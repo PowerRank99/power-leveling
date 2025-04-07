@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import AuthRequiredRoute from "@/components/AuthRequiredRoute";
 
 import Index from "./pages/Index";
 import WorkoutPage from "./pages/WorkoutPage";
@@ -28,14 +29,45 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/treino" element={<WorkoutPage />} />
-            <Route path="/ranking" element={<RankingPage />} />
-            <Route path="/perfil" element={<ProfilePage />} />
-            <Route path="/perfil/editar" element={<EditProfilePage />} />
-            <Route path="/ranking/:id" element={<RankingDetailPage />} />
-            <Route path="/treino-atual/:id" element={<ActiveWorkoutPage />} />
-            <Route path="/biblioteca-exercicios" element={<ExerciseLibraryPage />} />
             <Route path="/auth" element={<AuthPage />} />
+            
+            {/* Protected Routes */}
+            <Route path="/treino" element={
+              <AuthRequiredRoute>
+                <WorkoutPage />
+              </AuthRequiredRoute>
+            } />
+            <Route path="/ranking" element={
+              <AuthRequiredRoute>
+                <RankingPage />
+              </AuthRequiredRoute>
+            } />
+            <Route path="/perfil" element={
+              <AuthRequiredRoute>
+                <ProfilePage />
+              </AuthRequiredRoute>
+            } />
+            <Route path="/perfil/editar" element={
+              <AuthRequiredRoute>
+                <EditProfilePage />
+              </AuthRequiredRoute>
+            } />
+            <Route path="/ranking/:id" element={
+              <AuthRequiredRoute>
+                <RankingDetailPage />
+              </AuthRequiredRoute>
+            } />
+            <Route path="/treino-atual/:id" element={
+              <AuthRequiredRoute>
+                <ActiveWorkoutPage />
+              </AuthRequiredRoute>
+            } />
+            <Route path="/biblioteca-exercicios" element={
+              <AuthRequiredRoute>
+                <ExerciseLibraryPage />
+              </AuthRequiredRoute>
+            } />
+            
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

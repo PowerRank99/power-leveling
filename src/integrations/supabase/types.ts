@@ -39,6 +39,51 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          achievements_count: number | null
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          id: string
+          level: number | null
+          name: string | null
+          records_count: number | null
+          title: string | null
+          updated_at: string | null
+          workouts_count: number | null
+          xp: number | null
+        }
+        Insert: {
+          achievements_count?: number | null
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          id: string
+          level?: number | null
+          name?: string | null
+          records_count?: number | null
+          title?: string | null
+          updated_at?: string | null
+          workouts_count?: number | null
+          xp?: number | null
+        }
+        Update: {
+          achievements_count?: number | null
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          id?: string
+          level?: number | null
+          name?: string | null
+          records_count?: number | null
+          title?: string | null
+          updated_at?: string | null
+          workouts_count?: number | null
+          xp?: number | null
+        }
+        Relationships: []
+      }
       routine_exercises: {
         Row: {
           display_order: number
