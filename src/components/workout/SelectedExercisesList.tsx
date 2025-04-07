@@ -25,8 +25,10 @@ const SelectedExercisesList: React.FC<SelectedExercisesListProps> = ({ exercises
               name={exercise.name}
               category={exercise.category}
               level={exercise.level as any}
-              type={exercise.type as any}
               image={exercise.image_url || '/placeholder.svg'}
+              description={exercise.description}
+              equipment={exercise.equipment}
+              // Removed type prop
             />
             <button 
               className="absolute top-3 right-3 bg-red-100 text-red-600 p-2 rounded-full"

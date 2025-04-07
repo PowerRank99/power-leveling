@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -35,7 +34,6 @@ const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
   const [availableExercises, setAvailableExercises] = useState<Exercise[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Function to search for exercises
   const searchExercises = async () => {
     if (!searchQuery.trim()) return;
     
@@ -49,7 +47,6 @@ const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
       
       if (error) throw error;
       
-      // Filter out exercises already selected
       const selectedIds = selectedExercises.map(ex => ex.id);
       const filteredExercises = data?.filter(ex => !selectedIds.includes(ex.id)) || [];
       
@@ -98,7 +95,6 @@ const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
                   name={exercise.name}
                   category={exercise.category}
                   level={exercise.level as any}
-                  type={exercise.type as any}
                   image={exercise.image_url || '/placeholder.svg'}
                   description={exercise.description}
                   equipment={exercise.equipment}

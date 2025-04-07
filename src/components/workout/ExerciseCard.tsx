@@ -8,7 +8,7 @@ interface ExerciseCardProps {
   name: string;
   category: string;
   level: 'Iniciante' | 'Intermediário' | 'Avançado';
-  type: 'Composto' | 'Isolado';
+  type?: 'Composto' | 'Isolado'; // Made optional since we won't display it
   image: string;
   description?: string;
   equipment?: string;
@@ -19,7 +19,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
   name, 
   category, 
   level, 
-  type, 
+  type, // Keep in props but don't use it
   image,
   description,
   equipment,
@@ -58,9 +58,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
             <span className={cn("text-xs px-2 py-1 rounded-full", getLevelColor())}>
               {level}
             </span>
-            <span className="bg-fitblue-100 text-fitblue-700 text-xs px-2 py-1 rounded-full">
-              {type}
-            </span>
+            {/* Removed the exercise type badge */}
           </div>
         </div>
         
