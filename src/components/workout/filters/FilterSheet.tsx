@@ -23,10 +23,15 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
   onOptionSelect 
 }) => {
   // Add "Não especificado" option if it doesn't exist
-  const allOptions = [...options];
+  const allOptions = options.includes('Todos') ? [...options] : ['Todos', ...options];
   if (!allOptions.includes('Não especificado')) {
     allOptions.push('Não especificado');
   }
+
+  const handleOptionSelect = (option: string) => {
+    console.log(`Selected filter option: ${option}`);
+    onOptionSelect(option);
+  };
 
   return (
     <Sheet>
@@ -49,10 +54,7 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
               <Button 
                 variant={selectedOption === option ? "default" : "outline"}
                 className="justify-start"
-                onClick={() => {
-                  console.log(`Selected option: ${option}`);
-                  onOptionSelect(option);
-                }}
+                onClick={() => handleOptionSelect(option)}
               >
                 {option}
               </Button>

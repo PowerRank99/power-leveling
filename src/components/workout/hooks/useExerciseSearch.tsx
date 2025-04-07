@@ -18,6 +18,14 @@ export const useExerciseSearch = ({ selectedExercises }: UseExerciseSearchProps)
   const [muscleFilter, setMuscleFilter] = useState('Todos');
   const [recentExercises, setRecentExercises] = useState<Exercise[]>([]);
 
+  // Debugging state to track filter changes
+  const [debugInfo, setDebugInfo] = useState({
+    totalExercises: 0,
+    afterEquipmentFilter: 0,
+    afterMuscleFilter: 0,
+    finalFiltered: 0
+  });
+
   useEffect(() => {
     fetchExercises();
   }, [selectedExercises]);
@@ -44,22 +52,22 @@ export const useExerciseSearch = ({ selectedExercises }: UseExerciseSearchProps)
       console.log('Fetched exercises:', exercises.length);
       
       // Log the actual muscle_group and equipment_type values from the database
-      // to see what we're working with
       const uniqueMuscleGroups = [...new Set(exercises.map(ex => ex.muscle_group))];
       const uniqueEquipmentTypes = [...new Set(exercises.map(ex => ex.equipment_type))];
       
       console.log('Unique muscle groups in DB:', uniqueMuscleGroups);
       console.log('Unique equipment types in DB:', uniqueEquipmentTypes);
       
-      // Process exercises to handle null/undefined values
+      // Process exercises to normalize values - ALWAYS normalize to lower case for comparison
       const processedExercises = exercises.map(ex => ({
         ...ex,
-        muscle_group: ex.muscle_group || 'Não especificado',
-        equipment_type: ex.equipment_type || 'Não especificado'
+        muscle_group: ex.muscle_group || 'não especificado',
+        equipment_type: ex.equipment_type || 'não especificado'
       }));
       
       setAvailableExercises(processedExercises as Exercise[]);
       setFilteredExercises(processedExercises as Exercise[]);
+      setDebugInfo(prev => ({ ...prev, totalExercises: processedExercises.length }));
       
       setRecentExercises(processedExercises.slice(0, 5) as Exercise[]);
     } catch (error) {
@@ -76,59 +84,76 @@ export const useExerciseSearch = ({ selectedExercises }: UseExerciseSearchProps)
 
   const filterExercises = () => {
     let filtered = [...availableExercises];
+    console.log('Starting filter with', filtered.length, 'exercises');
     
     if (searchQuery.trim()) {
       filtered = filtered.filter(ex => 
         ex.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
+      console.log('After search filter:', filtered.length, 'exercises');
     }
     
     if (equipmentFilter !== 'Todos') {
       console.log('Filtering by equipment:', equipmentFilter);
       
       filtered = filtered.filter(ex => {
+        const exEquipment = (ex.equipment_type || '').toLowerCase();
+        const filterEquipment = equipmentFilter.toLowerCase();
+        
         // For "Nenhum" filter, match exercises with no equipment or "Nenhum"
-        if (equipmentFilter === 'Nenhum') {
+        if (filterEquipment === 'nenhum') {
           return !ex.equipment_type || 
-                 ex.equipment_type === 'Nenhum' || 
-                 ex.equipment_type === '';
+                 exEquipment === 'nenhum' || 
+                 exEquipment === '';
         }
         
         // For "Não especificado", match exercises with null, undefined or "Não especificado"
-        if (equipmentFilter === 'Não especificado') {
+        if (filterEquipment === 'não especificado') {
           return !ex.equipment_type || 
-                 ex.equipment_type === 'Não especificado' || 
-                 ex.equipment_type === '';
+                 exEquipment === 'não especificado' || 
+                 exEquipment === '';
         }
         
-        // Regular matching (case-insensitive)
-        return ex.equipment_type?.toLowerCase() === equipmentFilter.toLowerCase();
+        // For exact matching (case-insensitive)
+        return exEquipment === filterEquipment;
       });
       
-      console.log(`After equipment filter: ${filtered.length} exercises`);
+      console.log('After equipment filter:', filtered.length, 'exercises remaining');
+      setDebugInfo(prev => ({ ...prev, afterEquipmentFilter: filtered.length }));
     }
     
     if (muscleFilter !== 'Todos') {
       console.log('Filtering by muscle:', muscleFilter);
-      console.log('Filtered before muscle filter:', filtered.length);
       
       filtered = filtered.filter(ex => {
+        const exMuscle = (ex.muscle_group || '').toLowerCase();
+        const filterMuscle = muscleFilter.toLowerCase();
+        
         // For "Não especificado", match exercises with null, undefined or "Não especificado"
-        if (muscleFilter === 'Não especificado') {
+        if (filterMuscle === 'não especificado') {
           return !ex.muscle_group || 
-                 ex.muscle_group === 'Não especificado' || 
-                 ex.muscle_group === '';
+                 exMuscle === 'não especificado' || 
+                 exMuscle === '';
         }
         
-        // Regular matching (case-insensitive)
-        return ex.muscle_group?.toLowerCase() === muscleFilter.toLowerCase();
+        // For exact matching (case-insensitive)
+        return exMuscle === filterMuscle;
       });
       
-      console.log('Filtered after muscle filter:', filtered.length);
+      console.log('After muscle filter:', filtered.length, 'exercises remaining');
+      setDebugInfo(prev => ({ ...prev, afterMuscleFilter: filtered.length }));
     }
     
     setFilteredExercises(filtered);
+    setDebugInfo(prev => ({ ...prev, finalFiltered: filtered.length }));
     console.log('Final filtered exercises:', filtered.length);
+    
+    // Log the actual values for debugging
+    if (filtered.length > 0 && filtered.length < 10) {
+      filtered.forEach(ex => {
+        console.log(`Exercise: ${ex.name}, Muscle: "${ex.muscle_group}", Equipment: "${ex.equipment_type}"`);
+      });
+    }
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -155,6 +180,7 @@ export const useExerciseSearch = ({ selectedExercises }: UseExerciseSearchProps)
     recentExercises,
     handleSearchChange,
     resetFilters,
-    hasActiveFilters
+    hasActiveFilters,
+    debugInfo
   };
 };

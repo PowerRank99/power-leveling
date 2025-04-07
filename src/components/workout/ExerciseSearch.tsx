@@ -10,6 +10,7 @@ import RecentExercises from './search/RecentExercises';
 import FilterSheet from './filters/FilterSheet';
 import { EQUIPMENT_TYPES, MUSCLE_GROUPS } from './constants/exerciseFilters';
 import { Exercise } from './types/Exercise';
+import { toast } from '@/components/ui/use-toast';
 
 interface ExerciseSearchProps {
   selectedExercises: Exercise[];
@@ -33,8 +34,17 @@ const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
     recentExercises,
     handleSearchChange,
     resetFilters,
-    hasActiveFilters
+    hasActiveFilters,
+    debugInfo
   } = useExerciseSearch({ selectedExercises });
+
+  const handleSelectExercise = (exercise: Exercise) => {
+    onAddExercise(exercise);
+    toast({
+      title: 'Exercício adicionado',
+      description: `${exercise.name} foi adicionado à rotina`
+    });
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-md mb-4">
@@ -91,7 +101,7 @@ const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
             {searchQuery === '' && equipmentFilter === 'Todos' && muscleFilter === 'Todos' && (
               <RecentExercises 
                 exercises={recentExercises} 
-                onSelectExercise={onAddExercise} 
+                onSelectExercise={handleSelectExercise} 
               />
             )}
 
@@ -101,7 +111,7 @@ const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
               searchQuery={searchQuery}
               equipmentFilter={equipmentFilter}
               muscleFilter={muscleFilter}
-              onSelectExercise={onAddExercise} 
+              onSelectExercise={handleSelectExercise} 
             />
           </div>
         )}
