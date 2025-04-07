@@ -23,7 +23,9 @@ export const useExerciseSearch = ({ selectedExercises }: UseExerciseSearchProps)
   }, [selectedExercises]);
 
   useEffect(() => {
-    filterExercises();
+    if (availableExercises.length > 0) {
+      filterExercises();
+    }
   }, [equipmentFilter, muscleFilter, availableExercises, searchQuery]);
 
   const fetchExercises = async () => {
@@ -77,6 +79,7 @@ export const useExerciseSearch = ({ selectedExercises }: UseExerciseSearchProps)
     }
     
     setFilteredExercises(filtered);
+    console.log('Filtered exercises:', filtered.length, 'Equipment filter:', equipmentFilter, 'Muscle filter:', muscleFilter);
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,7 +90,6 @@ export const useExerciseSearch = ({ selectedExercises }: UseExerciseSearchProps)
     setEquipmentFilter('Todos');
     setMuscleFilter('Todos');
     setSearchQuery('');
-    setFilteredExercises(availableExercises);
   };
 
   const hasActiveFilters = equipmentFilter !== 'Todos' || muscleFilter !== 'Todos' || searchQuery.trim() !== '';

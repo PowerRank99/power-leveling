@@ -22,6 +22,13 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
   label, 
   onOptionSelect 
 }) => {
+  const handleOptionSelect = (option: string) => {
+    onOptionSelect(option);
+    // Close the sheet after selection
+    const sheetCloseButton = document.querySelector('[data-radix-collection-item]') as HTMLElement;
+    if (sheetCloseButton) sheetCloseButton.click();
+  };
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -43,11 +50,7 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
               key={option} 
               variant={selectedOption === option ? "default" : "outline"}
               className="justify-start"
-              onClick={() => {
-                onOptionSelect(option);
-                const sheetCloseButton = document.querySelector('[data-radix-collection-item]') as HTMLElement;
-                if (sheetCloseButton) sheetCloseButton.click();
-              }}
+              onClick={() => handleOptionSelect(option)}
             >
               {option}
             </Button>
