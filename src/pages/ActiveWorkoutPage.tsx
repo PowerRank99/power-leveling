@@ -1,16 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import PageHeader from '@/components/ui/PageHeader';
-import ActiveWorkout from '@/components/workout/ActiveWorkout';
-import WorkoutSkeleton from '@/components/workout/WorkoutSkeleton';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { Menu, CheckCircle, AlertCircle } from 'lucide-react';
-import { EditIcon } from '@/components/icons/NavIcons';
-import { useWorkout } from '@/hooks/useWorkout';
 import { useToast } from '@/components/ui/use-toast';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { useWorkout } from '@/hooks/useWorkout';
+
+// Imported Components
+import WorkoutHeader from '@/components/workout/WorkoutHeader';
+import WorkoutProgressBar from '@/components/workout/WorkoutProgressBar';
+import WorkoutLoading from '@/components/workout/WorkoutLoading';
+import WorkoutError from '@/components/workout/WorkoutError';
+import EmptyExerciseState from '@/components/workout/EmptyExerciseState';
+import ActiveWorkout from '@/components/workout/ActiveWorkout';
+import NextExercisePreview from '@/components/workout/NextExercisePreview';
+import ExerciseNotes from '@/components/workout/ExerciseNotes';
+import FinishWorkoutButton from '@/components/workout/FinishWorkoutButton';
 
 const ActiveWorkoutPage = () => {
   const navigate = useNavigate();
@@ -81,126 +84,32 @@ const ActiveWorkoutPage = () => {
     }
   };
   
-  const handleSkipExercise = () => {
-    goToNextExercise();
-  };
-  
+  // If loading, show loading UI
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <PageHeader title="Treino Atual" />
-        
-        <div className="bg-white p-2">
-          <div className="flex justify-between items-center px-2">
-            <div className="text-sm text-gray-500">
-              Carregando exercícios...
-            </div>
-          </div>
-        </div>
-        
-        <div className="flex items-center justify-center p-8">
-          <LoadingSpinner 
-            message="Carregando treino..." 
-            subMessage="Preparando seus exercícios" 
-          />
-        </div>
-        
-        <WorkoutSkeleton />
-      </div>
-    );
+    return <WorkoutLoading />;
   }
   
+  // If there's an error, show error UI
   if (loadError) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <PageHeader title="Erro no Treino" />
-        
-        <div className="p-4">
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Erro ao carregar treino</AlertTitle>
-            <AlertDescription>{loadError}</AlertDescription>
-          </Alert>
-          
-          <Button 
-            onClick={() => navigate('/treino')}
-            className="w-full mt-4"
-          >
-            Voltar para Treinos
-          </Button>
-        </div>
-      </div>
-    );
+    return <WorkoutError errorMessage={loadError} />;
   }
   
+  // If no exercise is found, show empty state
   if (!currentExercise) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <PageHeader 
-          title="Treino Atual" 
-          rightContent={
-            <button className="p-1">
-              <Menu className="w-6 h-6" />
-            </button>
-          }
-        />
-        
-        <div className="p-4 text-center">
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Sem exercícios</AlertTitle>
-            <AlertDescription>Nenhum exercício encontrado para esta rotina.</AlertDescription>
-          </Alert>
-          
-          <Button 
-            onClick={() => navigate('/treino')}
-            className="mt-4"
-          >
-            Voltar para Treinos
-          </Button>
-        </div>
-      </div>
-    );
+    return <EmptyExerciseState />;
   }
   
   return (
     <div className="min-h-screen bg-gray-50">
-      <PageHeader 
-        title="Treino Atual" 
-        rightContent={
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleFinishWorkout}
-              disabled={isFinishing}
-            >
-              {isFinishing ? (
-                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-              ) : (
-                <CheckCircle className="w-6 h-6" />
-              )}
-            </Button>
-            <Button
-              variant="ghost" 
-              size="icon"
-            >
-              <Menu className="w-6 h-6" />
-            </Button>
-          </div>
-        }
+      <WorkoutHeader 
+        onFinish={handleFinishWorkout}
+        isFinishing={isFinishing}
       />
       
-      <div className="bg-white p-2">
-        <div className="flex justify-between items-center px-2">
-          <div className="text-sm text-gray-500">
-            Exercício {currentExerciseIndex + 1} de {totalExercises}
-          </div>
-          <div className="bg-fitblue-100 px-3 py-1 rounded-full text-xs text-fitblue font-medium">
-            {Math.floor((currentExerciseIndex / totalExercises) * 100)}% completo
-          </div>
-        </div>
-      </div>
+      <WorkoutProgressBar
+        currentExerciseIndex={currentExerciseIndex}
+        totalExercises={totalExercises}
+      />
       
       <ActiveWorkout 
         exerciseName={currentExercise.name}
@@ -211,61 +120,24 @@ const ActiveWorkoutPage = () => {
         elapsedTime={formatTime(elapsedTime)}
       />
       
-      {/* Next Exercise Preview */}
       {nextExercise && (
-        <div className="bg-white p-4 border-t border-gray-200 mt-4">
-          <p className="text-gray-500 mb-2">Próximo Exercício</p>
-          
-          <div className="flex justify-between items-center">
-            <div>
-              <h3 className="font-bold text-lg">{nextExercise.name}</h3>
-              <p className="text-sm text-gray-500">{currentExerciseIndex + 2}/{totalExercises}</p>
-            </div>
-            
-            <button 
-              className="text-fitblue font-medium"
-              onClick={handleSkipExercise}
-            >
-              Pular
-            </button>
-          </div>
-        </div>
+        <NextExercisePreview
+          nextExercise={nextExercise}
+          currentIndex={currentExerciseIndex}
+          totalExercises={totalExercises}
+          onSkip={goToNextExercise}
+        />
       )}
       
-      {/* Exercise Notes */}
-      <div className="p-4">
-        <div className="bg-white border border-gray-200 p-4 rounded-lg">
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="font-bold">Anotações</h3>
-            <EditIcon className="w-5 h-5 text-gray-400" />
-          </div>
-          
-          <textarea 
-            placeholder="Adicionar notas sobre o exercício..."
-            className="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 min-h-[100px]"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-          ></textarea>
-        </div>
-      </div>
+      <ExerciseNotes
+        notes={notes}
+        onNotesChange={setNotes}
+      />
       
-      {/* Finish Workout Button */}
-      <div className="p-4">
-        <Button 
-          className="w-full bg-fitblue"
-          onClick={handleFinishWorkout}
-          disabled={isFinishing}
-        >
-          {isFinishing ? (
-            <>
-              <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-              Finalizando...
-            </>
-          ) : (
-            "Finalizar Treino"
-          )}
-        </Button>
-      </div>
+      <FinishWorkoutButton 
+        onFinish={handleFinishWorkout}
+        isFinishing={isFinishing}
+      />
     </div>
   );
 };
