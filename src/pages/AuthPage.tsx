@@ -4,12 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/components/ui/use-toast';
+import { Google } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -25,6 +26,7 @@ const registerSchema = z.object({
 const AuthPage = () => {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -80,6 +82,28 @@ const AuthPage = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+  
+  const handleGoogleSignIn = async () => {
+    try {
+      setGoogleLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '/auth',
+        },
+      });
+      
+      if (error) throw error;
+      
+    } catch (error: any) {
+      toast({
+        title: "Erro ao entrar com Google",
+        description: error.message || "Não foi possível fazer login com Google. Tente novamente.",
+        variant: "destructive",
+      });
+      setGoogleLoading(false);
     }
   };
   
@@ -148,6 +172,23 @@ const AuthPage = () => {
             </button>
           </div>
           
+          <Button
+            onClick={handleGoogleSignIn}
+            variant="outline"
+            size="lg"
+            className="w-full mb-4 font-normal"
+            disabled={googleLoading}
+          >
+            <Google className="mr-2" />
+            {googleLoading ? "Conectando..." : "Entrar com Google"}
+          </Button>
+
+          <div className="flex items-center my-4">
+            <Separator className="flex-1" />
+            <span className="px-3 text-sm text-gray-500">ou</span>
+            <Separator className="flex-1" />
+          </div>
+
           {mode === 'login' ? (
             <Form {...loginForm}>
               <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
