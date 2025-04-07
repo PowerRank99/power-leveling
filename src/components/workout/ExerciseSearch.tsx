@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Search, Filter, X, Barbell, Dumbbell } from 'lucide-react';
+import { Search, Filter, X, Dumbbell } from 'lucide-react';
 import ExerciseCard from './ExerciseCard';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
@@ -29,7 +28,6 @@ interface ExerciseSearchProps {
   onClose: () => void;
 }
 
-// Equipment types for filtering
 export const EQUIPMENT_TYPES = [
   'Todos',
   'Nenhum', // Bodyweight
@@ -45,7 +43,6 @@ export const EQUIPMENT_TYPES = [
   'Outro' // Other
 ];
 
-// Muscle groups for filtering
 export const MUSCLE_GROUPS = [
   'Todos',
   'Abdômen', // Abdominals
@@ -85,12 +82,10 @@ const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
   const [muscleFilter, setMuscleFilter] = useState('Todos');
   const [recentExercises, setRecentExercises] = useState<Exercise[]>([]);
 
-  // Load exercises on initial mount
   useEffect(() => {
     fetchExercises();
   }, []);
 
-  // Apply filters when they change or when available exercises change
   useEffect(() => {
     filterExercises();
   }, [equipmentFilter, muscleFilter, availableExercises]);
@@ -111,7 +106,6 @@ const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
       setAvailableExercises(exercises as Exercise[]);
       setFilteredExercises(exercises as Exercise[]);
       
-      // Simulate recent exercises (would usually be fetched from user history)
       setRecentExercises(exercises.slice(0, 5) as Exercise[]);
     } catch (error) {
       console.error('Error fetching exercises:', error);
@@ -128,21 +122,18 @@ const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
   const filterExercises = () => {
     let filtered = [...availableExercises];
     
-    // Apply search query filter
     if (searchQuery.trim()) {
       filtered = filtered.filter(ex => 
         ex.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
     
-    // Apply equipment filter
     if (equipmentFilter !== 'Todos') {
       filtered = filtered.filter(ex => 
         ex.equipment_type === equipmentFilter
       );
     }
     
-    // Apply muscle filter
     if (muscleFilter !== 'Todos') {
       filtered = filtered.filter(ex => 
         ex.muscle_group === muscleFilter
@@ -154,7 +145,6 @@ const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    // Apply search filter with small delay for better UX
     setTimeout(() => filterExercises(), 300);
   };
 
@@ -165,12 +155,10 @@ const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
     setFilteredExercises(availableExercises);
   };
 
-  // Check if any filters are active
   const hasActiveFilters = equipmentFilter !== 'Todos' || muscleFilter !== 'Todos' || searchQuery.trim() !== '';
 
   return (
     <div className="bg-white rounded-lg shadow-md mb-4">
-      {/* Search and filter bar */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex gap-2 items-center mb-4">
           <div className="relative flex-1">
@@ -183,7 +171,6 @@ const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
             />
           </div>
           
-          {/* Reset filters button */}
           {hasActiveFilters && (
             <Button 
               variant="ghost" 
@@ -196,7 +183,6 @@ const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
         </div>
 
         <div className="flex gap-2">
-          {/* Equipment filter */}
           <Sheet>
             <SheetTrigger asChild>
               <Button 
@@ -230,7 +216,6 @@ const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
             </SheetContent>
           </Sheet>
 
-          {/* Muscle group filter */}
           <Sheet>
             <SheetTrigger asChild>
               <Button 
@@ -266,13 +251,11 @@ const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
         </div>
       </div>
 
-      {/* Exercise list */}
       <div className="max-h-[60vh] overflow-y-auto p-4">
         {isLoading ? (
           <LoadingSpinner message="Buscando exercícios..." />
         ) : (
           <div>
-            {/* Recent exercises section */}
             {searchQuery === '' && equipmentFilter === 'Todos' && muscleFilter === 'Todos' && recentExercises.length > 0 && (
               <div className="mb-6">
                 <h3 className="text-sm font-medium text-gray-500 mb-2">Recentes</h3>
@@ -297,7 +280,6 @@ const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
               </div>
             )}
 
-            {/* All exercises or filtered results */}
             {filteredExercises.length > 0 ? (
               <div>
                 {hasActiveFilters && (
@@ -335,7 +317,6 @@ const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
         )}
       </div>
 
-      {/* Bottom actions */}
       <div className="p-4 border-t border-gray-200">
         <Button 
           variant="outline" 
