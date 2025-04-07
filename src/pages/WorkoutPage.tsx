@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Play } from 'lucide-react';
@@ -40,41 +39,33 @@ const WorkoutPage = () => {
       
       try {
         setIsLoading(true);
-        // Fetch user's routines
         const { data: routines, error: routinesError } = await supabase
           .from('routines')
-          .select(`
-            id, 
-            name, 
-            last_used_at,
-            (SELECT count(*) FROM routine_exercises WHERE routine_id = routines.id) as exercises_count
-          `)
+          .select('id, name, last_used_at')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
         
         if (routinesError) throw routinesError;
         
         if (routines && routines.length > 0) {
-          setSavedRoutines(routines.map(r => ({
-            id: r.id,
-            name: r.name,
-            exercises_count: r.exercises_count || 0,
-            last_used_at: r.last_used_at,
-          })));
+          const routinesWithCounts = await Promise.all(routines.map(async (routine) => {
+            const { count, error } = await supabase
+              .from('routine_exercises')
+              .select('*', { count: 'exact', head: true })
+              .eq('routine_id', routine.id);
+              
+            return {
+              ...routine,
+              exercises_count: count || 0
+            };
+          }));
+          
+          setSavedRoutines(routinesWithCounts);
         }
         
-        // Fetch recent workouts
         const { data: workouts, error: workoutsError } = await supabase
           .from('workouts')
-          .select(`
-            id,
-            started_at,
-            completed_at,
-            duration_seconds,
-            routines (name),
-            (SELECT count(*) FROM workout_sets WHERE workout_id = workouts.id) as sets_count,
-            (SELECT count(DISTINCT exercise_id) FROM workout_sets WHERE workout_id = workouts.id) as exercises_count
-          `)
+          .select('id, started_at, completed_at, duration_seconds, routine_id')
           .eq('user_id', user.id)
           .order('started_at', { ascending: false })
           .limit(5);
@@ -82,15 +73,51 @@ const WorkoutPage = () => {
         if (workoutsError) throw workoutsError;
         
         if (workouts && workouts.length > 0) {
-          setRecentWorkouts(workouts.map(w => ({
-            id: w.id,
-            name: w.routines?.name || 'Treino sem nome',
-            date: new Date(w.started_at).toLocaleDateString('pt-BR'),
-            exercises_count: w.exercises_count || 0,
-            sets_count: w.sets_count || 0,
-            prs: 0, // We'll implement this feature later
-            duration_seconds: w.duration_seconds,
-          })));
+          const workoutsWithDetails = await Promise.all(workouts.map(async (workout) => {
+            let routineName = 'Treino sem nome';
+            if (workout.routine_id) {
+              const { data: routineData } = await supabase
+                .from('routines')
+                .select('name')
+                .eq('id', workout.routine_id)
+                .single();
+                
+              if (routineData) {
+                routineName = routineData.name;
+              }
+            }
+            
+            const { count: setsCount } = await supabase
+              .from('workout_sets')
+              .select('*', { count: 'exact', head: true })
+              .eq('workout_id', workout.id);
+              
+            const { data: exercisesData } = await supabase
+              .from('workout_sets')
+              .select('exercise_id')
+              .eq('workout_id', workout.id);
+              
+            const uniqueExercises = new Set();
+            if (exercisesData) {
+              exercisesData.forEach(item => {
+                if (item.exercise_id) {
+                  uniqueExercises.add(item.exercise_id);
+                }
+              });
+            }
+            
+            return {
+              id: workout.id,
+              name: routineName,
+              date: new Date(workout.started_at).toLocaleDateString('pt-BR'),
+              exercises_count: uniqueExercises.size,
+              sets_count: setsCount || 0,
+              prs: 0,
+              duration_seconds: workout.duration_seconds,
+            };
+          }));
+          
+          setRecentWorkouts(workoutsWithDetails);
         }
       } catch (error) {
         console.error('Error fetching workout data:', error);
@@ -107,14 +134,12 @@ const WorkoutPage = () => {
     fetchUserRoutines();
   }, [user, toast]);
   
-  // Format workout duration
   const formatDuration = (seconds?: number | null) => {
     if (!seconds) return '0 min';
     const minutes = Math.floor(seconds / 60);
     return `${minutes} min`;
   };
   
-  // Calculate how long ago a workout was done
   const getTimeAgo = (dateStr?: string | null) => {
     if (!dateStr) return 'Nunca';
     
@@ -157,7 +182,6 @@ const WorkoutPage = () => {
             </button>
           </div>
           
-          {/* Saved Routines */}
           <div className="mt-6">
             <h2 className="text-xl font-bold mb-4">Rotinas Salvas</h2>
             
@@ -204,7 +228,6 @@ const WorkoutPage = () => {
             )}
           </div>
           
-          {/* Recent Workouts */}
           <div className="mt-8">
             <h2 className="text-xl font-bold mb-4">Treinos Recentes</h2>
             

@@ -15,8 +15,8 @@ interface Exercise {
   id: string;
   name: string;
   category: string;
-  level: 'Iniciante' | 'Intermediário' | 'Avançado';
-  type: 'Composto' | 'Isolado';
+  level: string; // Changed from the specific union type to string to match DB data
+  type: string; // Changed from the specific union type to string to match DB data
   image_url?: string;
 }
 
@@ -50,10 +50,7 @@ const CreateRoutinePage: React.FC = () => {
       const selectedIds = selectedExercises.map(ex => ex.id);
       const filteredExercises = data?.filter(ex => !selectedIds.includes(ex.id)) || [];
       
-      setAvailableExercises(filteredExercises.map(ex => ({
-        ...ex,
-        image: ex.image_url || '/placeholder.svg',
-      })));
+      setAvailableExercises(filteredExercises);
     } catch (error) {
       console.error('Error searching exercises:', error);
       toast({
@@ -178,8 +175,8 @@ const CreateRoutinePage: React.FC = () => {
                 <ExerciseCard
                   name={exercise.name}
                   category={exercise.category}
-                  level={exercise.level}
-                  type={exercise.type}
+                  level={exercise.level as any} // Type assertion to handle the string from database
+                  type={exercise.type as any} // Type assertion to handle the string from database
                   image={exercise.image_url || '/placeholder.svg'}
                 />
                 <button 
@@ -228,8 +225,8 @@ const CreateRoutinePage: React.FC = () => {
                       <ExerciseCard
                         name={exercise.name}
                         category={exercise.category}
-                        level={exercise.level}
-                        type={exercise.type}
+                        level={exercise.level as any} // Type assertion to handle the string from database
+                        type={exercise.type as any} // Type assertion to handle the string from database
                         image={exercise.image_url || '/placeholder.svg'}
                       />
                     </div>
