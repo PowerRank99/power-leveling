@@ -1,16 +1,21 @@
 
-import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workout';
+import { toast } from 'sonner';
 
 export const useWorkoutSets = (workoutId: string | null, exercises: WorkoutExercise[], currentExerciseIndex: number) => {
-  const currentExercise = exercises[currentExerciseIndex];
-  
   const updateSet = async (setIndex: number, data: { weight?: string; reps?: string; completed?: boolean }) => {
-    if (!workoutId || !currentExercise) return;
+    if (!workoutId || !exercises[currentExerciseIndex]) {
+      toast.error("Erro ao atualizar série", {
+        description: "Treino ou exercício não encontrado"
+      });
+      return null;
+    }
     
     try {
-      // Update local state
+      const currentExercise = exercises[currentExerciseIndex];
+      
+      // Update local state first
       const updatedExercises = [...exercises];
       const updatedSets = [...updatedExercises[currentExerciseIndex].sets];
       
@@ -43,31 +48,44 @@ export const useWorkoutSets = (workoutId: string | null, exercises: WorkoutExerc
         
       if (error) {
         console.error("Error updating set:", error);
+        toast.error("Erro ao salvar série", {
+          description: "As alterações podem não ter sido salvas"
+        });
       }
       
       return updatedExercises;
     } catch (error) {
       console.error("Error updating set:", error);
-      return exercises;
+      toast.error("Erro ao atualizar série", {
+        description: "Não foi possível salvar as alterações"
+      });
+      return null;
     }
   };
   
   const addSet = async () => {
-    if (!workoutId || !currentExercise) return exercises;
+    if (!workoutId || !exercises[currentExerciseIndex]) {
+      toast.error("Erro ao adicionar série", {
+        description: "Treino ou exercício não encontrado"
+      });
+      return null;
+    }
     
     try {
+      const currentExercise = exercises[currentExerciseIndex];
+      
       // Add to local state first
       const updatedExercises = [...exercises];
-      const lastSet = updatedExercises[currentExerciseIndex].sets[
-        updatedExercises[currentExerciseIndex].sets.length - 1
-      ];
+      const currentSets = updatedExercises[currentExerciseIndex].sets;
+      const lastSet = currentSets[currentSets.length - 1];
       
+      const newSetId = `new-${Date.now()}`;
       const newSet = {
-        id: `${updatedExercises[currentExerciseIndex].sets.length}`,
-        weight: lastSet.weight,
-        reps: lastSet.reps,
+        id: newSetId,
+        weight: lastSet?.weight || '0',
+        reps: lastSet?.reps || '12',
         completed: false,
-        previous: lastSet.previous
+        previous: lastSet?.previous || { weight: '0', reps: '12' }
       };
       
       updatedExercises[currentExerciseIndex].sets.push(newSet);
@@ -75,7 +93,7 @@ export const useWorkoutSets = (workoutId: string | null, exercises: WorkoutExerc
       // Add to database
       const newSetOrder = currentExerciseIndex * 100 + updatedExercises[currentExerciseIndex].sets.length - 1;
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('workout_sets')
         .insert({
           workout_id: workoutId,
@@ -84,16 +102,30 @@ export const useWorkoutSets = (workoutId: string | null, exercises: WorkoutExerc
           weight: parseFloat(newSet.weight) || 0,
           reps: parseInt(newSet.reps) || 0,
           completed: false
-        });
+        })
+        .select()
+        .single();
         
       if (error) {
         console.error("Error adding new set:", error);
+        toast.error("Erro ao adicionar série", {
+          description: "A série pode não ter sido salva corretamente"
+        });
+      }
+      
+      // If we got data back, update the ID
+      if (data) {
+        const setIndex = updatedExercises[currentExerciseIndex].sets.length - 1;
+        updatedExercises[currentExerciseIndex].sets[setIndex].id = data.id;
       }
       
       return updatedExercises;
     } catch (error) {
       console.error("Error adding set:", error);
-      return exercises;
+      toast.error("Erro ao adicionar série", {
+        description: "Não foi possível adicionar uma nova série"
+      });
+      return null;
     }
   };
   
