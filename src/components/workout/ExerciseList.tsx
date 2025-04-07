@@ -1,8 +1,8 @@
 
 import React from 'react';
-import ExerciseCard from '../ExerciseCard';
+import ExerciseCard from './ExerciseCard';
 import EmptyState from '@/components/ui/EmptyState';
-import { Exercise } from '../types/Exercise';
+import { Exercise } from './types/Exercise';
 
 interface ExerciseListProps {
   exercises: Exercise[];
