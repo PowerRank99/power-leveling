@@ -1,19 +1,22 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Medal, Dumbbell, Award } from 'lucide-react';
+import { Medal, Dumbbell, Award, LogOut, Edit3 } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
 import Achievement from '@/components/profile/Achievement';
 import ProgressBar from '@/components/profile/ProgressBar';
 import BottomNavBar from '@/components/navigation/BottomNavBar';
 import Trophy from '@/components/icons/Trophy';
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
+  const { user, profile, signOut } = useAuth();
+  const { toast } = useToast();
   
-  // Mock data
-  const userAvatar = "/lovable-uploads/c6066df0-70c1-48cf-b017-126e8f7e850a.png";
-  
+  // Mock data for achievements and goals
   const achievements = [
     {
       id: "1",
@@ -57,10 +60,56 @@ const ProfilePage = () => {
       colorClass: "bg-fitgreen"
     }
   ];
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Logout realizado",
+        description: "Você foi desconectado da sua conta.",
+      });
+      navigate('/auth');
+    } catch (error: any) {
+      toast({
+        title: "Erro ao sair",
+        description: error.message || "Não foi possível fazer logout.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditProfile = () => {
+    navigate('/perfil/editar');
+  };
+  
+  // Default avatar if user doesn't have one
+  const userAvatar = profile?.avatar_url || "/lovable-uploads/c6066df0-70c1-48cf-b017-126e8f7e850a.png";
   
   return (
     <div className="pb-20 min-h-screen bg-gray-50">
-      <PageHeader title="Conquistas" />
+      <PageHeader 
+        title="Perfil" 
+        rightContent={
+          <div className="flex gap-2">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleEditProfile}
+              title="Editar perfil"
+            >
+              <Edit3 className="h-5 w-5" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleSignOut}
+              title="Sair da conta"
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
+        }
+      />
       
       {/* User Profile Header */}
       <div className="bg-white p-6 flex flex-col items-center">
@@ -68,8 +117,8 @@ const ProfilePage = () => {
           <img src={userAvatar} alt="User Avatar" className="w-full h-full object-cover" />
         </div>
         
-        <h2 className="text-xl font-bold">Maria Silva</h2>
-        <p className="text-gray-600">Nível 42 - Guerreira do Ferro</p>
+        <h2 className="text-xl font-bold">{profile?.name || user?.email}</h2>
+        <p className="text-gray-600">Nível {profile?.level || 1} - {profile?.title || "Novato"}</p>
         
         {/* XP Progress */}
         <div className="w-full mt-4">
@@ -77,7 +126,7 @@ const ProfilePage = () => {
             <div className="h-full bg-fitblue w-3/4"></div>
           </div>
           <div className="flex justify-between text-sm text-gray-500 mt-1">
-            <span>750/1000 XP para o próximo nível</span>
+            <span>{profile?.xp || 0}/1000 XP para o próximo nível</span>
           </div>
         </div>
         
@@ -86,7 +135,7 @@ const ProfilePage = () => {
           <div className="text-center">
             <div className="flex flex-col items-center">
               <Dumbbell className="w-6 h-6 text-fitblue mb-1" />
-              <span className="text-2xl font-bold">147</span>
+              <span className="text-2xl font-bold">{profile?.workouts_count || 0}</span>
               <span className="text-xs text-gray-500">Treinos</span>
             </div>
           </div>
@@ -94,7 +143,7 @@ const ProfilePage = () => {
           <div className="text-center border-x border-gray-200 px-8">
             <div className="flex flex-col items-center">
               <Trophy className="w-6 h-6 text-fitgreen mb-1" />
-              <span className="text-2xl font-bold">28</span>
+              <span className="text-2xl font-bold">{profile?.achievements_count || 0}</span>
               <span className="text-xs text-gray-500">Conquistas</span>
             </div>
           </div>
@@ -102,7 +151,7 @@ const ProfilePage = () => {
           <div className="text-center">
             <div className="flex flex-col items-center">
               <Award className="w-6 h-6 text-fitpurple mb-1" />
-              <span className="text-2xl font-bold">12</span>
+              <span className="text-2xl font-bold">{profile?.records_count || 0}</span>
               <span className="text-xs text-gray-500">Recordes</span>
             </div>
           </div>
@@ -113,31 +162,43 @@ const ProfilePage = () => {
       <div className="mt-4 bg-white p-4">
         <h3 className="text-lg font-bold mb-3">Conquistas Recentes</h3>
         
-        {achievements.map(achievement => (
-          <Achievement 
-            key={achievement.id}
-            icon={achievement.icon}
-            title={achievement.title}
-            description={achievement.description}
-            date={achievement.date}
-            color={achievement.color as 'blue' | 'green' | 'purple' | 'yellow'}
-          />
-        ))}
+        {achievements.length > 0 ? (
+          achievements.map(achievement => (
+            <Achievement 
+              key={achievement.id}
+              icon={achievement.icon}
+              title={achievement.title}
+              description={achievement.description}
+              date={achievement.date}
+              color={achievement.color as 'blue' | 'green' | 'purple' | 'yellow'}
+            />
+          ))
+        ) : (
+          <div className="text-center py-4 text-gray-500">
+            Você ainda não tem conquistas
+          </div>
+        )}
       </div>
       
       {/* Goals */}
       <div className="mt-4 bg-white p-4">
         <h3 className="text-lg font-bold mb-3">Metas em Andamento</h3>
         
-        {goals.map(goal => (
-          <ProgressBar 
-            key={goal.id}
-            label={goal.label}
-            current={goal.current}
-            target={goal.target}
-            colorClass={goal.colorClass}
-          />
-        ))}
+        {goals.length > 0 ? (
+          goals.map(goal => (
+            <ProgressBar 
+              key={goal.id}
+              label={goal.label}
+              current={goal.current}
+              target={goal.target}
+              colorClass={goal.colorClass}
+            />
+          ))
+        ) : (
+          <div className="text-center py-4 text-gray-500">
+            Você ainda não tem metas definidas
+          </div>
+        )}
       </div>
       
       <BottomNavBar />
