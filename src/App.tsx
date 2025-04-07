@@ -16,6 +16,7 @@ import ActiveWorkoutPage from "./pages/ActiveWorkoutPage";
 import ExerciseLibraryPage from "./pages/ExerciseLibraryPage";
 import AuthPage from "./pages/AuthPage";
 import EditProfilePage from "./pages/EditProfilePage";
+import CreateRoutinePage from "./pages/CreateRoutinePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -65,6 +66,11 @@ const App = () => (
             <Route path="/biblioteca-exercicios" element={
               <AuthRequiredRoute>
                 <ExerciseLibraryPage />
+              </AuthRequiredRoute>
+            } />
+            <Route path="/criar-rotina" element={
+              <AuthRequiredRoute>
+                <CreateRoutinePage />
               </AuthRequiredRoute>
             } />
             

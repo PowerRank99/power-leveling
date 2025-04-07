@@ -3,9 +3,11 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { WorkoutExercise } from '@/types/workout';
+import { useAuth } from './useAuth';
 
 export const useWorkoutExercises = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchRoutineExercises = async (routineId: string): Promise<{
     workoutExercises: WorkoutExercise[] | null;
@@ -40,12 +42,13 @@ export const useWorkoutExercises = () => {
         return { workoutExercises: null, workoutId: null };
       }
       
-      // Create a new workout entry
+      // Create a new workout entry with user_id
       const { data: newWorkout, error: workoutError } = await supabase
         .from('workouts')
         .insert({
           routine_id: routineId,
-          started_at: new Date().toISOString()
+          started_at: new Date().toISOString(),
+          user_id: user?.id // Associate workout with current user
         })
         .select()
         .single();
