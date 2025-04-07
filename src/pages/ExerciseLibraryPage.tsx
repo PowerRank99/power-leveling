@@ -1,49 +1,54 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SearchIcon, FilterIcon } from '@/components/icons/NavIcons';
 import PageHeader from '@/components/ui/PageHeader';
 import ExerciseCard from '@/components/workout/ExerciseCard';
 import BottomNavBar from '@/components/navigation/BottomNavBar';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import EmptyState from '@/components/ui/EmptyState';
+import { Exercise } from '@/components/workout/ExerciseSearch';
 
 const ExerciseLibraryPage = () => {
   const [activeCategory, setActiveCategory] = useState<string>('Todos');
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
   
   const categories = [
     'Todos', 'Peito', 'Costas', 'Pernas', 'Ombros', 'Braços', 'Abdômen'
   ];
   
-  // Mock data for exercises
-  const exercises = [
-    {
-      id: "1",
-      name: "Supino Reto",
-      category: "Peito",
-      level: "Iniciante" as const,
-      type: "Composto" as const,
-      image: "/lovable-uploads/7164b50e-55bc-43ae-9127-1c693ab31e70.png"
-    },
-    {
-      id: "2",
-      name: "Agachamento Livre",
-      category: "Pernas",
-      level: "Iniciante" as const,
-      type: "Composto" as const,
-      image: "/lovable-uploads/f018410c-9031-4726-b654-ec51c1bbd72b.png"
-    },
-    {
-      id: "3",
-      name: "Barra Fixa",
-      category: "Costas",
-      level: "Avançado" as const,
-      type: "Composto" as const,
-      image: "/lovable-uploads/71073810-f05a-4adc-a860-636599324c62.png"
-    }
-  ];
-  
-  // Filter exercises based on selected category
-  const filteredExercises = activeCategory === 'Todos'
-    ? exercises
-    : exercises.filter(exercise => exercise.category === activeCategory);
+  useEffect(() => {
+    const fetchExercises = async () => {
+      setIsLoading(true);
+      try {
+        let query = supabase.from('exercises').select('*').order('name');
+        
+        if (activeCategory !== 'Todos') {
+          query = query.eq('category', activeCategory);
+        }
+        
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        
+        setExercises(data as Exercise[]);
+      } catch (error) {
+        console.error('Error fetching exercises:', error);
+        toast({
+          title: 'Erro ao carregar exercícios',
+          description: 'Não foi possível carregar a lista de exercícios.',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchExercises();
+  }, [activeCategory, toast]);
   
   return (
     <div className="pb-20 min-h-screen bg-gray-50">
@@ -73,16 +78,24 @@ const ExerciseLibraryPage = () => {
       
       {/* Exercise List */}
       <div className="p-4">
-        {filteredExercises.map(exercise => (
-          <ExerciseCard
-            key={exercise.id}
-            name={exercise.name}
-            category={exercise.category}
-            level={exercise.level}
-            type={exercise.type}
-            image={exercise.image}
-          />
-        ))}
+        {isLoading ? (
+          <LoadingSpinner message="Carregando exercícios..." />
+        ) : exercises.length > 0 ? (
+          exercises.map(exercise => (
+            <ExerciseCard
+              key={exercise.id}
+              name={exercise.name}
+              category={exercise.category}
+              level={exercise.level as any}
+              type={exercise.type as any}
+              image={exercise.image_url || '/placeholder.svg'}
+              description={exercise.description}
+              equipment={exercise.equipment}
+            />
+          ))
+        ) : (
+          <EmptyState message={`Nenhum exercício encontrado ${activeCategory !== 'Todos' ? `na categoria ${activeCategory}` : ''}.`} />
+        )}
       </div>
       
       <BottomNavBar />

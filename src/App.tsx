@@ -17,6 +17,7 @@ import ExerciseLibraryPage from "./pages/ExerciseLibraryPage";
 import AuthPage from "./pages/AuthPage";
 import EditProfilePage from "./pages/EditProfilePage";
 import CreateRoutinePage from "./pages/CreateRoutinePage";
+import AdminPage from "./pages/AdminPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -71,6 +72,11 @@ const App = () => (
             <Route path="/criar-rotina" element={
               <AuthRequiredRoute>
                 <CreateRoutinePage />
+              </AuthRequiredRoute>
+            } />
+            <Route path="/admin" element={
+              <AuthRequiredRoute>
+                <AdminPage />
               </AuthRequiredRoute>
             } />
             

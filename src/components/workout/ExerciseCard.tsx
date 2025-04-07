@@ -10,6 +10,8 @@ interface ExerciseCardProps {
   level: 'Iniciante' | 'Intermediário' | 'Avançado';
   type: 'Composto' | 'Isolado';
   image: string;
+  description?: string;
+  equipment?: string;
   onClick?: () => void;
 }
 
@@ -19,6 +21,8 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
   level, 
   type, 
   image,
+  description,
+  equipment,
   onClick 
 }) => {
   const getLevelColor = () => {
@@ -44,6 +48,12 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
           <h3 className="font-bold text-lg mb-1">{name}</h3>
           <p className="text-gray-600 text-sm">{category}</p>
           
+          {equipment && (
+            <p className="text-gray-500 text-xs mt-1">
+              <span className="font-medium">Equipamento:</span> {equipment}
+            </p>
+          )}
+          
           <div className="flex mt-2 space-x-2">
             <span className={cn("text-xs px-2 py-1 rounded-full", getLevelColor())}>
               {level}
@@ -56,6 +66,12 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
         
         <ChevronRight className="text-gray-400" />
       </div>
+      
+      {description && (
+        <div className="px-3 pb-3 pt-0 text-sm text-gray-600 border-t border-gray-100 mt-1">
+          {description}
+        </div>
+      )}
     </div>
   );
 };

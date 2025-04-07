@@ -5,6 +5,8 @@ import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ExerciseCard from './ExerciseCard';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import EmptyState from '@/components/ui/EmptyState';
 
 export interface Exercise {
   id: string;
@@ -13,6 +15,8 @@ export interface Exercise {
   level: string;
   type: string;
   image_url?: string;
+  description?: string;
+  equipment?: string;
 }
 
 interface ExerciseSearchProps {
@@ -80,10 +84,7 @@ const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
       </div>
 
       {isLoading ? (
-        <div className="text-center py-4">
-          <div className="animate-spin w-6 h-6 border-3 border-fitblue border-t-transparent rounded-full mx-auto"></div>
-          <p className="mt-2 text-gray-500">Buscando exercícios...</p>
-        </div>
+        <LoadingSpinner message="Buscando exercícios..." />
       ) : (
         <div>
           {availableExercises.length > 0 ? (
@@ -99,18 +100,16 @@ const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
                   level={exercise.level as any}
                   type={exercise.type as any}
                   image={exercise.image_url || '/placeholder.svg'}
+                  description={exercise.description}
+                  equipment={exercise.equipment}
                 />
               </div>
             ))
           ) : (
             searchQuery ? (
-              <p className="text-center py-4 text-gray-500">
-                Nenhum exercício encontrado. Tente outra busca.
-              </p>
+              <EmptyState message="Nenhum exercício encontrado. Tente outra busca." />
             ) : (
-              <p className="text-center py-4 text-gray-500">
-                Digite um nome de exercício para buscar.
-              </p>
+              <EmptyState message="Digite um nome de exercício para buscar." />
             )
           )}
         </div>
