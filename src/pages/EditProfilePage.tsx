@@ -44,7 +44,8 @@ const EditProfilePage = () => {
         updated_at: new Date().toISOString(),
       };
       
-      const { error } = await supabase
+      // Using a type assertion to work around the TypeScript limitation
+      const { error } = await (supabase as any)
         .from('profiles')
         .upsert(updates);
         
