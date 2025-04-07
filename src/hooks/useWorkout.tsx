@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -8,7 +7,7 @@ import { useWorkoutTimer } from './useWorkoutTimer';
 import { useWorkoutSets } from './useWorkoutSets';
 import { useWorkoutCompletion } from './useWorkoutCompletion';
 
-export { WorkoutExercise } from '@/types/workout';
+export type { WorkoutExercise } from '@/types/workout';
 
 export const useWorkout = (routineId: string) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -26,7 +25,6 @@ export const useWorkout = (routineId: string) => {
       try {
         setIsLoading(true);
         
-        // 1. Fetch routine exercises
         const { data: routineExercises, error: routineError } = await supabase
           .from('routine_exercises')
           .select(`
@@ -56,7 +54,6 @@ export const useWorkout = (routineId: string) => {
           return;
         }
         
-        // 2. Create a new workout
         const { data: newWorkout, error: workoutError } = await supabase
           .from('workouts')
           .insert({
@@ -76,15 +73,12 @@ export const useWorkout = (routineId: string) => {
         
         setWorkoutId(newWorkout.id);
         
-        // 3. Format exercises data
         const workoutExercises: WorkoutExercise[] = routineExercises.map(routineExercise => {
           const exercise = routineExercise.exercises;
           const targetSets = routineExercise.target_sets || 3;
           const targetReps = routineExercise.target_reps?.split(',') || ['12'];
           
-          // Create sets for this exercise
           const sets = Array.from({ length: targetSets }).map((_, index) => {
-            // Use the corresponding rep target if available, otherwise use the last one
             const repTarget = index < targetReps.length ? targetReps[index] : targetReps[targetReps.length - 1];
             
             return {
@@ -108,12 +102,11 @@ export const useWorkout = (routineId: string) => {
         
         setExercises(workoutExercises);
         
-        // 4. Create workout_sets entries for each set
         const workoutSetsToInsert = workoutExercises.flatMap((exercise, exerciseIndex) => 
           exercise.sets.map((set, setIndex) => ({
             workout_id: newWorkout.id,
             exercise_id: exercise.id,
-            set_order: exerciseIndex * 100 + setIndex, // This gives room for ordering
+            set_order: exerciseIndex * 100 + setIndex,
             reps: parseInt(set.reps),
             weight: parseFloat(set.weight) || 0,
             completed: false
