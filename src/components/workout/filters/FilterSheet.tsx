@@ -22,6 +22,12 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
   label, 
   onOptionSelect 
 }) => {
+  // Add "Não especificado" option if it doesn't exist
+  const allOptions = [...options];
+  if (!allOptions.includes('Não especificado')) {
+    allOptions.push('Não especificado');
+  }
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -38,7 +44,7 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
           <SheetTitle>{title}</SheetTitle>
         </SheetHeader>
         <div className="grid grid-cols-2 gap-2 mt-4">
-          {options.map(option => (
+          {allOptions.map(option => (
             <SheetClose key={option} asChild>
               <Button 
                 variant={selectedOption === option ? "default" : "outline"}

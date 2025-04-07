@@ -11,7 +11,8 @@ export const EQUIPMENT_TYPES = [
   'TRX', // Suspension Band
   'Cabo', // Cable
   'Banco', // Bench
-  'Outro' // Other
+  'Outro', // Other
+  'Não especificado'
 ];
 
 export const MUSCLE_GROUPS = [
@@ -36,5 +37,6 @@ export const MUSCLE_GROUPS = [
   'Pescoço', // Neck
   'Quadríceps', // Quadriceps
   'Trapézio', // Traps
-  'Tríceps' // Triceps
+  'Tríceps', // Triceps
+  'Não especificado'
 ];

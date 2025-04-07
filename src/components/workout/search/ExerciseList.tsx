@@ -49,10 +49,10 @@ const ExerciseList: React.FC<ExerciseListProps> = ({
             category={exercise.category}
             level={exercise.level as any}
             image={exercise.image_url || '/placeholder.svg'}
-            description={exercise.description}
-            equipment={exercise.equipment}
-            muscleGroup={exercise.muscle_group}
-            equipmentType={exercise.equipment_type}
+            description={exercise.description || ''}
+            equipment={exercise.equipment || ''}
+            muscleGroup={exercise.muscle_group || 'Não especificado'}
+            equipmentType={exercise.equipment_type || 'Não especificado'}
           />
         </div>
       ))}

@@ -42,12 +42,18 @@ export const useExerciseSearch = ({ selectedExercises }: UseExerciseSearchProps)
       const exercises = data?.filter(ex => !selectedIds.includes(ex.id)) || [];
       
       console.log('Fetched exercises:', exercises.length);
-      console.log('Sample exercise data:', exercises.length > 0 ? exercises[0] : 'No exercises');
       
-      setAvailableExercises(exercises as Exercise[]);
-      setFilteredExercises(exercises as Exercise[]);
+      // Add default values for missing fields
+      const processedExercises = exercises.map(ex => ({
+        ...ex,
+        muscle_group: ex.muscle_group || 'Não especificado',
+        equipment_type: ex.equipment_type || 'Não especificado'
+      }));
       
-      setRecentExercises(exercises.slice(0, 5) as Exercise[]);
+      setAvailableExercises(processedExercises as Exercise[]);
+      setFilteredExercises(processedExercises as Exercise[]);
+      
+      setRecentExercises(processedExercises.slice(0, 5) as Exercise[]);
     } catch (error) {
       console.error('Error fetching exercises:', error);
       toast({
@@ -71,23 +77,24 @@ export const useExerciseSearch = ({ selectedExercises }: UseExerciseSearchProps)
     
     if (equipmentFilter !== 'Todos') {
       console.log('Filtering by equipment:', equipmentFilter);
-      console.log('Available equipment_types:', [...new Set(availableExercises.map(ex => ex.equipment_type))]);
       filtered = filtered.filter(ex => 
-        ex.equipment_type === equipmentFilter
+        (ex.equipment_type === equipmentFilter) || 
+        (equipmentFilter === 'Nenhum' && (!ex.equipment_type || ex.equipment_type === 'Nenhum'))
       );
     }
     
     if (muscleFilter !== 'Todos') {
       console.log('Filtering by muscle:', muscleFilter);
-      console.log('Available muscle_groups:', [...new Set(availableExercises.map(ex => ex.muscle_group))]);
       console.log('Filtered before muscle filter:', filtered.length);
       
       filtered = filtered.filter(ex => {
-        const result = ex.muscle_group === muscleFilter;
-        if (!result) {
-          console.log(`Exercise ${ex.name} has muscle_group ${ex.muscle_group}, doesn't match ${muscleFilter}`);
+        // If the filter is for unspecified and the exercise has no muscle group
+        if (muscleFilter === 'Não especificado' && (!ex.muscle_group || ex.muscle_group === 'Não especificado')) {
+          return true;
         }
-        return result;
+        
+        // Regular matching
+        return ex.muscle_group === muscleFilter;
       });
       
       console.log('Filtered after muscle filter:', filtered.length);
