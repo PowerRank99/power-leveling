@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import PageHeader from '@/components/ui/PageHeader';
 import ActiveWorkout from '@/components/workout/ActiveWorkout';
+import WorkoutSkeleton from '@/components/workout/WorkoutSkeleton';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Menu, CheckCircle, AlertCircle } from 'lucide-react';
 import { EditIcon } from '@/components/icons/NavIcons';
 import { useWorkout } from '@/hooks/useWorkout';
@@ -85,12 +87,25 @@ const ActiveWorkoutPage = () => {
   
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-4 border-fitblue border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p>Carregando treino...</p>
-          <p className="text-gray-500 text-sm mt-2">Preparando seus exercícios</p>
+      <div className="min-h-screen bg-gray-50">
+        <PageHeader title="Treino Atual" />
+        
+        <div className="bg-white p-2">
+          <div className="flex justify-between items-center px-2">
+            <div className="text-sm text-gray-500">
+              Carregando exercícios...
+            </div>
+          </div>
         </div>
+        
+        <div className="flex items-center justify-center p-8">
+          <LoadingSpinner 
+            message="Carregando treino..." 
+            subMessage="Preparando seus exercícios" 
+          />
+        </div>
+        
+        <WorkoutSkeleton />
       </div>
     );
   }
