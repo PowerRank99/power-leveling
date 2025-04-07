@@ -1,33 +1,25 @@
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Database } from '@/integrations/supabase/types';
+import { WorkoutExercise } from '@/types/workout';
+import { useWorkoutTimer } from './useWorkoutTimer';
+import { useWorkoutSets } from './useWorkoutSets';
+import { useWorkoutCompletion } from './useWorkoutCompletion';
 
-export type WorkoutExercise = {
-  id: string;
-  name: string;
-  sets: Array<{
-    id: string;
-    weight: string;
-    reps: string;
-    completed: boolean;
-    previous?: {
-      weight: string;
-      reps: string;
-    }
-  }>;
-}
+export { WorkoutExercise } from '@/types/workout';
 
 export const useWorkout = (routineId: string) => {
   const [isLoading, setIsLoading] = useState(true);
   const [exercises, setExercises] = useState<WorkoutExercise[]>([]);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [workoutId, setWorkoutId] = useState<string | null>(null);
-  const [startTime, setStartTime] = useState<Date>(new Date());
-  const [elapsedTime, setElapsedTime] = useState(0);
   const { toast } = useToast();
+  
+  const { elapsedTime, formatTime } = useWorkoutTimer();
+  const { updateSet: updateSetAction, addSet: addSetAction } = useWorkoutSets(workoutId, exercises, currentExerciseIndex);
+  const { finishWorkout: finishWorkoutAction } = useWorkoutCompletion(workoutId);
 
   useEffect(() => {
     const fetchRoutineAndCreateWorkout = async () => {
@@ -151,14 +143,7 @@ export const useWorkout = (routineId: string) => {
     };
     
     fetchRoutineAndCreateWorkout();
-    
-    // Start the timer
-    const interval = setInterval(() => {
-      setElapsedTime(Math.floor((new Date().getTime() - startTime.getTime()) / 1000));
-    }, 1000);
-    
-    return () => clearInterval(interval);
-  }, [routineId, toast, startTime]);
+  }, [routineId, toast]);
   
   const currentExercise = exercises[currentExerciseIndex];
   const nextExercise = currentExerciseIndex < exercises.length - 1 
@@ -166,91 +151,16 @@ export const useWorkout = (routineId: string) => {
     : null;
   
   const updateSet = async (setIndex: number, data: { weight?: string; reps?: string; completed?: boolean }) => {
-    if (!workoutId || !currentExercise) return;
-    
-    try {
-      // Update local state
-      const updatedExercises = [...exercises];
-      const updatedSets = [...updatedExercises[currentExerciseIndex].sets];
-      
-      updatedSets[setIndex] = {
-        ...updatedSets[setIndex],
-        ...data
-      };
-      
-      updatedExercises[currentExerciseIndex].sets = updatedSets;
+    const updatedExercises = await updateSetAction(setIndex, data);
+    if (updatedExercises) {
       setExercises(updatedExercises);
-      
-      // Update in database
-      const setData: Record<string, any> = {};
-      if (data.weight !== undefined) setData.weight = parseFloat(data.weight) || 0;
-      if (data.reps !== undefined) setData.reps = parseInt(data.reps) || 0;
-      if (data.completed !== undefined) {
-        setData.completed = data.completed;
-        if (data.completed) {
-          setData.completed_at = new Date().toISOString();
-        } else {
-          setData.completed_at = null;
-        }
-      }
-      
-      const { error } = await supabase
-        .from('workout_sets')
-        .update(setData)
-        .eq('workout_id', workoutId)
-        .eq('exercise_id', currentExercise.id)
-        .eq('set_order', currentExerciseIndex * 100 + setIndex);
-        
-      if (error) {
-        console.error("Error updating set:", error);
-      }
-      
-    } catch (error) {
-      console.error("Error updating set:", error);
     }
   };
   
   const addSet = async () => {
-    if (!workoutId || !currentExercise) return;
-    
-    try {
-      // Add to local state first
-      const updatedExercises = [...exercises];
-      const lastSet = updatedExercises[currentExerciseIndex].sets[
-        updatedExercises[currentExerciseIndex].sets.length - 1
-      ];
-      
-      const newSet = {
-        id: `${updatedExercises[currentExerciseIndex].sets.length}`,
-        weight: lastSet.weight,
-        reps: lastSet.reps,
-        completed: false,
-        previous: lastSet.previous
-      };
-      
-      updatedExercises[currentExerciseIndex].sets.push(newSet);
+    const updatedExercises = await addSetAction();
+    if (updatedExercises) {
       setExercises(updatedExercises);
-      
-      // Add to database
-      const newSetOrder = currentExerciseIndex * 100 + updatedExercises[currentExerciseIndex].sets.length - 1;
-      
-      const { error } = await supabase
-        .from('workout_sets')
-        .insert({
-          workout_id: workoutId,
-          exercise_id: currentExercise.id,
-          set_order: newSetOrder,
-          weight: parseFloat(newSet.weight) || 0,
-          reps: parseInt(newSet.reps) || 0,
-          completed: false
-        });
-        
-      if (error) {
-        console.error("Error adding new set:", error);
-      }
-      
-    } catch (error) {
-      console.error("Error adding set:", error);
     }
   };
   
@@ -261,33 +171,7 @@ export const useWorkout = (routineId: string) => {
   };
   
   const finishWorkout = async () => {
-    if (!workoutId) return false;
-    
-    try {
-      const { error } = await supabase
-        .from('workouts')
-        .update({
-          completed_at: new Date().toISOString(),
-          duration_seconds: elapsedTime
-        })
-        .eq('id', workoutId);
-        
-      if (error) {
-        console.error("Error finishing workout:", error);
-        return false;
-      }
-      
-      return true;
-    } catch (error) {
-      console.error("Error finishing workout:", error);
-      return false;
-    }
-  };
-  
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return finishWorkoutAction(elapsedTime);
   };
   
   return {
