@@ -1,17 +1,18 @@
 
 import React from 'react';
-import { ChevronRight, Edit2 } from 'lucide-react';
-import { EditIcon } from '../icons/NavIcons';
+import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ExerciseCardProps {
   name: string;
   category: string;
   level: 'Iniciante' | 'Intermediário' | 'Avançado';
-  type?: 'Composto' | 'Isolado'; // Made optional since we won't display it
+  type?: 'Composto' | 'Isolado'; // Kept for backward compatibility but not displayed
   image: string;
   description?: string;
   equipment?: string;
+  muscleGroup?: string;
+  equipmentType?: string;
   onClick?: () => void;
 }
 
@@ -19,10 +20,12 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
   name, 
   category, 
   level, 
-  type, // Keep in props but don't use it
+  type, // Kept for backward compatibility
   image,
   description,
   equipment,
+  muscleGroup,
+  equipmentType,
   onClick 
 }) => {
   const getLevelColor = () => {
@@ -46,11 +49,11 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
         
         <div className="flex-grow">
           <h3 className="font-bold text-lg mb-1">{name}</h3>
-          <p className="text-gray-600 text-sm">{category}</p>
+          <p className="text-gray-600 text-sm">{muscleGroup || category}</p>
           
-          {equipment && (
+          {(equipment || equipmentType) && (
             <p className="text-gray-500 text-xs mt-1">
-              <span className="font-medium">Equipamento:</span> {equipment}
+              <span className="font-medium">Equipamento:</span> {equipmentType || equipment}
             </p>
           )}
           
@@ -58,7 +61,6 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
             <span className={cn("text-xs px-2 py-1 rounded-full", getLevelColor())}>
               {level}
             </span>
-            {/* Removed the exercise type badge */}
           </div>
         </div>
         

@@ -15,9 +15,11 @@ export type Database = {
           created_at: string
           description: string | null
           equipment: string | null
+          equipment_type: string | null
           id: string
           image_url: string | null
           level: string
+          muscle_group: string | null
           name: string
           type: string
         }
@@ -26,9 +28,11 @@ export type Database = {
           created_at?: string
           description?: string | null
           equipment?: string | null
+          equipment_type?: string | null
           id?: string
           image_url?: string | null
           level: string
+          muscle_group?: string | null
           name: string
           type: string
         }
@@ -37,9 +41,11 @@ export type Database = {
           created_at?: string
           description?: string | null
           equipment?: string | null
+          equipment_type?: string | null
           id?: string
           image_url?: string | null
           level?: string
+          muscle_group?: string | null
           name?: string
           type?: string
         }

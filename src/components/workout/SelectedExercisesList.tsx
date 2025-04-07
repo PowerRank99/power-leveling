@@ -28,13 +28,14 @@ const SelectedExercisesList: React.FC<SelectedExercisesListProps> = ({ exercises
               image={exercise.image_url || '/placeholder.svg'}
               description={exercise.description}
               equipment={exercise.equipment}
-              // Removed type prop
+              muscleGroup={exercise.muscle_group}
+              equipmentType={exercise.equipment_type}
             />
             <button 
               className="absolute top-3 right-3 bg-red-100 text-red-600 p-2 rounded-full"
               onClick={() => onRemoveExercise(index)}
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-4 w-4" />
             </button>
           </div>
         ))
