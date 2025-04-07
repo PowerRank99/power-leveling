@@ -13,6 +13,8 @@ export type Database = {
         Row: {
           category: string
           created_at: string
+          description: string | null
+          equipment: string | null
           id: string
           image_url: string | null
           level: string
@@ -22,6 +24,8 @@ export type Database = {
         Insert: {
           category: string
           created_at?: string
+          description?: string | null
+          equipment?: string | null
           id?: string
           image_url?: string | null
           level: string
@@ -31,6 +35,8 @@ export type Database = {
         Update: {
           category?: string
           created_at?: string
+          description?: string | null
+          equipment?: string | null
           id?: string
           image_url?: string | null
           level?: string
