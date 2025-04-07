@@ -6,6 +6,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import Achievement from '@/components/profile/Achievement';
 import ProgressBar from '@/components/profile/ProgressBar';
 import BottomNavBar from '@/components/navigation/BottomNavBar';
+import Trophy from '@/components/icons/Trophy';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
