@@ -2,56 +2,54 @@
 import React, { useState } from 'react';
 import { Clock, Plus, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import type { WorkoutExercise } from '@/hooks/useWorkout';
+import RestTimer from '@/components/workout/RestTimer';
 
 interface ActiveWorkoutProps {
   exerciseName: string;
-  onAddSet: () => void;
-  onCompleteSet: (index: number) => void;
-}
-
-interface Set {
-  weight: string;
-  reps: string;
-  completed: boolean;
-  previous?: {
+  sets: Array<{
+    id: string;
     weight: string;
     reps: string;
-  };
+    completed: boolean;
+    previous?: {
+      weight: string;
+      reps: string;
+    };
+  }>;
+  onAddSet: () => void;
+  onCompleteSet: (index: number) => void;
+  onUpdateSet: (index: number, data: { weight?: string; reps?: string }) => void;
+  elapsedTime: string;
 }
 
 const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({ 
   exerciseName,
+  sets,
   onAddSet,
-  onCompleteSet
+  onCompleteSet,
+  onUpdateSet,
+  elapsedTime
 }) => {
-  const [sets, setSets] = useState<Set[]>([
-    { weight: '60', reps: '12', completed: false, previous: { weight: '60', reps: '12' } },
-    { weight: '60', reps: '12', completed: false, previous: { weight: '60', reps: '12' } },
-    { weight: '60', reps: '12', completed: false, previous: { weight: '60', reps: '12' } },
-  ]);
+  const [showRestTimer, setShowRestTimer] = useState(false);
   
-  const [notes, setNotes] = useState("");
-  const [timer, setTimer] = useState("32:15");
-
   const handleWeightChange = (index: number, value: string) => {
-    const newSets = [...sets];
-    newSets[index].weight = value;
-    setSets(newSets);
+    onUpdateSet(index, { weight: value });
   };
 
   const handleRepsChange = (index: number, value: string) => {
-    const newSets = [...sets];
-    newSets[index].reps = value;
-    setSets(newSets);
+    onUpdateSet(index, { reps: value });
   };
 
   const toggleSetCompletion = (index: number) => {
-    const newSets = [...sets];
-    newSets[index].completed = !newSets[index].completed;
-    setSets(newSets);
-    if (newSets[index].completed) {
-      onCompleteSet(index);
-    }
+    onCompleteSet(index);
+    // Show rest timer when completing a set
+    setShowRestTimer(true);
+  };
+
+  const handleRestComplete = () => {
+    // Hide timer when rest is complete
+    setShowRestTimer(false);
   };
 
   return (
@@ -59,12 +57,23 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
       <div className="flex justify-between items-center border-b pb-4 mb-4">
         <div>
           <p className="text-gray-500">Tempo de Treino</p>
-          <p className="text-2xl font-bold">{timer}</p>
+          <p className="text-2xl font-bold">{elapsedTime}</p>
         </div>
-        <div className="bg-fitblue-100 rounded-lg p-3 flex items-center">
-          <Clock className="text-fitblue mr-2" />
-          <span className="text-fitblue font-medium">01:30</span>
-        </div>
+        
+        {showRestTimer ? (
+          <div className="flex-1 ml-4">
+            <RestTimer onComplete={handleRestComplete} />
+          </div>
+        ) : (
+          <Button
+            variant="outline"
+            className="bg-fitblue-100 text-fitblue border-none hover:bg-fitblue-200"
+            onClick={() => setShowRestTimer(true)}
+          >
+            <Clock className="text-fitblue mr-2 h-4 w-4" />
+            Iniciar Descanso
+          </Button>
+        )}
       </div>
 
       <div className="mb-6">
@@ -79,7 +88,7 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
         </div>
 
         {sets.map((set, index) => (
-          <div key={index} className="grid grid-cols-12 gap-2 mb-4 items-center">
+          <div key={set.id} className="grid grid-cols-12 gap-2 mb-4 items-center">
             <div className="col-span-1 font-medium">{index + 1}</div>
             <div className="col-span-3 text-gray-500 text-sm">
               {set.previous ? `${set.previous.weight}kg x ${set.previous.reps}` : '-'}
@@ -122,16 +131,6 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
           <Plus className="w-4 h-4 mr-2" />
           Adicionar Set
         </button>
-      </div>
-
-      <div className="mb-6">
-        <h3 className="text-gray-500 mb-2">Anotações</h3>
-        <textarea 
-          className="w-full border border-gray-300 rounded-lg p-3 min-h-[100px]"
-          placeholder="Adicionar notas sobre o exercício..."
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-        />
       </div>
     </div>
   );
