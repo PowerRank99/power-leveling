@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { Database } from '@/integrations/supabase/types';
 
 export type WorkoutExercise = {
   id: string;
@@ -75,6 +76,10 @@ export const useWorkout = (routineId: string) => {
           
         if (workoutError) {
           throw workoutError;
+        }
+        
+        if (!newWorkout) {
+          throw new Error("Failed to create workout");
         }
         
         setWorkoutId(newWorkout.id);
@@ -177,7 +182,7 @@ export const useWorkout = (routineId: string) => {
       setExercises(updatedExercises);
       
       // Update in database
-      const setData: any = {};
+      const setData: Record<string, any> = {};
       if (data.weight !== undefined) setData.weight = parseFloat(data.weight) || 0;
       if (data.reps !== undefined) setData.reps = parseInt(data.reps) || 0;
       if (data.completed !== undefined) {
@@ -256,7 +261,7 @@ export const useWorkout = (routineId: string) => {
   };
   
   const finishWorkout = async () => {
-    if (!workoutId) return;
+    if (!workoutId) return false;
     
     try {
       const { error } = await supabase
