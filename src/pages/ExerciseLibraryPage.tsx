@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { SearchIcon, FilterIcon } from '@/components/icons/NavIcons';
 import PageHeader from '@/components/ui/PageHeader';
@@ -8,6 +9,7 @@ import { useToast } from '@/components/ui/use-toast';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
 import { Exercise } from '@/components/workout/types/Exercise';
+import { MUSCLE_GROUP_ALIASES } from '@/components/workout/constants/exerciseFilters';
 
 const ExerciseLibraryPage = () => {
   const [activeCategory, setActiveCategory] = useState<string>('Todos');
@@ -19,21 +21,69 @@ const ExerciseLibraryPage = () => {
     'Todos', 'Peito', 'Costas', 'Pernas', 'Ombros', 'Braços', 'Abdômen'
   ];
   
+  // Normalize text for comparison by removing accents and converting to lowercase
+  const normalizeText = (text: string | null | undefined): string => {
+    if (!text) return '';
+    return text.toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  };
+  
+  // Check if an exercise belongs to a category
+  const exerciseMatchesCategory = (exercise: Exercise, category: string): boolean => {
+    if (category === 'Todos') return true;
+    
+    const muscleGroup = exercise.muscle_group || exercise.category || '';
+    const normalizedMuscleGroup = normalizeText(muscleGroup);
+    const normalizedCategory = normalizeText(category);
+    
+    // Direct match
+    if (normalizedMuscleGroup === normalizedCategory) {
+      return true;
+    }
+    
+    // Check category match
+    if (normalizeText(exercise.category) === normalizedCategory) {
+      return true;
+    }
+    
+    // Check aliases
+    const matchingAliasKey = Object.keys(MUSCLE_GROUP_ALIASES).find(key => 
+      normalizedMuscleGroup.includes(key) && 
+      normalizeText(MUSCLE_GROUP_ALIASES[key as keyof typeof MUSCLE_GROUP_ALIASES]) === normalizedCategory
+    );
+    
+    return !!matchingAliasKey;
+  };
+  
   useEffect(() => {
     const fetchExercises = async () => {
       setIsLoading(true);
       try {
-        let query = supabase.from('exercises').select('*').order('name');
-        
-        if (activeCategory !== 'Todos') {
-          query = query.eq('category', activeCategory);
-        }
-        
-        const { data, error } = await query;
+        const { data, error } = await supabase
+          .from('exercises')
+          .select('*')
+          .order('name');
         
         if (error) throw error;
         
-        setExercises(data as Exercise[]);
+        let filteredData = data as Exercise[];
+        
+        // Process the data to ensure muscle_group is set
+        filteredData = filteredData.map(ex => ({
+          ...ex,
+          muscle_group: ex.muscle_group || ex.category || 'Não especificado'
+        }));
+        
+        // Apply category filter if not 'Todos'
+        if (activeCategory !== 'Todos') {
+          filteredData = filteredData.filter(ex => exerciseMatchesCategory(ex, activeCategory));
+        }
+        
+        setExercises(filteredData);
+        
+        // Log info for debugging
+        console.log(`Fetched ${filteredData.length} exercises for category ${activeCategory}`);
       } catch (error) {
         console.error('Error fetching exercises:', error);
         toast({
@@ -88,8 +138,10 @@ const ExerciseLibraryPage = () => {
               level={exercise.level as any}
               type={exercise.type as any}
               image={exercise.image_url || '/placeholder.svg'}
-              description={exercise.description}
-              equipment={exercise.equipment}
+              description={exercise.description || ''}
+              equipment={exercise.equipment || ''}
+              muscleGroup={exercise.muscle_group || exercise.category || 'Não especificado'}
+              equipmentType={exercise.equipment_type || 'Não especificado'}
             />
           ))
         ) : (

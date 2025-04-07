@@ -22,7 +22,7 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
   label, 
   onOptionSelect 
 }) => {
-  // Add "Não especificado" option if it doesn't exist
+  // Always ensure we have the "Todos" option
   const allOptions = options.includes('Todos') ? [...options] : ['Todos', ...options];
   
   // Debug information

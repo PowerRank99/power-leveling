@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Exercise } from '../types/Exercise';
+import { MUSCLE_GROUP_ALIASES, EQUIPMENT_TYPE_ALIASES } from '../constants/exerciseFilters';
 
 interface UseExerciseSearchProps {
   selectedExercises: Exercise[];
@@ -36,6 +37,76 @@ export const useExerciseSearch = ({ selectedExercises }: UseExerciseSearchProps)
     }
   }, [equipmentFilter, muscleFilter, availableExercises, searchQuery]);
 
+  // Normalize text for comparison by removing accents and converting to lowercase
+  const normalizeText = (text: string | null | undefined): string => {
+    if (!text) return '';
+    return text.toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  };
+
+  // Check if an exercise matches the given filter and value
+  const matchesFilter = (exercise: Exercise, filterType: 'muscle_group' | 'equipment_type', filterValue: string): boolean => {
+    if (filterValue === 'Todos') return true;
+    
+    const exerciseValue = filterType === 'muscle_group' 
+      ? (exercise.muscle_group || exercise.category || '')
+      : (exercise.equipment_type || exercise.equipment || '');
+    
+    const normalizedExerciseValue = normalizeText(exerciseValue);
+    const normalizedFilterValue = normalizeText(filterValue);
+    
+    // Direct match
+    if (normalizedExerciseValue === normalizedFilterValue) {
+      return true;
+    }
+    
+    // Check aliases for muscle groups
+    if (filterType === 'muscle_group') {
+      // Check if exercise value matches any key in the aliases map that maps to our filter value
+      const matchingAliasKey = Object.keys(MUSCLE_GROUP_ALIASES).find(key => 
+        normalizedExerciseValue.includes(key) && 
+        normalizeText(MUSCLE_GROUP_ALIASES[key as keyof typeof MUSCLE_GROUP_ALIASES]) === normalizedFilterValue
+      );
+      
+      if (matchingAliasKey) return true;
+      
+      // Special case for 'Não especificado'
+      if (filterValue === 'Não especificado' && (!exercise.muscle_group || exercise.muscle_group.trim() === '')) {
+        return true;
+      }
+
+      // Check if category matches (for backward compatibility)
+      if (normalizeText(exercise.category) === normalizedFilterValue) {
+        return true;
+      }
+    }
+    
+    // Check aliases for equipment types
+    if (filterType === 'equipment_type') {
+      // Check if exercise value matches any key in the aliases map that maps to our filter value
+      const matchingAliasKey = Object.keys(EQUIPMENT_TYPE_ALIASES).find(key => 
+        normalizedExerciseValue.includes(key) && 
+        normalizeText(EQUIPMENT_TYPE_ALIASES[key as keyof typeof EQUIPMENT_TYPE_ALIASES]) === normalizedFilterValue
+      );
+      
+      if (matchingAliasKey) return true;
+      
+      // Special case for 'Nenhum' (bodyweight exercises)
+      if (filterValue === 'Nenhum' && (!exercise.equipment_type || exercise.equipment_type.trim() === '' || 
+          !exercise.equipment || exercise.equipment.trim() === '')) {
+        return true;
+      }
+      
+      // Special case for 'Não especificado'
+      if (filterValue === 'Não especificado' && (!exercise.equipment_type || exercise.equipment_type.trim() === '')) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
+
   const fetchExercises = async () => {
     setIsLoading(true);
     try {
@@ -51,7 +122,7 @@ export const useExerciseSearch = ({ selectedExercises }: UseExerciseSearchProps)
       
       console.log('Fetched exercises:', exercises.length);
       
-      // Log the actual muscle_group and equipment_type values from the database
+      // Log the actual muscle_group and equipment_type values from the database for debugging
       const uniqueMuscleGroups = [...new Set(exercises.map(ex => ex.muscle_group))].filter(Boolean);
       const uniqueEquipmentTypes = [...new Set(exercises.map(ex => ex.equipment_type))].filter(Boolean);
       
@@ -61,7 +132,7 @@ export const useExerciseSearch = ({ selectedExercises }: UseExerciseSearchProps)
       // Process exercises to normalize values for comparison
       const processedExercises = exercises.map(ex => ({
         ...ex,
-        muscle_group: ex.muscle_group || 'Não especificado',
+        muscle_group: ex.muscle_group || ex.category || 'Não especificado',
         equipment_type: ex.equipment_type || 'Não especificado'
       }));
       
@@ -88,7 +159,7 @@ export const useExerciseSearch = ({ selectedExercises }: UseExerciseSearchProps)
     
     if (searchQuery.trim()) {
       filtered = filtered.filter(ex => 
-        ex.name.toLowerCase().includes(searchQuery.toLowerCase())
+        normalizeText(ex.name).includes(normalizeText(searchQuery))
       );
       console.log('After search filter:', filtered.length, 'exercises');
     }
@@ -96,26 +167,7 @@ export const useExerciseSearch = ({ selectedExercises }: UseExerciseSearchProps)
     if (equipmentFilter !== 'Todos') {
       console.log('Filtering by equipment:', equipmentFilter);
       
-      filtered = filtered.filter(ex => {
-        // Normalize both for comparison - ensure lowercase and trim
-        const exEquipment = (ex.equipment_type || '').toLowerCase().trim();
-        const filterEquipment = equipmentFilter.toLowerCase().trim();
-        
-        console.log(`Comparing exercise ${ex.name} equipment "${exEquipment}" with filter "${filterEquipment}"`);
-        
-        // For "Nenhum" filter
-        if (filterEquipment === 'nenhum') {
-          return exEquipment === 'nenhum' || exEquipment === '' || !ex.equipment_type;
-        }
-        
-        // For "Não especificado" filter
-        if (filterEquipment === 'não especificado') {
-          return exEquipment === 'não especificado' || exEquipment === '' || !ex.equipment_type;
-        }
-        
-        // Direct comparison (case-insensitive)
-        return exEquipment === filterEquipment;
-      });
+      filtered = filtered.filter(ex => matchesFilter(ex, 'equipment_type', equipmentFilter));
       
       console.log('After equipment filter:', filtered.length, 'exercises remaining');
       setDebugInfo(prev => ({ ...prev, afterEquipmentFilter: filtered.length }));
@@ -124,21 +176,7 @@ export const useExerciseSearch = ({ selectedExercises }: UseExerciseSearchProps)
     if (muscleFilter !== 'Todos') {
       console.log('Filtering by muscle:', muscleFilter);
       
-      filtered = filtered.filter(ex => {
-        // Normalize both for comparison - ensure lowercase and trim
-        const exMuscle = (ex.muscle_group || '').toLowerCase().trim();
-        const filterMuscle = muscleFilter.toLowerCase().trim();
-        
-        console.log(`Comparing exercise ${ex.name} muscle "${exMuscle}" with filter "${filterMuscle}"`);
-        
-        // For "Não especificado" filter
-        if (filterMuscle === 'não especificado') {
-          return exMuscle === 'não especificado' || exMuscle === '' || !ex.muscle_group;
-        }
-        
-        // Direct comparison (case-insensitive)
-        return exMuscle === filterMuscle;
-      });
+      filtered = filtered.filter(ex => matchesFilter(ex, 'muscle_group', muscleFilter));
       
       console.log('After muscle filter:', filtered.length, 'exercises remaining');
       setDebugInfo(prev => ({ ...prev, afterMuscleFilter: filtered.length }));
