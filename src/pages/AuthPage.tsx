@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,7 +8,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/components/ui/use-toast';
-import { Google } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 const loginSchema = z.object({
@@ -111,7 +110,6 @@ const AuthPage = () => {
     try {
       setLoading(true);
       
-      // Sign up the user
       const { error: signUpError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -179,8 +177,27 @@ const AuthPage = () => {
             className="w-full mb-4 font-normal"
             disabled={googleLoading}
           >
-            <Google className="mr-2" />
-            {googleLoading ? "Conectando..." : "Entrar com Google"}
+            <div className="flex items-center justify-center">
+              <svg className="mr-2" width="20" height="20" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M21.8,12.1c0-0.7-0.1-1.3-0.2-2H12v3.8h5.5c-0.2,1.2-1,2.3-2.1,3v2.5h3.4C20.6,17.8,21.8,15.2,21.8,12.1z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12,22c2.8,0,5.2-0.9,7-2.5l-3.4-2.5c-0.9,0.6-2.1,1-3.5,1c-2.7,0-5-1.8-5.8-4.2H2.8v2.6C4.6,19.7,8.1,22,12,22z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M6.2,13.8c-0.2-0.6-0.3-1.2-0.3-1.8s0.1-1.2,0.3-1.8V7.5H2.8C2.3,8.9,2,10.4,2,12s0.3,3.1,0.8,4.5L6.2,13.8z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12,6.8c1.5,0,2.9,0.5,3.9,1.5l3-3c-1.8-1.7-4.1-2.7-6.9-2.7c-4,0-7.4,2.3-9.1,5.6l3.4,2.6C7,8.6,9.3,6.8,12,6.8z"
+                />
+              </svg>
+              {googleLoading ? "Conectando..." : "Entrar com Google"}
+            </div>
           </Button>
 
           <div className="flex items-center my-4">
