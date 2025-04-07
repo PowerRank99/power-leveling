@@ -2,7 +2,7 @@
 import React from 'react';
 import { Trash2 } from 'lucide-react';
 import ExerciseCard from './ExerciseCard';
-import { Exercise } from './ExerciseSearch';
+import { Exercise } from './types/Exercise';
 
 interface SelectedExercisesListProps {
   exercises: Exercise[];
