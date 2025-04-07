@@ -37,6 +37,10 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
     }
   };
   
+  // Use consistent display values
+  const displayMuscleGroup = muscleGroup || category || 'Não especificado';
+  const displayEquipment = equipmentType || equipment || 'Não especificado';
+  
   return (
     <div 
       className="border border-gray-200 rounded-lg overflow-hidden mb-3 bg-white shadow-sm card-hover"
@@ -49,13 +53,11 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
         
         <div className="flex-grow">
           <h3 className="font-bold text-lg mb-1">{name}</h3>
-          <p className="text-gray-600 text-sm">{muscleGroup || category}</p>
+          <p className="text-gray-600 text-sm">{displayMuscleGroup}</p>
           
-          {(equipment || equipmentType) && (
-            <p className="text-gray-500 text-xs mt-1">
-              <span className="font-medium">Equipamento:</span> {equipmentType || equipment}
-            </p>
-          )}
+          <p className="text-gray-500 text-xs mt-1">
+            <span className="font-medium">Equipamento:</span> {displayEquipment}
+          </p>
           
           <div className="flex mt-2 space-x-2">
             <span className={cn("text-xs px-2 py-1 rounded-full", getLevelColor())}>

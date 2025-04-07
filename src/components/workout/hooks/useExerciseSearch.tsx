@@ -43,7 +43,15 @@ export const useExerciseSearch = ({ selectedExercises }: UseExerciseSearchProps)
       
       console.log('Fetched exercises:', exercises.length);
       
-      // Add default values for missing fields
+      // Log the actual muscle_group and equipment_type values from the database
+      // to see what we're working with
+      const uniqueMuscleGroups = [...new Set(exercises.map(ex => ex.muscle_group))];
+      const uniqueEquipmentTypes = [...new Set(exercises.map(ex => ex.equipment_type))];
+      
+      console.log('Unique muscle groups in DB:', uniqueMuscleGroups);
+      console.log('Unique equipment types in DB:', uniqueEquipmentTypes);
+      
+      // Process exercises to handle null/undefined values
       const processedExercises = exercises.map(ex => ({
         ...ex,
         muscle_group: ex.muscle_group || 'Não especificado',
@@ -77,10 +85,27 @@ export const useExerciseSearch = ({ selectedExercises }: UseExerciseSearchProps)
     
     if (equipmentFilter !== 'Todos') {
       console.log('Filtering by equipment:', equipmentFilter);
-      filtered = filtered.filter(ex => 
-        (ex.equipment_type === equipmentFilter) || 
-        (equipmentFilter === 'Nenhum' && (!ex.equipment_type || ex.equipment_type === 'Nenhum'))
-      );
+      
+      filtered = filtered.filter(ex => {
+        // For "Nenhum" filter, match exercises with no equipment or "Nenhum"
+        if (equipmentFilter === 'Nenhum') {
+          return !ex.equipment_type || 
+                 ex.equipment_type === 'Nenhum' || 
+                 ex.equipment_type === '';
+        }
+        
+        // For "Não especificado", match exercises with null, undefined or "Não especificado"
+        if (equipmentFilter === 'Não especificado') {
+          return !ex.equipment_type || 
+                 ex.equipment_type === 'Não especificado' || 
+                 ex.equipment_type === '';
+        }
+        
+        // Regular matching (case-insensitive)
+        return ex.equipment_type?.toLowerCase() === equipmentFilter.toLowerCase();
+      });
+      
+      console.log(`After equipment filter: ${filtered.length} exercises`);
     }
     
     if (muscleFilter !== 'Todos') {
@@ -88,13 +113,15 @@ export const useExerciseSearch = ({ selectedExercises }: UseExerciseSearchProps)
       console.log('Filtered before muscle filter:', filtered.length);
       
       filtered = filtered.filter(ex => {
-        // If the filter is for unspecified and the exercise has no muscle group
-        if (muscleFilter === 'Não especificado' && (!ex.muscle_group || ex.muscle_group === 'Não especificado')) {
-          return true;
+        // For "Não especificado", match exercises with null, undefined or "Não especificado"
+        if (muscleFilter === 'Não especificado') {
+          return !ex.muscle_group || 
+                 ex.muscle_group === 'Não especificado' || 
+                 ex.muscle_group === '';
         }
         
-        // Regular matching
-        return ex.muscle_group === muscleFilter;
+        // Regular matching (case-insensitive)
+        return ex.muscle_group?.toLowerCase() === muscleFilter.toLowerCase();
       });
       
       console.log('Filtered after muscle filter:', filtered.length);
