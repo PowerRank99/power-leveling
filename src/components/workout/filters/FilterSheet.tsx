@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import FilterButton from './FilterButton';
 import { LucideIcon } from 'lucide-react';
@@ -22,13 +22,6 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
   label, 
   onOptionSelect 
 }) => {
-  const handleOptionSelect = (option: string) => {
-    onOptionSelect(option);
-    // Close the sheet after selection
-    const sheetCloseButton = document.querySelector('[data-radix-collection-item]') as HTMLElement;
-    if (sheetCloseButton) sheetCloseButton.click();
-  };
-
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -46,14 +39,18 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
         </SheetHeader>
         <div className="grid grid-cols-2 gap-2 mt-4">
           {options.map(option => (
-            <Button 
-              key={option} 
-              variant={selectedOption === option ? "default" : "outline"}
-              className="justify-start"
-              onClick={() => handleOptionSelect(option)}
-            >
-              {option}
-            </Button>
+            <SheetClose key={option} asChild>
+              <Button 
+                variant={selectedOption === option ? "default" : "outline"}
+                className="justify-start"
+                onClick={() => {
+                  console.log(`Selected option: ${option}`);
+                  onOptionSelect(option);
+                }}
+              >
+                {option}
+              </Button>
+            </SheetClose>
           ))}
         </div>
       </SheetContent>

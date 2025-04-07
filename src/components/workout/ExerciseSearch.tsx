@@ -63,7 +63,10 @@ const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
             selectedOption={equipmentFilter} 
             icon={Dumbbell} 
             label="Equipamento" 
-            onOptionSelect={setEquipmentFilter} 
+            onOptionSelect={(option) => {
+              console.log(`Setting equipment filter to: ${option}`);
+              setEquipmentFilter(option);
+            }} 
           />
 
           <FilterSheet 
@@ -72,7 +75,10 @@ const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
             selectedOption={muscleFilter} 
             icon={Filter} 
             label="Músculos" 
-            onOptionSelect={setMuscleFilter} 
+            onOptionSelect={(option) => {
+              console.log(`Setting muscle filter to: ${option}`);
+              setMuscleFilter(option);
+            }} 
           />
         </div>
       </div>

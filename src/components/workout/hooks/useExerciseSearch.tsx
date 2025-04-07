@@ -41,6 +41,9 @@ export const useExerciseSearch = ({ selectedExercises }: UseExerciseSearchProps)
       const selectedIds = selectedExercises.map(ex => ex.id);
       const exercises = data?.filter(ex => !selectedIds.includes(ex.id)) || [];
       
+      console.log('Fetched exercises:', exercises.length);
+      console.log('Sample exercise data:', exercises.length > 0 ? exercises[0] : 'No exercises');
+      
       setAvailableExercises(exercises as Exercise[]);
       setFilteredExercises(exercises as Exercise[]);
       
@@ -67,19 +70,31 @@ export const useExerciseSearch = ({ selectedExercises }: UseExerciseSearchProps)
     }
     
     if (equipmentFilter !== 'Todos') {
+      console.log('Filtering by equipment:', equipmentFilter);
+      console.log('Available equipment_types:', [...new Set(availableExercises.map(ex => ex.equipment_type))]);
       filtered = filtered.filter(ex => 
         ex.equipment_type === equipmentFilter
       );
     }
     
     if (muscleFilter !== 'Todos') {
-      filtered = filtered.filter(ex => 
-        ex.muscle_group === muscleFilter
-      );
+      console.log('Filtering by muscle:', muscleFilter);
+      console.log('Available muscle_groups:', [...new Set(availableExercises.map(ex => ex.muscle_group))]);
+      console.log('Filtered before muscle filter:', filtered.length);
+      
+      filtered = filtered.filter(ex => {
+        const result = ex.muscle_group === muscleFilter;
+        if (!result) {
+          console.log(`Exercise ${ex.name} has muscle_group ${ex.muscle_group}, doesn't match ${muscleFilter}`);
+        }
+        return result;
+      });
+      
+      console.log('Filtered after muscle filter:', filtered.length);
     }
     
     setFilteredExercises(filtered);
-    console.log('Filtered exercises:', filtered.length, 'Equipment filter:', equipmentFilter, 'Muscle filter:', muscleFilter);
+    console.log('Final filtered exercises:', filtered.length);
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
