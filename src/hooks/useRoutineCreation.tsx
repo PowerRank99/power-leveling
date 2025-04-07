@@ -1,10 +1,9 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
-import { Exercise } from '@/components/workout/ExerciseSearch';
+import { Exercise } from '@/components/workout/types/Exercise';
 
 export const useRoutineCreation = () => {
   const navigate = useNavigate();

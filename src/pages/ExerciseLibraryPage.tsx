@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { SearchIcon, FilterIcon } from '@/components/icons/NavIcons';
 import PageHeader from '@/components/ui/PageHeader';
@@ -8,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
-import { Exercise } from '@/components/workout/ExerciseSearch';
+import { Exercise } from '@/components/workout/types/Exercise';
 
 const ExerciseLibraryPage = () => {
   const [activeCategory, setActiveCategory] = useState<string>('Todos');
