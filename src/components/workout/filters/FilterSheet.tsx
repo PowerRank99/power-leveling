@@ -24,9 +24,10 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
 }) => {
   // Add "Não especificado" option if it doesn't exist
   const allOptions = options.includes('Todos') ? [...options] : ['Todos', ...options];
-  if (!allOptions.includes('Não especificado')) {
-    allOptions.push('Não especificado');
-  }
+  
+  // Debug information
+  console.log(`FilterSheet rendering with selectedOption: ${selectedOption}`);
+  console.log('Available options:', allOptions);
 
   const handleOptionSelect = (option: string) => {
     console.log(`Selected filter option: ${option}`);

@@ -39,7 +39,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
   
   // Format display values with proper capitalization for consistent UI
   const formatDisplayValue = (value: string | undefined | null): string => {
-    if (!value) return 'Não especificado';
+    if (!value || value.trim() === '') return 'Não especificado';
     
     // Capitalize the first letter if it's "não especificado"
     if (value.toLowerCase() === 'não especificado') return 'Não especificado';
