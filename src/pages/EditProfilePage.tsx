@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/ui/PageHeader';
@@ -44,7 +43,7 @@ const EditProfilePage = () => {
         updated_at: new Date().toISOString(),
       };
       
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('profiles')
         .upsert(updates);
         
