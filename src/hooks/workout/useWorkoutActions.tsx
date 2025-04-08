@@ -100,42 +100,23 @@ export const useWorkoutActions = (workoutId: string | null) => {
       setIsSubmitting(true);
       console.log("Discarding workout:", workoutId);
       
-      // Delete sets
+      // Delete sets and workout in a transaction to ensure consistency
       try {
         await withTimeout(
           async () => {
-            const { error } = await supabase
-              .from('workout_sets')
-              .delete()
-              .eq('workout_id', workoutId);
+            // Use a transaction to ensure all-or-nothing deletion
+            const { error } = await supabase.rpc('delete_workout_with_sets', { 
+              workout_id_param: workoutId 
+            });
               
             if (error) throw error;
             return true;
           },
           TIMEOUT_MS
         );
-      } catch (setsError) {
-        console.error("Error or timeout deleting workout sets:", setsError);
-        throw new Error("Erro ao excluir séries do treino");
-      }
-      
-      // Delete workout
-      try {
-        await withTimeout(
-          async () => {
-            const { error } = await supabase
-              .from('workouts')
-              .delete()
-              .eq('id', workoutId);
-              
-            if (error) throw error;
-            return true;
-          },
-          TIMEOUT_MS
-        );
-      } catch (workoutError) {
-        console.error("Error or timeout deleting workout:", workoutError);
-        throw new Error("Erro ao excluir treino");
+      } catch (error) {
+        console.error("Error or timeout deleting workout:", error);
+        throw new Error("Erro ao excluir treino e suas séries");
       }
       
       return true;

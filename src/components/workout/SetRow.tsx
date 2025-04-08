@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { Check, Trash } from 'lucide-react';
 
 interface SetRowProps {
@@ -37,38 +38,80 @@ const SetRow: React.FC<SetRowProps> = ({
   
   const [weightValue, setWeightValue] = useState(set.weight || '0');
   const [repsValue, setRepsValue] = useState(set.reps || '0');
+  const isInitializedRef = useRef(false);
+  const setIdRef = useRef(set.id);
+  const previousValuesRef = useRef({weight: set.weight, reps: set.reps});
   
+  // Handle initial value setting once, and when set ID changes
   useEffect(() => {
-    if (set.weight && set.weight !== '0') {
-      setWeightValue(set.weight);
-    } else if (set.previous?.weight && set.previous.weight !== '0') {
-      setWeightValue(set.previous.weight);
+    if (set.id !== setIdRef.current) {
+      console.log(`SetRow: Set ID changed from ${setIdRef.current} to ${set.id}, reinitializing values`);
+      setIdRef.current = set.id;
+      isInitializedRef.current = false;
     }
     
-    if (set.reps && set.reps !== '0') {
-      setRepsValue(set.reps);
-    } else if (set.previous?.reps && set.previous.reps !== '0') {
-      setRepsValue(set.previous.reps);
+    if (!isInitializedRef.current) {
+      console.log(`SetRow (${index}): Initializing values - ID: ${set.id}`);
+      console.log(`SetRow (${index}): Input values - weight: "${set.weight}", reps: "${set.reps}"`);
+      console.log(`SetRow (${index}): Previous values - weight: "${set.previous?.weight}", reps: "${set.previous?.reps}"`);
+      
+      let newWeightValue = set.weight;
+      let newRepsValue = set.reps;
+      
+      // Use set values if they exist and are not '0'
+      if (!newWeightValue || newWeightValue === '0') {
+        newWeightValue = set.previous?.weight && set.previous.weight !== '0' ? 
+          set.previous.weight : '0';
+      }
+      
+      if (!newRepsValue || newRepsValue === '0') {
+        newRepsValue = set.previous?.reps && set.previous.reps !== '0' ? 
+          set.previous.reps : '12';
+      }
+      
+      console.log(`SetRow (${index}): Setting initial values - weight: "${newWeightValue}", reps: "${newRepsValue}"`);
+      
+      setWeightValue(newWeightValue);
+      setRepsValue(newRepsValue);
+      previousValuesRef.current = {weight: newWeightValue, reps: newRepsValue};
+      isInitializedRef.current = true;
     }
-  }, [set.id]);
+  }, [set.id, index, set.weight, set.reps, set.previous]);
   
+  // Handle updates to the set values from parent component
   useEffect(() => {
+    // Skip redundant updates when values haven't changed
+    if (set.weight === previousValuesRef.current.weight && 
+        set.reps === previousValuesRef.current.reps) {
+      return;
+    }
+    
+    console.log(`SetRow (${index}): Received updated values - weight: "${set.weight}", reps: "${set.reps}"`);
+    
+    // Only update if the new values are meaningful (not empty or '0')
     if (set.weight && set.weight !== '0' && set.weight !== weightValue) {
+      console.log(`SetRow (${index}): Updating weight from "${weightValue}" to "${set.weight}"`);
       setWeightValue(set.weight);
+      previousValuesRef.current.weight = set.weight;
     }
+    
     if (set.reps && set.reps !== '0' && set.reps !== repsValue) {
+      console.log(`SetRow (${index}): Updating reps from "${repsValue}" to "${set.reps}"`);
       setRepsValue(set.reps);
+      previousValuesRef.current.reps = set.reps;
     }
-  }, [set.weight, set.reps]);
+  }, [set.weight, set.reps, weightValue, repsValue, index]);
   
   const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    console.log(`SetRow (${index}): handleWeightChange - from "${weightValue}" to "${value}"`);
     setWeightValue(value);
     onWeightChange(value);
   };
   
   const handleRepsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    console.log(`SetRow (${index}): handleRepsChange - from "${repsValue}" to "${value}"`);
     setRepsValue(value);
     onRepsChange(value);
   };

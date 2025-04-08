@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workout';
 
@@ -63,7 +62,6 @@ export const useFetchWorkoutSets = () => {
             .from('workout_sets')
             .select('exercise_id, weight, reps, set_order')
             .eq('workout_id', previousWorkout[0].id)
-            .eq('completed', true) // Only use completed sets as reference
             .order('set_order');
           
           if (previousSets && previousSets.length > 0) {
@@ -73,9 +71,14 @@ export const useFetchWorkoutSets = () => {
             previousWorkoutData = previousSets.reduce((acc: Record<string, any[]>, curr) => {
               if (!curr.exercise_id) return acc;
               if (!acc[curr.exercise_id]) acc[curr.exercise_id] = [];
+              
+              // Ensure values are always strings for UI consistency
+              const weightStr = curr.weight !== null && curr.weight !== undefined ? curr.weight.toString() : '0';
+              const repsStr = curr.reps !== null && curr.reps !== undefined ? curr.reps.toString() : '12';
+              
               acc[curr.exercise_id].push({
-                weight: curr.weight?.toString() || '0',
-                reps: curr.reps?.toString() || '0',
+                weight: weightStr,
+                reps: repsStr,
                 set_order: curr.set_order
               });
               return acc;
@@ -86,7 +89,8 @@ export const useFetchWorkoutSets = () => {
               previousWorkoutData[exerciseId].sort((a, b) => a.set_order - b.set_order);
             });
             
-            console.log("Previous workout data loaded:", previousWorkoutData);
+            console.log("Previous workout data loaded:", Object.keys(previousWorkoutData).length, "exercises");
+            console.log("Previous workout data details:", JSON.stringify(previousWorkoutData));
           }
         }
       } catch (error) {
@@ -107,6 +111,7 @@ export const useFetchWorkoutSets = () => {
       
       // Get previous workout data for this exercise
       const previousExerciseData = previousWorkoutData[exercise.id] || [];
+      console.log(`Exercise ${exercise.name} has ${previousExerciseData.length} previous sets`);
       
       // Format sets
       let sets = exerciseSets.map((set, index) => {
@@ -119,15 +124,7 @@ export const useFetchWorkoutSets = () => {
         let weight = set.weight !== null && set.weight !== undefined ? set.weight.toString() : '';
         let reps = set.reps !== null && set.reps !== undefined ? set.reps.toString() : '';
         
-        // If weight or reps are empty strings or '0', use values from previous workout
-        // This ensures we pre-populate with previous workout data
-        if (weight === '' || weight === '0') {
-          weight = previousSet.weight || '0';
-        }
-        
-        if (reps === '' || reps === '0') {
-          reps = previousSet.reps || '12';
-        }
+        console.log(`Set ${index} for ${exercise.name}: current [w: ${weight}, r: ${reps}], previous [w: ${previousSet.weight}, r: ${previousSet.reps}]`);
         
         return {
           id: set.id,
@@ -149,10 +146,12 @@ export const useFetchWorkoutSets = () => {
           ? previousExerciseData.length 
           : (routineExercise.target_sets || 3);
         
-        console.log(`Creating ${setCount} default sets for ${exercise.name}`);
+        console.log(`Creating ${setCount} default sets for ${exercise.name} using previous data`);
         
         sets = Array.from({ length: setCount }).map((_, idx) => {
           const prevSet = previousExerciseData[idx] || { weight: '0', reps: '12' };
+          
+          console.log(`Default set ${idx} for ${exercise.name}: using previous [w: ${prevSet.weight}, r: ${prevSet.reps}]`);
           
           return {
             id: `default-${exercise.id}-${idx}`,

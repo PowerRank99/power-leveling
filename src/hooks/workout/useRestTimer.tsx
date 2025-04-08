@@ -13,6 +13,7 @@ export const useRestTimer = (workoutId: string | null) => {
   const [isSaving, setIsSaving] = useState(false);
   const saveTimerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pendingUpdateRef = useRef<{ minutes: number; seconds: number } | null>(null);
+  const saveInProgressRef = useRef(false);
   
   // Load saved timer settings when the workout ID changes
   useEffect(() => {
@@ -61,6 +62,7 @@ export const useRestTimer = (workoutId: string | null) => {
     
     try {
       setIsSaving(true);
+      saveInProgressRef.current = true;
       console.log(`Saving timer settings: ${minutes}m ${seconds}s (attempt ${retryCount + 1})`);
       
       const { error } = await supabase
@@ -85,6 +87,8 @@ export const useRestTimer = (workoutId: string | null) => {
         setTimeout(() => {
           saveTimerSettingsWithRetry(pendingMinutes, pendingSeconds);
         }, 100);
+      } else {
+        saveInProgressRef.current = false;
       }
       
       return true;
@@ -105,6 +109,7 @@ export const useRestTimer = (workoutId: string | null) => {
         });
       }
       
+      saveInProgressRef.current = false;
       return false;
     } finally {
       setIsSaving(false);
@@ -119,13 +124,13 @@ export const useRestTimer = (workoutId: string | null) => {
     // Debounce the save operation to reduce database calls
     if (saveTimerTimeoutRef.current) {
       clearTimeout(saveTimerTimeoutRef.current);
-      
-      // Store this as a pending update if we're currently saving
-      if (isSaving) {
-        console.log(`Currently saving, storing as pending update: ${minutes}m ${seconds}s`);
-        pendingUpdateRef.current = { minutes, seconds };
-        return;
-      }
+    }
+    
+    // Store this as a pending update if we're currently saving
+    if (saveInProgressRef.current) {
+      console.log(`Currently saving timer, storing as pending update: ${minutes}m ${seconds}s`);
+      pendingUpdateRef.current = { minutes, seconds };
+      return;
     }
     
     // Set up a new debounced save
@@ -145,8 +150,7 @@ export const useRestTimer = (workoutId: string | null) => {
       }
       saveTimerTimeoutRef.current = null;
     }, DEBOUNCE_DELAY);
-    
-  }, [workoutId, saveTimerSettingsWithRetry, isSaving]);
+  }, [workoutId, saveTimerSettingsWithRetry]);
   
   // Clean up on unmount
   useEffect(() => {
