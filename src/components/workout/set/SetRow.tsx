@@ -14,6 +14,9 @@ interface SetRowProps {
   showRemoveButton: boolean;
 }
 
+/**
+ * Component responsible for rendering a single set row with input management
+ */
 const SetRow: React.FC<SetRowProps> = ({
   index,
   set,

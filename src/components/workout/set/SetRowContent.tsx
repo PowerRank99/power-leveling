@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { SetData } from './types';
+import { SetData } from '@/types/workoutTypes';
 import PreviousValues from './PreviousValues';
 import InputField from './InputField';
 import CompleteButton from './CompleteButton';

@@ -8,6 +8,9 @@ interface DeleteButtonProps {
   onClick: () => void;
 }
 
+/**
+ * Delete button component that appears when swiping a set row
+ */
 const DeleteButton: React.FC<DeleteButtonProps> = ({ offsetX, swiping, onClick }) => {
   console.log(`[DeleteButton] Rendering with offsetX: ${offsetX}, swiping: ${swiping}`);
   
@@ -19,10 +22,13 @@ const DeleteButton: React.FC<DeleteButtonProps> = ({ offsetX, swiping, onClick }
         transform: offsetX > 0 ? 'translateX(0)' : 'translateX(80px)',
         transition: swiping ? 'none' : 'transform 0.3s ease'
       }}
-      onClick={() => {
+      onClick={(e) => {
+        e.stopPropagation(); // Prevent event bubbling
         console.log('[DeleteButton] Delete button clicked, calling onClick handler');
         onClick();
       }}
+      role="button"
+      aria-label="Delete set"
     >
       <div className="flex items-center justify-center w-full">
         <Trash className="w-5 h-5" />

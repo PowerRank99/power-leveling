@@ -7,6 +7,9 @@ interface CompleteButtonProps {
   onClick: () => void;
 }
 
+/**
+ * Button component to mark a set as completed
+ */
 const CompleteButton: React.FC<CompleteButtonProps> = ({ isCompleted, onClick }) => {
   return (
     <button
@@ -16,6 +19,7 @@ const CompleteButton: React.FC<CompleteButtonProps> = ({ isCompleted, onClick })
           ? 'bg-green-100 text-green-500'
           : 'border border-gray-300 bg-white'
       }`}
+      aria-label={isCompleted ? "Unmark as completed" : "Mark as completed"}
     >
       {isCompleted && <Check className="w-4 h-4" />}
     </button>

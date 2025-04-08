@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 
 interface SwipeableRowProps {
   children: React.ReactNode;
@@ -25,14 +25,14 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
   const [startX, setStartX] = useState(0);
   const [offsetX, setOffsetX] = useState(0);
   
-  const handleTouchStart = (e: React.TouchEvent) => {
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (!swipeEnabled) return;
     setStartX(e.touches[0].clientX);
     setSwiping(true);
     console.log('[SwipeableRow] Touch start detected');
-  };
+  }, [swipeEnabled]);
   
-  const handleTouchMove = (e: React.TouchEvent) => {
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!swiping || !swipeEnabled) return;
     
     const currentX = e.touches[0].clientX;
@@ -44,9 +44,9 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
     } else {
       setOffsetX(0);
     }
-  };
+  }, [swiping, swipeEnabled, startX]);
   
-  const handleTouchEnd = () => {
+  const handleTouchEnd = useCallback(() => {
     if (!swipeEnabled) return;
     setSwiping(false);
     
@@ -56,17 +56,17 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
     } else {
       setOffsetX(0);
     }
-  };
+  }, [swipeEnabled, offsetX]);
   
-  const resetSwipe = () => {
+  const resetSwipe = useCallback(() => {
     setOffsetX(0);
-  };
+  }, []);
   
-  const handleAction = () => {
+  const handleAction = useCallback(() => {
     console.log('[SwipeableRow] Action triggered, calling onSwipeTrigger');
     onSwipeTrigger();
     resetSwipe();
-  };
+  }, [onSwipeTrigger, resetSwipe]);
   
   return (
     <div className="relative overflow-hidden">
