@@ -3,9 +3,10 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { NavigateFunction } from 'react-router-dom';
+import { ExerciseHistoryService } from '@/services/ExerciseHistoryService';
 
 /**
- * Hook responsible for handling workout completion or discarding
+ * Hook for handling workout completion and saving history
  */
 export const useWorkoutCompletion = (
   workoutId: string | null, 
@@ -15,21 +16,83 @@ export const useWorkoutCompletion = (
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   /**
-   * Finishes the current workout
+   * Saves exercise history based on completed workout data
+   */
+  const saveExerciseHistory = async (workoutId: string) => {
+    try {
+      // Get all completed sets from this workout
+      const { data: completedSets, error } = await supabase
+        .from('workout_sets')
+        .select('exercise_id, weight, reps, completed')
+        .eq('workout_id', workoutId)
+        .eq('completed', true);
+
+      if (error || !completedSets) {
+        console.error("Error fetching completed sets:", error);
+        return;
+      }
+
+      // Group and analyze sets by exercise
+      const exerciseMap: Record<string, { maxWeight: number, avgReps: number, setCount: number }> = {};
+
+      completedSets.forEach(set => {
+        if (!set.exercise_id) return;
+        
+        if (!exerciseMap[set.exercise_id]) {
+          exerciseMap[set.exercise_id] = {
+            maxWeight: 0,
+            avgReps: 0,
+            setCount: 0
+          };
+        }
+        
+        const record = exerciseMap[set.exercise_id];
+        
+        // Track max weight
+        if (set.weight && set.weight > record.maxWeight) {
+          record.maxWeight = Number(set.weight);
+        }
+        
+        // Sum reps for average calculation
+        record.avgReps += Number(set.reps || 0);
+        record.setCount++;
+      });
+      
+      // Process and save history for each exercise
+      for (const [exerciseId, data] of Object.entries(exerciseMap)) {
+        if (data.setCount === 0) continue;
+        
+        const avgReps = Math.round(data.avgReps / data.setCount);
+        
+        await ExerciseHistoryService.updateExerciseHistory(
+          exerciseId,
+          data.maxWeight,
+          avgReps,
+          data.setCount
+        );
+        
+        console.log(`Exercise history updated for ${exerciseId}: weight=${data.maxWeight}, reps=${avgReps}, sets=${data.setCount}`);
+      }
+    } catch (error) {
+      console.error("Error saving exercise history:", error);
+    }
+  };
+
+  /**
+   * Finishes and saves the current workout
    */
   const finishWorkout = async () => {
     if (!workoutId) {
       toast.error("Erro ao finalizar treino", {
-        description: "Treino não encontrado"
+        description: "ID do treino não encontrado"
       });
-      return false;
+      return;
     }
     
     try {
       setIsSubmitting(true);
       
-      console.log("[useWorkoutCompletion] Finishing workout:", workoutId);
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('workouts')
         .update({
           completed_at: new Date().toISOString(),
@@ -37,23 +100,25 @@ export const useWorkoutCompletion = (
         })
         .eq('id', workoutId);
         
-      if (error) {
-        console.error("[useWorkoutCompletion] Error finishing workout:", error);
-        throw error;
+      if (updateError) {
+        throw updateError;
       }
       
-      toast.success("Treino Completo!", {
-        description: "Seu treino foi salvo com sucesso.",
-      });
-      navigate('/treino');
+      // Save exercise history based on the completed workout
+      await saveExerciseHistory(workoutId);
       
-      return true;
-    } catch (error) {
-      console.error("[useWorkoutCompletion] Exception finishing workout:", error);
-      toast.error("Erro ao finalizar treino", {
-        description: "Ocorreu um problema ao salvar seu treino."
+      toast.success("Treino finalizado", {
+        description: "Seu progresso foi salvo com sucesso!"
       });
-      return false;
+      
+      // Navigate back after success
+      navigate('/treino');
+    } catch (error: any) {
+      console.error("Error finishing workout:", error);
+      
+      toast.error("Erro ao finalizar treino", {
+        description: error.message || "Não foi possível salvar o treino"
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -63,41 +128,24 @@ export const useWorkoutCompletion = (
    * Discards the current workout
    */
   const discardWorkout = async () => {
-    if (!workoutId) {
-      return false;
-    }
+    if (!workoutId) return;
     
     try {
       setIsSubmitting(true);
       
-      console.log("[useWorkoutCompletion] Discarding workout:", workoutId);
-      const { error } = await supabase
+      await supabase
         .from('workouts')
         .delete()
         .eq('id', workoutId);
         
-      if (error) {
-        console.error("[useWorkoutCompletion] Error discarding workout:", error);
-        throw error;
-      }
-      
-      toast.info("Treino descartado", {
-        description: "O treino foi descartado com sucesso.",
-      });
+      toast.info("Treino descartado");
       navigate('/treino');
-      
-      return true;
     } catch (error) {
-      console.error("[useWorkoutCompletion] Exception discarding workout:", error);
-      toast.error("Erro ao descartar treino", {
-        description: "Ocorreu um problema ao descartar seu treino."
-      });
-      return false;
-    } finally {
+      console.error("Error discarding workout:", error);
       setIsSubmitting(false);
     }
   };
-
+  
   return {
     finishWorkout,
     discardWorkout,

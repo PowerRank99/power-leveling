@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { toast } from 'sonner';
+import { ExerciseHistoryService } from '@/services/ExerciseHistoryService';
 
 /**
  * A hook that provides reliable workout data fetching with proper hydration
@@ -89,6 +90,13 @@ export function useWorkoutDataFetching() {
         .eq('id', workoutId)
         .single();
       
+      // Extract all exercise IDs for bulk fetching
+      const exerciseIds = routineExercises.map(re => re.exercises.id);
+      
+      // Get exercise history data (persisted across routines)
+      const exerciseHistoryData = await ExerciseHistoryService.getMultipleExerciseHistory(exerciseIds);
+      console.log("[useWorkoutDataFetching] Loaded exercise history:", exerciseHistoryData);
+      
       // Get previous workout data for initial set values
       const previousWorkoutData = routineData ? 
         await fetchPreviousWorkoutData(routineData.routine_id) : {};
@@ -117,6 +125,9 @@ export function useWorkoutDataFetching() {
         
         console.log(`[useWorkoutDataFetching] Exercise ${exercise.name} has ${exerciseSets.length} sets in database`);
         
+        // Get exercise history data
+        const historyData = exerciseHistoryData[exercise.id];
+        
         // Get previous workout data for this exercise
         const previousExerciseData = previousWorkoutData[exercise.id] || [];
         
@@ -126,10 +137,19 @@ export function useWorkoutDataFetching() {
         if (exerciseSets.length > 0) {
           // Use existing sets from database
           sets = exerciseSets.map((set, index) => {
-            // Find matching previous set
+            // First try to get values from exercise history
+            // Then fallback to previous workout data
+            // Finally use defaults if nothing else is available
+            
             const previousSet = previousExerciseData.find(p => p.set_order === set.set_order) || 
                               previousExerciseData[index] ||
                               { weight: '0', reps: '12' };
+                              
+            // Use exercise history as "previous" values if available
+            const historyValues = historyData ? {
+              weight: historyData.weight.toString(),
+              reps: historyData.reps.toString()
+            } : previousSet;
             
             return {
               id: set.id,
@@ -137,15 +157,13 @@ export function useWorkoutDataFetching() {
               reps: set.reps?.toString() || '0',
               completed: set.completed || false,
               set_order: set.set_order,
-              previous: {
-                weight: previousSet.weight || '0',
-                reps: previousSet.reps || '12'
-              }
+              previous: historyValues
             };
           });
         } else {
-          // Create default sets
+          // Create default sets using exercise history first, then previous workout data
           const targetSets = Math.max(
+            historyData ? historyData.sets : 0,
             previousExerciseData.length > 0 ? previousExerciseData.length : 0,
             routineExercise.target_sets || 3
           );
@@ -153,17 +171,28 @@ export function useWorkoutDataFetching() {
           console.log(`[useWorkoutDataFetching] Creating ${targetSets} default sets for ${exercise.name}`);
           
           sets = Array.from({ length: targetSets }).map((_, index) => {
-            const prevSet = previousExerciseData[index] || { weight: '0', reps: '12' };
+            // Prioritize exercise history for defaults
+            let weight = '0';
+            let reps = '12';
+            
+            if (historyData) {
+              weight = historyData.weight.toString();
+              reps = historyData.reps.toString();
+              console.log(`[useWorkoutDataFetching] Using history for ${exercise.name}: weight=${weight}, reps=${reps}`);
+            } else if (previousExerciseData[index]) {
+              weight = previousExerciseData[index].weight;
+              reps = previousExerciseData[index].reps;
+            }
             
             return {
               id: `default-${exercise.id}-${index}`,
-              weight: prevSet.weight || '0',
-              reps: prevSet.reps || '12',
+              weight: weight,
+              reps: reps,
               completed: false,
               set_order: index,
               previous: {
-                weight: prevSet.weight || '0',
-                reps: prevSet.reps || '12'
+                weight: weight,
+                reps: reps
               }
             };
           });

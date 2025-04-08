@@ -31,3 +31,19 @@ export interface DatabaseResult<T> {
   data?: T;
   error?: any;
 }
+
+// New exercise history types
+export interface ExerciseHistory {
+  id: string;
+  user_id: string;
+  exercise_id: string;
+  weight: number;
+  reps: number;
+  sets: number;
+  last_used_at: string;
+  created_at: string;
+}
+
+export interface ExerciseHistoryMap {
+  [exerciseId: string]: ExerciseHistory;
+}

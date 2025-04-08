@@ -2,6 +2,7 @@
 import { WorkoutExercise, SetData } from '@/types/workoutTypes';
 import { SetService } from '@/services/SetService';
 import { useSetOperations } from './useSetOperations';
+import { ExerciseHistoryService } from '@/services/ExerciseHistoryService';
 
 /**
  * Hook for updating workout sets
@@ -70,6 +71,16 @@ export function useSetUpdater(workoutId: string | null) {
           set_order: setIndex
         };
         
+        // If this is a completed set, update exercise history
+        if (completedValue) {
+          await ExerciseHistoryService.updateExerciseHistory(
+            currentExercise.id,
+            weightValue,
+            repsValue,
+            currentExercise.sets.length
+          );
+        }
+        
         return updatedExercises;
       } 
       // Regular update for existing database records
@@ -106,6 +117,19 @@ export function useSetUpdater(workoutId: string | null) {
           ...updatedExercises[exerciseIndex].sets[setIndex],
           ...data
         };
+        
+        // If this set is being marked as completed, update exercise history
+        if (data.completed === true) {
+          const weightValue = parseFloat(currentSet.weight) || 0;
+          const repsValue = parseInt(currentSet.reps) || 0;
+          
+          await ExerciseHistoryService.updateExerciseHistory(
+            currentExercise.id,
+            weightValue,
+            repsValue,
+            currentExercise.sets.length
+          );
+        }
         
         return updatedExercises;
       }
