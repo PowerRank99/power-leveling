@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Progress } from '@/components/ui/progress';
 
 interface WorkoutProgressBarProps {
   currentExerciseIndex: number;
@@ -15,22 +16,11 @@ const WorkoutProgressBar: React.FC<WorkoutProgressBarProps> = ({
     : 0;
   
   return (
-    <div className="bg-white shadow-sm">
-      <div className="flex justify-between items-center px-4 py-3">
-        <div className="text-sm font-medium">
-          Exercício {currentExerciseIndex + 1} de {totalExercises}
-        </div>
-        <div className="bg-gray-100 px-3 py-1 rounded-full text-xs text-gray-700 font-medium">
-          {progressPercentage}% completo
-        </div>
-      </div>
-      {/* Progress bar */}
-      <div className="h-1 bg-gray-200 w-full">
-        <div 
-          className="h-1 bg-fitblue transition-all duration-300 ease-in-out" 
-          style={{ width: `${progressPercentage}%` }}
-        />
-      </div>
+    <div className="bg-white">
+      <Progress 
+        value={progressPercentage} 
+        className="h-1 rounded-none bg-gray-200"
+      />
     </div>
   );
 };

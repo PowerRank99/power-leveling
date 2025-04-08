@@ -3,11 +3,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { WorkoutExercise } from '@/types/workout';
 import { useWorkoutTimer } from './useWorkoutTimer';
-import { useWorkoutSets } from './useWorkoutSets';
 import { useWorkoutCompletion } from './useWorkoutCompletion';
 import { useWorkoutExercises } from './useWorkoutExercises';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 export type { WorkoutExercise } from '@/types/workout';
 
@@ -22,7 +22,6 @@ export const useWorkout = (routineId: string) => {
   const { toast: uiToast } = useToast();
   
   const { elapsedTime, formatTime } = useWorkoutTimer();
-  const { updateSet: updateSetAction, addSet: addSetAction } = useWorkoutSets(workoutId, exercises, currentExerciseIndex);
   const { finishWorkout: finishWorkoutAction } = useWorkoutCompletion(workoutId);
   const { fetchRoutineExercises, isCreatingWorkout } = useWorkoutExercises();
 
@@ -76,22 +75,124 @@ export const useWorkout = (routineId: string) => {
     }
   }, [setupWorkout, isInitialized, isCreatingWorkout]);
   
-  const currentExercise = exercises[currentExerciseIndex];
-  const nextExercise = currentExerciseIndex < exercises.length - 1 
-    ? exercises[currentExerciseIndex + 1] 
-    : null;
-  
-  const updateSet = async (setIndex: number, data: { weight?: string; reps?: string; completed?: boolean }) => {
-    const updatedExercises = await updateSetAction(setIndex, data);
-    if (updatedExercises) {
+  const updateSet = async (exerciseIndex: number, setIndex: number, data: { weight?: string; reps?: string; completed?: boolean }) => {
+    try {
+      if (!workoutId || !exercises[exerciseIndex]) {
+        toast.error("Erro ao atualizar série", {
+          description: "Treino ou exercício não encontrado"
+        });
+        return;
+      }
+      
+      const currentExercise = exercises[exerciseIndex];
+      
+      // Update local state first
+      const updatedExercises = [...exercises];
+      const updatedSets = [...updatedExercises[exerciseIndex].sets];
+      
+      updatedSets[setIndex] = {
+        ...updatedSets[setIndex],
+        ...data
+      };
+      
+      updatedExercises[exerciseIndex].sets = updatedSets;
       setExercises(updatedExercises);
+      
+      // Update in database
+      const setData: Record<string, any> = {};
+      if (data.weight !== undefined) setData.weight = parseFloat(data.weight) || 0;
+      if (data.reps !== undefined) setData.reps = parseInt(data.reps) || 0;
+      if (data.completed !== undefined) {
+        setData.completed = data.completed;
+        if (data.completed) {
+          setData.completed_at = new Date().toISOString();
+        } else {
+          setData.completed_at = null;
+        }
+      }
+      
+      const { error } = await supabase
+        .from('workout_sets')
+        .update(setData)
+        .eq('id', updatedSets[setIndex].id);
+        
+      if (error) {
+        console.error("Error updating set:", error);
+        toast.error("Erro ao salvar série", {
+          description: "As alterações podem não ter sido salvas"
+        });
+      }
+    } catch (error) {
+      console.error("Error updating set:", error);
+      toast.error("Erro ao atualizar série", {
+        description: "Não foi possível salvar as alterações"
+      });
     }
   };
   
-  const addSet = async () => {
-    const updatedExercises = await addSetAction();
-    if (updatedExercises) {
+  const addSet = async (exerciseIndex: number) => {
+    try {
+      if (!workoutId || !exercises[exerciseIndex]) {
+        toast.error("Erro ao adicionar série", {
+          description: "Treino ou exercício não encontrado"
+        });
+        return;
+      }
+      
+      const currentExercise = exercises[exerciseIndex];
+      
+      // Add to local state first
+      const updatedExercises = [...exercises];
+      const currentSets = updatedExercises[exerciseIndex].sets;
+      const lastSet = currentSets[currentSets.length - 1];
+      
+      const newSetId = `new-${Date.now()}`;
+      const newSet = {
+        id: newSetId,
+        weight: lastSet?.weight || '0',
+        reps: lastSet?.reps || '12',
+        completed: false,
+        previous: lastSet?.previous || { weight: '0', reps: '12' }
+      };
+      
+      updatedExercises[exerciseIndex].sets.push(newSet);
       setExercises(updatedExercises);
+      
+      // Add to database
+      const newSetOrder = exerciseIndex * 100 + updatedExercises[exerciseIndex].sets.length - 1;
+      
+      const { data, error } = await supabase
+        .from('workout_sets')
+        .insert({
+          workout_id: workoutId,
+          exercise_id: currentExercise.id,
+          set_order: newSetOrder,
+          weight: parseFloat(newSet.weight) || 0,
+          reps: parseInt(newSet.reps) || 0,
+          completed: false
+        })
+        .select()
+        .single();
+        
+      if (error) {
+        console.error("Error adding new set:", error);
+        toast.error("Erro ao adicionar série", {
+          description: "A série pode não ter sido salva corretamente"
+        });
+      }
+      
+      // If we got data back, update the ID
+      if (data) {
+        const updatedExercisesWithId = [...exercises];
+        const setIndex = updatedExercisesWithId[exerciseIndex].sets.length - 1;
+        updatedExercisesWithId[exerciseIndex].sets[setIndex].id = data.id;
+        setExercises(updatedExercisesWithId);
+      }
+    } catch (error) {
+      console.error("Error adding set:", error);
+      toast.error("Erro ao adicionar série", {
+        description: "Não foi possível adicionar uma nova série"
+      });
     }
   };
   
@@ -118,8 +219,6 @@ export const useWorkout = (routineId: string) => {
     isLoading,
     loadError,
     exercises,
-    currentExercise,
-    nextExercise,
     currentExerciseIndex,
     totalExercises: exercises.length,
     updateSet,

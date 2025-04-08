@@ -1,8 +1,10 @@
-
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import { WorkoutExercise } from '@/hooks/useWorkout';
 import { Button } from '@/components/ui/button';
+
+// This component is no longer needed in the new design,
+// but we'll keep it for backward compatibility
 
 interface NextExercisePreviewProps {
   nextExercise: WorkoutExercise;

@@ -1,43 +1,50 @@
 
 import React from 'react';
-import PageHeader from '@/components/ui/PageHeader';
-import { Menu, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface WorkoutHeaderProps {
   onFinish: () => void;
   isFinishing: boolean;
+  elapsedTime: string;
 }
 
-const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({ onFinish, isFinishing }) => {
+const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({ onFinish, isFinishing, elapsedTime }) => {
   return (
-    <PageHeader 
-      title="Treino Atual" 
-      rightContent={
-        <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onFinish}
-            disabled={isFinishing}
-            title="Finalizar Treino"
-          >
-            {isFinishing ? (
-              <div className="animate-spin h-4 w-4 border-2 border-black border-t-transparent rounded-full"></div>
-            ) : (
-              <CheckCircle className="w-5 h-5" />
-            )}
-          </Button>
+    <div className="bg-white border-b border-gray-200">
+      <div className="flex justify-between items-center p-4">
+        <div className="flex items-center">
           <Button
             variant="ghost" 
             size="icon"
-            title="Menu"
+            className="mr-2"
+            title="Back"
           >
-            <Menu className="w-5 h-5" />
+            <ArrowLeft className="w-6 h-6" />
+          </Button>
+          <div className="text-gray-500">{elapsedTime}</div>
+        </div>
+        
+        <div className="flex items-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="mr-2"
+            title="Timer"
+          >
+            <Clock className="w-6 h-6" />
+          </Button>
+          
+          <Button
+            className="bg-blue-500 hover:bg-blue-600 text-white px-6"
+            onClick={onFinish}
+            disabled={isFinishing}
+          >
+            {isFinishing ? "Finalizando..." : "Finish"}
           </Button>
         </div>
-      }
-    />
+      </div>
+    </div>
   );
 };
 
