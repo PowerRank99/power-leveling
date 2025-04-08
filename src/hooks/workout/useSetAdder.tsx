@@ -3,13 +3,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { toast } from 'sonner';
 import { SetService } from '@/services/SetService';
+import { useState } from 'react';
 
 export const useSetAdder = (workoutId: string | null) => {
+  const [isProcessing, setIsProcessing] = useState(false);
+  
   const addSet = async (
     exerciseIndex: number, 
     exercises: WorkoutExercise[], 
     routineId: string
   ) => {
+    if (isProcessing) return null;
+    
     if (!workoutId || !exercises[exerciseIndex]) {
       toast.error("Erro ao adicionar série", {
         description: "Treino ou exercício não encontrado"
@@ -18,6 +23,7 @@ export const useSetAdder = (workoutId: string | null) => {
     }
     
     try {
+      setIsProcessing(true);
       const currentExercise = exercises[exerciseIndex];
       console.log(`[useSetAdder] Adding set to exercise ${currentExercise.name} (ID: ${currentExercise.id})`);
       
@@ -134,8 +140,13 @@ export const useSetAdder = (workoutId: string | null) => {
         description: "Não foi possível adicionar uma nova série"
       });
       return null;
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  return { addSet };
+  return { 
+    addSet,
+    isProcessing 
+  };
 };

@@ -1,4 +1,5 @@
 
+import { useState } from 'react';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { SetService } from '@/services/SetService';
 import { useSetOperations } from './useSetOperations';
@@ -8,8 +9,8 @@ import { toast } from 'sonner';
  * Hook for removing sets from exercises
  */
 export function useSetRemover(workoutId: string | null) {
-  const { executeOperation, isProcessing } = useSetOperations(workoutId);
-  
+  const [isProcessing, setIsProcessing] = useState(false);
+
   /**
    * Removes a set from an exercise
    */
@@ -19,7 +20,10 @@ export function useSetRemover(workoutId: string | null) {
     setIndex: number,
     routineId: string
   ) => {
-    return executeOperation('remover série', async () => {
+    if (isProcessing) return null;
+    
+    try {
+      setIsProcessing(true);
       const currentExercise = exercises[exerciseIndex];
       
       if (currentExercise.sets.length <= 1) {
@@ -117,7 +121,15 @@ export function useSetRemover(workoutId: string | null) {
       }
       
       return updatedExercises;
-    });
+    } catch (error) {
+      console.error("[useSetRemover] Error removing set:", error);
+      toast.error("Erro ao remover série", {
+        description: "Não foi possível remover a série"
+      });
+      return null;
+    } finally {
+      setIsProcessing(false);
+    }
   };
   
   return {

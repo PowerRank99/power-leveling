@@ -20,9 +20,9 @@ export class SetVerificationService {
       console.log(`[SetVerificationService] Verifying set count for workout=${workoutId}, exercise=${exerciseId}, expected=${expectedCount}`);
       
       // Count actual sets in workout_sets
-      const { data, error } = await supabase
+      const { count, error } = await supabase
         .from('workout_sets')
-        .select('id', { count: 'exact' })
+        .select('*', { count: 'exact', head: true })
         .eq('workout_id', workoutId)
         .eq('exercise_id', exerciseId);
         
@@ -31,7 +31,7 @@ export class SetVerificationService {
         return { success: false, error };
       }
       
-      const actualCount = data;
+      const actualCount = count || 0;
       const match = actualCount === expectedCount;
       
       console.log(`[SetVerificationService] Verification result: actual=${actualCount}, expected=${expectedCount}, match=${match}`);
@@ -68,9 +68,9 @@ export class SetVerificationService {
       console.log(`[SetVerificationService] Reconciling set count for workout=${workoutId}, exercise=${exerciseId}, routine=${routineId}`);
       
       // Get actual count from workout_sets (source of truth)
-      const { data: setsData, error: countError } = await supabase
+      const { count: actualCount, error: countError } = await supabase
         .from('workout_sets')
-        .select('id', { count: 'exact' })
+        .select('*', { count: 'exact', head: true })
         .eq('workout_id', workoutId)
         .eq('exercise_id', exerciseId);
         
@@ -79,7 +79,6 @@ export class SetVerificationService {
         return { success: false, error: countError };
       }
       
-      const actualCount = setsData;
       console.log(`[SetVerificationService] Actual set count from DB: ${actualCount}`);
       
       if (actualCount === 0) {
