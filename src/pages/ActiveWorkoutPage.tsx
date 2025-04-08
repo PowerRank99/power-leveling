@@ -56,6 +56,7 @@ const ActiveWorkoutPage = () => {
     selectedExerciseId,
     selectedExerciseName,
     exerciseTimers,
+    savingTimerDuration,
     handleTimerClick,
     handleTimerDurationSelect,
     handleLoadExerciseTimer,
@@ -110,6 +111,7 @@ const ActiveWorkoutPage = () => {
                 onStartTimer={startTimer}
                 timerDuration={getExerciseTimerDuration(exercise.id)}
                 loadExerciseTimer={handleLoadExerciseTimer}
+                isSavingTimer={savingTimerDuration[exercise.id] || false}
               />
             </Card>
           ))}

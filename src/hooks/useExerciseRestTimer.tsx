@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { TimerService } from '@/services/timer/TimerService';
@@ -190,6 +191,33 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
     return null;
   }, [user, loadingExercises]);
 
+  // New function to save exercise timer duration immediately
+  const saveExerciseTimerDuration = useCallback(async (exerciseId: string, duration: number) => {
+    if (!user || !exerciseId) {
+      console.error("[useExerciseRestTimer] Cannot save timer: missing user or exerciseId");
+      return false;
+    }
+    
+    try {
+      console.log(`[useExerciseRestTimer] Saving timer for ${exerciseId}: ${duration}s`);
+      
+      const result = await TimerService.saveExerciseTimerDuration(user.id, exerciseId, duration);
+      
+      if (result.success) {
+        // Update local state
+        setLastSavedDurations(prev => ({ ...prev, [exerciseId]: duration }));
+        console.log(`[useExerciseRestTimer] Timer duration saved successfully: ${duration}s`);
+        return true;
+      } else {
+        console.error("[useExerciseRestTimer] Error saving timer duration:", result.error);
+        return false;
+      }
+    } catch (error) {
+      console.error("[useExerciseRestTimer] Exception saving timer duration:", error);
+      return false;
+    }
+  }, [user]);
+
   // Format timer display
   const formatTime = useCallback((seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -356,6 +384,7 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
     loadExerciseTimerDuration,
     updateTimerDuration,
     saveTimerSettings,
-    saveDefaultTimerDuration
+    saveDefaultTimerDuration,
+    saveExerciseTimerDuration
   };
 };

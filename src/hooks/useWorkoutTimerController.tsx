@@ -1,7 +1,8 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useExerciseRestTimer } from './useExerciseRestTimer';
 import { WorkoutExercise } from '@/types/workoutTypes';
+import { toast } from 'sonner';
 
 /**
  * Custom hook to manage workout timer controls in a centralized way
@@ -19,13 +20,15 @@ export const useWorkoutTimerController = (exercises: WorkoutExercise[]) => {
     addTime,
     formatTime,
     loadExerciseTimerDuration,
-    updateTimerDuration
+    updateTimerDuration,
+    saveExerciseTimerDuration
   } = useExerciseRestTimer();
   
   // State for timer modal
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
   const [selectedExerciseName, setSelectedExerciseName] = useState<string | null>(null);
   const [exerciseTimers, setExerciseTimers] = useState<Record<string, number>>({});
+  const [savingTimerDuration, setSavingTimerDuration] = useState<Record<string, boolean>>({});
   
   // Handle timer click for an exercise
   const handleTimerClick = (exerciseId: string, exerciseName: string) => {
@@ -35,7 +38,7 @@ export const useWorkoutTimerController = (exercises: WorkoutExercise[]) => {
   };
   
   // Handle timer duration selection
-  const handleTimerDurationSelect = (duration: number) => {
+  const handleTimerDurationSelect = async (duration: number) => {
     if (selectedExerciseId) {
       // Update the duration in our local state
       setExerciseTimers(prev => ({
@@ -45,6 +48,18 @@ export const useWorkoutTimerController = (exercises: WorkoutExercise[]) => {
       
       // Update in the timer state if it's the current timer
       updateTimerDuration(selectedExerciseId, duration);
+      
+      // Save the duration to the database
+      try {
+        setSavingTimerDuration(prev => ({ ...prev, [selectedExerciseId]: true }));
+        await saveExerciseTimerDuration(selectedExerciseId, duration);
+        console.log(`Timer duration for ${selectedExerciseId} saved to database: ${duration}s`);
+      } catch (error) {
+        console.error(`Error saving timer duration for ${selectedExerciseId}:`, error);
+        toast.error("Não foi possível salvar o tempo de descanso");
+      } finally {
+        setSavingTimerDuration(prev => ({ ...prev, [selectedExerciseId]: false }));
+      }
     }
   };
   
@@ -87,6 +102,7 @@ export const useWorkoutTimerController = (exercises: WorkoutExercise[]) => {
     selectedExerciseId,
     selectedExerciseName,
     exerciseTimers,
+    savingTimerDuration,
     handleTimerClick,
     handleTimerDurationSelect,
     handleLoadExerciseTimer,
