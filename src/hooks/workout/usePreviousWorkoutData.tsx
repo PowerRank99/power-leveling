@@ -7,6 +7,7 @@ interface PreviousWorkoutData {
   [exerciseId: string]: {
     weight: string;
     reps: string;
+    set_order: number; // Add set_order to track exact position
   }[];
 }
 
@@ -71,7 +72,8 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
             exercise_id,
             weight,
             reps,
-            completed
+            completed,
+            set_order
           `)
           .eq('workout_id', previousWorkout.id)
           .eq('completed', true) // Only get completed sets
@@ -101,8 +103,14 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
           
           groupedSets[set.exercise_id].push({
             weight: set.weight?.toString() || '0',
-            reps: set.reps?.toString() || '0'
+            reps: set.reps?.toString() || '0',
+            set_order: set.set_order // Store the set order to preserve position
           });
+        });
+        
+        // Sort sets by set_order to ensure they're in the right order
+        Object.keys(groupedSets).forEach(exerciseId => {
+          groupedSets[exerciseId].sort((a, b) => a.set_order - b.set_order);
         });
         
         setPreviousWorkoutData(groupedSets);

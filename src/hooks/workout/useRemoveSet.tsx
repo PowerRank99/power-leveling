@@ -14,6 +14,8 @@ export const useRemoveSet = (workoutId: string | null) => {
       
       if (error) {
         console.error("Error updating routine exercise set count:", error);
+      } else {
+        console.log(`Successfully updated routine ${routineId}, exercise ${exerciseId} to ${newSetCount} sets`);
       }
     } catch (error) {
       console.error("Error updating routine exercise set count:", error);
@@ -50,19 +52,51 @@ export const useRemoveSet = (workoutId: string | null) => {
         ...currentExercise.sets.slice(setIndex + 1)
       ];
       
-      const { error } = await supabase
-        .from('workout_sets')
-        .delete()
-        .eq('id', setId);
-      
-      if (error) {
-        console.error("Error removing set:", error);
-        toast.error("Erro ao remover série", {
-          description: "A série pode não ter sido removida corretamente"
-        });
-      } else {
-        updateRoutineExerciseSetCount(currentExercise.id, routineId, currentExercise.sets.length - 1);
+      // If this is a temporary ID (not in the database yet), we don't need to delete it
+      if (!setId.startsWith('default-') && !setId.startsWith('new-')) {
+        const { error } = await supabase
+          .from('workout_sets')
+          .delete()
+          .eq('id', setId);
+        
+        if (error) {
+          console.error("Error removing set:", error);
+          toast.error("Erro ao remover série", {
+            description: "A série pode não ter sido removida corretamente"
+          });
+        } else {
+          console.log(`Successfully removed set ${setId} from database`);
+        }
       }
+      
+      // Update the remaining set_order values to ensure they're sequential
+      const remainingSets = updatedExercises[exerciseIndex].sets;
+      
+      // Only update IDs that are in the database (not temporary)
+      const databaseSets = remainingSets.filter(set => 
+        !set.id.startsWith('default-') && !set.id.startsWith('new-')
+      );
+      
+      for (let i = 0; i < databaseSets.length; i++) {
+        const set = databaseSets[i];
+        const actualIndex = remainingSets.findIndex(s => s.id === set.id);
+        
+        if (actualIndex !== -1) {
+          try {
+            await supabase
+              .from('workout_sets')
+              .update({ set_order: i })
+              .eq('id', set.id);
+            
+            console.log(`Updated set ${set.id} order to ${i}`);
+          } catch (orderError) {
+            console.error(`Error updating set ${set.id} order:`, orderError);
+          }
+        }
+      }
+      
+      // Update the routine exercise set count for persistence
+      await updateRoutineExerciseSetCount(currentExercise.id, routineId, currentExercise.sets.length - 1);
       
       return updatedExercises;
     } catch (error) {

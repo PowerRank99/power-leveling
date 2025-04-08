@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workout';
 
@@ -62,7 +61,9 @@ export const useFetchWorkoutSets = () => {
           const { data: previousSets } = await supabase
             .from('workout_sets')
             .select('exercise_id, weight, reps, set_order')
-            .eq('workout_id', previousWorkout[0].id);
+            .eq('workout_id', previousWorkout[0].id)
+            .eq('completed', true) // Only get completed sets
+            .order('set_order');
           
           if (previousSets && previousSets.length > 0) {
             console.log(`Found ${previousSets.length} sets from previous workout`);
@@ -78,6 +79,11 @@ export const useFetchWorkoutSets = () => {
               });
               return acc;
             }, {});
+            
+            // Sort sets by set_order for each exercise to ensure they're in the right order
+            Object.keys(previousWorkoutData).forEach(exerciseId => {
+              previousWorkoutData[exerciseId].sort((a, b) => a.set_order - b.set_order);
+            });
           }
         }
       } catch (error) {
@@ -97,41 +103,48 @@ export const useFetchWorkoutSets = () => {
       console.log(`Exercise ${exercise.name} has ${exerciseSets.length} sets`);
       
       // Get previous workout data for this exercise
-      const previousExerciseData = previousWorkoutData[exercise.id];
+      const previousExerciseData = previousWorkoutData[exercise.id] || [];
       
       // Format sets
       let sets = exerciseSets.map((set, index) => {
-        // Get matching set from previous workout if available
-        const previousSet = previousExerciseData && previousExerciseData.find(p => p.set_order === set.set_order) || 
-                           previousExerciseData && previousExerciseData[index];
+        // Get matching set from previous workout if available, matching by set_order first
+        const previousSet = previousExerciseData.find(p => p.set_order === set.set_order) || 
+                           previousExerciseData[index] ||
+                           { weight: '0', reps: '0' };
         
         return {
           id: set.id,
-          weight: set.weight?.toString() || '0',
-          reps: set.reps?.toString() || '0',
+          weight: set.weight?.toString() || previousSet.weight || '0',
+          reps: set.reps?.toString() || previousSet.reps || '0',
           completed: set.completed,
-          previous: previousSet || {
-            weight: '0',
-            reps: '0'
+          previous: {
+            weight: previousSet.weight || '0',
+            reps: previousSet.reps || '0'
           }
         };
       });
       
       // If we have no sets, create default ones using previous workout data if available
       if (sets.length === 0) {
-        const setCount = routineExercise.target_sets || 3;
+        // Use the number of sets from the previous workout data if available,
+        // otherwise use the target_sets from routine_exercise 
+        const setCount = previousExerciseData.length > 0 
+          ? previousExerciseData.length 
+          : (routineExercise.target_sets || 3);
+        
+        console.log(`Creating ${setCount} default sets for ${exercise.name}`);
         
         sets = Array.from({ length: setCount }).map((_, idx) => {
-          const prevSet = previousExerciseData && previousExerciseData[idx];
+          const prevSet = previousExerciseData[idx] || { weight: '0', reps: '12' };
           
           return {
             id: `default-${exercise.id}-${idx}`,
-            weight: prevSet?.weight || '0',
-            reps: prevSet?.reps || '12',
+            weight: prevSet.weight || '0',
+            reps: prevSet.reps || '12',
             completed: false,
             previous: { 
-              weight: prevSet?.weight || '0', 
-              reps: prevSet?.reps || '12' 
+              weight: prevSet.weight || '0', 
+              reps: prevSet.reps || '12' 
             }
           };
         });

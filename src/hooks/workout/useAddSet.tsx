@@ -44,8 +44,8 @@ export const useAddSet = (workoutId: string | null) => {
       const currentSets = updatedExercises[exerciseIndex].sets;
       const lastSet = currentSets[currentSets.length - 1];
       
-      // Determine the next set order
-      const newSetOrder = currentSets.length;
+      // Determine the next set order - critical for persistence
+      const newSetOrder = currentSets.length; // Use the length as the next set order
       console.log(`Adding new set with order ${newSetOrder} for exercise ${currentExercise.name}`);
       
       // Create the temporary set object

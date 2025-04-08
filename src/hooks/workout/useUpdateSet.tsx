@@ -58,16 +58,43 @@ export const useUpdateSet = (workoutId: string | null) => {
         console.log(`Updating set ${currentSet.id} completed to ${data.completed}`);
       }
       
-      // Skip the database update if the ID starts with "default-" or "new-"
-      // These are temporary IDs for sets that don't exist in the database yet
-      if (currentSet.id && !currentSet.id.startsWith('default-') && !currentSet.id.startsWith('new-')) {
-        const { error } = await supabase
+      // If this is a temporary set ID, we need to create it in the database
+      if (currentSet.id && (currentSet.id.startsWith('default-') || currentSet.id.startsWith('new-'))) {
+        console.log(`Creating new database record for temporary set: ${currentSet.id}`);
+        
+        const { data: newSet, error: insertError } = await supabase
+          .from('workout_sets')
+          .insert({
+            workout_id: workoutId,
+            exercise_id: currentExercise.id,
+            set_order: setIndex,
+            weight: parseFloat(data.weight || currentSet.weight) || 0,
+            reps: parseInt(data.reps || currentSet.reps) || 0,
+            completed: data.completed !== undefined ? data.completed : currentSet.completed,
+            completed_at: data.completed ? new Date().toISOString() : null
+          })
+          .select()
+          .single();
+        
+        if (insertError) {
+          console.error("Error creating new set in database:", insertError);
+          toast.error("Erro ao salvar série", {
+            description: "A série não pôde ser criada no banco de dados"
+          });
+        } else if (newSet) {
+          console.log(`Successfully created new set with ID: ${newSet.id}`);
+          updatedExercises[exerciseIndex].sets[setIndex].id = newSet.id;
+        }
+      } 
+      // Regular update for existing database records
+      else if (Object.keys(setData).length > 0) {
+        const { error: updateError } = await supabase
           .from('workout_sets')
           .update(setData)
           .eq('id', currentSet.id);
           
-        if (error) {
-          console.error("Error updating set in database:", error);
+        if (updateError) {
+          console.error("Error updating set in database:", updateError);
           toast.error("Erro ao salvar série", {
             description: "As alterações podem não ter sido salvas"
           });
@@ -75,7 +102,7 @@ export const useUpdateSet = (workoutId: string | null) => {
           console.log(`Successfully updated set ${currentSet.id} in database`);
         }
       } else {
-        console.warn(`Skipping database update for temporary set ID: ${currentSet.id}`);
+        console.log(`No changes to save for set ${currentSet.id}`);
       }
       
       return updatedExercises;
