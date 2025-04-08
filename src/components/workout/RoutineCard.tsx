@@ -9,13 +9,17 @@ interface RoutineCardProps {
   name: string;
   exercisesCount: number;
   lastUsedAt?: string | null;
+  onDelete?: (id: string) => void;
+  isDeleting?: boolean;
 }
 
 const RoutineCard: React.FC<RoutineCardProps> = ({ 
   id, 
   name, 
   exercisesCount, 
-  lastUsedAt 
+  lastUsedAt,
+  onDelete,
+  isDeleting = false
 }) => {
   const navigate = useNavigate();
   
@@ -36,6 +40,7 @@ const RoutineCard: React.FC<RoutineCardProps> = ({
         <button 
           onClick={() => navigate(`/treino/ativo/${id}`)}
           className="bg-fitblue text-white rounded-lg px-4 py-2 font-medium flex items-center"
+          disabled={isDeleting}
         >
           <Play className="w-4 h-4 mr-1" />
           Iniciar Rotina

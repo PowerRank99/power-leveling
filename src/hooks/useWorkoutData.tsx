@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export interface Routine {
   id: string;
@@ -32,6 +33,7 @@ export const useWorkoutData = () => {
   const [lastRefresh, setLastRefresh] = useState<number>(Date.now());
   const [error, setError] = useState<string | null>(null);
   const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
+  const [deleteInProgress, setDeleteInProgress] = useState<{[key: string]: boolean}>({});
   
   // Function to force a refresh
   const refreshData = useCallback(() => {
@@ -39,6 +41,108 @@ export const useWorkoutData = () => {
     setLastRefresh(Date.now());
     setError(null);
   }, []);
+  
+  // Function to delete a routine
+  const deleteRoutine = useCallback(async (routineId: string) => {
+    if (!user || deleteInProgress[routineId]) {
+      return false;
+    }
+    
+    try {
+      setDeleteInProgress(prev => ({ ...prev, [routineId]: true }));
+      
+      console.log("Deleting routine:", routineId);
+      
+      // First delete all routine_exercises entries for this routine
+      const { error: routineExercisesError } = await supabase
+        .from('routine_exercises')
+        .delete()
+        .eq('routine_id', routineId);
+        
+      if (routineExercisesError) {
+        console.error("Error deleting routine exercises:", routineExercisesError);
+        throw routineExercisesError;
+      }
+      
+      // Then delete the routine itself
+      const { error: routineError } = await supabase
+        .from('routines')
+        .delete()
+        .eq('id', routineId);
+        
+      if (routineError) {
+        console.error("Error deleting routine:", routineError);
+        throw routineError;
+      }
+      
+      // Update the UI by removing the deleted routine from state
+      setSavedRoutines(prevRoutines => prevRoutines.filter(routine => routine.id !== routineId));
+      
+      // Show success message
+      toast.success("Rotina excluída com sucesso");
+      
+      return true;
+    } catch (error: any) {
+      console.error("Error in deleteRoutine:", error);
+      toast.error("Erro ao excluir rotina", {
+        description: error.message || "Não foi possível excluir a rotina. Tente novamente."
+      });
+      return false;
+    } finally {
+      setDeleteInProgress(prev => ({ ...prev, [routineId]: false }));
+    }
+  }, [user, toast, deleteInProgress]);
+  
+  // Function to delete a workout
+  const deleteWorkout = useCallback(async (workoutId: string) => {
+    if (!user || deleteInProgress[workoutId]) {
+      return false;
+    }
+    
+    try {
+      setDeleteInProgress(prev => ({ ...prev, [workoutId]: true }));
+      
+      console.log("Deleting workout:", workoutId);
+      
+      // First delete all workout_sets entries for this workout
+      const { error: workoutSetsError } = await supabase
+        .from('workout_sets')
+        .delete()
+        .eq('workout_id', workoutId);
+        
+      if (workoutSetsError) {
+        console.error("Error deleting workout sets:", workoutSetsError);
+        throw workoutSetsError;
+      }
+      
+      // Then delete the workout itself
+      const { error: workoutError } = await supabase
+        .from('workouts')
+        .delete()
+        .eq('id', workoutId);
+        
+      if (workoutError) {
+        console.error("Error deleting workout:", workoutError);
+        throw workoutError;
+      }
+      
+      // Update the UI by removing the deleted workout from state
+      setRecentWorkouts(prevWorkouts => prevWorkouts.filter(workout => workout.id !== workoutId));
+      
+      // Show success message
+      toast.success("Treino excluído com sucesso");
+      
+      return true;
+    } catch (error: any) {
+      console.error("Error in deleteWorkout:", error);
+      toast.error("Erro ao excluir treino", {
+        description: error.message || "Não foi possível excluir o treino. Tente novamente."
+      });
+      return false;
+    } finally {
+      setDeleteInProgress(prev => ({ ...prev, [workoutId]: false }));
+    }
+  }, [user, toast, deleteInProgress]);
   
   useEffect(() => {
     let isMounted = true;
@@ -220,6 +324,9 @@ export const useWorkoutData = () => {
     isLoading,
     refreshData,
     error,
-    hasAttemptedLoad
+    hasAttemptedLoad,
+    deleteRoutine,
+    deleteWorkout,
+    isDeletingItem: (id: string) => deleteInProgress[id] || false
   };
 };

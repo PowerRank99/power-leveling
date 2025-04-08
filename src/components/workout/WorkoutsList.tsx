@@ -6,6 +6,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import { RecentWorkout } from '@/hooks/useWorkoutData';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
+import WorkoutContextMenu from '@/components/workout/WorkoutContextMenu';
 
 interface WorkoutsListProps {
   workouts: RecentWorkout[];
@@ -13,6 +14,8 @@ interface WorkoutsListProps {
   onRetry: () => void;
   error: string | null;
   hasAttemptedLoad: boolean;
+  onDeleteWorkout: (workoutId: string) => void;
+  isDeletingItem: (id: string) => boolean;
 }
 
 const WorkoutsList: React.FC<WorkoutsListProps> = ({ 
@@ -20,7 +23,9 @@ const WorkoutsList: React.FC<WorkoutsListProps> = ({
   isLoading,
   onRetry,
   error,
-  hasAttemptedLoad
+  hasAttemptedLoad,
+  onDeleteWorkout,
+  isDeletingItem
 }) => {
   if (isLoading && !hasAttemptedLoad) {
     return <LoadingSpinner message="Carregando seus treinos..." />;
@@ -52,16 +57,24 @@ const WorkoutsList: React.FC<WorkoutsListProps> = ({
   return (
     <>
       {workouts.map(workout => (
-        <WorkoutCard 
+        <WorkoutContextMenu
           key={workout.id}
-          id={workout.id}
-          name={workout.name}
-          date={workout.date}
-          exercisesCount={workout.exercises_count}
-          setsCount={workout.sets_count}
-          prs={workout.prs}
-          durationSeconds={workout.duration_seconds}
-        />
+          workoutId={workout.id}
+          workoutName={workout.name}
+          onDeleteWorkout={onDeleteWorkout}
+        >
+          <WorkoutCard 
+            key={workout.id}
+            id={workout.id}
+            name={workout.name}
+            date={workout.date}
+            exercisesCount={workout.exercises_count}
+            setsCount={workout.sets_count}
+            prs={workout.prs}
+            durationSeconds={workout.duration_seconds}
+            isDeleting={isDeletingItem(workout.id)}
+          />
+        </WorkoutContextMenu>
       ))}
     </>
   );

@@ -13,7 +13,17 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 
 const WorkoutPage = () => {
-  const { savedRoutines, recentWorkouts, isLoading, refreshData, error, hasAttemptedLoad } = useWorkoutData();
+  const { 
+    savedRoutines, 
+    recentWorkouts, 
+    isLoading, 
+    refreshData, 
+    error, 
+    hasAttemptedLoad,
+    deleteRoutine,
+    deleteWorkout,
+    isDeletingItem
+  } = useWorkoutData();
   
   // Refresh data when component mounts
   useEffect(() => {
@@ -66,6 +76,8 @@ const WorkoutPage = () => {
               onRetry={handleRetry}
               error={error}
               hasAttemptedLoad={hasAttemptedLoad}
+              onDeleteRoutine={deleteRoutine}
+              isDeletingItem={isDeletingItem}
             />
           </div>
           
@@ -77,6 +89,8 @@ const WorkoutPage = () => {
               onRetry={handleRetry}
               error={error}
               hasAttemptedLoad={hasAttemptedLoad}
+              onDeleteWorkout={deleteWorkout}
+              isDeletingItem={isDeletingItem}
             />
           </div>
         </div>

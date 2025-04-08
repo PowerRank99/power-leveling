@@ -10,6 +10,7 @@ interface WorkoutCardProps {
   setsCount: number;
   prs?: number;
   durationSeconds?: number | null;
+  isDeleting?: boolean;
 }
 
 const WorkoutCard: React.FC<WorkoutCardProps> = ({
@@ -19,10 +20,11 @@ const WorkoutCard: React.FC<WorkoutCardProps> = ({
   exercisesCount,
   setsCount,
   prs = 0,
-  durationSeconds
+  durationSeconds,
+  isDeleting = false
 }) => {
   return (
-    <div className="bg-white rounded-lg shadow-sm p-4 mb-4 border border-gray-200">
+    <div className={`bg-white rounded-lg shadow-sm p-4 mb-4 border border-gray-200 ${isDeleting ? 'opacity-50' : ''}`}>
       <div className="flex justify-between">
         <div>
           <h3 className="font-bold text-lg">{name}</h3>

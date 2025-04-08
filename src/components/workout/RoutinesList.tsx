@@ -7,6 +7,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Routine } from '@/hooks/useWorkoutData';
 import { RefreshCw } from 'lucide-react';
+import RoutineContextMenu from '@/components/workout/RoutineContextMenu';
 
 interface RoutinesListProps {
   routines: Routine[];
@@ -14,6 +15,8 @@ interface RoutinesListProps {
   onRetry: () => void;
   error: string | null;
   hasAttemptedLoad: boolean;
+  onDeleteRoutine: (routineId: string) => void;
+  isDeletingItem: (id: string) => boolean;
 }
 
 const RoutinesList: React.FC<RoutinesListProps> = ({ 
@@ -21,7 +24,9 @@ const RoutinesList: React.FC<RoutinesListProps> = ({
   isLoading, 
   onRetry,
   error,
-  hasAttemptedLoad
+  hasAttemptedLoad,
+  onDeleteRoutine,
+  isDeletingItem
 }) => {
   const navigate = useNavigate();
   
@@ -65,13 +70,20 @@ const RoutinesList: React.FC<RoutinesListProps> = ({
   return (
     <>
       {routines.map(routine => (
-        <RoutineCard 
+        <RoutineContextMenu
           key={routine.id}
-          id={routine.id}
-          name={routine.name}
-          exercisesCount={routine.exercises_count || 0}
-          lastUsedAt={routine.last_used_at}
-        />
+          routineId={routine.id}
+          routineName={routine.name}
+          onDeleteRoutine={onDeleteRoutine}
+        >
+          <RoutineCard 
+            id={routine.id}
+            name={routine.name}
+            exercisesCount={routine.exercises_count || 0}
+            lastUsedAt={routine.last_used_at}
+            isDeleting={isDeletingItem(routine.id)}
+          />
+        </RoutineContextMenu>
       ))}
     </>
   );
