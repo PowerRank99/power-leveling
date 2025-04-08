@@ -1,65 +1,90 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { WorkoutExercise } from '@/types/workout';
-import { useUpdateSet } from './useUpdateSet';
 import { useAddSet } from './useAddSet';
 import { useRemoveSet } from './useRemoveSet';
+import { useUpdateSet } from './useUpdateSet';
 
 export const useWorkoutSetsManagement = (
-  workoutId: string | null, 
-  initialExercises: WorkoutExercise[], 
+  workoutId: string | null,
+  initialExercises: WorkoutExercise[],
   currentExerciseIndex: number
 ) => {
   const [exercises, setExercises] = useState<WorkoutExercise[]>(initialExercises);
-  const { updateSet: updateSetHook } = useUpdateSet(workoutId);
-  const { addSet: addSetHook } = useAddSet(workoutId);
-  const { removeSet: removeSetHook } = useRemoveSet(workoutId);
   
-  // Update exercises state whenever props change
-  if (JSON.stringify(exercises) !== JSON.stringify(initialExercises)) {
+  // Update local state when props change
+  useEffect(() => {
     setExercises(initialExercises);
-  }
+  }, [initialExercises]);
   
-  const updateSet = useCallback(async (setIndex: number, data: { weight?: string; reps?: string; completed?: boolean }) => {
-    console.log(`Updating set ${setIndex} for exercise ${currentExerciseIndex}`, data);
-    
-    const updatedExercises = await updateSetHook(currentExerciseIndex, exercises, setIndex, data);
-    
-    if (updatedExercises) {
-      setExercises(updatedExercises);
-      return true;
+  const { updateSet: updateSetInDb } = useUpdateSet(workoutId);
+  const { addSet: addSetInDb } = useAddSet(workoutId);
+  const { removeSet: removeSetInDb } = useRemoveSet(workoutId);
+  
+  const updateSet = async (
+    exerciseIndex: number,
+    setIndex: number,
+    data: { weight?: string; reps?: string; completed?: boolean }
+  ) => {
+    try {
+      console.log(`Updating set ${setIndex} for exercise index ${exerciseIndex} with data:`, data);
+      const result = await updateSetInDb(exerciseIndex, exercises, setIndex, data);
+      if (result) {
+        setExercises(result);
+        console.log("Local state updated after set update");
+        return result;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error in updateSet:", error);
+      return null;
     }
-    return false;
-  }, [workoutId, exercises, currentExerciseIndex, updateSetHook]);
+  };
   
-  const addSet = useCallback(async (routineId: string) => {
-    console.log(`Adding set for exercise ${currentExerciseIndex}`);
-    
-    const updatedExercises = await addSetHook(currentExerciseIndex, exercises, routineId);
-    
-    if (updatedExercises) {
-      setExercises(updatedExercises);
-      return true;
+  const addSet = async (exerciseIndex: number, routineId: string) => {
+    try {
+      console.log(`Adding set for exercise index ${exerciseIndex}`);
+      const result = await addSetInDb(exerciseIndex, exercises, routineId);
+      if (result) {
+        setExercises(result);
+        console.log("Local state updated after set add");
+        // Verify the sets in the updated state
+        const exerciseSets = result[exerciseIndex].sets;
+        console.log(`Updated exercise now has ${exerciseSets.length} sets with IDs:`, 
+                    exerciseSets.map(s => s.id));
+        return result;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error in addSet:", error);
+      return null;
     }
-    return false;
-  }, [workoutId, exercises, currentExerciseIndex, addSetHook]);
+  };
   
-  const removeSet = useCallback(async (setIndex: number, routineId: string) => {
-    console.log(`Removing set ${setIndex} from exercise ${currentExerciseIndex}`);
-    
-    const updatedExercises = await removeSetHook(currentExerciseIndex, exercises, setIndex, routineId);
-    
-    if (updatedExercises) {
-      setExercises(updatedExercises);
-      return true;
+  const removeSet = async (
+    exerciseIndex: number,
+    setIndex: number,
+    routineId: string
+  ) => {
+    try {
+      console.log(`Removing set ${setIndex} for exercise index ${exerciseIndex}`);
+      const result = await removeSetInDb(exerciseIndex, exercises, setIndex, routineId);
+      if (result) {
+        setExercises(result);
+        console.log("Local state updated after set remove");
+        return result;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error in removeSet:", error);
+      return null;
     }
-    return false;
-  }, [workoutId, exercises, currentExerciseIndex, removeSetHook]);
-  
+  };
+
   return {
-    exercises: exercises[currentExerciseIndex],
+    exercises,
     updateSet,
     addSet,
-    removeSet,
+    removeSet
   };
 };

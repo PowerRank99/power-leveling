@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workout';
 import { toast } from 'sonner';
@@ -49,30 +48,20 @@ export const useAddSet = (workoutId: string | null) => {
       const updatedExercises = [...exercises];
       const currentSets = updatedExercises[exerciseIndex].sets;
       const lastSet = currentSets[currentSets.length - 1];
-      const newSetsCount = currentSets.length + 1;
       
-      // Calculate next set order using consistent formula
-      const newSetOrder = exerciseIndex * 100 + currentSets.length;
+      // Calculate consistently set order - IMPORTANT: Keep this consistent across the app
+      const newSetOrder = currentSets.length; // Simple incrementing number within exercise
       console.log(`Adding new set with order ${newSetOrder} for exercise ${currentExercise.name}`);
       
       // Convert values to correct types for database
       const weightValue = lastSet ? parseFloat(lastSet.weight) || 0 : 0;
       const repsValue = lastSet ? parseInt(lastSet.reps) || 12 : 12;
       
-      // Create the temporary set object with values from last set
-      const newSetId = `new-${Date.now()}`;
-      const newSet = {
-        id: newSetId,
-        weight: lastSet?.weight || '0',
-        reps: lastSet?.reps || '12',
-        completed: false,
-        previous: lastSet?.previous || { weight: '0', reps: '12' }
-      };
-      
+      // Create the database record FIRST
       console.log(`Saving new set to database: workout=${workoutId}, exercise=${currentExercise.id}, order=${newSetOrder}, weight=${weightValue}, reps=${repsValue}`);
       
       // Add to database first to ensure persistence
-      const { data, error } = await supabase
+      const { data: newSet, error } = await supabase
         .from('workout_sets')
         .insert({
           workout_id: workoutId,
@@ -95,13 +84,18 @@ export const useAddSet = (workoutId: string | null) => {
       } 
       
       // Verify the data was properly saved
-      console.log("Successfully added new set to database with ID:", data.id);
+      console.log("Successfully added new set to database with ID:", newSet.id);
 
-      // Add to local state after confirming database write was successful
+      // Now update local state with the database-generated ID
       updatedExercises[exerciseIndex].sets.push({
-        ...newSet,
-        id: data.id // Use the real database ID
+        id: newSet.id, // Use the real database ID
+        weight: String(newSet.weight || 0),
+        reps: String(newSet.reps || 12),
+        completed: false,
+        previous: lastSet?.previous || { weight: '0', reps: '12' }
       });
+      
+      const newSetsCount = currentSets.length + 1;
       
       // Update the target_sets in routine_exercises to persist for next workouts
       const routineUpdateResult = await updateRoutineExerciseSetCount(
@@ -125,7 +119,7 @@ export const useAddSet = (workoutId: string | null) => {
       if (verificationError) {
         console.error("Error verifying sets after add:", verificationError);
       } else {
-        console.log("Current sets in database after add:", verificationData);
+        console.log(`Verification: Current sets in database after add: ${verificationData.length}`, verificationData);
       }
       
       return updatedExercises;

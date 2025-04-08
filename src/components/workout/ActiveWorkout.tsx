@@ -1,4 +1,3 @@
-
 import React from 'react';
 import ExerciseHeader from '@/components/workout/ExerciseHeader';
 import ExerciseNotes from '@/components/workout/ExerciseNotes';

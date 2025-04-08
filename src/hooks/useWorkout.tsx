@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { WorkoutExercise } from '@/types/workout';
@@ -77,16 +76,19 @@ export const useWorkout = (routineId: string) => {
     }
   }, [setupWorkout, isInitialized, isCreatingWorkout]);
   
-  // Wrapper functions to maintain the original API while using the new hooks
-  const updateSet = async (exerciseIndex: number, setIndex: number, data: { weight?: string; reps?: string; completed?: boolean }) => {
-    const result = await updateSetAction(exerciseIndex, exercises, setIndex, data);
+  const addSet = async (exerciseIndex: number) => {
+    console.log(`useWorkout.addSet called with exerciseIndex=${exerciseIndex}, routineId=${routineId}`);
+    const result = await addSetAction(exerciseIndex, exercises, routineId);
     if (result) {
+      console.log(`Set added successfully for exercise ${exerciseIndex}, updating exercises state`);
       setExercises(result);
+    } else {
+      console.error("Failed to add set, no result returned");
     }
   };
   
-  const addSet = async (exerciseIndex: number) => {
-    const result = await addSetAction(exerciseIndex, exercises, routineId);
+  const updateSet = async (exerciseIndex: number, setIndex: number, data: { weight?: string; reps?: string; completed?: boolean }) => {
+    const result = await updateSetAction(exerciseIndex, exercises, setIndex, data);
     if (result) {
       setExercises(result);
     }

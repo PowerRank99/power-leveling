@@ -33,9 +33,9 @@ export const useFetchWorkoutSets = () => {
       throw fetchSetsError;
     }
 
-    console.log(`Found ${workoutSets?.length || 0} sets for this workout:`, workoutSets);
+    console.log(`Found ${workoutSets?.length || 0} sets for this workout`);
     
-    // Log all sets to help debug persistence issues
+    // Log all sets for debug purposes
     if (workoutSets && workoutSets.length > 0) {
       console.log("Workout sets by exercise:");
       const setsByExercise = workoutSets.reduce((acc: Record<string, any[]>, set) => {
@@ -48,7 +48,10 @@ export const useFetchWorkoutSets = () => {
       Object.entries(setsByExercise).forEach(([exerciseId, sets]) => {
         console.log(`Exercise ${exerciseId}: ${sets.length} sets`);
         console.log(`Set orders: ${sets.map(s => s.set_order).join(', ')}`);
+        console.log(`Set IDs: ${sets.map(s => s.id).join(', ')}`);
       });
+    } else {
+      console.warn("No sets found for this workout!");
     }
 
     // Fetch previous workout data for the same routine to use as reference
@@ -102,7 +105,7 @@ export const useFetchWorkoutSets = () => {
               return acc;
             }, {});
             
-            // Sort sets by set_order for each exercise to ensure they're in the right order
+            // Sort sets by set_order for each exercise
             Object.keys(previousWorkoutData).forEach(exerciseId => {
               previousWorkoutData[exerciseId].sort((a, b) => a.set_order - b.set_order);
             });
@@ -167,7 +170,7 @@ export const useFetchWorkoutSets = () => {
         
         sets = Array.from({ length: setCount }).map((_, idx) => {
           const prevSet = previousExerciseData[idx] || { weight: '0', reps: '12' };
-          const setOrder = exerciseIndex * 100 + idx; // Consistent set order calculation
+          const setOrder = idx; // Simple consistent ordering
           
           console.log(`Default set ${idx} (order ${setOrder}) for ${exercise.name}: using previous [w: ${prevSet.weight}, r: ${prevSet.reps}]`);
           
