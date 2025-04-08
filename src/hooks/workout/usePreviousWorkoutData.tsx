@@ -28,7 +28,7 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
       
       try {
         setIsLoading(true);
-        console.log("Fetching previous workout data for routine:", routineId);
+        console.log("[PREVIOUS_WORKOUT] Fetching previous workout data for routine:", routineId);
         
         // 1. Get the most recent completed workout for this routine
         const { data: previousWorkout, error: workoutError } = await supabase
@@ -42,29 +42,29 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
           .single();
           
         if (workoutError) {
-          console.log("No previous workout found for routine:", routineId);
+          console.log("[PREVIOUS_WORKOUT] No previous workout found for routine:", routineId);
           return;
         }
         
         if (!previousWorkout) {
-          console.log("No previous workout found for routine:", routineId);
+          console.log("[PREVIOUS_WORKOUT] No previous workout found for routine:", routineId);
           return;
         }
         
-        console.log("Found previous workout:", previousWorkout.id);
+        console.log("[PREVIOUS_WORKOUT] Found previous workout:", previousWorkout.id);
         
         // Set previous rest timer settings if available
         if (previousWorkout && 
             previousWorkout.rest_timer_minutes !== null && 
             previousWorkout.rest_timer_seconds !== null) {
-          console.log(`Loading previous timer settings: ${previousWorkout.rest_timer_minutes}m ${previousWorkout.rest_timer_seconds}s`);
+          console.log(`[PREVIOUS_WORKOUT] Loading previous timer settings: ${previousWorkout.rest_timer_minutes}m ${previousWorkout.rest_timer_seconds}s`);
           setRestTimerSettings({
             minutes: previousWorkout.rest_timer_minutes || 1,
             seconds: previousWorkout.rest_timer_seconds || 30
           });
         }
         
-        // 2. Get all sets from the previous workout
+        // 2. Get all completed sets from the previous workout
         const { data: previousSets, error: setsError } = await supabase
           .from('workout_sets')
           .select(`
@@ -75,19 +75,20 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
             completed,
             set_order
           `)
-          .eq('workout_id', previousWorkout.id);
+          .eq('workout_id', previousWorkout.id)
+          .eq('completed', true);  // Only get completed sets for reference
           
         if (setsError) {
-          console.error("Error fetching previous workout sets:", setsError);
+          console.error("[PREVIOUS_WORKOUT] Error fetching previous workout sets:", setsError);
           return;
         }
         
         if (!previousSets || previousSets.length === 0) {
-          console.log("No sets found in previous workout");
+          console.log("[PREVIOUS_WORKOUT] No completed sets found in previous workout");
           return;
         }
         
-        console.log(`Found ${previousSets.length} sets from previous workout`);
+        console.log(`[PREVIOUS_WORKOUT] Found ${previousSets.length} completed sets from previous workout`);
         
         // 3. Group sets by exercise ID
         const groupedSets: PreviousWorkoutData = {};
@@ -112,10 +113,10 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
         });
         
         setPreviousWorkoutData(groupedSets);
-        console.log("Processed previous workout data:", Object.keys(groupedSets).length, "exercises");
-        console.log("Previous workout data details:", groupedSets);
+        console.log("[PREVIOUS_WORKOUT] Processed previous workout data:", Object.keys(groupedSets).length, "exercises");
+        console.log("[PREVIOUS_WORKOUT] Previous workout data details:", groupedSets);
       } catch (error) {
-        console.error("Error fetching previous workout data:", error);
+        console.error("[PREVIOUS_WORKOUT] Error fetching previous workout data:", error);
       } finally {
         setIsLoading(false);
       }

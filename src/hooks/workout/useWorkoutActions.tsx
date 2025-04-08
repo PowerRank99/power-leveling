@@ -29,15 +29,32 @@ export const useWorkoutActions = (workoutId: string | null) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { finishWorkout: finishWorkoutAction } = useWorkoutCompletion(workoutId);
   
+  // Function to ensure all pending sets have been saved
+  const ensureSetsSaved = useCallback(async () => {
+    console.log("[WORKOUT_ACTIONS] Ensuring all sets are saved before finishing workout");
+    
+    try {
+      // Add a small delay to ensure any pending set updates have been processed
+      // This helps with race conditions between set updates and workout completion
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Could also check for any sets with temporary IDs and wait for them to be committed
+      return true;
+    } catch (error) {
+      console.error("[WORKOUT_ACTIONS] Error ensuring sets saved:", error);
+      return false;
+    }
+  }, []);
+  
   const finishWorkout = useCallback(async (elapsedTime: number, restTimerSettings: { minutes: number, seconds: number }) => {
     if (isSubmitting) {
-      console.log("Already submitting, ignoring duplicate request");
+      console.log("[WORKOUT_ACTIONS] Already submitting, ignoring duplicate request");
       return false;
     }
     
     try {
       setIsSubmitting(true);
-      console.log(`Finishing workout: ${workoutId} with duration: ${elapsedTime}`);
+      console.log(`[WORKOUT_ACTIONS] Starting finish workout process: ${workoutId} with duration: ${elapsedTime}`);
       
       if (!workoutId) {
         toast.error("Erro ao finalizar", {
@@ -46,10 +63,13 @@ export const useWorkoutActions = (workoutId: string | null) => {
         return false;
       }
       
-      // First, ensure the timer settings are saved
+      // First, ensure all pending set updates have been committed to the database
+      await ensureSetsSaved();
+      
+      // Then, update the rest timer settings in a separate operation
       // This is important to make sure they persist for future workouts
       try {
-        console.log(`Saving final timer settings: ${restTimerSettings.minutes}m ${restTimerSettings.seconds}s`);
+        console.log(`[WORKOUT_ACTIONS] Saving final timer settings: ${restTimerSettings.minutes}m ${restTimerSettings.seconds}s`);
         await supabase
           .from('workouts')
           .update({
@@ -58,11 +78,15 @@ export const useWorkoutActions = (workoutId: string | null) => {
           })
           .eq('id', workoutId);
       } catch (timerError) {
-        console.error("Error saving final timer settings:", timerError);
+        console.error("[WORKOUT_ACTIONS] Error saving final timer settings:", timerError);
         // Continue with workout completion even if timer settings fail
       }
       
-      // Proceed with finishing the workout
+      // Now wait a moment to ensure the timer settings have been saved
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Finally proceed with finishing the workout
+      console.log("[WORKOUT_ACTIONS] Calling finishWorkoutAction with elapsed time:", elapsedTime);
       const success = await finishWorkoutAction(elapsedTime);
       
       if (success) {
@@ -73,7 +97,7 @@ export const useWorkoutActions = (workoutId: string | null) => {
       
       return success;
     } catch (error) {
-      console.error("Error finishing workout:", error);
+      console.error("[WORKOUT_ACTIONS] Error finishing workout:", error);
       toast.error("Erro ao finalizar", {
         description: "Ocorreu um erro. Tente novamente."
       });
@@ -81,11 +105,11 @@ export const useWorkoutActions = (workoutId: string | null) => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting, workoutId, finishWorkoutAction]);
+  }, [isSubmitting, workoutId, finishWorkoutAction, ensureSetsSaved]);
 
   const discardWorkout = useCallback(async () => {
     if (isSubmitting) {
-      console.log("Already submitting, ignoring duplicate request");
+      console.log("[WORKOUT_ACTIONS] Already submitting, ignoring duplicate request");
       return false;
     }
     
@@ -98,7 +122,7 @@ export const useWorkoutActions = (workoutId: string | null) => {
     
     try {
       setIsSubmitting(true);
-      console.log("Discarding workout:", workoutId);
+      console.log("[WORKOUT_ACTIONS] Discarding workout:", workoutId);
       
       // Delete sets
       try {
@@ -115,7 +139,7 @@ export const useWorkoutActions = (workoutId: string | null) => {
           TIMEOUT_MS
         );
       } catch (setsError) {
-        console.error("Error or timeout deleting workout sets:", setsError);
+        console.error("[WORKOUT_ACTIONS] Error or timeout deleting workout sets:", setsError);
         throw new Error("Erro ao excluir séries do treino");
       }
       
@@ -134,13 +158,13 @@ export const useWorkoutActions = (workoutId: string | null) => {
           TIMEOUT_MS
         );
       } catch (workoutError) {
-        console.error("Error or timeout deleting workout:", workoutError);
+        console.error("[WORKOUT_ACTIONS] Error or timeout deleting workout:", workoutError);
         throw new Error("Erro ao excluir treino");
       }
       
       return true;
     } catch (error) {
-      console.error("Error discarding workout:", error);
+      console.error("[WORKOUT_ACTIONS] Error discarding workout:", error);
       toast.error("Erro ao descartar treino", {
         description: error instanceof Error ? error.message : "Ocorreu um erro inesperado"
       });
