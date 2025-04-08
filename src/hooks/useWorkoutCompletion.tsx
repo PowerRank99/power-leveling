@@ -29,7 +29,7 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
       toast.error("Erro ao finalizar", {
         description: "ID do treino não encontrado"
       });
-      return false;
+      return { success: false, error: "ID do treino não encontrado" };
     }
     
     try {
@@ -58,7 +58,7 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
       
       if (workoutData?.completed_at) {
         console.log("Workout already completed, skipping update");
-        return true; // Workout already completed, return success
+        return { success: true, error: null }; // Workout already completed, return success
       }
       
       // Update workout with completion status
@@ -78,18 +78,18 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
           },
           TIMEOUT_MS
         );
+        
+        return { success: true, error: null };
       } catch (updateError) {
         console.error("Error or timeout finishing workout:", updateError);
         throw new Error("Não foi possível salvar o treino finalizado");
       }
-      
-      return true;
     } catch (error: any) {
       console.error("Error finishing workout:", error);
       toast.error("Erro ao finalizar treino", {
         description: error.message || "Ocorreu um erro ao salvar seu treino"
       });
-      return false;
+      return { success: false, error: error.message || "Unknown error" };
     }
   };
   

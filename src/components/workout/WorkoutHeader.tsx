@@ -44,6 +44,7 @@ const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
             size="icon"
             className="mr-2"
             title="Back"
+            disabled={isFinishing}
           >
             <ArrowLeft className="w-6 h-6" />
           </Button>
@@ -55,8 +56,9 @@ const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
             variant="ghost"
             size="icon"
             className="mr-2 text-red-500"
-            title="Discard workout"
+            title="Descartar treino"
             onClick={handleDiscardClick}
+            disabled={isFinishing}
           >
             <Trash2 className="w-6 h-6" />
           </Button>
@@ -66,6 +68,7 @@ const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
             size="icon"
             className="mr-2"
             title="Timer"
+            disabled={isFinishing}
           >
             <Clock className="w-6 h-6" />
           </Button>
@@ -75,7 +78,14 @@ const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
             onClick={onFinish}
             disabled={isFinishing}
           >
-            {isFinishing ? "Finalizando..." : "Finish"}
+            {isFinishing ? (
+              <div className="flex items-center">
+                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                <span>Finalizando...</span>
+              </div>
+            ) : (
+              "Finalizar"
+            )}
           </Button>
         </div>
       </div>
@@ -89,11 +99,26 @@ const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex justify-between sm:justify-between">
-            <Button variant="outline" onClick={() => setShowDiscardDialog(false)}>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowDiscardDialog(false)}
+              disabled={isFinishing}
+            >
               Cancelar
             </Button>
-            <Button variant="destructive" onClick={handleConfirmDiscard}>
-              Descartar
+            <Button 
+              variant="destructive" 
+              onClick={handleConfirmDiscard}
+              disabled={isFinishing}
+            >
+              {isFinishing ? (
+                <div className="flex items-center">
+                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                  <span>Processando...</span>
+                </div>
+              ) : (
+                "Descartar"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

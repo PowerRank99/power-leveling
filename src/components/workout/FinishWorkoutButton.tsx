@@ -15,10 +15,10 @@ const FinishWorkoutButton: React.FC<FinishWorkoutButtonProps> = ({ onFinish, isF
       disabled={isFinishing}
     >
       {isFinishing ? (
-        <>
+        <div className="flex items-center justify-center">
           <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-          Finalizando...
-        </>
+          <span>Finalizando...</span>
+        </div>
       ) : (
         "Finalizar Treino"
       )}

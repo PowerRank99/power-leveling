@@ -47,38 +47,48 @@ export const useWorkoutActions = (workoutId: string | null) => {
       }
       
       // First, ensure the timer settings are saved
-      // This is important to make sure they persist for future workouts
       try {
         console.log(`Saving final timer settings: ${restTimerSettings.minutes}m ${restTimerSettings.seconds}s`);
-        await supabase
+        const { error: timerError } = await supabase
           .from('workouts')
           .update({
             rest_timer_minutes: restTimerSettings.minutes,
             rest_timer_seconds: restTimerSettings.seconds
           })
           .eq('id', workoutId);
+          
+        if (timerError) {
+          console.error("Error saving timer settings:", timerError);
+          // Continue with workout completion even if timer settings fail
+        }
       } catch (timerError) {
-        console.error("Error saving final timer settings:", timerError);
+        console.error("Exception saving timer settings:", timerError);
         // Continue with workout completion even if timer settings fail
       }
       
       // Proceed with finishing the workout
-      const success = await finishWorkoutAction(elapsedTime);
+      const { success, error } = await finishWorkoutAction(elapsedTime);
       
       if (success) {
         toast.success("Treino finalizado!", {
           description: "Seu treino foi salvo com sucesso."
         });
+      } else {
+        console.error("Error from finishWorkoutAction:", error);
+        toast.error("Erro ao finalizar", {
+          description: error || "Ocorreu um erro. Tente novamente."
+        });
       }
       
       return success;
     } catch (error) {
-      console.error("Error finishing workout:", error);
+      console.error("Exception in finishWorkout:", error);
       toast.error("Erro ao finalizar", {
-        description: "Ocorreu um erro. Tente novamente."
+        description: error instanceof Error ? error.message : "Ocorreu um erro. Tente novamente."
       });
       return false;
     } finally {
+      // Always ensure isSubmitting is reset to false
       setIsSubmitting(false);
     }
   }, [isSubmitting, workoutId, finishWorkoutAction]);
@@ -146,6 +156,7 @@ export const useWorkoutActions = (workoutId: string | null) => {
       });
       return false;
     } finally {
+      // Always ensure isSubmitting is reset to false
       setIsSubmitting(false);
     }
   }, [isSubmitting, workoutId]);

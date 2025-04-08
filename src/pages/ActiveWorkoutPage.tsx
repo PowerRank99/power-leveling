@@ -21,6 +21,7 @@ const ActiveWorkoutPage = () => {
   const { id } = useParams<{ id: string }>();
   const { toast: uiToast } = useToast();
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [isLocalSubmitting, setIsLocalSubmitting] = useState(false);
   
   const {
     isLoading,
@@ -79,7 +80,11 @@ const ActiveWorkoutPage = () => {
   
   const handleFinishWorkout = async () => {
     try {
+      setIsLocalSubmitting(true);
+      console.log("Starting workout finish process...");
       const success = await finishWorkout();
+      console.log("Finish workout result:", success);
+      
       if (success) {
         toast.success("Treino Completo!", {
           description: "Seu treino foi salvo com sucesso.",
@@ -95,12 +100,18 @@ const ActiveWorkoutPage = () => {
       toast.error("Erro ao finalizar treino", {
         description: "Ocorreu um erro ao salvar seu treino.",
       });
+    } finally {
+      setIsLocalSubmitting(false);
     }
   };
 
   const handleDiscardWorkout = async () => {
     try {
+      setIsLocalSubmitting(true);
+      console.log("Starting workout discard process...");
       const success = await discardWorkout();
+      console.log("Discard workout result:", success);
+      
       if (success) {
         toast.info("Treino descartado", {
           description: "O treino foi descartado com sucesso.",
@@ -116,6 +127,8 @@ const ActiveWorkoutPage = () => {
       toast.error("Erro ao descartar treino", {
         description: "Não foi possível descartar o treino.",
       });
+    } finally {
+      setIsLocalSubmitting(false);
     }
   };
   
@@ -139,7 +152,7 @@ const ActiveWorkoutPage = () => {
       <WorkoutHeader 
         onFinish={handleFinishWorkout}
         onDiscard={handleDiscardWorkout}
-        isFinishing={isSubmitting}
+        isFinishing={isSubmitting || isLocalSubmitting}
         elapsedTime={formatTime(elapsedTime)}
       />
       
@@ -175,7 +188,7 @@ const ActiveWorkoutPage = () => {
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-gray-50 border-t border-gray-200">
         <FinishWorkoutButton 
           onFinish={handleFinishWorkout}
-          isFinishing={isSubmitting}
+          isFinishing={isSubmitting || isLocalSubmitting}
         />
       </div>
     </div>
