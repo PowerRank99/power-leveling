@@ -5,9 +5,15 @@ interface InputFieldProps {
   value: string;
   onChange: (value: string) => void;
   inputMode: 'decimal' | 'numeric';
+  disabled?: boolean;  // Added disabled prop to fix build error
 }
 
-const InputField: React.FC<InputFieldProps> = ({ value, onChange, inputMode }) => {
+const InputField: React.FC<InputFieldProps> = ({ 
+  value, 
+  onChange, 
+  inputMode, 
+  disabled = false  // Set default to false
+}) => {
   const [localValue, setLocalValue] = useState(value);
   const lastUserEditRef = useRef<number | null>(null);
   const isFirstRenderRef = useRef(true);
@@ -52,6 +58,7 @@ const InputField: React.FC<InputFieldProps> = ({ value, onChange, inputMode }) =
       className="w-full border border-gray-200 rounded p-2 text-center"
       value={localValue}
       onChange={handleChange}
+      disabled={disabled}  // Added disabled attribute to use the prop
     />
   );
 };
