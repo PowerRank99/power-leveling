@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
+import { useLocation } from 'react-router-dom';
 
 export interface Routine {
   id: string;
@@ -24,9 +25,16 @@ export interface RecentWorkout {
 export const useWorkoutData = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const location = useLocation();
   const [savedRoutines, setSavedRoutines] = useState<Routine[]>([]);
   const [recentWorkouts, setRecentWorkouts] = useState<RecentWorkout[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState<number>(Date.now());
+  
+  // Function to force a refresh
+  const refreshData = () => {
+    setLastRefresh(Date.now());
+  };
   
   useEffect(() => {
     const fetchUserRoutines = async () => {
@@ -66,7 +74,7 @@ export const useWorkoutData = () => {
           .select('id, started_at, completed_at, duration_seconds, routine_id')
           .eq('user_id', user.id)
           .not('completed_at', 'is', null) // Only get completed workouts
-          .order('started_at', { ascending: false })
+          .order('completed_at', { ascending: false }) // Order by completed_at instead of started_at
           .limit(5);
         
         if (workoutsError) throw workoutsError;
@@ -108,7 +116,7 @@ export const useWorkoutData = () => {
             return {
               id: workout.id,
               name: routineName,
-              date: new Date(workout.started_at).toLocaleDateString('pt-BR'),
+              date: new Date(workout.completed_at || workout.started_at).toLocaleDateString('pt-BR'),
               exercises_count: uniqueExercises.size,
               sets_count: setsCount || 0,
               prs: 0,
@@ -117,6 +125,8 @@ export const useWorkoutData = () => {
           }));
           
           setRecentWorkouts(workoutsWithDetails);
+        } else {
+          setRecentWorkouts([]);
         }
       } catch (error) {
         console.error('Error fetching workout data:', error);
@@ -131,11 +141,12 @@ export const useWorkoutData = () => {
     };
     
     fetchUserRoutines();
-  }, [user, toast]);
+  }, [user, toast, location.pathname, lastRefresh]); // Added location.pathname and lastRefresh as dependencies
 
   return {
     savedRoutines,
     recentWorkouts,
-    isLoading
+    isLoading,
+    refreshData
   };
 };
