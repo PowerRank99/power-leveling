@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import RestTimer from '@/components/workout/RestTimer';
 import ExerciseHeader from '@/components/workout/ExerciseHeader';
@@ -47,7 +46,7 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
   initialRestTimer = { minutes: 1, seconds: 30 },
   onRestTimerChange
 }) => {
-  const [showRestTimer, setShowRestTimer] = useState(false);
+  const [showDetailedTimer, setShowDetailedTimer] = useState(false);
   const [restTimeMinutes, setRestTimeMinutes] = useState(initialRestTimer.minutes);
   const [restTimeSeconds, setRestTimeSeconds] = useState(initialRestTimer.seconds);
   const [autoStartTimer, setAutoStartTimer] = useState(false);
@@ -62,14 +61,14 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
 
   const handleSetCompletion = (index: number) => {
     onCompleteSet(index);
-    // Show and auto-start rest timer when completing a set
-    setShowRestTimer(true);
+    // Auto-start rest timer when completing a set
+    setShowDetailedTimer(true);
     setAutoStartTimer(true);
   };
 
   const handleRestComplete = () => {
-    // Hide timer when rest is complete
-    setShowRestTimer(false);
+    // Hide detailed timer when rest is complete but keep the timer visible
+    setShowDetailedTimer(false);
     setAutoStartTimer(false);
   };
   
@@ -87,8 +86,8 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
       <ExerciseHeader exerciseName={exerciseName} />
       <ExerciseNotes notes={notes} onChange={onNotesChange} />
 
-      {showRestTimer ? (
-        <div className="mb-6">
+      <div className="mb-6">
+        {showDetailedTimer ? (
           <RestTimer 
             minutes={restTimeMinutes} 
             seconds={restTimeSeconds} 
@@ -96,14 +95,14 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
             onTimerChange={handleTimerChange}
             autoStart={autoStartTimer}
           />
-        </div>
-      ) : (
-        <RestTimerToggle 
-          minutes={restTimeMinutes} 
-          seconds={restTimeSeconds} 
-          onShowTimer={() => setShowRestTimer(true)} 
-        />
-      )}
+        ) : (
+          <RestTimerToggle 
+            minutes={restTimeMinutes} 
+            seconds={restTimeSeconds} 
+            onShowTimer={() => setShowDetailedTimer(true)} 
+          />
+        )}
+      </div>
 
       <div className="mb-6">
         <SetHeader />

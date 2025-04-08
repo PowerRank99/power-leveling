@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Clock, ChevronDown } from 'lucide-react';
+import { Clock } from 'lucide-react';
 
 interface RestTimerToggleProps {
   minutes: number;
@@ -23,7 +23,9 @@ const RestTimerToggle: React.FC<RestTimerToggleProps> = ({
         <Clock className="mr-2 h-5 w-5" />
         Rest Timer: {minutes}min {seconds}s
       </div>
-      <ChevronDown className="h-5 w-5" />
+      <div className="bg-blue-100 rounded-full p-1">
+        <Clock className="h-4 w-4" />
+      </div>
     </button>
   );
 };
