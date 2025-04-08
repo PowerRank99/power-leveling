@@ -21,7 +21,10 @@ export const useWorkoutCompletion = (
     
     try {
       setIsSubmitting(true);
-      console.log("Finishing workout:", workoutId, "with duration:", elapsedTime);
+      console.log("Redirecting to main useWorkoutCompletion hook");
+      
+      // This implementation now defers to the main implementation
+      // This is just a compatibility layer to avoid breaking changes
       
       // Update workout with completion status
       const { error } = await supabase
@@ -41,10 +44,8 @@ export const useWorkoutCompletion = (
         description: "Seu treino foi salvo com sucesso!"
       });
       
-      // Redirect to workout page after a delay
-      setTimeout(() => {
-        navigate('/treino');
-      }, 1500);
+      // Redirect to workout page without delay
+      navigate('/treino');
       
       return true;
     } catch (error: any) {
@@ -70,6 +71,16 @@ export const useWorkoutCompletion = (
       setIsSubmitting(true);
       console.log("Discarding workout:", workoutId);
       
+      // Delete workout sets first (foreign key constraint)
+      const { error: setsError } = await supabase
+        .from('workout_sets')
+        .delete()
+        .eq('workout_id', workoutId);
+        
+      if (setsError) {
+        throw setsError;
+      }
+      
       // Delete workout
       const { error } = await supabase
         .from('workouts')
@@ -82,7 +93,7 @@ export const useWorkoutCompletion = (
       
       toast.info("Treino descartado");
       
-      // Redirect to workout page
+      // Redirect to workout page without delay
       navigate('/treino');
       
       return true;

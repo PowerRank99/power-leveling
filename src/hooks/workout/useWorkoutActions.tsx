@@ -13,7 +13,7 @@ export const useWorkoutActions = (
   navigate: NavigateFunction
 ) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { finishWorkout: finishWorkoutAction } = useWorkoutCompletion(workoutId);
+  const { finishWorkout: finishWorkoutAction, discardWorkout: discardWorkoutAction } = useWorkoutCompletion(workoutId);
   
   const finishWorkout = async () => {
     if (isSubmitting) return false;
@@ -29,10 +29,7 @@ export const useWorkoutActions = (
         });
         
         // Navigate to workout summary page
-        setTimeout(() => {
-          navigate('/treino');
-        }, 1500);
-        
+        navigate('/treino');
         return true;
       } else {
         throw new Error("Não foi possível finalizar o treino.");
@@ -49,17 +46,32 @@ export const useWorkoutActions = (
   };
   
   const discardWorkout = async () => {
+    if (isSubmitting) return false;
+    
     try {
+      setIsSubmitting(true);
       console.log("Discarding workout with ID:", workoutId);
-      toast.success("Treino descartado", {
-        description: "Você foi redirecionado para a página inicial."
-      });
       
-      navigate('/treino');
-      return true;
-    } catch (error) {
+      const success = await discardWorkoutAction();
+      if (success) {
+        toast.success("Treino descartado", {
+          description: "Você foi redirecionado para a página inicial."
+        });
+        
+        // Navigate directly without timeout
+        navigate('/treino');
+        return true;
+      } else {
+        throw new Error("Não foi possível descartar o treino.");
+      }
+    } catch (error: any) {
       console.error("Error discarding workout:", error);
+      toast.error("Erro ao descartar treino", {
+        description: error.message || "Ocorreu um erro ao descartar seu treino"
+      });
       return false;
+    } finally {
+      setIsSubmitting(false);
     }
   };
   

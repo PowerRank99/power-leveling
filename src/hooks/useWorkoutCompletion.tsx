@@ -92,8 +92,59 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
       return false;
     }
   };
+
+  const discardWorkout = async () => {
+    if (!workoutId) {
+      toast.error("Erro ao descartar", {
+        description: "ID do treino não encontrado"
+      });
+      return false;
+    }
+    
+    try {
+      console.log("Discarding workout:", workoutId);
+      
+      // Delete workout and related sets in a single operation
+      try {
+        await withTimeout(
+          async () => {
+            // Delete all sets first (due to foreign key constraints)
+            const { error: setsError } = await supabase
+              .from('workout_sets')
+              .delete()
+              .eq('workout_id', workoutId);
+              
+            if (setsError) throw setsError;
+            
+            // Then delete the workout itself
+            const { error: workoutError } = await supabase
+              .from('workouts')
+              .delete()
+              .eq('id', workoutId);
+              
+            if (workoutError) throw workoutError;
+            
+            return true;
+          },
+          TIMEOUT_MS
+        );
+      } catch (deleteError) {
+        console.error("Error or timeout discarding workout:", deleteError);
+        throw new Error("Não foi possível descartar o treino");
+      }
+      
+      return true;
+    } catch (error: any) {
+      console.error("Error discarding workout:", error);
+      toast.error("Erro ao descartar treino", {
+        description: error.message || "Ocorreu um erro ao descartar seu treino"
+      });
+      return false;
+    }
+  };
   
   return {
-    finishWorkout
+    finishWorkout,
+    discardWorkout
   };
 };

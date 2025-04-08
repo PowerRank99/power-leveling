@@ -30,9 +30,10 @@ const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
     setShowDiscardDialog(true);
   };
 
-  const handleConfirmDiscard = () => {
+  const handleConfirmDiscard = async () => {
     setShowDiscardDialog(false);
-    onDiscard();
+    // Call the discard function without wrapping it in another timeout
+    await onDiscard();
   };
 
   return (
@@ -57,6 +58,7 @@ const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
             className="mr-2 text-red-500"
             title="Discard workout"
             onClick={handleDiscardClick}
+            disabled={isFinishing}
           >
             <Trash2 className="w-6 h-6" />
           </Button>
@@ -75,7 +77,7 @@ const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
             onClick={onFinish}
             disabled={isFinishing}
           >
-            {isFinishing ? "Finalizando..." : "Finish"}
+            {isFinishing ? "Finalizando..." : "Finalizar"}
           </Button>
         </div>
       </div>
@@ -92,7 +94,11 @@ const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
             <Button variant="outline" onClick={() => setShowDiscardDialog(false)}>
               Cancelar
             </Button>
-            <Button variant="destructive" onClick={handleConfirmDiscard}>
+            <Button 
+              variant="destructive" 
+              onClick={handleConfirmDiscard}
+              disabled={isFinishing}
+            >
               Descartar
             </Button>
           </DialogFooter>
