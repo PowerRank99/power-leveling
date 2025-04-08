@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ExerciseHistory } from '@/types/workoutTypes';
@@ -75,7 +74,9 @@ export class ExerciseHistoryService {
   }
   
   /**
-   * Update exercise history after completing sets
+   * Update exercise history based on workout data
+   * This is a critical method that ensures consistency between routine_exercises.target_sets
+   * and exercise_history.sets
    */
   static async updateExerciseHistory(
     exerciseId: string,
@@ -105,17 +106,22 @@ export class ExerciseHistoryService {
         .eq('user_id', userId)
         .single();
       
-      // Make sure we're not decreasing the set count
-      // Use the maximum between the current sets and existing sets (if any)
+      // Make sure we're not decreasing the set count unintentionally
+      // Only update the set count if it's higher than existing or if no existing record
       const finalSets = existingHistory ? Math.max(sets, existingHistory.sets) : sets;
+      
+      // Also make sure we're capturing the highest weight used (not just the latest)
+      const finalWeight = existingHistory ? Math.max(weight, existingHistory.weight) : weight;
+      
+      // For reps, we'll just use the provided value as it represents the current exercise setting
       
       const { data, error } = await supabase
         .from('exercise_history')
         .upsert({
           user_id: userId,
           exercise_id: exerciseId,
-          weight,
-          reps,
+          weight: finalWeight,
+          reps: reps,
           sets: finalSets,
           last_used_at: new Date().toISOString()
         }, {

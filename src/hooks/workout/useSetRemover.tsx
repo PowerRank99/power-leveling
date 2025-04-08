@@ -58,13 +58,18 @@ export function useSetRemover(workoutId: string | null) {
       
       // Update the routine exercise set count for persistence in future workouts
       if (routineId) {
-        console.log(`[useSetRemover] Updating routine ${routineId} exercise ${currentExercise.id} target sets to ${currentExercise.sets.length - 1}`);
+        const newSetCount = currentExercise.sets.length - 1;
+        console.log(`[useSetRemover] Updating routine ${routineId} exercise ${currentExercise.id} target sets to ${newSetCount}`);
         
         await SetService.updateRoutineExerciseSetsCount(
           routineId,
           currentExercise.id,
-          currentExercise.sets.length - 1
+          newSetCount
         );
+        
+        // Note: We don't update exercise history here anymore
+        // History will be comprehensively updated when the workout is completed
+        console.log(`[useSetRemover] Set removed but deferring history update until workout completion`);
       } else {
         console.warn("[useSetRemover] No routineId provided, cannot update target_sets in routine_exercises");
       }

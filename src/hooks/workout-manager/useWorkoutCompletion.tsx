@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -16,93 +15,113 @@ export const useWorkoutCompletion = (
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   /**
-   * Saves exercise history based on completed workout data
+   * Saves exercise history based on workout data, accounting for all sets
+   * This is the primary method for updating exercise history
    */
   const saveExerciseHistory = async (workoutId: string) => {
     try {
-      // Get all completed sets from this workout
-      const { data: completedSets, error } = await supabase
-        .from('workout_sets')
-        .select('exercise_id, weight, reps, completed')
-        .eq('workout_id', workoutId)
-        .eq('completed', true);
-
-      if (error || !completedSets) {
-        console.error("Error fetching completed sets:", error);
-        return;
-      }
-
-      // Group and analyze sets by exercise
-      const exerciseMap: Record<string, { maxWeight: number, avgReps: number, setCount: number, completedCount: number }> = {};
-
-      // First get all exercises with their total set counts
+      console.log("[useWorkoutCompletion] Saving comprehensive exercise history");
+      
+      // First, get all sets from this workout (both completed and non-completed)
       const { data: allSets, error: allSetsError } = await supabase
         .from('workout_sets')
-        .select('exercise_id')
-        .eq('workout_id', workoutId);
+        .select('exercise_id, weight, reps, completed, set_order')
+        .eq('workout_id', workoutId)
+        .order('exercise_id, set_order');
         
-      if (allSetsError) {
-        console.error("Error fetching all sets:", allSetsError);
-      } else if (allSets) {
-        // Count all sets per exercise
-        allSets.forEach(set => {
-          if (!set.exercise_id) return;
-          
-          if (!exerciseMap[set.exercise_id]) {
-            exerciseMap[set.exercise_id] = {
-              maxWeight: 0,
-              avgReps: 0,
-              setCount: 0,
-              completedCount: 0
-            };
-          }
-          
-          exerciseMap[set.exercise_id].setCount++;
-        });
+      if (allSetsError || !allSets) {
+        console.error("Error fetching all workout sets:", allSetsError);
+        return;
       }
-
-      // Now process completed sets
-      completedSets.forEach(set => {
+      
+      console.log(`[useWorkoutCompletion] Processing ${allSets.length} sets for history update`);
+      
+      // Group sets by exercise
+      const exerciseMap: Record<string, { 
+        maxWeight: number, 
+        typicalReps: number, 
+        totalSets: number,
+        completedSets: number,
+        weights: number[],
+        reps: number[]
+      }> = {};
+      
+      // Process all sets to build a complete picture
+      allSets.forEach(set => {
         if (!set.exercise_id) return;
         
         if (!exerciseMap[set.exercise_id]) {
           exerciseMap[set.exercise_id] = {
             maxWeight: 0,
-            avgReps: 0,
-            setCount: 1,  // Default to 1 if we couldn't get the total count
-            completedCount: 0
+            typicalReps: 0,
+            totalSets: 0,
+            completedSets: 0,
+            weights: [],
+            reps: []
           };
         }
         
         const record = exerciseMap[set.exercise_id];
+        record.totalSets++;
         
-        // Track max weight
-        if (set.weight && set.weight > record.maxWeight) {
-          record.maxWeight = Number(set.weight);
+        // Track the weight and reps, even for non-completed sets
+        if (set.weight) {
+          record.weights.push(Number(set.weight));
+          // Keep track of max weight regardless of completion status
+          if (Number(set.weight) > record.maxWeight) {
+            record.maxWeight = Number(set.weight);
+          }
         }
         
-        // Sum reps for average calculation
-        record.avgReps += Number(set.reps || 0);
-        record.completedCount++;
+        if (set.reps) {
+          record.reps.push(Number(set.reps));
+        }
+        
+        // Count completed sets separately
+        if (set.completed) {
+          record.completedSets++;
+        }
       });
       
       // Process and save history for each exercise
       for (const [exerciseId, data] of Object.entries(exerciseMap)) {
-        if (data.completedCount === 0) continue;
+        // Calculate typical reps based on the mode (most common value)
+        // or average if no mode is obvious
+        let typicalReps = 12; // Default
         
-        const avgReps = Math.round(data.avgReps / data.completedCount);
+        if (data.reps.length > 0) {
+          // Find the mode (most common reps value)
+          const repsCount: Record<number, number> = {};
+          let maxCount = 0;
+          let modeReps = 0;
+          
+          data.reps.forEach(rep => {
+            repsCount[rep] = (repsCount[rep] || 0) + 1;
+            if (repsCount[rep] > maxCount) {
+              maxCount = repsCount[rep];
+              modeReps = rep;
+            }
+          });
+          
+          typicalReps = modeReps || Math.round(data.reps.reduce((sum, rep) => sum + rep, 0) / data.reps.length);
+        }
         
+        console.log(`[useWorkoutCompletion] Updating history for exercise ${exerciseId}:`, {
+          maxWeight: data.maxWeight,
+          typicalReps,
+          totalSets: data.totalSets
+        });
+        
+        // Update the exercise history using our comprehensive data
         await ExerciseHistoryService.updateExerciseHistory(
           exerciseId,
           data.maxWeight,
-          avgReps,
-          data.setCount  // Use the total set count, not just completed sets
+          typicalReps,
+          data.totalSets // Use the total set count, not just completed sets
         );
-        
-        console.log(`Exercise history updated for ${exerciseId}: weight=${data.maxWeight}, reps=${avgReps}, sets=${data.setCount}`);
       }
     } catch (error) {
-      console.error("Error saving exercise history:", error);
+      console.error("[useWorkoutCompletion] Error saving exercise history:", error);
     }
   };
 
@@ -132,7 +151,7 @@ export const useWorkoutCompletion = (
         throw updateError;
       }
       
-      // Save exercise history based on the completed workout
+      // Save comprehensive exercise history based on all sets
       await saveExerciseHistory(workoutId);
       
       toast.success("Treino finalizado", {

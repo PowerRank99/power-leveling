@@ -2,7 +2,6 @@
 import { WorkoutExercise, SetData } from '@/types/workoutTypes';
 import { SetService } from '@/services/SetService';
 import { useSetOperations } from './useSetOperations';
-import { ExerciseHistoryService } from '@/services/ExerciseHistoryService';
 
 /**
  * Hook for updating workout sets
@@ -71,15 +70,8 @@ export function useSetUpdater(workoutId: string | null) {
           set_order: setIndex
         };
         
-        // If this is a completed set, update exercise history with the CURRENT NUMBER OF SETS
-        if (completedValue) {
-          await ExerciseHistoryService.updateExerciseHistory(
-            currentExercise.id,
-            weightValue,
-            repsValue,
-            currentExercise.sets.length // Use the current number of sets
-          );
-        }
+        // We don't need to update exercise history immediately on set update
+        // This will be handled comprehensively during workout completion
         
         return updatedExercises;
       } 
@@ -118,18 +110,9 @@ export function useSetUpdater(workoutId: string | null) {
           ...data
         };
         
-        // If this set is being marked as completed, update exercise history
-        if (data.completed === true) {
-          const weightValue = parseFloat(currentSet.weight) || 0;
-          const repsValue = parseInt(currentSet.reps) || 0;
-          
-          await ExerciseHistoryService.updateExerciseHistory(
-            currentExercise.id,
-            weightValue,
-            repsValue,
-            currentExercise.sets.length // Use the current number of sets
-          );
-        }
+        // Don't update exercise history immediately - defer to workout completion
+        // This ensures a comprehensive update with all set data
+        console.log(`[useSetUpdater] Set updated but deferring history update until workout completion`);
         
         return updatedExercises;
       }
