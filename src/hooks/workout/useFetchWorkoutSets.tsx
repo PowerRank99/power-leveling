@@ -33,7 +33,7 @@ export const useFetchWorkoutSets = () => {
       throw fetchSetsError;
     }
 
-    console.log(`Found ${workoutSets?.length || 0} sets for this workout`);
+    console.log(`Found ${workoutSets?.length || 0} sets for this workout:`, workoutSets);
     
     // Log all sets to help debug persistence issues
     if (workoutSets && workoutSets.length > 0) {
@@ -124,7 +124,7 @@ export const useFetchWorkoutSets = () => {
         ?.filter(set => set.exercise_id === exercise.id)
         .sort((a, b) => a.set_order - b.set_order) || [];
       
-      console.log(`Exercise ${exercise.name} has ${exerciseSets.length} sets`);
+      console.log(`Exercise ${exercise.name} has ${exerciseSets.length} sets with IDs: ${exerciseSets.map(s => s.id).join(', ')}`);
       
       // Get previous workout data for this exercise
       const previousExerciseData = previousWorkoutData[exercise.id] || [];
@@ -141,13 +141,14 @@ export const useFetchWorkoutSets = () => {
         const weight = set.weight !== null && set.weight !== undefined ? set.weight.toString() : '0';
         const reps = set.reps !== null && set.reps !== undefined ? set.reps.toString() : '12';
         
-        console.log(`Set ${index} (order ${set.set_order}) for ${exercise.name}: current [w: ${weight}, r: ${reps}], previous [w: ${previousSet.weight}, r: ${previousSet.reps}]`);
+        console.log(`Set ${index} (ID: ${set.id}, order ${set.set_order}) for ${exercise.name}: current [w: ${weight}, r: ${reps}], previous [w: ${previousSet.weight}, r: ${previousSet.reps}]`);
         
         return {
           id: set.id,
           weight: weight,
           reps: reps,
           completed: set.completed || false,
+          set_order: set.set_order, // Include set_order for reference
           previous: {
             weight: previousSet.weight || '0',
             reps: previousSet.reps || '12'
@@ -166,14 +167,16 @@ export const useFetchWorkoutSets = () => {
         
         sets = Array.from({ length: setCount }).map((_, idx) => {
           const prevSet = previousExerciseData[idx] || { weight: '0', reps: '12' };
+          const setOrder = exerciseIndex * 100 + idx; // Consistent set order calculation
           
-          console.log(`Default set ${idx} for ${exercise.name}: using previous [w: ${prevSet.weight}, r: ${prevSet.reps}]`);
+          console.log(`Default set ${idx} (order ${setOrder}) for ${exercise.name}: using previous [w: ${prevSet.weight}, r: ${prevSet.reps}]`);
           
           return {
             id: `default-${exercise.id}-${idx}`,
             weight: prevSet.weight || '0',
             reps: prevSet.reps || '12',
             completed: false,
+            set_order: setOrder,
             previous: { 
               weight: prevSet.weight || '0', 
               reps: prevSet.reps || '12' 

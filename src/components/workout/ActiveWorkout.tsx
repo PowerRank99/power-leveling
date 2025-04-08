@@ -32,6 +32,7 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
   onNotesChange
 }) => {
   console.log(`ActiveWorkout render: ${exerciseName} with ${sets.length} sets`);
+  console.log(`Exercise ID: ${exerciseId}, Exercise Index: ${exerciseIndex}`);
   
   const handleWeightChange = (index: number, value: string) => {
     console.log(`Weight change for ${exerciseName}, set ${index}: ${value}`);
@@ -49,7 +50,7 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
   };
   
   const handleAddSet = () => {
-    console.log(`Adding new set to ${exerciseName}`);
+    console.log(`Adding new set to ${exerciseName} (exerciseIndex: ${exerciseIndex})`);
     onAddSet();
   };
 

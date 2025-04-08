@@ -10,4 +10,6 @@ export interface SetData {
   reps: string;
   completed: boolean;
   previous?: PreviousSetData;
+  // Set order is needed for database persistence
+  set_order?: number;
 }

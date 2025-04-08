@@ -52,8 +52,12 @@ export const useAddSet = (workoutId: string | null) => {
       const newSetsCount = currentSets.length + 1;
       
       // Calculate next set order using consistent formula
-      const newSetOrder = exerciseIndex * 100 + (currentSets.length);
+      const newSetOrder = exerciseIndex * 100 + currentSets.length;
       console.log(`Adding new set with order ${newSetOrder} for exercise ${currentExercise.name}`);
+      
+      // Convert values to correct types for database
+      const weightValue = lastSet ? parseFloat(lastSet.weight) || 0 : 0;
+      const repsValue = lastSet ? parseInt(lastSet.reps) || 12 : 12;
       
       // Create the temporary set object with values from last set
       const newSetId = `new-${Date.now()}`;
@@ -65,16 +69,9 @@ export const useAddSet = (workoutId: string | null) => {
         previous: lastSet?.previous || { weight: '0', reps: '12' }
       };
       
-      // Add to local state first for immediate UI feedback
-      updatedExercises[exerciseIndex].sets.push(newSet);
-      
-      // Convert values to correct types for database
-      const weightValue = parseFloat(newSet.weight) || 0;
-      const repsValue = parseInt(newSet.reps) || 0;
-      
       console.log(`Saving new set to database: workout=${workoutId}, exercise=${currentExercise.id}, order=${newSetOrder}, weight=${weightValue}, reps=${repsValue}`);
       
-      // Add to database with consistent set_order
+      // Add to database first to ensure persistence
       const { data, error } = await supabase
         .from('workout_sets')
         .insert({
@@ -90,20 +87,21 @@ export const useAddSet = (workoutId: string | null) => {
         
       if (error) {
         console.error("Error adding new set:", error);
+        console.error("Error details:", error.details, error.hint, error.message);
         toast.error("Erro ao adicionar série", {
-          description: "A série pode não ter sido salva corretamente"
+          description: "A série não pôde ser salva no banco de dados"
         });
-        // Remove the set from the local state since it failed to save
-        updatedExercises[exerciseIndex].sets.pop();
-        return updatedExercises;
+        return exercises; // Return original state on error
       } 
       
+      // Verify the data was properly saved
       console.log("Successfully added new set to database with ID:", data.id);
-      
-      // Update the ID in our state with the real one from the database
-      const updatedExercisesWithId = [...updatedExercises];
-      const setIndex = updatedExercisesWithId[exerciseIndex].sets.length - 1;
-      updatedExercisesWithId[exerciseIndex].sets[setIndex].id = data.id;
+
+      // Add to local state after confirming database write was successful
+      updatedExercises[exerciseIndex].sets.push({
+        ...newSet,
+        id: data.id // Use the real database ID
+      });
       
       // Update the target_sets in routine_exercises to persist for next workouts
       const routineUpdateResult = await updateRoutineExerciseSetCount(
@@ -115,8 +113,22 @@ export const useAddSet = (workoutId: string | null) => {
       if (!routineUpdateResult) {
         console.warn(`Failed to update target sets count for routine ${routineId}, exercise ${currentExercise.id}`);
       }
+
+      // Verify database state after all operations
+      const { data: verificationData, error: verificationError } = await supabase
+        .from('workout_sets')
+        .select('id, set_order, weight, reps, completed')
+        .eq('workout_id', workoutId)
+        .eq('exercise_id', currentExercise.id)
+        .order('set_order');
+
+      if (verificationError) {
+        console.error("Error verifying sets after add:", verificationError);
+      } else {
+        console.log("Current sets in database after add:", verificationData);
+      }
       
-      return updatedExercisesWithId;
+      return updatedExercises;
     } catch (error) {
       console.error("Error adding set:", error);
       toast.error("Erro ao adicionar série", {
