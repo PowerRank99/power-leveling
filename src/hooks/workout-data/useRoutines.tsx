@@ -66,6 +66,23 @@ export const useRoutines = (userId: string | undefined) => {
       }
       
       // Step 3: Delete all routine_exercises entries for this routine
+      // Check if the routine has any exercises first
+      const { data: routineExercises, error: routineExercisesCheckError } = await supabase
+        .from('routine_exercises')
+        .select('id')
+        .eq('routine_id', routineId)
+        .limit(1);
+        
+      if (routineExercisesCheckError) {
+        console.error("Error checking routine exercises:", routineExercisesCheckError);
+        throw routineExercisesCheckError;
+      }
+      
+      // Delete routine exercises if they exist
+      console.log(`Found ${routineExercises?.length || 0} routine exercises to delete`);
+      
+      // Always try to delete routine_exercises, even if the check shows none
+      // This handles edge cases where the check might miss some records
       const { error: routineExercisesError } = await supabase
         .from('routine_exercises')
         .delete()
@@ -73,7 +90,10 @@ export const useRoutines = (userId: string | undefined) => {
         
       if (routineExercisesError) {
         console.error("Error deleting routine exercises:", routineExercisesError);
-        throw routineExercisesError;
+        // Don't throw here, we'll still try to delete the routine
+        console.warn("Continuing deletion process despite exercises deletion error");
+      } else {
+        console.log("Successfully deleted any existing routine exercises");
       }
       
       // Step 4: Finally delete the routine itself
