@@ -23,7 +23,6 @@ interface ActiveWorkoutProps {
   onStartTimer?: (exerciseId: string, exerciseName: string) => void;
   timerDuration?: number;
   loadExerciseTimer?: (exerciseId: string) => void;
-  isTimerSaving?: boolean;
 }
 
 const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({ 
@@ -40,8 +39,7 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
   onTimerClick,
   onStartTimer,
   timerDuration = 90,
-  loadExerciseTimer,
-  isTimerSaving = false
+  loadExerciseTimer
 }) => {
   console.log(`ActiveWorkout render: ${exerciseName} with ${sets.length} sets`);
   console.log(`Exercise ID: ${exerciseId}, Exercise Index: ${exerciseIndex}`);
@@ -97,7 +95,6 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
             exerciseName={exerciseName}
             onTimerClick={handleTimerClick}
             onStartTimer={onStartTimer || (() => {})}
-            isSaving={isTimerSaving}
           />
         )}
       </div>

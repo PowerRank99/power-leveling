@@ -57,7 +57,6 @@ const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
             className="mr-2 text-red-500"
             title="Discard workout"
             onClick={handleDiscardClick}
-            disabled={isFinishing}
           >
             <Trash2 className="w-6 h-6" />
           </Button>
@@ -76,7 +75,7 @@ const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
             onClick={onFinish}
             disabled={isFinishing}
           >
-            {isFinishing ? "Finalizando..." : "Finalizar"}
+            {isFinishing ? "Finalizando..." : "Finish"}
           </Button>
         </div>
       </div>
@@ -93,11 +92,7 @@ const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
             <Button variant="outline" onClick={() => setShowDiscardDialog(false)}>
               Cancelar
             </Button>
-            <Button 
-              variant="destructive" 
-              onClick={handleConfirmDiscard}
-              disabled={isFinishing}
-            >
+            <Button variant="destructive" onClick={handleConfirmDiscard}>
               Descartar
             </Button>
           </DialogFooter>

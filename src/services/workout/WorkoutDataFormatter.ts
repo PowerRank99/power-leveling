@@ -44,17 +44,13 @@ export class WorkoutDataFormatter {
         const weight = set.weight !== null && set.weight !== undefined ? set.weight.toString() : '0';
         const reps = set.reps !== null && set.reps !== undefined ? set.reps.toString() : '12';
         
-        // CRITICAL FIX: Always ensure completed is false initially
-        // Sets should only be marked as completed by explicit user action
-        const completed = false; // Always start with uncompleted sets
-        
-        console.log(`Set ${index} (ID: ${set.id}, order ${set.set_order}) for ${exercise.name}: current [w: ${weight}, r: ${reps}, c: ${completed}], previous [w: ${previousSet.weight}, r: ${previousSet.reps}]`);
+        console.log(`Set ${index} (ID: ${set.id}, order ${set.set_order}) for ${exercise.name}: current [w: ${weight}, r: ${reps}], previous [w: ${previousSet.weight}, r: ${previousSet.reps}]`);
         
         return {
           id: set.id,
           weight: weight,
           reps: reps,
-          completed: completed,
+          completed: set.completed || false,
           set_order: set.set_order, // Include set_order for reference
           previous: {
             weight: previousSet.weight || '0',
@@ -84,7 +80,7 @@ export class WorkoutDataFormatter {
             id: `default-${exercise.id}-${setIndex}`,
             weight: prevSet.weight || '0',
             reps: prevSet.reps || '12',
-            completed: false, // Always ensure default sets are not completed
+            completed: false,
             set_order: setOrder,
             previous: { 
               weight: prevSet.weight || '0', 
