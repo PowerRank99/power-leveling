@@ -1,133 +1,67 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { useState } from 'react';
 import { useWorkoutCompletion } from '../useWorkoutCompletion';
-import { useState, useCallback } from 'react';
+import { NavigateFunction } from 'react-router-dom';
+import { toast } from 'sonner';
 
-const TIMEOUT_MS = 10000; // 10 seconds timeout for operations
-
-// Modified timeout function with proper generic typing
-const withTimeout = async <T,>(promiseFactory: () => Promise<T>, ms: number): Promise<T> => {
-  let timeoutId: NodeJS.Timeout;
-  
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(() => reject(new Error('Request timed out')), ms);
-  });
-  
-  try {
-    const resultPromise = promiseFactory();
-    const result = await Promise.race([resultPromise, timeoutPromise]);
-    clearTimeout(timeoutId);
-    return result;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    throw error;
-  }
-};
-
-export const useWorkoutActions = (workoutId: string | null) => {
+/**
+ * Hook for workout completion and discard actions
+ */
+export const useWorkoutActions = (
+  workoutId: string | null, 
+  elapsedTime: number,
+  navigate: NavigateFunction
+) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { finishWorkout: finishWorkoutAction } = useWorkoutCompletion(workoutId);
   
-  const finishWorkout = useCallback(async (elapsedTime: number) => {
-    if (isSubmitting) {
-      console.log("Already submitting, ignoring duplicate request");
-      return false;
-    }
+  const finishWorkout = async () => {
+    if (isSubmitting) return false;
     
     try {
       setIsSubmitting(true);
-      console.log(`Finishing workout: ${workoutId} with duration: ${elapsedTime}`);
+      console.log("Finishing workout with ID:", workoutId);
       
-      if (!workoutId) {
-        toast.error("Erro ao finalizar", {
-          description: "ID do treino não encontrado"
-        });
-        return false;
-      }
-      
-      // Proceed with finishing the workout
       const success = await finishWorkoutAction(elapsedTime);
-      
       if (success) {
-        toast.success("Treino finalizado!", {
-          description: "Seu treino foi salvo com sucesso."
+        toast.success("Treino finalizado com sucesso!", {
+          description: "Os dados do seu treino foram salvos."
         });
-      }
-      
-      return success;
-    } catch (error) {
-      console.error("Error finishing workout:", error);
-      toast.error("Erro ao finalizar", {
-        description: "Ocorreu um erro. Tente novamente."
-      });
-      return false;
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [isSubmitting, workoutId, finishWorkoutAction]);
-
-  const discardWorkout = useCallback(async () => {
-    if (isSubmitting) {
-      console.log("Already submitting, ignoring duplicate request");
-      return false;
-    }
-    
-    if (!workoutId) {
-      toast.error("Erro ao descartar treino", {
-        description: "ID do treino não encontrado"
-      });
-      return false;
-    }
-    
-    try {
-      setIsSubmitting(true);
-      console.log("Discarding workout:", workoutId);
-      
-      // Delete sets and workout directly with separate queries instead of using RPC
-      try {
-        await withTimeout(
-          async () => {
-            // First delete all sets associated with this workout
-            const { error: setsError } = await supabase
-              .from('workout_sets')
-              .delete()
-              .eq('workout_id', workoutId);
-              
-            if (setsError) throw setsError;
-            
-            // Then delete the workout itself
-            const { error: workoutError } = await supabase
-              .from('workouts')
-              .delete()
-              .eq('id', workoutId);
-              
-            if (workoutError) throw workoutError;
-            
-            return true;
-          },
-          TIMEOUT_MS
-        );
         
-        toast.info("Treino descartado", {
-          description: "O treino foi descartado com sucesso."
-        });
+        // Navigate to workout summary page
+        setTimeout(() => {
+          navigate('/treino');
+        }, 1500);
         
         return true;
-      } catch (error) {
-        console.error("Error or timeout deleting workout:", error);
-        throw new Error("Erro ao excluir treino e suas séries");
+      } else {
+        throw new Error("Não foi possível finalizar o treino.");
       }
-    } catch (error) {
-      console.error("Error discarding workout:", error);
-      toast.error("Erro ao descartar treino", {
-        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado"
+    } catch (error: any) {
+      console.error("Error finishing workout:", error);
+      toast.error("Erro ao finalizar treino", {
+        description: error.message || "Ocorreu um erro ao salvar seu treino"
       });
       return false;
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting, workoutId]);
+  };
+  
+  const discardWorkout = async () => {
+    try {
+      console.log("Discarding workout with ID:", workoutId);
+      toast.success("Treino descartado", {
+        description: "Você foi redirecionado para a página inicial."
+      });
+      
+      navigate('/treino');
+      return true;
+    } catch (error) {
+      console.error("Error discarding workout:", error);
+      return false;
+    }
+  };
   
   return {
     finishWorkout,

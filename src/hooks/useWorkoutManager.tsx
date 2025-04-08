@@ -2,47 +2,57 @@
 import { useState, useCallback, useEffect } from 'react';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { useNavigate } from 'react-router-dom';
-import { useWorkoutSetup } from './workout-manager/useWorkoutSetup';
 import { useWorkoutTimer } from './useWorkoutTimer';
-import { useWorkoutSets } from './workout-manager/useWorkoutSets';
-import { useWorkoutCompletion } from './workout-manager/useWorkoutCompletion';
-import { useWorkoutNotes } from './workout-manager/useWorkoutNotes';
+import { useWorkoutInitialization } from './workout/useWorkoutInitialization';
+import { useWorkoutSetManagement } from './workout/useWorkoutSetManagement';
+import { useWorkoutActions } from './workout/useWorkoutActions';
+import { useWorkoutNotesManager } from './workout/useWorkoutNotesManager';
 
 /**
  * A comprehensive hook that coordinates all workout operations by composing specialized hooks
  */
 export const useWorkoutManager = (routineId: string) => {
   const navigate = useNavigate();
-  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
-  const [notes, setNotes] = useState<Record<string, string>>({});
 
   // Use specialized hooks for different concerns
   const { elapsedTime, formatTime } = useWorkoutTimer();
+  
   const { 
     isLoading, 
     loadError, 
     exercises, 
     workoutId, 
-    isInitialized 
-  } = useWorkoutSetup(routineId, navigate);
-
+    isInitialized,
+    setupWorkout,
+    setExercises
+  } = useWorkoutInitialization(routineId);
+  
   const {
+    handleUpdateSet,
     handleAddSet,
     handleRemoveSet,
-    handleUpdateSet,
     handleCompleteSet,
-    isProcessing
-  } = useWorkoutSets(workoutId, exercises, setCurrentExerciseIndex, routineId);
+    currentExerciseIndex,
+    setCurrentExerciseIndex
+  } = useWorkoutSetManagement(workoutId, exercises, setExercises, routineId);
 
   const {
     finishWorkout,
     discardWorkout,
     isSubmitting
-  } = useWorkoutCompletion(workoutId, elapsedTime, navigate);
+  } = useWorkoutActions(workoutId, elapsedTime, navigate);
 
   const {
+    notes,
     handleNotesChange
-  } = useWorkoutNotes(setNotes);
+  } = useWorkoutNotesManager();
+
+  // Initialize workout when component mounts
+  useEffect(() => {
+    if (!isInitialized) {
+      setupWorkout();
+    }
+  }, [setupWorkout, isInitialized]);
 
   return {
     isLoading,
