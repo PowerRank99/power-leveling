@@ -1,6 +1,8 @@
 
 import React from 'react';
+import { ArrowRight } from 'lucide-react';
 import { WorkoutExercise } from '@/hooks/useWorkout';
+import { Button } from '@/components/ui/button';
 
 interface NextExercisePreviewProps {
   nextExercise: WorkoutExercise;
@@ -18,22 +20,21 @@ const NextExercisePreview: React.FC<NextExercisePreviewProps> = ({
   if (!nextExercise) return null;
   
   return (
-    <div className="bg-white p-4 border-t border-gray-200 mt-4">
-      <p className="text-gray-500 mb-2">Próximo Exercício</p>
-      
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="font-bold text-lg">{nextExercise.name}</h3>
-          <p className="text-sm text-gray-500">{currentIndex + 2}/{totalExercises}</p>
-        </div>
-        
-        <button 
-          className="text-fitblue font-medium"
-          onClick={onSkip}
-        >
-          Pular
-        </button>
+    <div className="flex justify-between items-center">
+      <div>
+        <p className="text-gray-500 text-sm mb-1">Próximo Exercício</p>
+        <h3 className="font-medium text-lg">{nextExercise.name}</h3>
+        <p className="text-sm text-gray-500">{currentIndex + 2}/{totalExercises}</p>
       </div>
+      
+      <Button 
+        variant="ghost"
+        onClick={onSkip}
+        className="text-fitblue flex items-center gap-1"
+      >
+        Avançar
+        <ArrowRight className="h-4 w-4" />
+      </Button>
     </div>
   );
 };

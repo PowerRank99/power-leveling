@@ -20,18 +20,20 @@ const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({ onFinish, isFinishing }) 
             size="icon"
             onClick={onFinish}
             disabled={isFinishing}
+            title="Finalizar Treino"
           >
             {isFinishing ? (
-              <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+              <div className="animate-spin h-4 w-4 border-2 border-black border-t-transparent rounded-full"></div>
             ) : (
-              <CheckCircle className="w-6 h-6" />
+              <CheckCircle className="w-5 h-5" />
             )}
           </Button>
           <Button
             variant="ghost" 
             size="icon"
+            title="Menu"
           >
-            <Menu className="w-6 h-6" />
+            <Menu className="w-5 h-5" />
           </Button>
         </div>
       }

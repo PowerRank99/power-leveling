@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Clock, Plus, Check } from 'lucide-react';
+import { Clock, Plus, Check, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { WorkoutExercise } from '@/hooks/useWorkout';
 import RestTimer from '@/components/workout/RestTimer';
@@ -41,6 +41,18 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
     onUpdateSet(index, { reps: value });
   };
 
+  const adjustWeight = (index: number, change: number) => {
+    const currentWeight = parseFloat(sets[index].weight) || 0;
+    const newWeight = Math.max(0, currentWeight + change).toString();
+    handleWeightChange(index, newWeight);
+  };
+
+  const adjustReps = (index: number, change: number) => {
+    const currentReps = parseInt(sets[index].reps) || 0;
+    const newReps = Math.max(0, currentReps + change).toString();
+    handleRepsChange(index, newReps);
+  };
+
   const toggleSetCompletion = (index: number) => {
     onCompleteSet(index);
     // Show rest timer when completing a set
@@ -54,78 +66,109 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
 
   return (
     <div className="p-4">
-      <div className="flex justify-between items-center border-b pb-4 mb-4">
+      <div className="flex justify-between items-center mb-4">
         <div>
-          <p className="text-gray-500">Tempo de Treino</p>
-          <p className="text-2xl font-bold">{elapsedTime}</p>
+          <h2 className="text-xl font-bold">{exerciseName}</h2>
         </div>
-        
-        {showRestTimer ? (
-          <div className="flex-1 ml-4">
-            <RestTimer onComplete={handleRestComplete} />
-          </div>
-        ) : (
-          <Button
-            variant="outline"
-            className="bg-fitblue-100 text-fitblue border-none hover:bg-fitblue-200"
-            onClick={() => setShowRestTimer(true)}
-          >
-            <Clock className="text-fitblue mr-2 h-4 w-4" />
-            Iniciar Descanso
-          </Button>
-        )}
+        <div className="flex items-center text-gray-500">
+          <Clock className="mr-1 h-4 w-4" />
+          <span>{elapsedTime}</span>
+        </div>
       </div>
 
-      <div className="mb-6">
-        <h2 className="text-xl font-bold mb-4">{exerciseName}</h2>
+      {showRestTimer ? (
+        <div className="mb-6">
+          <RestTimer onComplete={handleRestComplete} />
+        </div>
+      ) : (
+        <button
+          className="w-full py-3 mb-6 text-fitblue font-medium border border-fitblue rounded-md flex items-center justify-center"
+          onClick={() => setShowRestTimer(true)}
+        >
+          <Clock className="mr-2 h-5 w-5" />
+          Iniciar Descanso
+        </button>
+      )}
 
-        <div className="grid grid-cols-12 gap-2 mb-2 text-sm font-medium text-gray-500">
+      <div className="mb-6">
+        <div className="grid grid-cols-12 gap-2 mb-2 text-xs font-medium text-gray-500 px-2">
           <div className="col-span-1">SET</div>
           <div className="col-span-3">ANTERIOR</div>
           <div className="col-span-3">KG</div>
           <div className="col-span-3">REPS</div>
-          <div className="col-span-2"></div>
+          <div className="col-span-2 text-center">✓</div>
         </div>
 
         {sets.map((set, index) => (
-          <div key={set.id} className="grid grid-cols-12 gap-2 mb-4 items-center">
-            <div className="col-span-1 font-medium">{index + 1}</div>
-            <div className="col-span-3 text-gray-500 text-sm">
-              {set.previous ? `${set.previous.weight}kg x ${set.previous.reps}` : '-'}
-            </div>
-            <div className="col-span-3">
-              <input
-                type="text"
-                className="w-full border border-gray-300 rounded p-2 text-center"
-                value={set.weight}
-                onChange={(e) => handleWeightChange(index, e.target.value)}
-              />
-            </div>
-            <div className="col-span-3">
-              <input
-                type="text"
-                className="w-full border border-gray-300 rounded p-2 text-center"
-                value={set.reps}
-                onChange={(e) => handleRepsChange(index, e.target.value)}
-              />
-            </div>
-            <div className="col-span-2 flex justify-center">
-              <button
-                onClick={() => toggleSetCompletion(index)}
-                className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  set.completed 
-                    ? 'bg-fitgreen text-white' 
-                    : 'border border-gray-300'
-                }`}
-              >
-                {set.completed && <Check className="w-5 h-5" />}
-              </button>
+          <div key={set.id} className="mb-4 bg-white rounded-lg shadow-sm p-2">
+            <div className="grid grid-cols-12 gap-2 items-center">
+              <div className="col-span-1 font-medium text-center">{index + 1}</div>
+              <div className="col-span-3 text-gray-500 text-xs">
+                {set.previous ? `${set.previous.weight}kg × ${set.previous.reps}` : '-'}
+              </div>
+              
+              {/* Weight section with +/- buttons */}
+              <div className="col-span-3 flex items-center">
+                <button 
+                  className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-600"
+                  onClick={() => adjustWeight(index, -2.5)}
+                >
+                  <Minus className="w-3 h-3" />
+                </button>
+                <input
+                  type="text"
+                  className="w-full mx-1 border border-gray-200 rounded p-2 text-center text-sm"
+                  value={set.weight}
+                  onChange={(e) => handleWeightChange(index, e.target.value)}
+                />
+                <button 
+                  className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-600"
+                  onClick={() => adjustWeight(index, 2.5)}
+                >
+                  <Plus className="w-3 h-3" />
+                </button>
+              </div>
+              
+              {/* Reps section with +/- buttons */}
+              <div className="col-span-3 flex items-center">
+                <button 
+                  className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-600"
+                  onClick={() => adjustReps(index, -1)}
+                >
+                  <Minus className="w-3 h-3" />
+                </button>
+                <input
+                  type="text"
+                  className="w-full mx-1 border border-gray-200 rounded p-2 text-center text-sm"
+                  value={set.reps}
+                  onChange={(e) => handleRepsChange(index, e.target.value)}
+                />
+                <button 
+                  className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-600"
+                  onClick={() => adjustReps(index, 1)}
+                >
+                  <Plus className="w-3 h-3" />
+                </button>
+              </div>
+              
+              <div className="col-span-2 flex justify-center">
+                <button
+                  onClick={() => toggleSetCompletion(index)}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    set.completed 
+                      ? 'bg-fitgreen text-white' 
+                      : 'border border-gray-300'
+                  }`}
+                >
+                  {set.completed && <Check className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
           </div>
         ))}
 
         <button 
-          className="flex items-center justify-center w-full py-2 text-gray-500 font-medium"
+          className="flex items-center justify-center w-full py-3 mt-4 border border-gray-200 rounded-md text-gray-600 font-medium"
           onClick={onAddSet}
         >
           <Plus className="w-4 h-4 mr-2" />

@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface FinishWorkoutButtonProps {
@@ -9,19 +10,22 @@ interface FinishWorkoutButtonProps {
 
 const FinishWorkoutButton: React.FC<FinishWorkoutButtonProps> = ({ onFinish, isFinishing }) => {
   return (
-    <div className="p-4">
+    <div>
       <Button 
-        className="w-full bg-fitblue"
+        className="w-full py-4 rounded-md flex items-center justify-center gap-2"
         onClick={onFinish}
         disabled={isFinishing}
       >
         {isFinishing ? (
           <>
-            <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+            <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
             Finalizando...
           </>
         ) : (
-          "Finalizar Treino"
+          <>
+            <CheckCircle className="w-5 h-5" />
+            Finalizar Treino
+          </>
         )}
       </Button>
     </div>

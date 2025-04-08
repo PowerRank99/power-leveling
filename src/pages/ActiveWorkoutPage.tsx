@@ -14,6 +14,7 @@ import ActiveWorkout from '@/components/workout/ActiveWorkout';
 import NextExercisePreview from '@/components/workout/NextExercisePreview';
 import ExerciseNotes from '@/components/workout/ExerciseNotes';
 import FinishWorkoutButton from '@/components/workout/FinishWorkoutButton';
+import { Card, CardContent } from '@/components/ui/card';
 
 const ActiveWorkoutPage = () => {
   const navigate = useNavigate();
@@ -100,7 +101,7 @@ const ActiveWorkoutPage = () => {
   }
   
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-100">
       <WorkoutHeader 
         onFinish={handleFinishWorkout}
         isFinishing={isFinishing}
@@ -111,33 +112,47 @@ const ActiveWorkoutPage = () => {
         totalExercises={totalExercises}
       />
       
-      <ActiveWorkout 
-        exerciseName={currentExercise.name}
-        sets={currentExercise.sets}
-        onAddSet={handleAddSet}
-        onCompleteSet={handleCompleteSet}
-        onUpdateSet={handleUpdateSet}
-        elapsedTime={formatTime(elapsedTime)}
-      />
+      <div className="p-4">
+        <Card className="mb-4 bg-white shadow-sm border-0">
+          <CardContent className="p-0">
+            <ActiveWorkout 
+              exerciseName={currentExercise.name}
+              sets={currentExercise.sets}
+              onAddSet={handleAddSet}
+              onCompleteSet={handleCompleteSet}
+              onUpdateSet={handleUpdateSet}
+              elapsedTime={formatTime(elapsedTime)}
+            />
+          </CardContent>
+        </Card>
       
-      {nextExercise && (
-        <NextExercisePreview
-          nextExercise={nextExercise}
-          currentIndex={currentExerciseIndex}
-          totalExercises={totalExercises}
-          onSkip={goToNextExercise}
+        {nextExercise && (
+          <Card className="mb-4 bg-white shadow-sm border-0">
+            <CardContent className="p-4">
+              <NextExercisePreview
+                nextExercise={nextExercise}
+                currentIndex={currentExerciseIndex}
+                totalExercises={totalExercises}
+                onSkip={goToNextExercise}
+              />
+            </CardContent>
+          </Card>
+        )}
+        
+        <Card className="mb-4 bg-white shadow-sm border-0">
+          <CardContent className="p-4">
+            <ExerciseNotes
+              notes={notes}
+              onNotesChange={setNotes}
+            />
+          </CardContent>
+        </Card>
+        
+        <FinishWorkoutButton 
+          onFinish={handleFinishWorkout}
+          isFinishing={isFinishing}
         />
-      )}
-      
-      <ExerciseNotes
-        notes={notes}
-        onNotesChange={setNotes}
-      />
-      
-      <FinishWorkoutButton 
-        onFinish={handleFinishWorkout}
-        isFinishing={isFinishing}
-      />
+      </div>
     </div>
   );
 };
