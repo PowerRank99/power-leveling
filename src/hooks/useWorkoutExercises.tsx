@@ -1,6 +1,5 @@
 
 import { useState, useCallback } from 'react';
-import { useToast } from '@/components/ui/use-toast';
 import { WorkoutExercise } from '@/types/workout';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
@@ -12,7 +11,6 @@ import { useFetchRoutineExercises } from './workout/useFetchRoutineExercises';
 import { useFetchWorkoutSets } from './workout/useFetchWorkoutSets';
 
 export const useWorkoutExercises = () => {
-  const { toast: uiToast } = useToast();
   const { user } = useAuth();
   const [isCreatingWorkout, setIsCreatingWorkout] = useState(false);
   
@@ -43,11 +41,15 @@ export const useWorkoutExercises = () => {
       // Step 1: Verify routine access
       await verifyRoutineAccess(routineId, user.id);
       
-      // Step 2: Check for existing workouts
-      let workoutId = await findExistingWorkout(routineId, user.id);
-      
-      // Step 3: Fetch routine exercises
+      // Step 2: Fetch routine exercises FIRST to validate before creating workout
       const routineExercises = await fetchRoutineExerciseData(routineId);
+      
+      if (!routineExercises || routineExercises.length === 0) {
+        throw new Error("Esta rotina não possui exercícios");
+      }
+      
+      // Step 3: Check for existing workouts only after validating exercises
+      let workoutId = await findExistingWorkout(routineId, user.id);
       
       // Step 4: Create a new workout if needed
       if (!workoutId) {
@@ -71,14 +73,10 @@ export const useWorkoutExercises = () => {
     } catch (error: any) {
       console.error("Error setting up workout:", error);
       
+      // Use a consistent error ID to prevent duplicate toasts
       toast.error("Erro ao iniciar treino", {
-        description: error.message || "Não foi possível iniciar o treino. Tente novamente."
-      });
-      
-      uiToast({
-        title: "Erro ao iniciar treino",
         description: error.message || "Não foi possível iniciar o treino. Tente novamente.",
-        variant: "destructive"
+        id: `workout-setup-error-${routineId}`
       });
       
       return { workoutExercises: null, workoutId: null };
@@ -87,7 +85,6 @@ export const useWorkoutExercises = () => {
     }
   }, [
     user,
-    uiToast,
     isCreatingWorkout,
     verifyRoutineAccess,
     findExistingWorkout,

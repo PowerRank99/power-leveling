@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workoutTypes';
@@ -52,6 +53,26 @@ export const useWorkoutSetup = (routineId: string, navigate: NavigateFunction) =
         throw new Error("Rotina não encontrada ou acesso negado");
       }
       
+      // Fetch routine exercises to validate BEFORE creating/finding workout
+      const { data: routineExercises, error: exercisesError } = await supabase
+        .from('routine_exercises')
+        .select(`
+          id,
+          target_sets,
+          target_reps,
+          display_order,
+          exercises (
+            id,
+            name
+          )
+        `)
+        .eq('routine_id', routineId)
+        .order('display_order');
+      
+      if (exercisesError || !routineExercises || routineExercises.length === 0) {
+        throw new Error("Não foi possível encontrar exercícios para esta rotina");
+      }
+      
       // Check for existing in-progress workout
       const { data: existingWorkout, error: existingError } = await supabase
         .from('workouts')
@@ -94,26 +115,6 @@ export const useWorkoutSetup = (routineId: string, navigate: NavigateFunction) =
           .eq('id', routineId);
       }
       
-      // Fetch routine exercises
-      const { data: routineExercises, error: exercisesError } = await supabase
-        .from('routine_exercises')
-        .select(`
-          id,
-          target_sets,
-          target_reps,
-          display_order,
-          exercises (
-            id,
-            name
-          )
-        `)
-        .eq('routine_id', routineId)
-        .order('display_order');
-      
-      if (exercisesError || !routineExercises || routineExercises.length === 0) {
-        throw new Error("Não foi possível encontrar exercícios para esta rotina");
-      }
-      
       // Fetch all workout data with proper set information - now awaiting the Promise
       const workoutExercises = await fetchWorkoutExercises(currentWorkoutId, routineExercises);
       
@@ -126,13 +127,15 @@ export const useWorkoutSetup = (routineId: string, navigate: NavigateFunction) =
       console.error("[useWorkoutSetup] Error in setupWorkout:", error);
       setLoadError(error.message || "Erro ao iniciar treino");
       
+      // Use a consistent error ID to prevent duplicate toasts
       toast.error("Erro ao carregar treino", {
-        description: "Não foi possível iniciar seu treino. Tente novamente."
+        description: error.message || "Não foi possível iniciar seu treino. Tente novamente.",
+        id: `workout-setup-error-${routineId}`
       });
       
       setTimeout(() => {
         navigate('/treino');
-      }, 3000);
+      }, 2000);
     } finally {
       setIsLoading(false);
       setIsCreatingWorkout(false);

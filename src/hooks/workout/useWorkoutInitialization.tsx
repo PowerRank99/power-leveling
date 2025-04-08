@@ -47,10 +47,14 @@ export const useWorkoutInitialization = (routineId: string) => {
       console.error("Error in setupWorkout:", error);
       setLoadError(error.message || "Erro ao iniciar treino");
       
+      // Only show one toast message
       toast.error("Erro ao carregar treino", {
-        description: "Não foi possível iniciar seu treino. Tente novamente."
+        description: error.message || "Não foi possível iniciar seu treino. Tente novamente.",
+        // Prevent duplicate toasts
+        id: `workout-error-${routineId}`
       });
       
+      // Navigate back after error with a small delay
       setTimeout(() => {
         navigate('/treino');
       }, 3000);

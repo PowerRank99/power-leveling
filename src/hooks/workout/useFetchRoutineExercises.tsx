@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 
 export const useFetchRoutineExercises = () => {
   /**
-   * Fetches exercises for a routine with proper join
+   * Fetches exercises for a routine with proper join and validation
    */
   const fetchRoutineExerciseData = async (routineId: string) => {
     if (!routineId) {
@@ -34,11 +34,9 @@ export const useFetchRoutineExercises = () => {
     }
     
     if (!routineExercises || routineExercises.length === 0) {
-      toast.error("Rotina sem exercícios", {
-        description: "Não foi possível encontrar exercícios para esta rotina."
-      });
-      
-      throw new Error("Não foi possível encontrar exercícios para esta rotina.");
+      const errorMessage = "Esta rotina não possui exercícios";
+      console.error(errorMessage);
+      throw new Error(errorMessage);
     }
     
     return routineExercises;
