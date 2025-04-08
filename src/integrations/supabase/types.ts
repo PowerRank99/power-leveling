@@ -215,6 +215,8 @@ export type Database = {
           completed_at: string | null
           duration_seconds: number | null
           id: string
+          rest_timer_minutes: number | null
+          rest_timer_seconds: number | null
           routine_id: string | null
           started_at: string
           user_id: string | null
@@ -223,6 +225,8 @@ export type Database = {
           completed_at?: string | null
           duration_seconds?: number | null
           id?: string
+          rest_timer_minutes?: number | null
+          rest_timer_seconds?: number | null
           routine_id?: string | null
           started_at?: string
           user_id?: string | null
@@ -231,6 +235,8 @@ export type Database = {
           completed_at?: string | null
           duration_seconds?: number | null
           id?: string
+          rest_timer_minutes?: number | null
+          rest_timer_seconds?: number | null
           routine_id?: string | null
           started_at?: string
           user_id?: string | null

@@ -45,7 +45,7 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
         }
         
         // Set previous rest timer settings if available
-        if (previousWorkout?.rest_timer_minutes !== null && previousWorkout?.rest_timer_seconds !== null) {
+        if (previousWorkout && previousWorkout.rest_timer_minutes !== null && previousWorkout.rest_timer_seconds !== null) {
           setRestTimerSettings({
             minutes: previousWorkout.rest_timer_minutes || 1,
             seconds: previousWorkout.rest_timer_seconds || 30

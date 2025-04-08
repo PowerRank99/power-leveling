@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { WorkoutExercise } from '@/types/workout';
@@ -23,14 +22,12 @@ export const useWorkout = (routineId: string) => {
   const { toast: uiToast } = useToast();
   const [restTimerSettings, setRestTimerSettings] = useState({ minutes: 1, seconds: 30 });
   
-  // Get previous workout data for this routine
-  const { previousWorkoutData, restTimerSettings: savedRestTimerSettings } = usePreviousWorkoutData(routineId);
-  
   const { elapsedTime, formatTime } = useWorkoutTimer();
   const { finishWorkout: finishWorkoutAction } = useWorkoutCompletion(workoutId);
   const { fetchRoutineExercises, isCreatingWorkout } = useWorkoutExercises();
 
-  // Update rest timer settings from previous workout when available
+  const { previousWorkoutData, restTimerSettings: savedRestTimerSettings } = usePreviousWorkoutData(routineId);
+  
   useEffect(() => {
     if (savedRestTimerSettings) {
       setRestTimerSettings(savedRestTimerSettings);
@@ -59,13 +56,11 @@ export const useWorkout = (routineId: string) => {
       if (workoutExercises && workoutExercises.length > 0 && newWorkoutId) {
         console.log("Workout setup successful with", workoutExercises.length, "exercises");
         
-        // Apply previous workout data for exercises if available
         if (Object.keys(previousWorkoutData).length > 0) {
           const exercisesWithPrevious = workoutExercises.map(exercise => {
             const previousSets = previousWorkoutData[exercise.id];
             
             if (previousSets) {
-              // Pre-fill with previous workout data
               return {
                 ...exercise,
                 sets: exercise.sets.map((set, idx) => {
@@ -109,7 +104,6 @@ export const useWorkout = (routineId: string) => {
         description: "Não foi possível iniciar seu treino. Tente novamente."
       });
       
-      // Redirect back to workout page after error
       setTimeout(() => {
         navigate('/treino');
       }, 3000);
@@ -135,7 +129,6 @@ export const useWorkout = (routineId: string) => {
       
       const currentExercise = exercises[exerciseIndex];
       
-      // Update local state first
       const updatedExercises = [...exercises];
       const updatedSets = [...updatedExercises[exerciseIndex].sets];
       
@@ -147,7 +140,6 @@ export const useWorkout = (routineId: string) => {
       updatedExercises[exerciseIndex].sets = updatedSets;
       setExercises(updatedExercises);
       
-      // Update in database
       const setData: Record<string, any> = {};
       if (data.weight !== undefined) setData.weight = parseFloat(data.weight) || 0;
       if (data.reps !== undefined) setData.reps = parseInt(data.reps) || 0;
@@ -190,7 +182,6 @@ export const useWorkout = (routineId: string) => {
       
       const currentExercise = exercises[exerciseIndex];
       
-      // Add to local state first
       const updatedExercises = [...exercises];
       const currentSets = updatedExercises[exerciseIndex].sets;
       const lastSet = currentSets[currentSets.length - 1];
@@ -207,7 +198,6 @@ export const useWorkout = (routineId: string) => {
       updatedExercises[exerciseIndex].sets.push(newSet);
       setExercises(updatedExercises);
       
-      // Add to database
       const newSetOrder = currentSets.length;
       
       const { data, error } = await supabase
@@ -230,14 +220,12 @@ export const useWorkout = (routineId: string) => {
         });
       }
       
-      // If we got data back, update the ID
       if (data) {
         const updatedExercisesWithId = [...exercises];
         const setIndex = updatedExercisesWithId[exerciseIndex].sets.length - 1;
         updatedExercisesWithId[exerciseIndex].sets[setIndex].id = data.id;
         setExercises(updatedExercisesWithId);
         
-        // Also update the routine_exercises target_sets to persist this change
         updateRoutineExerciseSetCount(currentExercise.id, routineId, currentSets.length + 1);
       }
     } catch (error) {
@@ -260,7 +248,6 @@ export const useWorkout = (routineId: string) => {
       const currentExercise = exercises[exerciseIndex];
       const setId = currentExercise.sets[setIndex].id;
       
-      // Only proceed if there will be at least one set left
       if (currentExercise.sets.length <= 1) {
         toast.error("Não é possível remover", {
           description: "Deve haver pelo menos uma série"
@@ -268,7 +255,6 @@ export const useWorkout = (routineId: string) => {
         return;
       }
       
-      // Update local state first
       const updatedExercises = [...exercises];
       updatedExercises[exerciseIndex].sets = [
         ...currentExercise.sets.slice(0, setIndex),
@@ -277,7 +263,6 @@ export const useWorkout = (routineId: string) => {
       
       setExercises(updatedExercises);
       
-      // Remove from database
       const { error } = await supabase
         .from('workout_sets')
         .delete()
@@ -289,7 +274,6 @@ export const useWorkout = (routineId: string) => {
           description: "A série pode não ter sido removida corretamente"
         });
       } else {
-        // Update the routine_exercises target_sets to persist this change
         updateRoutineExerciseSetCount(currentExercise.id, routineId, currentExercise.sets.length - 1);
       }
     } catch (error) {
@@ -300,7 +284,6 @@ export const useWorkout = (routineId: string) => {
     }
   };
   
-  // Helper to update the target_sets in routine_exercises
   const updateRoutineExerciseSetCount = async (exerciseId: string, routineId: string, newSetCount: number) => {
     try {
       const { error } = await supabase
@@ -320,7 +303,6 @@ export const useWorkout = (routineId: string) => {
   const handleRestTimerChange = (minutes: number, seconds: number) => {
     setRestTimerSettings({ minutes, seconds });
     
-    // Update rest timer settings in the current workout
     if (workoutId) {
       supabase
         .from('workouts')
@@ -339,7 +321,6 @@ export const useWorkout = (routineId: string) => {
   
   const finishWorkout = async () => {
     try {
-      // Save the rest timer settings when finishing the workout
       if (workoutId) {
         await supabase
           .from('workouts')
@@ -350,7 +331,6 @@ export const useWorkout = (routineId: string) => {
           .eq('id', workoutId);
       }
       
-      // Complete the workout
       const success = await finishWorkoutAction(elapsedTime);
       if (success) {
         toast.success("Treino finalizado!", {
@@ -375,7 +355,6 @@ export const useWorkout = (routineId: string) => {
     try {
       console.log("Discarding workout:", workoutId);
       
-      // Delete all workout sets first
       const { error: setsError } = await supabase
         .from('workout_sets')
         .delete()
@@ -386,7 +365,6 @@ export const useWorkout = (routineId: string) => {
         throw new Error("Erro ao excluir séries do treino");
       }
       
-      // Then delete the workout itself
       const { error: workoutError } = await supabase
         .from('workouts')
         .delete()
