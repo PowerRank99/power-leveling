@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { toast } from 'sonner';
@@ -23,7 +23,7 @@ export const useWorkoutSetup = (routineId: string, navigate: NavigateFunction) =
   /**
    * Initialize or find an existing workout
    */
-  const setupWorkout = useCallback(async () => {
+  const setupWorkout = async () => {
     if (!routineId) {
       setLoadError("ID da rotina não fornecido");
       setIsLoading(false);
@@ -138,14 +138,14 @@ export const useWorkoutSetup = (routineId: string, navigate: NavigateFunction) =
       setIsLoading(false);
       setIsCreatingWorkout(false);
     }
-  }, [routineId, fetchWorkoutExercises, navigate, isInitialized, isCreatingWorkout]);
+  };
   
   // Initialize workout on mount
   useEffect(() => {
     if (!isInitialized && !isCreatingWorkout) {
       setupWorkout();
     }
-  }, [setupWorkout, isInitialized, isCreatingWorkout]);
+  }, [routineId, isInitialized, isCreatingWorkout]);
 
   return {
     isLoading,
