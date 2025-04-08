@@ -36,7 +36,7 @@ export const useWorkoutActions = (workoutId: string | null) => {
     try {
       // Add a small delay to ensure any pending set updates have been processed
       // This helps with race conditions between set updates and workout completion
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 800));
       
       // Could also check for any sets with temporary IDs and wait for them to be committed
       return true;
@@ -63,39 +63,69 @@ export const useWorkoutActions = (workoutId: string | null) => {
         return false;
       }
       
-      // First, ensure all pending set updates have been committed to the database
+      // IMPORTANT: First, ensure all pending set updates have been committed to the database
+      // We increase the delay to ensure all data is saved properly
+      console.log("[WORKOUT_ACTIONS] Waiting for all pending set updates to be saved...");
       await ensureSetsSaved();
       
-      // Then, update the rest timer settings in a separate operation
-      // This is important to make sure they persist for future workouts
+      // Capture the current timer settings to ensure they are saved correctly
+      const timerMinutes = restTimerSettings.minutes;
+      const timerSeconds = restTimerSettings.seconds;
+      
+      console.log(`[WORKOUT_ACTIONS] Saving final timer settings: ${timerMinutes}m ${timerSeconds}s`);
+      
+      // Combine everything in a single transaction to ensure consistency
       try {
-        console.log(`[WORKOUT_ACTIONS] Saving final timer settings: ${restTimerSettings.minutes}m ${restTimerSettings.seconds}s`);
-        await supabase
-          .from('workouts')
-          .update({
-            rest_timer_minutes: restTimerSettings.minutes,
-            rest_timer_seconds: restTimerSettings.seconds
-          })
-          .eq('id', workoutId);
-      } catch (timerError) {
-        console.error("[WORKOUT_ACTIONS] Error saving final timer settings:", timerError);
-        // Continue with workout completion even if timer settings fail
-      }
-      
-      // Now wait a moment to ensure the timer settings have been saved
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // Finally proceed with finishing the workout
-      console.log("[WORKOUT_ACTIONS] Calling finishWorkoutAction with elapsed time:", elapsedTime);
-      const success = await finishWorkoutAction(elapsedTime);
-      
-      if (success) {
+        await supabase.rpc('finish_workout', {
+          p_workout_id: workoutId,
+          p_elapsed_time: elapsedTime,
+          p_timer_minutes: timerMinutes,
+          p_timer_seconds: timerSeconds
+        });
+        
+        console.log("[WORKOUT_ACTIONS] Successfully saved all workout data in single transaction");
+        
         toast.success("Treino finalizado!", {
           description: "Seu treino foi salvo com sucesso."
         });
+        
+        return true;
+      } catch (transactionError) {
+        console.error("[WORKOUT_ACTIONS] Transaction error:", transactionError);
+        
+        // Fallback to the original approach if the RPC fails
+        console.log("[WORKOUT_ACTIONS] Falling back to sequential updates...");
+        
+        // Then, update the rest timer settings in a separate operation
+        try {
+          console.log(`[WORKOUT_ACTIONS] Saving final timer settings: ${timerMinutes}m ${timerSeconds}s`);
+          await supabase
+            .from('workouts')
+            .update({
+              rest_timer_minutes: timerMinutes,
+              rest_timer_seconds: timerSeconds
+            })
+            .eq('id', workoutId);
+        } catch (timerError) {
+          console.error("[WORKOUT_ACTIONS] Error saving final timer settings:", timerError);
+          // Continue with workout completion even if timer settings fail
+        }
+        
+        // Now wait a moment to ensure the timer settings have been saved
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Finally proceed with finishing the workout
+        console.log("[WORKOUT_ACTIONS] Calling finishWorkoutAction with elapsed time:", elapsedTime);
+        const success = await finishWorkoutAction(elapsedTime);
+        
+        if (success) {
+          toast.success("Treino finalizado!", {
+            description: "Seu treino foi salvo com sucesso."
+          });
+        }
+        
+        return success;
       }
-      
-      return success;
     } catch (error) {
       console.error("[WORKOUT_ACTIONS] Error finishing workout:", error);
       toast.error("Erro ao finalizar", {

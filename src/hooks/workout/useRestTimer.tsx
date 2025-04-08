@@ -20,7 +20,7 @@ export const useRestTimer = (workoutId: string | null) => {
       if (!workoutId) return;
       
       try {
-        console.log("Loading timer settings for workout:", workoutId);
+        console.log("[REST_TIMER] Loading timer settings for workout:", workoutId);
         
         const { data, error } = await supabase
           .from('workouts')
@@ -29,18 +29,18 @@ export const useRestTimer = (workoutId: string | null) => {
           .single();
           
         if (error) {
-          console.error("Error loading timer settings:", error);
+          console.error("[REST_TIMER] Error loading timer settings:", error);
           return;
         }
         
         if (data) {
-          console.log("Loaded timer settings:", data);
+          console.log("[REST_TIMER] Loaded timer settings:", data);
           
           if (data.rest_timer_minutes !== null || data.rest_timer_seconds !== null) {
             const minutes = data.rest_timer_minutes ?? 1;
             const seconds = data.rest_timer_seconds ?? 30;
             
-            console.log(`Setting timer to ${minutes}m ${seconds}s`);
+            console.log(`[REST_TIMER] Setting timer to ${minutes}m ${seconds}s`);
             setRestTimerSettings({
               minutes,
               seconds
@@ -48,7 +48,7 @@ export const useRestTimer = (workoutId: string | null) => {
           }
         }
       } catch (error) {
-        console.error("Error loading timer settings:", error);
+        console.error("[REST_TIMER] Error loading timer settings:", error);
       }
     };
     
@@ -62,6 +62,19 @@ export const useRestTimer = (workoutId: string | null) => {
     try {
       setIsSaving(true);
       console.log(`[REST_TIMER] Saving timer settings: ${minutes}m ${seconds}s (attempt ${retryCount + 1})`);
+      
+      // Log current workout state before updating
+      try {
+        const { data: workoutData } = await supabase
+          .from('workouts')
+          .select('*')
+          .eq('id', workoutId)
+          .single();
+          
+        console.log(`[REST_TIMER] Current workout state before timer update:`, workoutData);
+      } catch (err) {
+        console.log("[REST_TIMER] Error fetching current workout state:", err);
+      }
       
       const { error } = await supabase
         .from('workouts')

@@ -117,8 +117,8 @@ export const useFetchWorkoutSets = () => {
                            previousExerciseData[index];
                            
         console.log(`[FETCH_SETS] Set ${index + 1} for ${exercise.name}:`, 
-          set.weight && set.weight !== '0' ? `Current weight: ${set.weight}` : 'No current weight', 
-          set.reps && set.reps !== '0' ? `Current reps: ${set.reps}` : 'No current reps',
+          set.weight !== null && set.weight !== undefined ? `Current weight: ${set.weight}` : 'No current weight', 
+          set.reps !== null && set.reps !== undefined ? `Current reps: ${set.reps}` : 'No current reps',
           previousSet ? `Previous: ${previousSet.weight}kg × ${previousSet.reps}` : 'No previous data'
         );
         
