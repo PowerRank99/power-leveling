@@ -28,15 +28,13 @@ export const useWorkout = (routineId: string) => {
   const { updateSet: updateSetAction, addSet: addSetAction, removeSet: removeSetAction } = useSetManagement(workoutId);
   const { restTimerSettings, setRestTimerSettings, handleRestTimerChange, isSaving: isTimerSaving } = useRestTimer(workoutId);
   const { finishWorkout: finishWorkoutAction, discardWorkout: discardWorkoutAction, isSubmitting } = useWorkoutActions(workoutId);
-  const { previousWorkoutData, restTimerSettings: savedRestTimerSettings, dataLoaded: previousDataLoaded } = usePreviousWorkoutData(routineId);
+  const { previousWorkoutData, restTimerSettings: savedRestTimerSettings } = usePreviousWorkoutData(routineId);
   
-  // Wait for previous workout data to load before applying saved timer settings
   useEffect(() => {
-    if (previousDataLoaded && savedRestTimerSettings) {
-      console.log("[WORKOUT] Applying saved timer settings from previous workout:", savedRestTimerSettings);
+    if (savedRestTimerSettings) {
       setRestTimerSettings(savedRestTimerSettings);
     }
-  }, [savedRestTimerSettings, previousDataLoaded, setRestTimerSettings]);
+  }, [savedRestTimerSettings, setRestTimerSettings]);
 
   const setupWorkout = useCallback(async () => {
     if (!routineId) {
@@ -59,7 +57,6 @@ export const useWorkout = (routineId: string) => {
       
       if (workoutExercises && workoutExercises.length > 0 && newWorkoutId) {
         console.log("Workout setup successful with", workoutExercises.length, "exercises");
-        console.log("Workout exercises data:", workoutExercises);
         setExercises(workoutExercises);
         setWorkoutId(newWorkoutId);
         setIsInitialized(true);
@@ -90,7 +87,6 @@ export const useWorkout = (routineId: string) => {
   
   // Wrapper functions to maintain the original API while using the new hooks
   const updateSet = async (exerciseIndex: number, setIndex: number, data: { weight?: string; reps?: string; completed?: boolean }) => {
-    console.log(`[WORKOUT] Updating set: exercise=${exerciseIndex}, set=${setIndex}, data=`, data);
     const result = await updateSetAction(exerciseIndex, exercises, setIndex, data);
     if (result) {
       setExercises(result);
@@ -98,7 +94,6 @@ export const useWorkout = (routineId: string) => {
   };
   
   const addSet = async (exerciseIndex: number) => {
-    console.log(`[WORKOUT] Adding new set to exercise ${exerciseIndex}`);
     const result = await addSetAction(exerciseIndex, exercises, routineId);
     if (result) {
       setExercises(result);
@@ -106,7 +101,6 @@ export const useWorkout = (routineId: string) => {
   };
   
   const removeSet = async (exerciseIndex: number, setIndex: number) => {
-    console.log(`[WORKOUT] Removing set ${setIndex} from exercise ${exerciseIndex}`);
     const result = await removeSetAction(exerciseIndex, exercises, setIndex, routineId);
     if (result) {
       setExercises(result);
@@ -114,12 +108,10 @@ export const useWorkout = (routineId: string) => {
   };
   
   const finishWorkout = async () => {
-    console.log(`[WORKOUT] Finishing workout with timer: ${restTimerSettings.minutes}m ${restTimerSettings.seconds}s`);
     return finishWorkoutAction(elapsedTime, restTimerSettings);
   };
 
   const discardWorkout = async () => {
-    console.log("[WORKOUT] Discarding workout");
     return discardWorkoutAction();
   };
   

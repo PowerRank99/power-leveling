@@ -20,7 +20,7 @@ export const useRestTimer = (workoutId: string | null) => {
       if (!workoutId) return;
       
       try {
-        console.log("[REST_TIMER] Loading timer settings for workout:", workoutId);
+        console.log("Loading timer settings for workout:", workoutId);
         
         const { data, error } = await supabase
           .from('workouts')
@@ -29,18 +29,18 @@ export const useRestTimer = (workoutId: string | null) => {
           .single();
           
         if (error) {
-          console.error("[REST_TIMER] Error loading timer settings:", error);
+          console.error("Error loading timer settings:", error);
           return;
         }
         
         if (data) {
-          console.log("[REST_TIMER] Loaded timer settings:", data);
+          console.log("Loaded timer settings:", data);
           
           if (data.rest_timer_minutes !== null || data.rest_timer_seconds !== null) {
             const minutes = data.rest_timer_minutes ?? 1;
             const seconds = data.rest_timer_seconds ?? 30;
             
-            console.log(`[REST_TIMER] Setting timer to ${minutes}m ${seconds}s`);
+            console.log(`Setting timer to ${minutes}m ${seconds}s`);
             setRestTimerSettings({
               minutes,
               seconds
@@ -48,7 +48,7 @@ export const useRestTimer = (workoutId: string | null) => {
           }
         }
       } catch (error) {
-        console.error("[REST_TIMER] Error loading timer settings:", error);
+        console.error("Error loading timer settings:", error);
       }
     };
     
@@ -61,20 +61,7 @@ export const useRestTimer = (workoutId: string | null) => {
     
     try {
       setIsSaving(true);
-      console.log(`[REST_TIMER] Saving timer settings: ${minutes}m ${seconds}s (attempt ${retryCount + 1})`);
-      
-      // Log current workout state before updating
-      try {
-        const { data: workoutData } = await supabase
-          .from('workouts')
-          .select('*')
-          .eq('id', workoutId)
-          .single();
-          
-        console.log(`[REST_TIMER] Current workout state before timer update:`, workoutData);
-      } catch (err) {
-        console.log("[REST_TIMER] Error fetching current workout state:", err);
-      }
+      console.log(`Saving timer settings: ${minutes}m ${seconds}s (attempt ${retryCount + 1})`);
       
       const { error } = await supabase
         .from('workouts')
@@ -86,12 +73,12 @@ export const useRestTimer = (workoutId: string | null) => {
       
       if (error) throw error;
       
-      console.log("[REST_TIMER] Timer settings saved successfully");
+      console.log("Timer settings saved successfully");
       
       // Check if there was a pending update while this one was processing
       if (pendingUpdateRef.current) {
         const { minutes: pendingMinutes, seconds: pendingSeconds } = pendingUpdateRef.current;
-        console.log(`[REST_TIMER] Processing pending timer update: ${pendingMinutes}m ${pendingSeconds}s`);
+        console.log(`Processing pending timer update: ${pendingMinutes}m ${pendingSeconds}s`);
         pendingUpdateRef.current = null;
         
         // Process the pending update after a small delay
@@ -102,11 +89,11 @@ export const useRestTimer = (workoutId: string | null) => {
       
       return true;
     } catch (error) {
-      console.error(`[REST_TIMER] Error saving timer settings (attempt ${retryCount + 1}):`, error);
+      console.error(`Error saving timer settings (attempt ${retryCount + 1}):`, error);
       
       // Retry logic
       if (retryCount < MAX_RETRIES) {
-        console.log(`[REST_TIMER] Retrying in ${RETRY_DELAY}ms...`);
+        console.log(`Retrying in ${RETRY_DELAY}ms...`);
         await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
         return saveTimerSettingsWithRetry(minutes, seconds, retryCount + 1);
       }
@@ -127,7 +114,7 @@ export const useRestTimer = (workoutId: string | null) => {
   const handleRestTimerChange = useCallback((minutes: number, seconds: number) => {
     // Immediately update local state for responsive UI
     setRestTimerSettings({ minutes, seconds });
-    console.log(`[REST_TIMER] Local timer state updated to ${minutes}m ${seconds}s`);
+    console.log(`Local timer state updated to ${minutes}m ${seconds}s`);
     
     // Debounce the save operation to reduce database calls
     if (saveTimerTimeoutRef.current) {
@@ -135,7 +122,7 @@ export const useRestTimer = (workoutId: string | null) => {
       
       // Store this as a pending update if we're currently saving
       if (isSaving) {
-        console.log(`[REST_TIMER] Currently saving, storing as pending update: ${minutes}m ${seconds}s`);
+        console.log(`Currently saving, storing as pending update: ${minutes}m ${seconds}s`);
         pendingUpdateRef.current = { minutes, seconds };
         return;
       }
@@ -144,16 +131,16 @@ export const useRestTimer = (workoutId: string | null) => {
     // Set up a new debounced save
     saveTimerTimeoutRef.current = setTimeout(() => {
       if (workoutId) {
-        console.log(`[REST_TIMER] Debounced save triggered for timer: ${minutes}m ${seconds}s`);
+        console.log(`Debounced save triggered for timer: ${minutes}m ${seconds}s`);
         // We run this in the background without awaiting
         saveTimerSettingsWithRetry(minutes, seconds)
           .then(success => {
             if (success) {
-              console.log("[REST_TIMER] Timer settings saved successfully");
+              console.log("Timer settings saved successfully");
             }
           })
           .catch(err => {
-            console.error("[REST_TIMER] Background timer save failed:", err);
+            console.error("Background timer save failed:", err);
           });
       }
       saveTimerTimeoutRef.current = null;

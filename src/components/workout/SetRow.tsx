@@ -35,83 +35,41 @@ const SetRow: React.FC<SetRowProps> = ({
   const [startX, setStartX] = useState(0);
   const [offsetX, setOffsetX] = useState(0);
   
-  const [weightValue, setWeightValue] = useState<string>(set.weight || '0');
-  const [repsValue, setRepsValue] = useState<string>(set.reps || '0');
-  const [initialized, setInitialized] = useState(false);
+  const [weightValue, setWeightValue] = useState(set.weight || '0');
+  const [repsValue, setRepsValue] = useState(set.reps || '0');
   
   useEffect(() => {
-    if (initialized) return;
-    
-    console.log(`[SET_ROW] Initializing set #${index + 1} with ID ${set.id}`, 
-      `Weight: ${set.weight || '0'}`, 
-      `Reps: ${set.reps || '0'}`,
-      `Previous: ${set.previous?.weight || 'none'}kg × ${set.previous?.reps || 'none'}`
-    );
-    
-    let newWeightValue = set.weight;
-    let newRepsValue = set.reps;
-    
-    if (!newWeightValue || newWeightValue === '0') {
-      if (set.previous?.weight && set.previous.weight !== '0') {
-        console.log(`[SET_ROW] Set #${index + 1}: Using previous weight: ${set.previous.weight}`);
-        newWeightValue = set.previous.weight;
-      } else {
-        newWeightValue = '0';
-      }
-    } else {
-      console.log(`[SET_ROW] Set #${index + 1}: Using current weight: ${newWeightValue}`);
+    if (set.weight && set.weight !== '0') {
+      setWeightValue(set.weight);
+    } else if (set.previous?.weight && set.previous.weight !== '0') {
+      setWeightValue(set.previous.weight);
     }
     
-    if (!newRepsValue || newRepsValue === '0') {
-      if (set.previous?.reps && set.previous.reps !== '0') {
-        console.log(`[SET_ROW] Set #${index + 1}: Using previous reps: ${set.previous.reps}`);
-        newRepsValue = set.previous.reps;
-      } else {
-        newRepsValue = '12';
-      }
-    } else {
-      console.log(`[SET_ROW] Set #${index + 1}: Using current reps: ${newRepsValue}`);
+    if (set.reps && set.reps !== '0') {
+      setRepsValue(set.reps);
+    } else if (set.previous?.reps && set.previous.reps !== '0') {
+      setRepsValue(set.previous.reps);
     }
-    
-    setWeightValue(newWeightValue);
-    setRepsValue(newRepsValue);
-    
-    setInitialized(true);
-    
-    if (newWeightValue !== set.weight) {
-      onWeightChange(newWeightValue);
-    }
-    
-    if (newRepsValue !== set.reps) {
-      onRepsChange(newRepsValue);
-    }
-  }, [set.id, set.weight, set.reps, set.previous, index, onWeightChange, onRepsChange, initialized]);
+  }, [set.id]);
   
   useEffect(() => {
-    if (!initialized) return;
-    
     if (set.weight && set.weight !== '0' && set.weight !== weightValue) {
-      console.log(`[SET_ROW] Set #${index + 1}: Updating weight from ${weightValue} to ${set.weight}`);
       setWeightValue(set.weight);
     }
-    
     if (set.reps && set.reps !== '0' && set.reps !== repsValue) {
-      console.log(`[SET_ROW] Set #${index + 1}: Updating reps from ${repsValue} to ${set.reps}`);
       setRepsValue(set.reps);
     }
-  }, [set.weight, set.reps, weightValue, repsValue, index, initialized]);
+  }, [set.weight, set.reps]);
   
   const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setWeightValue(value);
-    console.log(`[SET_ROW] Set #${index + 1}: Weight changed to ${value}`);
     onWeightChange(value);
   };
   
   const handleRepsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setRepsValue(value);
-    console.log(`[SET_ROW] Set #${index + 1}: Reps changed to ${value}`);
     onRepsChange(value);
   };
   
