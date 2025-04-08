@@ -100,16 +100,26 @@ export const useWorkoutActions = (workoutId: string | null) => {
       setIsSubmitting(true);
       console.log("Discarding workout:", workoutId);
       
-      // Delete sets and workout in a transaction to ensure consistency
+      // Delete sets and workout directly with separate queries instead of using RPC
       try {
         await withTimeout(
           async () => {
-            // Use a transaction to ensure all-or-nothing deletion
-            const { error } = await supabase.rpc('delete_workout_with_sets', { 
-              workout_id_param: workoutId 
-            });
+            // First delete all sets associated with this workout
+            const { error: setsError } = await supabase
+              .from('workout_sets')
+              .delete()
+              .eq('workout_id', workoutId);
               
-            if (error) throw error;
+            if (setsError) throw setsError;
+            
+            // Then delete the workout itself
+            const { error: workoutError } = await supabase
+              .from('workouts')
+              .delete()
+              .eq('id', workoutId);
+              
+            if (workoutError) throw workoutError;
+            
             return true;
           },
           TIMEOUT_MS
