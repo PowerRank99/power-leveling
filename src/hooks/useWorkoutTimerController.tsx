@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useExerciseRestTimer } from './useExerciseRestTimer';
+import { useExerciseRestTimer, TimerState, TimerSettings } from '@/hooks/useExerciseRestTimer';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { TimerService } from '@/services/timer/TimerService';
 import { useAuth } from '@/hooks/useAuth';
