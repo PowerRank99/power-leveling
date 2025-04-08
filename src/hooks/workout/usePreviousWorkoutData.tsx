@@ -35,7 +35,7 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
           .select('id, rest_timer_minutes, rest_timer_seconds')
           .eq('routine_id', routineId)
           .eq('user_id', user.id)
-          .is('completed_at', 'not.null') // Only get completed workouts
+          .not('completed_at', 'is', null) // Fixed syntax: use .not() with 'is' and null
           .order('completed_at', { ascending: false })
           .limit(1)
           .single();

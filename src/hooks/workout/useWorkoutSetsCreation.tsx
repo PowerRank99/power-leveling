@@ -34,7 +34,7 @@ export const useWorkoutSetsCreation = () => {
             .select('id')
             .eq('routine_id', routineData.routine_id)
             .not('id', 'eq', workoutId) 
-            .is('completed_at', 'not.null') // Only fetch completed workouts
+            .not('completed_at', 'is', null) // Fixed syntax: use .not() with 'is' and null
             .order('completed_at', { ascending: false })
             .limit(1);
           
