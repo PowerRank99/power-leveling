@@ -18,14 +18,21 @@ interface RestTimerProps {
   autoStart?: boolean;
 }
 
+// Updated timer presets with 10-second intervals
 const TIMER_PRESETS = [
   { label: '30s', minutes: 0, seconds: 30 },
+  { label: '40s', minutes: 0, seconds: 40 },
+  { label: '50s', minutes: 0, seconds: 50 },
   { label: '1m', minutes: 1, seconds: 0 },
+  { label: '1m 10s', minutes: 1, seconds: 10 },
+  { label: '1m 20s', minutes: 1, seconds: 20 },
   { label: '1m 30s', minutes: 1, seconds: 30 },
+  { label: '1m 40s', minutes: 1, seconds: 40 },
+  { label: '1m 50s', minutes: 1, seconds: 50 },
   { label: '2m', minutes: 2, seconds: 0 },
+  { label: '2m 10s', minutes: 2, seconds: 10 },
+  { label: '2m 20s', minutes: 2, seconds: 20 },
   { label: '2m 30s', minutes: 2, seconds: 30 },
-  { label: '3m', minutes: 3, seconds: 0 },
-  { label: '5m', minutes: 5, seconds: 0 },
 ];
 
 const RestTimer: React.FC<RestTimerProps> = ({
@@ -39,7 +46,7 @@ const RestTimer: React.FC<RestTimerProps> = ({
   const [seconds, setSeconds] = useState(initialSeconds);
   const [isRunning, setIsRunning] = useState(autoStart);
   const [totalSeconds, setTotalSeconds] = useState(minutes * 60 + seconds);
-  const [showTimerOptions, setShowTimerOptions] = useState(false);
+  const [showTimerOptions, setShowTimerOptions] = useState(true); // Default to showing options
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   
   useEffect(() => {
@@ -99,7 +106,6 @@ const RestTimer: React.FC<RestTimerProps> = ({
         onTimerChange(preset.minutes, preset.seconds);
       }
     }
-    setShowTimerOptions(false);
   };
   
   // Calculate progress percentage
@@ -112,7 +118,8 @@ const RestTimer: React.FC<RestTimerProps> = ({
           <div className="text-blue-500 font-medium">Rest Timer</div>
           <button 
             onClick={() => setShowTimerOptions(!showTimerOptions)}
-            className="text-blue-500"
+            className="text-blue-500 p-2 bg-blue-50 rounded-full"
+            aria-label={showTimerOptions ? "Hide timer options" : "Show timer options"}
           >
             {showTimerOptions ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </button>
@@ -153,7 +160,7 @@ const RestTimer: React.FC<RestTimerProps> = ({
         </div>
 
         {showTimerOptions && (
-          <div className="w-full mt-2">
+          <div className="w-full mt-2 animate-scale-in">
             <Select 
               onValueChange={handleTimerPresetChange} 
               defaultValue={`${initialMinutes}m${initialSeconds > 0 ? ` ${initialSeconds}s` : ''}`}

@@ -21,7 +21,6 @@ const ActiveWorkoutPage = () => {
   const { id } = useParams<{ id: string }>();
   const { toast: uiToast } = useToast();
   const [notes, setNotes] = useState<Record<string, string>>({});
-  const [isFinishing, setIsFinishing] = useState(false);
   
   const {
     isLoading,
@@ -37,7 +36,8 @@ const ActiveWorkoutPage = () => {
     formatTime,
     elapsedTime,
     restTimerSettings,
-    handleRestTimerChange
+    handleRestTimerChange,
+    isSubmitting
   } = useWorkout(id || '');
   
   useEffect(() => {
@@ -77,7 +77,6 @@ const ActiveWorkoutPage = () => {
   };
   
   const handleFinishWorkout = async () => {
-    setIsFinishing(true);
     try {
       const success = await finishWorkout();
       if (success) {
@@ -90,8 +89,11 @@ const ActiveWorkoutPage = () => {
           description: "Ocorreu um erro ao salvar seu treino.",
         });
       }
-    } finally {
-      setIsFinishing(false);
+    } catch (error) {
+      console.error("Error in handleFinishWorkout:", error);
+      toast.error("Erro ao finalizar treino", {
+        description: "Ocorreu um erro ao salvar seu treino.",
+      });
     }
   };
 
@@ -136,7 +138,7 @@ const ActiveWorkoutPage = () => {
       <WorkoutHeader 
         onFinish={handleFinishWorkout}
         onDiscard={handleDiscardWorkout}
-        isFinishing={isFinishing}
+        isFinishing={isSubmitting}
         elapsedTime={formatTime(elapsedTime)}
       />
       
@@ -171,7 +173,7 @@ const ActiveWorkoutPage = () => {
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-gray-50 border-t border-gray-200">
         <FinishWorkoutButton 
           onFinish={handleFinishWorkout}
-          isFinishing={isFinishing}
+          isFinishing={isSubmitting}
         />
       </div>
     </div>

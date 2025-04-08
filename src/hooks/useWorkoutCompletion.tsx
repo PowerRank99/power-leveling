@@ -14,6 +14,23 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
     try {
       console.log("Finishing workout:", workoutId, "with duration:", elapsedTime);
       
+      // Check if the workout is already completed
+      const { data: workoutData, error: checkError } = await supabase
+        .from('workouts')
+        .select('completed_at')
+        .eq('id', workoutId)
+        .single();
+      
+      if (checkError) {
+        console.error("Error checking workout status:", checkError);
+        throw new Error("Não foi possível verificar o estado do treino");
+      }
+      
+      if (workoutData?.completed_at) {
+        console.log("Workout already completed, skipping update");
+        return true; // Workout already completed, return success
+      }
+      
       const { error } = await supabase
         .from('workouts')
         .update({
@@ -24,17 +41,14 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
         
       if (error) {
         console.error("Error finishing workout:", error);
-        toast.error("Erro ao finalizar treino", {
-          description: "Não foi possível salvar o treino finalizado"
-        });
-        return false;
+        throw new Error("Não foi possível salvar o treino finalizado");
       }
       
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error finishing workout:", error);
       toast.error("Erro ao finalizar treino", {
-        description: "Ocorreu um erro ao salvar seu treino"
+        description: error.message || "Ocorreu um erro ao salvar seu treino"
       });
       return false;
     }

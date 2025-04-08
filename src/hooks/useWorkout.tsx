@@ -27,7 +27,7 @@ export const useWorkout = (routineId: string) => {
   const { fetchRoutineExercises, isCreatingWorkout } = useWorkoutExercises();
   const { updateSet: updateSetAction, addSet: addSetAction, removeSet: removeSetAction } = useSetManagement(workoutId);
   const { restTimerSettings, setRestTimerSettings, handleRestTimerChange } = useRestTimer(workoutId);
-  const { finishWorkout: finishWorkoutAction, discardWorkout: discardWorkoutAction } = useWorkoutActions(workoutId);
+  const { finishWorkout: finishWorkoutAction, discardWorkout: discardWorkoutAction, isSubmitting } = useWorkoutActions(workoutId);
   const { previousWorkoutData, restTimerSettings: savedRestTimerSettings } = usePreviousWorkoutData(routineId);
   
   useEffect(() => {
@@ -164,6 +164,7 @@ export const useWorkout = (routineId: string) => {
     elapsedTime,
     formatTime,
     restTimerSettings,
-    handleRestTimerChange
+    handleRestTimerChange,
+    isSubmitting
   };
 };
