@@ -150,7 +150,7 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
                   onClick={() => handleSetCompletion(index)}
                   className={`w-8 h-8 rounded-md flex items-center justify-center ${
                     isCompleted
-                      ? 'bg-blue-100 text-blue-500'
+                      ? 'bg-green-100 text-green-500'
                       : 'border border-gray-300 bg-white'
                   }`}
                 >

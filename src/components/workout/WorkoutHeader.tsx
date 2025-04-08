@@ -1,15 +1,40 @@
 
 import React from 'react';
-import { ArrowLeft, Clock } from 'lucide-react';
+import { ArrowLeft, Clock, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
 
 interface WorkoutHeaderProps {
   onFinish: () => void;
+  onDiscard: () => void;
   isFinishing: boolean;
   elapsedTime: string;
 }
 
-const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({ onFinish, isFinishing, elapsedTime }) => {
+const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({ 
+  onFinish, 
+  onDiscard,
+  isFinishing, 
+  elapsedTime 
+}) => {
+  const [showDiscardDialog, setShowDiscardDialog] = React.useState(false);
+
+  const handleDiscardClick = () => {
+    setShowDiscardDialog(true);
+  };
+
+  const handleConfirmDiscard = () => {
+    setShowDiscardDialog(false);
+    onDiscard();
+  };
+
   return (
     <div className="bg-white border-b border-gray-200">
       <div className="flex justify-between items-center p-4">
@@ -29,6 +54,16 @@ const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({ onFinish, isFinishing, el
           <Button
             variant="ghost"
             size="icon"
+            className="mr-2 text-red-500"
+            title="Discard workout"
+            onClick={handleDiscardClick}
+          >
+            <Trash2 className="w-6 h-6" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
             className="mr-2"
             title="Timer"
           >
@@ -44,6 +79,25 @@ const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({ onFinish, isFinishing, el
           </Button>
         </div>
       </div>
+
+      <Dialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Descartar treino</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja descartar este treino? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex justify-between sm:justify-between">
+            <Button variant="outline" onClick={() => setShowDiscardDialog(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDiscard}>
+              Descartar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

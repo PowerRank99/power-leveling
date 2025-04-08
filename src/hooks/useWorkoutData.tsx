@@ -60,11 +60,12 @@ export const useWorkoutData = () => {
           setSavedRoutines(routinesWithCounts);
         }
         
-        // Fetch recent workouts
+        // Fetch recent workouts - UPDATED to only show completed workouts
         const { data: workouts, error: workoutsError } = await supabase
           .from('workouts')
           .select('id, started_at, completed_at, duration_seconds, routine_id')
           .eq('user_id', user.id)
+          .not('completed_at', 'is', null) // Only get completed workouts
           .order('started_at', { ascending: false })
           .limit(5);
         

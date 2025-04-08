@@ -214,6 +214,46 @@ export const useWorkout = (routineId: string) => {
     }
     return success;
   };
+
+  const discardWorkout = async () => {
+    if (!workoutId) {
+      toast.error("Erro ao descartar treino", {
+        description: "ID do treino não encontrado"
+      });
+      return false;
+    }
+    
+    try {
+      console.log("Discarding workout:", workoutId);
+      
+      // Delete all workout sets first
+      const { error: setsError } = await supabase
+        .from('workout_sets')
+        .delete()
+        .eq('workout_id', workoutId);
+        
+      if (setsError) {
+        console.error("Error deleting workout sets:", setsError);
+        throw new Error("Erro ao excluir séries do treino");
+      }
+      
+      // Then delete the workout itself
+      const { error: workoutError } = await supabase
+        .from('workouts')
+        .delete()
+        .eq('id', workoutId);
+        
+      if (workoutError) {
+        console.error("Error deleting workout:", workoutError);
+        throw new Error("Erro ao excluir treino");
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error discarding workout:", error);
+      throw error;
+    }
+  };
   
   return {
     isLoading,
@@ -225,6 +265,7 @@ export const useWorkout = (routineId: string) => {
     addSet,
     goToNextExercise,
     finishWorkout,
+    discardWorkout,
     elapsedTime,
     formatTime
   };
