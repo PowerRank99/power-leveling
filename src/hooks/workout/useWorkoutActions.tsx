@@ -73,14 +73,14 @@ export const useWorkoutActions = (workoutId: string | null) => {
         toast.success("Treino finalizado!", {
           description: "Seu treino foi salvo com sucesso."
         });
+        return true;
       } else {
         console.error("Error from finishWorkoutAction:", error);
         toast.error("Erro ao finalizar", {
           description: error || "Ocorreu um erro. Tente novamente."
         });
+        return false;
       }
-      
-      return success;
     } catch (error) {
       console.error("Exception in finishWorkout:", error);
       toast.error("Erro ao finalizar", {

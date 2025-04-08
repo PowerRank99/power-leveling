@@ -79,6 +79,11 @@ const ActiveWorkoutPage = () => {
   };
   
   const handleFinishWorkout = async () => {
+    if (isLocalSubmitting || isSubmitting) {
+      console.log("Already submitting, ignoring duplicate request");
+      return;
+    }
+
     try {
       setIsLocalSubmitting(true);
       console.log("Starting workout finish process...");
@@ -106,6 +111,11 @@ const ActiveWorkoutPage = () => {
   };
 
   const handleDiscardWorkout = async () => {
+    if (isLocalSubmitting || isSubmitting) {
+      console.log("Already submitting, ignoring duplicate request");
+      return;
+    }
+
     try {
       setIsLocalSubmitting(true);
       console.log("Starting workout discard process...");
