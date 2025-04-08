@@ -18,24 +18,42 @@ const WorkoutContent: React.FC = () => {
     isTimerSaving
   } = useWorkoutContext();
   
-  const handleAddSet = (exerciseIndex: number) => {
-    addSet(exerciseIndex);
-  };
-  
-  const handleRemoveSet = (exerciseIndex: number, setIndex: number) => {
-    removeSet(exerciseIndex, setIndex);
-  };
-  
-  const handleCompleteSet = (exerciseIndex: number, setIndex: number) => {
-    if (exercises[exerciseIndex]) {
-      updateSet(exerciseIndex, setIndex, { 
-        completed: !exercises[exerciseIndex].sets[setIndex].completed 
-      });
+  const handleAddSet = async (exerciseIndex: number) => {
+    try {
+      const result = await addSet(exerciseIndex);
+      console.log("Set added:", result ? "success" : "failed");
+    } catch (error) {
+      console.error("Error adding set:", error);
     }
   };
   
-  const handleUpdateSet = (exerciseIndex: number, setIndex: number, data: { weight?: string; reps?: string }) => {
-    updateSet(exerciseIndex, setIndex, data);
+  const handleRemoveSet = async (exerciseIndex: number, setIndex: number) => {
+    try {
+      const result = await removeSet(exerciseIndex, setIndex);
+      console.log("Set removed:", result ? "success" : "failed");
+    } catch (error) {
+      console.error("Error removing set:", error);
+    }
+  };
+  
+  const handleCompleteSet = async (exerciseIndex: number, setIndex: number) => {
+    if (exercises[exerciseIndex]) {
+      try {
+        await updateSet(exerciseIndex, setIndex, { 
+          completed: !exercises[exerciseIndex].sets[setIndex].completed 
+        });
+      } catch (error) {
+        console.error("Error completing set:", error);
+      }
+    }
+  };
+  
+  const handleUpdateSet = async (exerciseIndex: number, setIndex: number, data: { weight?: string; reps?: string }) => {
+    try {
+      await updateSet(exerciseIndex, setIndex, data);
+    } catch (error) {
+      console.error("Error updating set:", error);
+    }
   };
   
   const handleNotesChange = (exerciseId: string, value: string) => {

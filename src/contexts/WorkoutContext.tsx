@@ -8,9 +8,9 @@ interface WorkoutContextProps {
   exercises: WorkoutExercise[];
   currentExerciseIndex: number;
   totalExercises: number;
-  updateSet: (exerciseIndex: number, setIndex: number, data: { weight?: string; reps?: string; completed?: boolean }) => Promise<void>;
-  addSet: (exerciseIndex: number) => Promise<void>;
-  removeSet: (exerciseIndex: number, setIndex: number) => Promise<void>;
+  updateSet: (exerciseIndex: number, setIndex: number, data: { weight?: string; reps?: string; completed?: boolean }) => Promise<WorkoutExercise[] | null>;
+  addSet: (exerciseIndex: number) => Promise<WorkoutExercise[] | null>;
+  removeSet: (exerciseIndex: number, setIndex: number) => Promise<WorkoutExercise[] | null>;
   finishWorkout: () => Promise<boolean>;
   discardWorkout: () => Promise<boolean>;
   elapsedTime: number;

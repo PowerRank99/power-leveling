@@ -16,9 +16,9 @@ export const useWorkoutFlow = () => {
     exercises,
     currentExerciseIndex,
     totalExercises,
-    updateSet,
-    addSet,
-    removeSet,
+    updateSet: updateSetBase,
+    addSet: addSetBase,
+    removeSet: removeSetBase,
     finishWorkout: finishWorkoutBase,
     discardWorkout: discardWorkoutBase,
     formatTime,
@@ -37,6 +37,37 @@ export const useWorkoutFlow = () => {
       navigate('/treino');
     }
   }, [id, navigate]);
+  
+  // Wrapper functions to handle type compatibility and error handling
+  const updateSet = async (exerciseIndex: number, setIndex: number, data: { weight?: string; reps?: string; completed?: boolean }) => {
+    try {
+      console.log("Updating set:", exerciseIndex, setIndex, data);
+      return await updateSetBase(exerciseIndex, setIndex, data);
+    } catch (error) {
+      console.error("Error updating set in flow:", error);
+      return null;
+    }
+  };
+  
+  const addSet = async (exerciseIndex: number) => {
+    try {
+      console.log("Adding set to exercise:", exerciseIndex);
+      return await addSetBase(exerciseIndex);
+    } catch (error) {
+      console.error("Error adding set in flow:", error);
+      return null;
+    }
+  };
+  
+  const removeSet = async (exerciseIndex: number, setIndex: number) => {
+    try {
+      console.log("Removing set:", exerciseIndex, setIndex);
+      return await removeSetBase(exerciseIndex, setIndex);
+    } catch (error) {
+      console.error("Error removing set in flow:", error);
+      return null;
+    }
+  };
   
   const finishWorkout = async () => {
     if (isLocalSubmitting || isSubmitting) {

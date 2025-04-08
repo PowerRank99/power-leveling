@@ -15,12 +15,12 @@ export const useWorkoutSetsManagement = (
   const { removeSet: removeSetAction } = useWorkoutSetRemove(workoutId);
   
   const updateSet = async (exerciseIndex: number, setIndex: number, data: { weight?: string; reps?: string; completed?: boolean }) => {
-    const result = await updateSetAction(exerciseIndex, exercises, setIndex, data);
+    const result = await updateSetAction(setIndex, data);
     return result;
   };
   
-  const addSet = async (exerciseIndex: number) => {
-    const result = await addSetAction(exerciseIndex);
+  const addSet = async () => {
+    const result = await addSetAction();
     return result;
   };
   
