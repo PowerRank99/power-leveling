@@ -1,108 +1,64 @@
-
-import React, { useState, useEffect } from 'react';
-import { useExerciseRestTimer } from '@/hooks/useExerciseRestTimer';
-import { WorkoutExercise } from '@/types/workoutTypes';
-import FloatingTimer from './FloatingTimer';
-import TimerSelectionModal from './TimerSelectionModal';
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { TimerState } from '@/hooks/timer/timerTypes';
 
 interface WorkoutTimerControlsProps {
-  exercises: WorkoutExercise[];
+  timerState: TimerState;
+  onPause: () => void;
+  onResume: () => void;
+  onStop: () => void;
+  onAddTime: (seconds: number) => void;
 }
 
-const WorkoutTimerControls: React.FC<WorkoutTimerControlsProps> = ({ exercises }) => {
-  // Timer hook
-  const {
-    timerState,
-    timerSettings,
-    showDurationSelector,
-    setShowDurationSelector,
-    startTimer,
-    pauseTimer,
-    resumeTimer,
-    stopTimer,
-    addTime,
-    formatTime: formatTimerTime,
-    loadExerciseTimerDuration,
-    updateTimerDuration
-  } = useExerciseRestTimer();
-  
-  // State for timer modal
-  const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
-  const [selectedExerciseName, setSelectedExerciseName] = useState<string | null>(null);
-  const [exerciseTimers, setExerciseTimers] = useState<Record<string, number>>({});
-  
-  // Handle timer click for an exercise
-  const handleTimerClick = (exerciseId: string, exerciseName: string) => {
-    setSelectedExerciseId(exerciseId);
-    setSelectedExerciseName(exerciseName);
-    setShowDurationSelector(true);
-  };
-  
-  // Handle timer duration selection
-  const handleTimerDurationSelect = (duration: number) => {
-    if (selectedExerciseId) {
-      // Update the duration in our local state
-      setExerciseTimers(prev => ({
-        ...prev,
-        [selectedExerciseId]: duration
-      }));
-      
-      // Update in the timer state if it's the current timer
-      updateTimerDuration(selectedExerciseId, duration);
-    }
-  };
-  
-  // Load exercise timer duration
-  const handleLoadExerciseTimer = (exerciseId: string) => {
-    // Fixed: Don't check the return value for truthiness
-    loadExerciseTimerDuration(exerciseId)
-      .then(duration => {
-        if (typeof duration === 'number') {
-          setExerciseTimers(prev => ({
-            ...prev,
-            [exerciseId]: duration
-          }));
-        }
-      })
-      .catch(error => {
-        console.error(`Error loading timer for ${exerciseId}:`, error);
-      });
-  };
-  
-  // Load timer durations for all exercises on mount
-  useEffect(() => {
-    if (exercises && exercises.length > 0) {
-      exercises.forEach(exercise => {
-        handleLoadExerciseTimer(exercise.id);
-      });
-    }
-  }, [exercises]);
-  
+const WorkoutTimerControls: React.FC<WorkoutTimerControlsProps> = ({
+  timerState,
+  onPause,
+  onResume,
+  onStop,
+  onAddTime
+}) => {
+  if (!timerState.isActive) return null;
+
   return (
-    <>
-      {/* Timer Selection Modal */}
-      <TimerSelectionModal
-        isOpen={showDurationSelector}
-        onClose={() => setShowDurationSelector(false)}
-        onSelectDuration={handleTimerDurationSelect}
-        currentDuration={
-          selectedExerciseId && exerciseTimers[selectedExerciseId] 
-          ? exerciseTimers[selectedExerciseId] 
-          : 90
-        }
-        exerciseName={selectedExerciseName || undefined}
-      />
+    <div className="flex justify-center gap-2 mt-4">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => onAddTime(30)}
+        className="px-3"
+      >
+        +30s
+      </Button>
       
-      {/* Floating Timer */}
-      <FloatingTimer
-        timerState={timerState}
-        formatTime={formatTimerTime}
-        onPause={pauseTimer}
-        onResume={resumeTimer}
-        onStop={stopTimer}
-        onAddTime={addTime}
-      />
-    </>
+      {timerState.isPaused ? (
+        <Button
+          variant="default"
+          size="sm"
+          onClick={onResume}
+          className="px-4"
+        >
+          Resume
+        </Button>
+      ) : (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onPause}
+          className="px-4"
+        >
+          Pause
+        </Button>
+      )}
+      
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={onStop}
+        className="px-3"
+      >
+        Stop
+      </Button>
+    </div>
   );
 };
 

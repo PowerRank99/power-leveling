@@ -3,7 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import { Play, Pause, X, Clock, Plus, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { TimerState } from '@/hooks/useExerciseRestTimer';
+import { TimerState } from '@/hooks/timer/timerTypes';
 
 interface FloatingTimerProps {
   timerState: TimerState;
