@@ -35,28 +35,17 @@ export const useWorkoutSets = (
     if (isProcessing) return;
     console.log(`[useWorkoutSets] Removing set ${setIndex} from exercise ${exerciseIndex}`);
     
-    if (!exercises[exerciseIndex]) {
-      console.error(`[useWorkoutSets] Exercise at index ${exerciseIndex} not found`);
-      return;
-    }
-    
-    console.log(`[useWorkoutSets] Exercise: ${exercises[exerciseIndex].name}, Set ID: ${exercises[exerciseIndex].sets[setIndex]?.id || 'unknown'}`);
-    
     const result = await removeSet(exerciseIndex, exercises, setIndex, routineId);
     if (result) {
-      console.log(`[useWorkoutSets] Set removed successfully, updating state with new exercises`);
       setProcessedExercises(result);
-    } else {
-      console.error(`[useWorkoutSets] Failed to remove set or no update needed`);
     }
   };
   
   /**
    * Handles updating a set's data
    */
-  const handleUpdateSet = async (exerciseIndex: number, setIndex: number, data: { weight?: string; reps?: string; completed?: boolean }) => {
+  const handleUpdateSet = async (exerciseIndex: number, setIndex: number, data: { weight?: string; reps?: string }) => {
     if (isProcessing) return;
-    console.log(`[useWorkoutSets] Updating set ${setIndex} from exercise ${exerciseIndex}`, data);
     
     const result = await updateSet(exerciseIndex, exercises, setIndex, data);
     if (result) {

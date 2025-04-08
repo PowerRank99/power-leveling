@@ -35,7 +35,6 @@ export class SetDeleteService {
       console.log(`[SetDeleteService] Found set to delete: workout=${workout_id}, exercise=${exercise_id}, order=${set_order}`);
       
       // Delete the set
-      console.log(`[SetDeleteService] Sending DELETE request for set ${setId}`);
       const { error } = await supabase
         .from('workout_sets')
         .delete()
@@ -77,24 +76,9 @@ export class SetDeleteService {
             
           if (updateError) {
             console.error(`[SetDeleteService] Error updating set ${set.id} order:`, updateError);
-            // Continue with other updates even if one fails
+            continue; // Continue with other updates even if one fails
           }
         }
-      }
-      
-      // Verify deletion was successful
-      const { count, error: verifyError } = await supabase
-        .from('workout_sets')
-        .select('*', { count: 'exact', head: true })
-        .eq('id', setId);
-      
-      if (verifyError) {
-        console.error(`[SetDeleteService] Error verifying deletion:`, verifyError);
-      } else if (count && count > 0) {
-        console.error(`[SetDeleteService] Set ${setId} still exists after deletion!`);
-        return { success: false, error: new Error(`Failed to delete set ${setId}`) };
-      } else {
-        console.log(`[SetDeleteService] Verified set ${setId} was deleted successfully`);
       }
       
       return { success: true };

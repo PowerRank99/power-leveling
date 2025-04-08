@@ -1,4 +1,3 @@
-
 import React from 'react';
 import ExerciseHeader from '@/components/workout/ExerciseHeader';
 import ExerciseNotes from '@/components/workout/ExerciseNotes';
@@ -54,11 +53,6 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
     console.log(`Adding new set to ${exerciseName} (exerciseIndex: ${exerciseIndex})`);
     onAddSet();
   };
-  
-  const handleRemoveSet = (index: number) => {
-    console.log(`Removing set ${index} from ${exerciseName} (exerciseIndex: ${exerciseIndex})`);
-    onRemoveSet(index);
-  };
 
   return (
     <div className="px-4 pt-4 pb-6">
@@ -74,7 +68,7 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
             index={index}
             set={set}
             onComplete={() => handleSetCompletion(index)}
-            onRemove={() => handleRemoveSet(index)}
+            onRemove={() => onRemoveSet(index)}
             onWeightChange={(value) => handleWeightChange(index, value)}
             onRepsChange={(value) => handleRepsChange(index, value)}
             showRemoveButton={sets.length > 1}

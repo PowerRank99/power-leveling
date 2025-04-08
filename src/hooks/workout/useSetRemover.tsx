@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { SetService } from '@/services/SetService';
+import { useSetOperations } from './useSetOperations';
 import { toast } from 'sonner';
 
 /**
@@ -25,13 +26,6 @@ export function useSetRemover(workoutId: string | null) {
       setIsProcessing(true);
       const currentExercise = exercises[exerciseIndex];
       
-      if (!currentExercise) {
-        console.error(`[useSetRemover] Exercise at index ${exerciseIndex} not found`);
-        return exercises;
-      }
-      
-      console.log(`[useSetRemover] Starting to remove set ${setIndex} from exercise ${currentExercise.name}`);
-      
       if (currentExercise.sets.length <= 1) {
         toast.error("Não é possível remover", {
           description: "Deve haver pelo menos uma série"
@@ -39,7 +33,6 @@ export function useSetRemover(workoutId: string | null) {
         return exercises;
       }
       
-      // Get the set we're about to delete
       const setId = currentExercise.sets[setIndex].id;
       console.log(`[useSetRemover] Removing set ${setIndex + 1} for exercise ${currentExercise.name}, ID: ${setId}`);
       console.log(`[useSetRemover] Current set count before removal: ${currentExercise.sets.length}`);
@@ -56,23 +49,16 @@ export function useSetRemover(workoutId: string | null) {
       
       // Update local state first for immediate feedback
       const updatedExercises = [...exercises];
-      updatedExercises[exerciseIndex] = {
-        ...currentExercise,
-        sets: [
-          ...currentExercise.sets.slice(0, setIndex),
-          ...currentExercise.sets.slice(setIndex + 1)
-        ]
-      };
-      
-      console.log(`[useSetRemover] Local state updated, new set count: ${updatedExercises[exerciseIndex].sets.length}`);
+      updatedExercises[exerciseIndex].sets = [
+        ...currentExercise.sets.slice(0, setIndex),
+        ...currentExercise.sets.slice(setIndex + 1)
+      ];
       
       // Delete from database if it's a real record
       if (!setId.startsWith('default-') && !setId.startsWith('new-')) {
-        console.log(`[useSetRemover] Deleting set ${setId} from database`);
         const deleteResult = await SetService.deleteSet(setId);
         
         if (!deleteResult.success) {
-          console.error(`[useSetRemover] Failed to delete set from database: ${JSON.stringify(deleteResult.error)}`);
           SetService.displayError('remover série', deleteResult.error);
           return exercises;
         }
@@ -81,8 +67,6 @@ export function useSetRemover(workoutId: string | null) {
         
         // Normalize set orders to ensure they're sequential
         await SetService.normalizeSetOrders(workoutId!, currentExercise.id);
-      } else {
-        console.log(`[useSetRemover] Set ${setId} is temporary, no need to delete from database`);
       }
       
       // Verify the new set count in database
@@ -136,7 +120,6 @@ export function useSetRemover(workoutId: string | null) {
         }
       }
       
-      console.log(`[useSetRemover] Set removal complete, returning updated exercises`);
       return updatedExercises;
     } catch (error) {
       console.error("[useSetRemover] Error removing set:", error);

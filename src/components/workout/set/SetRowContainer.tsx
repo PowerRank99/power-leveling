@@ -27,15 +27,10 @@ const SetRowContainer: React.FC<SetRowContainerProps> = ({
   onRepsChange,
   showRemoveButton
 }) => {
-  const handleSwipeTrigger = () => {
-    console.log(`[SetRowContainer] Swipe triggered for set ${index}, calling onRemove`);
-    onRemove();
-  };
-
   return (
     <SwipeableRow
       swipeEnabled={showRemoveButton}
-      onSwipeTrigger={handleSwipeTrigger}
+      onSwipeTrigger={onRemove}
       renderSwipeAction={({ offsetX, swiping, onClick }) => (
         <DeleteButton 
           offsetX={offsetX} 
