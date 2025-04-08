@@ -1,15 +1,6 @@
 
-export interface PreviousSetData {
-  weight: string;
-  reps: string;
-}
+import { SetData as WorkoutTypeSetData, PreviousSetData as WorkoutTypePreviousSetData } from '@/types/workoutTypes';
 
-export interface SetData {
-  id: string;
-  weight: string;
-  reps: string;
-  completed: boolean;
-  previous?: PreviousSetData;
-  // Set order is needed for database persistence
-  set_order?: number;
-}
+// Re-export the types for convenience and consistency
+export type SetData = WorkoutTypeSetData;
+export type PreviousSetData = WorkoutTypePreviousSetData;

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { SetData } from '@/components/workout/set/types';
+import { SetData } from '@/types/workoutTypes';
 import PreviousValues from './PreviousValues';
 import InputField from './InputField';
 import CompleteButton from './CompleteButton';
@@ -13,6 +13,9 @@ interface SetRowContentProps {
   onRepsChange: (value: string) => void;
 }
 
+/**
+ * Component responsible for rendering the content of a set row
+ */
 const SetRowContent: React.FC<SetRowContentProps> = ({
   index,
   set,
