@@ -92,14 +92,19 @@ const ActiveWorkoutPage = () => {
   const handleLoadExerciseTimer = (exerciseId: string) => {
     if (!user) return;
     
-    loadExerciseTimerDuration(exerciseId).then(duration => {
-      if (duration) {
-        setExerciseTimers(prev => ({
-          ...prev,
-          [exerciseId]: duration
-        }));
-      }
-    });
+    // Fixed: Don't check the return value for truthiness
+    loadExerciseTimerDuration(exerciseId)
+      .then(duration => {
+        if (typeof duration === 'number') {
+          setExerciseTimers(prev => ({
+            ...prev,
+            [exerciseId]: duration
+          }));
+        }
+      })
+      .catch(error => {
+        console.error(`Error loading timer for ${exerciseId}:`, error);
+      });
   };
   
   // Validate route parameters

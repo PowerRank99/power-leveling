@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { TimerService } from '@/services/timer/TimerService';
@@ -49,21 +48,21 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
       if (!user) return;
       
       try {
-        const { data, success } = await TimerService.getUserTimerSettings(user.id);
-        if (success && data) {
+        const result = await TimerService.getUserTimerSettings(user.id);
+        if (result.success && result.data) {
           setTimerSettings({
-            soundEnabled: data.timer_sound_enabled,
-            vibrationEnabled: data.timer_vibration_enabled,
-            notificationEnabled: data.timer_notification_enabled
+            soundEnabled: result.data.timer_sound_enabled,
+            vibrationEnabled: result.data.timer_vibration_enabled,
+            notificationEnabled: result.data.timer_notification_enabled
           });
           
           // Update default timer duration
           setTimerState(prev => ({
             ...prev,
-            totalSeconds: data.default_rest_timer_seconds || 90
+            totalSeconds: result.data.default_rest_timer_seconds || 90
           }));
           
-          console.log("[useExerciseRestTimer] Loaded timer settings:", data);
+          console.log("[useExerciseRestTimer] Loaded timer settings:", result.data);
         }
       } catch (error) {
         console.error("[useExerciseRestTimer] Error loading timer settings:", error);
@@ -171,19 +170,24 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
     setLoadingExercises(prev => ({ ...prev, [exerciseId]: true }));
     
     try {
-      const { data, success } = await TimerService.getExerciseTimerDuration(user.id, exerciseId);
+      const result = await TimerService.getExerciseTimerDuration(user.id, exerciseId);
       
-      if (success && data) {
+      if (result.success && typeof result.data === 'number') {
         // Store the duration for this exercise
-        setLastSavedDurations(prev => ({ ...prev, [exerciseId]: data }));
+        setLastSavedDurations(prev => ({ ...prev, [exerciseId]: result.data as number }));
         
-        console.log(`[useExerciseRestTimer] Loaded timer for exercise ${exerciseId}: ${data}s`);
+        console.log(`[useExerciseRestTimer] Loaded timer for exercise ${exerciseId}: ${result.data}s`);
+        
+        // Return the data for immediate use if needed
+        return result.data;
       }
     } catch (error) {
       console.error(`[useExerciseRestTimer] Error loading timer for ${exerciseId}:`, error);
     } finally {
       setLoadingExercises(prev => ({ ...prev, [exerciseId]: false }));
     }
+
+    return null;
   }, [user, loadingExercises]);
 
   // Format timer display

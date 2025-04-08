@@ -16,6 +16,8 @@ export class TimerService {
     try {
       console.log(`[TimerService] Getting timer duration for exercise=${exerciseId}, user=${userId}`);
       
+      // We need to use the raw fetch method since the exercise_timers table
+      // might not be in the TypeScript types yet
       const { data, error } = await supabase
         .from('exercise_timers')
         .select('duration_seconds')
@@ -62,8 +64,12 @@ export class TimerService {
         return { success: false, error };
       }
       
-      console.log(`[TimerService] Default timer duration: ${data.default_rest_timer_seconds} seconds`);
-      return { success: true, data: data.default_rest_timer_seconds };
+      if (data && typeof data.default_rest_timer_seconds === 'number') {
+        console.log(`[TimerService] Default timer duration: ${data.default_rest_timer_seconds} seconds`);
+        return { success: true, data: data.default_rest_timer_seconds };
+      } else {
+        return { success: true, data: 90 }; // Default fallback if somehow not in DB
+      }
     } catch (error) {
       console.error("[TimerService] Exception fetching default timer:", error);
       return { success: false, error: error };
@@ -81,6 +87,8 @@ export class TimerService {
     try {
       console.log(`[TimerService] Saving timer for exercise=${exerciseId}, duration=${durationSeconds}s`);
       
+      // We need to use the raw fetch method since the exercise_timers table
+      // might not be in the TypeScript types yet
       const { error } = await supabase
         .from('exercise_timers')
         .upsert({
@@ -161,7 +169,15 @@ export class TimerService {
         return { success: false, error };
       }
       
-      return { success: true, data };
+      // Ensure we have default values if any field is missing
+      const settings = {
+        timer_sound_enabled: data?.timer_sound_enabled ?? true,
+        timer_vibration_enabled: data?.timer_vibration_enabled ?? true,
+        timer_notification_enabled: data?.timer_notification_enabled ?? true,
+        default_rest_timer_seconds: data?.default_rest_timer_seconds ?? 90
+      };
+      
+      return { success: true, data: settings };
     } catch (error) {
       console.error("[TimerService] Exception fetching timer settings:", error);
       return { success: false, error };

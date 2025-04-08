@@ -7,14 +7,24 @@ interface PageHeaderProps {
   title: string;
   showBackButton?: boolean;
   rightContent?: React.ReactNode;
+  onBackClick?: () => void; // Add this prop
 }
 
 const PageHeader: React.FC<PageHeaderProps> = ({ 
   title, 
   showBackButton = true, 
-  rightContent 
+  rightContent,
+  onBackClick
 }) => {
   const navigate = useNavigate();
+  
+  const handleBackClick = () => {
+    if (onBackClick) {
+      onBackClick();
+    } else {
+      navigate(-1);
+    }
+  };
   
   return (
     <div className="sticky top-0 bg-white border-b border-gray-200 z-10">
@@ -22,7 +32,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         <div className="flex items-center">
           {showBackButton && (
             <button 
-              onClick={() => navigate(-1)}
+              onClick={handleBackClick}
               className="mr-3 p-1"
               aria-label="Voltar"
             >
