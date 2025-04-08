@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Check, Trash } from 'lucide-react';
 
@@ -35,31 +36,15 @@ const SetRow: React.FC<SetRowProps> = ({
   const [startX, setStartX] = useState(0);
   const [offsetX, setOffsetX] = useState(0);
   
-  const [weightValue, setWeightValue] = useState(set.weight || (set.previous?.weight || '0'));
-  const [repsValue, setRepsValue] = useState(set.reps || (set.previous?.reps || '12'));
+  // Add local state to ensure values are properly displayed
+  const [weightValue, setWeightValue] = useState(set.weight);
+  const [repsValue, setRepsValue] = useState(set.reps);
   
+  // Update local state when props change
   useEffect(() => {
-    const newWeightValue = 
-      (!set.weight || set.weight === '0') && set.previous?.weight 
-        ? set.previous.weight 
-        : set.weight;
-        
-    const newRepsValue = 
-      (!set.reps || set.reps === '0') && set.previous?.reps
-        ? set.previous.reps
-        : set.reps;
-    
-    setWeightValue(newWeightValue);
-    setRepsValue(newRepsValue);
-
-    if ((!set.weight || set.weight === '0') && set.previous?.weight) {
-      onWeightChange(set.previous.weight);
-    }
-    
-    if ((!set.reps || set.reps === '0') && set.previous?.reps) {
-      onRepsChange(set.previous.reps);
-    }
-  }, [set.weight, set.reps, set.previous, onWeightChange, onRepsChange]);
+    setWeightValue(set.weight);
+    setRepsValue(set.reps);
+  }, [set.weight, set.reps]);
   
   const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -84,8 +69,9 @@ const SetRow: React.FC<SetRowProps> = ({
     const currentX = e.touches[0].clientX;
     const diff = startX - currentX;
     
+    // Only allow swiping left (positive diff)
     if (diff > 0) {
-      setOffsetX(Math.min(80, diff));
+      setOffsetX(Math.min(80, diff)); // Limit the swipe distance
     } else {
       setOffsetX(0);
     }
@@ -94,10 +80,11 @@ const SetRow: React.FC<SetRowProps> = ({
   const handleTouchEnd = () => {
     setSwiping(false);
     
+    // If swiped more than 40px, show delete button
     if (offsetX > 40) {
-      setOffsetX(80);
+      setOffsetX(80); // Fully reveal delete button
     } else {
-      setOffsetX(0);
+      setOffsetX(0); // Reset position
     }
   };
   
@@ -159,6 +146,7 @@ const SetRow: React.FC<SetRowProps> = ({
         </div>
       </div>
       
+      {/* Delete button that appears when swiped */}
       {showRemoveButton && (
         <div 
           className="absolute top-0 right-0 h-full flex items-center bg-red-500 text-white"
