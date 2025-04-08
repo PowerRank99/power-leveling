@@ -1,18 +1,37 @@
 
+import { useState } from 'react';
 import { WorkoutExercise } from '@/types/workout';
 import { useWorkoutSetUpdate } from './useWorkoutSetUpdate';
 import { useWorkoutSetAdd } from './useWorkoutSetAdd';
+import { useWorkoutSetRemove } from './useWorkoutSetRemove';
 
 export const useWorkoutSetsManagement = (
   workoutId: string | null, 
   exercises: WorkoutExercise[], 
   currentExerciseIndex: number
 ) => {
-  const { updateSet } = useWorkoutSetUpdate(workoutId, exercises, currentExerciseIndex);
-  const { addSet } = useWorkoutSetAdd(workoutId, exercises, currentExerciseIndex);
+  const { updateSet: updateSetAction } = useWorkoutSetUpdate(workoutId, exercises, currentExerciseIndex);
+  const { addSet: addSetAction } = useWorkoutSetAdd(workoutId, exercises, currentExerciseIndex);
+  const { removeSet: removeSetAction } = useWorkoutSetRemove(workoutId);
+  
+  const updateSet = async (exerciseIndex: number, setIndex: number, data: { weight?: string; reps?: string; completed?: boolean }) => {
+    const result = await updateSetAction(exerciseIndex, exercises, setIndex, data);
+    return result;
+  };
+  
+  const addSet = async (exerciseIndex: number) => {
+    const result = await addSetAction(exerciseIndex);
+    return result;
+  };
+  
+  const removeSet = async (exerciseIndex: number, setIndex: number) => {
+    const result = await removeSetAction(exerciseIndex, exercises, setIndex);
+    return result;
+  };
   
   return {
     updateSet,
-    addSet
+    addSet,
+    removeSet
   };
 };
