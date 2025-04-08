@@ -32,14 +32,20 @@ const RoutineContextMenu: React.FC<RoutineContextMenuProps> = ({
   onDeleteRoutine 
 }) => {
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
 
   const handleDeleteClick = () => {
     setShowDeleteDialog(true);
   };
 
-  const handleConfirmDelete = () => {
-    onDeleteRoutine(routineId);
-    setShowDeleteDialog(false);
+  const handleConfirmDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await onDeleteRoutine(routineId);
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+    }
   };
 
   return (
@@ -68,12 +74,13 @@ const RoutineContextMenu: React.FC<RoutineContextMenuProps> = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleConfirmDelete}
               className="bg-red-500 hover:bg-red-600"
+              disabled={isDeleting}
             >
-              Excluir
+              {isDeleting ? 'Excluindo...' : 'Excluir'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

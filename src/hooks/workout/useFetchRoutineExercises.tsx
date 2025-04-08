@@ -13,6 +13,23 @@ export const useFetchRoutineExercises = () => {
 
     console.log("Fetching routine exercises for routine ID:", routineId);
     
+    // First check if the routine actually exists
+    const { data: routineCheck, error: routineCheckError } = await supabase
+      .from('routines')
+      .select('id, name')
+      .eq('id', routineId)
+      .single();
+    
+    if (routineCheckError) {
+      console.error("Error fetching routine:", routineCheckError);
+      throw new Error(`Rotina não encontrada: ${routineCheckError.message}`);
+    }
+    
+    if (!routineCheck) {
+      console.error("Routine not found with ID:", routineId);
+      throw new Error("Rotina não encontrada");
+    }
+    
     const { data: routineExercises, error: exercisesError } = await supabase
       .from('routine_exercises')
       .select(`
