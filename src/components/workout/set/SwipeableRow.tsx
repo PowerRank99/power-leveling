@@ -26,8 +26,10 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
   const [offsetX, setOffsetX] = useState(0);
   
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (!swipeEnabled) return;
     setStartX(e.touches[0].clientX);
     setSwiping(true);
+    console.log('[SwipeableRow] Touch start detected');
   };
   
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -38,14 +40,17 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
     
     if (diff > 0) {
       setOffsetX(Math.min(80, diff));
+      console.log(`[SwipeableRow] Touch move, offsetX: ${Math.min(80, diff)}`);
     } else {
       setOffsetX(0);
     }
   };
   
   const handleTouchEnd = () => {
+    if (!swipeEnabled) return;
     setSwiping(false);
     
+    console.log(`[SwipeableRow] Touch end, offsetX: ${offsetX}`);
     if (offsetX > 40) {
       setOffsetX(80);
     } else {
@@ -58,6 +63,7 @@ const SwipeableRow: React.FC<SwipeableRowProps> = ({
   };
   
   const handleAction = () => {
+    console.log('[SwipeableRow] Action triggered, calling onSwipeTrigger');
     onSwipeTrigger();
     resetSwipe();
   };

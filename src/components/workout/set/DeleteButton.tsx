@@ -9,6 +9,8 @@ interface DeleteButtonProps {
 }
 
 const DeleteButton: React.FC<DeleteButtonProps> = ({ offsetX, swiping, onClick }) => {
+  console.log(`[DeleteButton] Rendering with offsetX: ${offsetX}, swiping: ${swiping}`);
+  
   return (
     <div 
       className="absolute top-0 right-0 h-full flex items-center bg-red-500 text-white"
@@ -17,7 +19,10 @@ const DeleteButton: React.FC<DeleteButtonProps> = ({ offsetX, swiping, onClick }
         transform: offsetX > 0 ? 'translateX(0)' : 'translateX(80px)',
         transition: swiping ? 'none' : 'transform 0.3s ease'
       }}
-      onClick={onClick}
+      onClick={() => {
+        console.log('[DeleteButton] Delete button clicked, calling onClick handler');
+        onClick();
+      }}
     >
       <div className="flex items-center justify-center w-full">
         <Trash className="w-5 h-5" />
