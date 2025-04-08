@@ -1,7 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { ExerciseHistory } from '@/types/workoutTypes';
 
 /**
  * Service for managing exercise history data
@@ -74,18 +73,9 @@ export class ExerciseHistoryService {
         exerciseId, weight, reps, sets
       });
       
-      // Get the current user ID from Supabase auth
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        console.error('[ExerciseHistoryService] No authenticated user found');
-        return false;
-      }
-      
       const { data, error } = await supabase
         .from('exercise_history')
         .upsert({
-          user_id: user.id,
           exercise_id: exerciseId,
           weight,
           reps,
