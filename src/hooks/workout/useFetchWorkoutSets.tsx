@@ -115,7 +115,7 @@ export const useFetchWorkoutSets = () => {
                            previousExerciseData[index] ||
                            { weight: '0', reps: '12' };
         
-        // If this is a new workout (no saved weight/reps yet), use previous workout values
+        // If weight or reps are null/undefined/empty, use values from previous workout
         let weight = set.weight?.toString();
         let reps = set.reps?.toString();
         
