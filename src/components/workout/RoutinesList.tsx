@@ -52,7 +52,7 @@ const RoutinesList: React.FC<RoutinesListProps> = ({
         message="Você ainda não tem rotinas salvas" 
         action={
           <Button 
-            onClick={() => navigate('/criar-rotina')}
+            onClick={() => navigate('/treino/criar')}
             className="bg-fitblue text-white rounded-lg px-4 py-2 font-medium mt-2"
           >
             Criar Primeira Rotina

@@ -34,7 +34,7 @@ const RoutineCard: React.FC<RoutineCardProps> = ({
         </span>
         
         <button 
-          onClick={() => navigate(`/treino-atual/${id}`)}
+          onClick={() => navigate(`/treino/ativo/${id}`)}
           className="bg-fitblue text-white rounded-lg px-4 py-2 font-medium flex items-center"
         >
           <Play className="w-4 h-4 mr-1" />
