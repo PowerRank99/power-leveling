@@ -47,51 +47,38 @@ export const useWorkoutActions = (workoutId: string | null) => {
       }
       
       // First, ensure the timer settings are saved
+      // This is important to make sure they persist for future workouts
       try {
         console.log(`Saving final timer settings: ${restTimerSettings.minutes}m ${restTimerSettings.seconds}s`);
-        const { error: timerError } = await supabase
+        await supabase
           .from('workouts')
           .update({
             rest_timer_minutes: restTimerSettings.minutes,
             rest_timer_seconds: restTimerSettings.seconds
           })
           .eq('id', workoutId);
-          
-        if (timerError) {
-          console.error("Error saving timer settings:", timerError);
-          // Continue with workout completion even if timer settings fail
-        }
       } catch (timerError) {
-        console.error("Exception saving timer settings:", timerError);
+        console.error("Error saving final timer settings:", timerError);
         // Continue with workout completion even if timer settings fail
       }
       
       // Proceed with finishing the workout
-      console.log("Calling finishWorkoutAction...");
-      const { success, error } = await finishWorkoutAction(elapsedTime);
-      console.log("finishWorkoutAction result:", { success, error });
+      const success = await finishWorkoutAction(elapsedTime);
       
       if (success) {
         toast.success("Treino finalizado!", {
           description: "Seu treino foi salvo com sucesso."
         });
-        return true;
-      } else {
-        console.error("Error from finishWorkoutAction:", error);
-        toast.error("Erro ao finalizar", {
-          description: error || "Ocorreu um erro. Tente novamente."
-        });
-        return false;
       }
+      
+      return success;
     } catch (error) {
-      console.error("Exception in finishWorkout:", error);
+      console.error("Error finishing workout:", error);
       toast.error("Erro ao finalizar", {
-        description: error instanceof Error ? error.message : "Ocorreu um erro. Tente novamente."
+        description: "Ocorreu um erro. Tente novamente."
       });
       return false;
     } finally {
-      // Always ensure isSubmitting is reset to false
-      console.log("Resetting isSubmitting state to false");
       setIsSubmitting(false);
     }
   }, [isSubmitting, workoutId, finishWorkoutAction]);
@@ -115,7 +102,6 @@ export const useWorkoutActions = (workoutId: string | null) => {
       
       // Delete sets
       try {
-        console.log("Deleting workout sets...");
         await withTimeout(
           async () => {
             const { error } = await supabase
@@ -123,11 +109,7 @@ export const useWorkoutActions = (workoutId: string | null) => {
               .delete()
               .eq('workout_id', workoutId);
               
-            if (error) {
-              console.error("Error deleting workout sets:", error);
-              throw error;
-            }
-            console.log("Workout sets deleted successfully");
+            if (error) throw error;
             return true;
           },
           TIMEOUT_MS
@@ -139,7 +121,6 @@ export const useWorkoutActions = (workoutId: string | null) => {
       
       // Delete workout
       try {
-        console.log("Deleting workout...");
         await withTimeout(
           async () => {
             const { error } = await supabase
@@ -147,11 +128,7 @@ export const useWorkoutActions = (workoutId: string | null) => {
               .delete()
               .eq('id', workoutId);
               
-            if (error) {
-              console.error("Error deleting workout:", error);
-              throw error;
-            }
-            console.log("Workout deleted successfully");
+            if (error) throw error;
             return true;
           },
           TIMEOUT_MS
@@ -169,8 +146,6 @@ export const useWorkoutActions = (workoutId: string | null) => {
       });
       return false;
     } finally {
-      // Always ensure isSubmitting is reset to false
-      console.log("Resetting isSubmitting state to false");
       setIsSubmitting(false);
     }
   }, [isSubmitting, workoutId]);

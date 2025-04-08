@@ -1,146 +1,118 @@
 
-import { useCallback, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { WorkoutExercise } from '@/types/workout';
 import { useWorkoutTimer } from './useWorkoutTimer';
 import { useWorkoutExercises } from './useWorkoutExercises';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { useWorkoutState } from './useWorkoutState';
-import { useWorkoutInitialization } from './useWorkoutInitialization';
+import { useSetManagement } from './workout/useSetManagement';
 import { useRestTimer } from './workout/useRestTimer';
 import { useWorkoutActions } from './workout/useWorkoutActions';
 import { usePreviousWorkoutData } from './workout/usePreviousWorkoutData';
-import { useWorkoutSetsManagement } from './workout/useWorkoutSetsManagement';
 
 export type { WorkoutExercise } from '@/types/workout';
 
 export const useWorkout = (routineId: string) => {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [exercises, setExercises] = useState<WorkoutExercise[]>([]);
+  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
+  const [workoutId, setWorkoutId] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
   const { toast: uiToast } = useToast();
-  const { isCreatingWorkout } = useWorkoutExercises();
   
-  // Use the extracted state management hook
-  const {
-    isLoading, setIsLoading,
-    loadError, setLoadError,
-    exercises, setExercises,
-    currentExerciseIndex, setCurrentExerciseIndex,
-    workoutId, setWorkoutId,
-    isInitialized, setIsInitialized,
-    isLocalSubmitting, setIsLocalSubmitting
-  } = useWorkoutState();
-  
-  // Use separate hooks for different functionalities
   const { elapsedTime, formatTime } = useWorkoutTimer();
-  const { setupWorkout } = useWorkoutInitialization(
-    routineId,
-    isInitialized,
-    isCreatingWorkout,
-    setIsLoading,
-    setLoadError,
-    setExercises,
-    setWorkoutId,
-    setIsInitialized
-  );
-  
+  const { fetchRoutineExercises, isCreatingWorkout } = useWorkoutExercises();
+  const { updateSet: updateSetAction, addSet: addSetAction, removeSet: removeSetAction } = useSetManagement(workoutId);
   const { restTimerSettings, setRestTimerSettings, handleRestTimerChange, isSaving: isTimerSaving } = useRestTimer(workoutId);
   const { finishWorkout: finishWorkoutAction, discardWorkout: discardWorkoutAction, isSubmitting } = useWorkoutActions(workoutId);
   const { previousWorkoutData, restTimerSettings: savedRestTimerSettings } = usePreviousWorkoutData(routineId);
   
-  // Set up the workout sets management
-  const { updateSet, addSet, removeSet } = useWorkoutSetsManagement(workoutId, exercises, currentExerciseIndex);
-  
-  // Apply saved rest timer settings
   useEffect(() => {
     if (savedRestTimerSettings) {
       setRestTimerSettings(savedRestTimerSettings);
     }
   }, [savedRestTimerSettings, setRestTimerSettings]);
-  
-  // Wrapper functions to maintain the original API
-  const finishWorkout = async () => {
-    if (isLocalSubmitting || isSubmitting) {
-      console.log("Already submitting, ignoring duplicate request");
-      return false;
+
+  const setupWorkout = useCallback(async () => {
+    if (!routineId) {
+      setLoadError("ID da rotina não fornecido");
+      setIsLoading(false);
+      return;
+    }
+
+    if (isInitialized || isCreatingWorkout) {
+      console.log("Workout already initialized or in progress, skipping setup");
+      return;
     }
 
     try {
-      setIsLocalSubmitting(true);
-      console.log("Starting workout finish process...");
-      const success = await finishWorkoutAction(elapsedTime, restTimerSettings);
-      console.log("Finish workout result:", success);
+      setIsLoading(true);
+      setLoadError(null);
       
-      if (success) {
-        toast.success("Treino Completo!", {
-          description: "Seu treino foi salvo com sucesso.",
-        });
-        
-        // Wait a brief moment before navigation to ensure state updates and toasts are visible
-        setTimeout(() => {
-          if (!isLocalSubmitting) { // Double-check we're not in submitting state
-            navigate('/treino');
-          }
-        }, 1500);
-        return true;
+      console.log("Setting up workout for routine:", routineId);
+      const { workoutExercises, workoutId: newWorkoutId } = await fetchRoutineExercises(routineId);
+      
+      if (workoutExercises && workoutExercises.length > 0 && newWorkoutId) {
+        console.log("Workout setup successful with", workoutExercises.length, "exercises");
+        setExercises(workoutExercises);
+        setWorkoutId(newWorkoutId);
+        setIsInitialized(true);
       } else {
-        toast.error("Erro ao finalizar treino", {
-          description: "Ocorreu um erro ao salvar seu treino.",
-        });
-        return false;
+        throw new Error("Não foi possível iniciar o treino. Verifique se a rotina possui exercícios.");
       }
-    } catch (error) {
-      console.error("Error in handleFinishWorkout:", error);
-      toast.error("Erro ao finalizar treino", {
-        description: "Ocorreu um erro ao salvar seu treino.",
+    } catch (error: any) {
+      console.error("Error in setupWorkout:", error);
+      setLoadError(error.message || "Erro ao iniciar treino");
+      
+      toast.error("Erro ao carregar treino", {
+        description: "Não foi possível iniciar seu treino. Tente novamente."
       });
-      return false;
+      
+      setTimeout(() => {
+        navigate('/treino');
+      }, 3000);
     } finally {
-      console.log("Resetting local submitting state");
-      setIsLocalSubmitting(false);
+      setIsLoading(false);
     }
+  }, [routineId, fetchRoutineExercises, navigate, isInitialized, isCreatingWorkout]);
+  
+  useEffect(() => {
+    if (!isInitialized && !isCreatingWorkout) {
+      setupWorkout();
+    }
+  }, [setupWorkout, isInitialized, isCreatingWorkout]);
+  
+  // Wrapper functions to maintain the original API while using the new hooks
+  const updateSet = async (exerciseIndex: number, setIndex: number, data: { weight?: string; reps?: string; completed?: boolean }) => {
+    const result = await updateSetAction(exerciseIndex, exercises, setIndex, data);
+    if (result) {
+      setExercises(result);
+    }
+  };
+  
+  const addSet = async (exerciseIndex: number) => {
+    const result = await addSetAction(exerciseIndex, exercises, routineId);
+    if (result) {
+      setExercises(result);
+    }
+  };
+  
+  const removeSet = async (exerciseIndex: number, setIndex: number) => {
+    const result = await removeSetAction(exerciseIndex, exercises, setIndex, routineId);
+    if (result) {
+      setExercises(result);
+    }
+  };
+  
+  const finishWorkout = async () => {
+    return finishWorkoutAction(elapsedTime, restTimerSettings);
   };
 
   const discardWorkout = async () => {
-    if (isLocalSubmitting || isSubmitting) {
-      console.log("Already submitting, ignoring duplicate request");
-      return false;
-    }
-
-    try {
-      setIsLocalSubmitting(true);
-      console.log("Starting workout discard process...");
-      const success = await discardWorkoutAction();
-      console.log("Discard workout result:", success);
-      
-      if (success) {
-        toast.info("Treino descartado", {
-          description: "O treino foi descartado com sucesso.",
-        });
-        
-        // Wait a brief moment before navigation to ensure state updates and toasts are visible
-        setTimeout(() => {
-          if (!isLocalSubmitting) { // Double-check we're not in submitting state
-            navigate('/treino');
-          }
-        }, 1500);
-        return true;
-      } else {
-        toast.error("Erro ao descartar treino", {
-          description: "Ocorreu um erro ao descartar o treino.",
-        });
-        return false;
-      }
-    } catch (error) {
-      console.error("Error discarding workout:", error);
-      toast.error("Erro ao descartar treino", {
-        description: "Não foi possível descartar o treino.",
-      });
-      return false;
-    } finally {
-      console.log("Resetting local submitting state");
-      setIsLocalSubmitting(false);
-    }
+    return discardWorkoutAction();
   };
   
   return {
@@ -159,7 +131,6 @@ export const useWorkout = (routineId: string) => {
     restTimerSettings,
     handleRestTimerChange,
     isSubmitting,
-    isTimerSaving,
-    isLocalSubmitting
+    isTimerSaving
   };
 };
