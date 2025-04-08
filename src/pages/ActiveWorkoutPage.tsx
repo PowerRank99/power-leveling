@@ -94,7 +94,13 @@ const ActiveWorkoutPage = () => {
         toast.success("Treino Completo!", {
           description: "Seu treino foi salvo com sucesso.",
         });
-        navigate('/treino');
+        
+        // Wait a brief moment before navigation to ensure state updates and toasts are visible
+        setTimeout(() => {
+          if (!isLocalSubmitting) { // Double-check we're not in submitting state
+            navigate('/treino');
+          }
+        }, 1500);
       } else {
         toast.error("Erro ao finalizar treino", {
           description: "Ocorreu um erro ao salvar seu treino.",
@@ -106,6 +112,7 @@ const ActiveWorkoutPage = () => {
         description: "Ocorreu um erro ao salvar seu treino.",
       });
     } finally {
+      console.log("Resetting local submitting state");
       setIsLocalSubmitting(false);
     }
   };
@@ -126,7 +133,13 @@ const ActiveWorkoutPage = () => {
         toast.info("Treino descartado", {
           description: "O treino foi descartado com sucesso.",
         });
-        navigate('/treino');
+        
+        // Wait a brief moment before navigation to ensure state updates and toasts are visible
+        setTimeout(() => {
+          if (!isLocalSubmitting) { // Double-check we're not in submitting state
+            navigate('/treino');
+          }
+        }, 1500);
       } else {
         toast.error("Erro ao descartar treino", {
           description: "Ocorreu um erro ao descartar o treino.",
@@ -138,6 +151,7 @@ const ActiveWorkoutPage = () => {
         description: "Não foi possível descartar o treino.",
       });
     } finally {
+      console.log("Resetting local submitting state");
       setIsLocalSubmitting(false);
     }
   };

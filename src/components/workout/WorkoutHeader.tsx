@@ -27,6 +27,7 @@ const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
   const [showDiscardDialog, setShowDiscardDialog] = React.useState(false);
 
   const handleDiscardClick = () => {
+    if (isFinishing) return; // Prevent opening dialog if already finishing
     setShowDiscardDialog(true);
   };
 
@@ -90,7 +91,11 @@ const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
         </div>
       </div>
 
-      <Dialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
+      <Dialog open={showDiscardDialog} onOpenChange={(open) => {
+        // Prevent closing the dialog if currently submitting
+        if (isFinishing && open === false) return;
+        setShowDiscardDialog(open);
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Descartar treino</DialogTitle>

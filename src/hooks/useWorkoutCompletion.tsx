@@ -25,7 +25,10 @@ const withTimeout = async <T,>(promiseFactory: () => Promise<T>, ms: number): Pr
 
 export const useWorkoutCompletion = (workoutId: string | null) => {
   const finishWorkout = async (elapsedTime: number) => {
+    console.log("Starting finishWorkout with workoutId:", workoutId, "and elapsedTime:", elapsedTime);
+    
     if (!workoutId) {
+      console.log("No workoutId provided, returning error");
       toast.error("Erro ao finalizar", {
         description: "ID do treino não encontrado"
       });
@@ -33,11 +36,12 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
     }
     
     try {
-      console.log("Finishing workout:", workoutId, "with duration:", elapsedTime);
+      console.log("Checking if workout", workoutId, "is already completed");
       
       // Check if the workout is already completed
       let workoutData;
       try {
+        console.log("Fetching workout completion status...");
         workoutData = await withTimeout(
           async () => {
             const { data, error } = await supabase
@@ -46,11 +50,16 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
               .eq('id', workoutId)
               .single();
               
-            if (error) throw error;
+            if (error) {
+              console.error("Error checking workout status:", error);
+              throw error;
+            }
+            console.log("Workout status retrieved:", data);
             return data;
           },
           TIMEOUT_MS
         );
+        console.log("Successfully checked workout completion status:", workoutData);
       } catch (checkError) {
         console.error("Error or timeout checking workout status:", checkError);
         throw new Error("Não foi possível verificar o estado do treino");
@@ -63,6 +72,7 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
       
       // Update workout with completion status
       try {
+        console.log("Updating workout completion status...");
         await withTimeout(
           async () => {
             const { error } = await supabase
@@ -73,12 +83,17 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
               })
               .eq('id', workoutId);
               
-            if (error) throw error;
+            if (error) {
+              console.error("Error updating workout completion:", error);
+              throw error;
+            }
+            console.log("Workout completion updated successfully");
             return true;
           },
           TIMEOUT_MS
         );
         
+        console.log("Workout", workoutId, "finished successfully");
         return { success: true, error: null };
       } catch (updateError) {
         console.error("Error or timeout finishing workout:", updateError);
@@ -86,9 +101,6 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
       }
     } catch (error: any) {
       console.error("Error finishing workout:", error);
-      toast.error("Erro ao finalizar treino", {
-        description: error.message || "Ocorreu um erro ao salvar seu treino"
-      });
       return { success: false, error: error.message || "Unknown error" };
     }
   };

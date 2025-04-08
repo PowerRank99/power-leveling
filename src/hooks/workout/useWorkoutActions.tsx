@@ -67,7 +67,9 @@ export const useWorkoutActions = (workoutId: string | null) => {
       }
       
       // Proceed with finishing the workout
+      console.log("Calling finishWorkoutAction...");
       const { success, error } = await finishWorkoutAction(elapsedTime);
+      console.log("finishWorkoutAction result:", { success, error });
       
       if (success) {
         toast.success("Treino finalizado!", {
@@ -89,6 +91,7 @@ export const useWorkoutActions = (workoutId: string | null) => {
       return false;
     } finally {
       // Always ensure isSubmitting is reset to false
+      console.log("Resetting isSubmitting state to false");
       setIsSubmitting(false);
     }
   }, [isSubmitting, workoutId, finishWorkoutAction]);
@@ -112,6 +115,7 @@ export const useWorkoutActions = (workoutId: string | null) => {
       
       // Delete sets
       try {
+        console.log("Deleting workout sets...");
         await withTimeout(
           async () => {
             const { error } = await supabase
@@ -119,7 +123,11 @@ export const useWorkoutActions = (workoutId: string | null) => {
               .delete()
               .eq('workout_id', workoutId);
               
-            if (error) throw error;
+            if (error) {
+              console.error("Error deleting workout sets:", error);
+              throw error;
+            }
+            console.log("Workout sets deleted successfully");
             return true;
           },
           TIMEOUT_MS
@@ -131,6 +139,7 @@ export const useWorkoutActions = (workoutId: string | null) => {
       
       // Delete workout
       try {
+        console.log("Deleting workout...");
         await withTimeout(
           async () => {
             const { error } = await supabase
@@ -138,7 +147,11 @@ export const useWorkoutActions = (workoutId: string | null) => {
               .delete()
               .eq('id', workoutId);
               
-            if (error) throw error;
+            if (error) {
+              console.error("Error deleting workout:", error);
+              throw error;
+            }
+            console.log("Workout deleted successfully");
             return true;
           },
           TIMEOUT_MS
@@ -157,6 +170,7 @@ export const useWorkoutActions = (workoutId: string | null) => {
       return false;
     } finally {
       // Always ensure isSubmitting is reset to false
+      console.log("Resetting isSubmitting state to false");
       setIsSubmitting(false);
     }
   }, [isSubmitting, workoutId]);
