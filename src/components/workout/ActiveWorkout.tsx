@@ -29,7 +29,8 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
   onCompleteSet,
   onUpdateSet,
   notes,
-  onNotesChange
+  onNotesChange,
+  exerciseId
 }) => {
   console.log(`ActiveWorkout render: ${exerciseName} with ${sets.length} sets`);
   console.log(`Exercise ID: ${exerciseId}, Exercise Index: ${exerciseIndex}`);
