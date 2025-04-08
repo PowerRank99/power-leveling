@@ -73,6 +73,7 @@ const WorkoutsList: React.FC<WorkoutsListProps> = ({
             prs={workout.prs}
             durationSeconds={workout.duration_seconds}
             isDeleting={isDeletingItem(workout.id)}
+            onDelete={onDeleteWorkout}
           />
         </WorkoutContextMenu>
       ))}

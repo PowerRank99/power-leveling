@@ -82,6 +82,7 @@ const RoutinesList: React.FC<RoutinesListProps> = ({
             exercisesCount={routine.exercises_count || 0}
             lastUsedAt={routine.last_used_at}
             isDeleting={isDeletingItem(routine.id)}
+            onDelete={onDeleteRoutine}
           />
         </RoutineContextMenu>
       ))}

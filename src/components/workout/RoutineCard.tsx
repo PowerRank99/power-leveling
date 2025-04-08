@@ -3,6 +3,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Play } from 'lucide-react';
 import { getTimeAgo } from '@/utils/formatters';
+import SwipeableRow from './set/SwipeableRow';
+import DeleteButton from './set/DeleteButton';
 
 interface RoutineCardProps {
   id: string;
@@ -23,30 +25,48 @@ const RoutineCard: React.FC<RoutineCardProps> = ({
 }) => {
   const navigate = useNavigate();
   
+  const handleDelete = () => {
+    if (onDelete) {
+      onDelete(id);
+    }
+  };
+  
   return (
-    <div className="bg-white rounded-lg shadow-sm p-4 mb-4 border border-gray-200">
-      <h3 className="font-bold text-lg">{name}</h3>
-      <div className="flex text-gray-500 text-sm mt-1 mb-2">
-        <span>{exercisesCount} exercícios</span>
-        <span className="mx-2">•</span>
-        <span>Última vez: {getTimeAgo(lastUsedAt)}</span>
-      </div>
-      
-      <div className="flex items-center justify-between">
-        <span className="bg-fitblue-50 text-fitblue-600 font-medium px-3 py-1 rounded-full text-sm">
-          {exercisesCount} exercícios
-        </span>
+    <SwipeableRow
+      swipeEnabled={Boolean(onDelete) && !isDeleting}
+      onSwipeTrigger={handleDelete}
+      renderSwipeAction={({ offsetX, swiping, onClick }) => (
+        <DeleteButton 
+          offsetX={offsetX} 
+          swiping={swiping} 
+          onClick={onClick} 
+        />
+      )}
+    >
+      <div className={`bg-white rounded-lg shadow-sm p-4 mb-4 border border-gray-200 ${isDeleting ? 'opacity-50' : ''}`}>
+        <h3 className="font-bold text-lg">{name}</h3>
+        <div className="flex text-gray-500 text-sm mt-1 mb-2">
+          <span>{exercisesCount} exercícios</span>
+          <span className="mx-2">•</span>
+          <span>Última vez: {getTimeAgo(lastUsedAt)}</span>
+        </div>
         
-        <button 
-          onClick={() => navigate(`/treino/ativo/${id}`)}
-          className="bg-fitblue text-white rounded-lg px-4 py-2 font-medium flex items-center"
-          disabled={isDeleting}
-        >
-          <Play className="w-4 h-4 mr-1" />
-          Iniciar Rotina
-        </button>
+        <div className="flex items-center justify-between">
+          <span className="bg-fitblue-50 text-fitblue-600 font-medium px-3 py-1 rounded-full text-sm">
+            {exercisesCount} exercícios
+          </span>
+          
+          <button 
+            onClick={() => navigate(`/treino/ativo/${id}`)}
+            className="bg-fitblue text-white rounded-lg px-4 py-2 font-medium flex items-center"
+            disabled={isDeleting}
+          >
+            <Play className="w-4 h-4 mr-1" />
+            Iniciar Rotina
+          </button>
+        </div>
       </div>
-    </div>
+    </SwipeableRow>
   );
 };
 
