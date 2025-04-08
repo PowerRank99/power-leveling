@@ -30,10 +30,9 @@ const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
     setShowDiscardDialog(true);
   };
 
-  const handleConfirmDiscard = async () => {
+  const handleConfirmDiscard = () => {
     setShowDiscardDialog(false);
-    // Call the discard function without wrapping it in another timeout
-    await onDiscard();
+    onDiscard();
   };
 
   return (

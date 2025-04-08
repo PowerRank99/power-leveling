@@ -38,52 +38,39 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
       // Check if the workout is already completed
       let workoutData;
       try {
-        workoutData = await withTimeout(
-          async () => {
-            const { data, error } = await supabase
-              .from('workouts')
-              .select('completed_at')
-              .eq('id', workoutId)
-              .single();
+        workoutData = await supabase
+          .from('workouts')
+          .select('completed_at')
+          .eq('id', workoutId)
+          .single();
               
-            if (error) throw error;
-            return data;
-          },
-          TIMEOUT_MS
-        );
+        if (workoutData.error) throw workoutData.error;
       } catch (checkError) {
-        console.error("Error or timeout checking workout status:", checkError);
+        console.error("Error checking workout status:", checkError);
         throw new Error("Não foi possível verificar o estado do treino");
       }
       
-      if (workoutData?.completed_at) {
+      if (workoutData?.data?.completed_at) {
         console.log("Workout already completed, skipping update");
         return true; // Workout already completed, return success
       }
       
       // Update workout with completion status
       try {
-        await withTimeout(
-          async () => {
-            const { error } = await supabase
-              .from('workouts')
-              .update({
-                completed_at: new Date().toISOString(),
-                duration_seconds: elapsedTime
-              })
-              .eq('id', workoutId);
+        const { error } = await supabase
+          .from('workouts')
+          .update({
+            completed_at: new Date().toISOString(),
+            duration_seconds: elapsedTime
+          })
+          .eq('id', workoutId);
               
-            if (error) throw error;
-            return true;
-          },
-          TIMEOUT_MS
-        );
+        if (error) throw error;
+        return true;
       } catch (updateError) {
-        console.error("Error or timeout finishing workout:", updateError);
+        console.error("Error finishing workout:", updateError);
         throw new Error("Não foi possível salvar o treino finalizado");
       }
-      
-      return true;
     } catch (error: any) {
       console.error("Error finishing workout:", error);
       toast.error("Erro ao finalizar treino", {
@@ -104,36 +91,35 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
     try {
       console.log("Discarding workout:", workoutId);
       
-      // Delete workout and related sets in a single operation
+      // Delete workout and related sets in a sequential operation
       try {
-        await withTimeout(
-          async () => {
-            // Delete all sets first (due to foreign key constraints)
-            const { error: setsError } = await supabase
-              .from('workout_sets')
-              .delete()
-              .eq('workout_id', workoutId);
+        // Delete all sets first (due to foreign key constraints)
+        const { error: setsError } = await supabase
+          .from('workout_sets')
+          .delete()
+          .eq('workout_id', workoutId);
               
-            if (setsError) throw setsError;
-            
-            // Then delete the workout itself
-            const { error: workoutError } = await supabase
-              .from('workouts')
-              .delete()
-              .eq('id', workoutId);
+        if (setsError) {
+          console.error("Error deleting workout sets:", setsError);
+          throw setsError;
+        }
+        
+        // Then delete the workout itself
+        const { error: workoutError } = await supabase
+          .from('workouts')
+          .delete()
+          .eq('id', workoutId);
               
-            if (workoutError) throw workoutError;
-            
-            return true;
-          },
-          TIMEOUT_MS
-        );
+        if (workoutError) {
+          console.error("Error deleting workout:", workoutError);
+          throw workoutError;
+        }
+        
+        return true;
       } catch (deleteError) {
-        console.error("Error or timeout discarding workout:", deleteError);
+        console.error("Error discarding workout:", deleteError);
         throw new Error("Não foi possível descartar o treino");
       }
-      
-      return true;
     } catch (error: any) {
       console.error("Error discarding workout:", error);
       toast.error("Erro ao descartar treino", {

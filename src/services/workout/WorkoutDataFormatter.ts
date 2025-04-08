@@ -44,8 +44,9 @@ export class WorkoutDataFormatter {
         const weight = set.weight !== null && set.weight !== undefined ? set.weight.toString() : '0';
         const reps = set.reps !== null && set.reps !== undefined ? set.reps.toString() : '12';
         
-        // FIXED: Explicitly set completed to false if it's null or undefined
-        const completed = set.completed === true ? true : false;
+        // CRITICAL FIX: Always ensure completed is false initially
+        // Sets should only be marked as completed by explicit user action
+        const completed = false; // Always start with uncompleted sets
         
         console.log(`Set ${index} (ID: ${set.id}, order ${set.set_order}) for ${exercise.name}: current [w: ${weight}, r: ${reps}, c: ${completed}], previous [w: ${previousSet.weight}, r: ${previousSet.reps}]`);
         

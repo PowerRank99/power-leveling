@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { useWorkoutCompletion } from '../useWorkoutCompletion';
+import { useWorkoutCompletion } from '@/hooks/useWorkoutCompletion';
 import { NavigateFunction } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -58,7 +58,7 @@ export const useWorkoutActions = (
           description: "Você foi redirecionado para a página inicial."
         });
         
-        // Navigate directly without timeout
+        // Navigate directly to workout page
         navigate('/treino');
         return true;
       } else {
