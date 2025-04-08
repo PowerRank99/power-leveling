@@ -4,21 +4,23 @@ import { toast } from 'sonner';
 
 const TIMEOUT_MS = 10000; // 10 seconds timeout for operations
 
-// Custom timeout promise that works with both regular promises and Supabase queries
-const withTimeout = <T,>(promiseFactory: () => Promise<T>, ms: number): Promise<T> => {
+// Modified timeout function that properly handles Supabase queries
+const withTimeout = async <T,>(promiseFactory: () => Promise<T>, ms: number): Promise<T> => {
   let timeoutId: NodeJS.Timeout;
   
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeoutId = setTimeout(() => reject(new Error('Request timed out')), ms);
   });
   
-  return Promise.race([
-    promiseFactory().then(result => {
-      clearTimeout(timeoutId);
-      return result;
-    }),
-    timeoutPromise
-  ]);
+  try {
+    const resultPromise = promiseFactory();
+    const result = await Promise.race([resultPromise, timeoutPromise]);
+    clearTimeout(timeoutId);
+    return result;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
 };
 
 export const useWorkoutCompletion = (workoutId: string | null) => {
@@ -33,7 +35,7 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
     try {
       console.log("Finishing workout:", workoutId, "with duration:", elapsedTime);
       
-      // Check if the workout is already completed with timeout
+      // Check if the workout is already completed
       let workoutData;
       try {
         workoutData = await withTimeout(
@@ -59,7 +61,7 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
         return true; // Workout already completed, return success
       }
       
-      // Update workout with completion status with timeout
+      // Update workout with completion status
       try {
         await withTimeout(
           async () => {

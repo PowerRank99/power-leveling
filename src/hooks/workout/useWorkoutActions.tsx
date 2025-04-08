@@ -6,21 +6,23 @@ import { useState } from 'react';
 
 const TIMEOUT_MS = 10000; // 10 seconds timeout for operations
 
-// Custom timeout promise that works with both regular promises and Supabase queries
-const withTimeout = <T,>(promiseFactory: () => Promise<T>, ms: number): Promise<T> => {
+// Modified timeout function that properly handles Supabase queries
+const withTimeout = async <T,>(promiseFactory: () => Promise<T>, ms: number): Promise<T> => {
   let timeoutId: NodeJS.Timeout;
   
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeoutId = setTimeout(() => reject(new Error('Request timed out')), ms);
   });
   
-  return Promise.race([
-    promiseFactory().then(result => {
-      clearTimeout(timeoutId);
-      return result;
-    }),
-    timeoutPromise
-  ]);
+  try {
+    const resultPromise = promiseFactory();
+    const result = await Promise.race([resultPromise, timeoutPromise]);
+    clearTimeout(timeoutId);
+    return result;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
 };
 
 export const useWorkoutActions = (workoutId: string | null) => {
@@ -43,7 +45,7 @@ export const useWorkoutActions = (workoutId: string | null) => {
         return false;
       }
       
-      // Save timer settings first with timeout
+      // Save timer settings first
       try {
         await withTimeout(
           async () => {
@@ -103,7 +105,7 @@ export const useWorkoutActions = (workoutId: string | null) => {
       setIsSubmitting(true);
       console.log("Discarding workout:", workoutId);
       
-      // Delete sets with timeout
+      // Delete sets
       try {
         await withTimeout(
           async () => {
@@ -122,7 +124,7 @@ export const useWorkoutActions = (workoutId: string | null) => {
         throw new Error("Erro ao excluir séries do treino");
       }
       
-      // Delete workout with timeout
+      // Delete workout
       try {
         await withTimeout(
           async () => {
