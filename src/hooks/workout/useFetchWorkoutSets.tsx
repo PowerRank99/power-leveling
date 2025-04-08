@@ -34,6 +34,22 @@ export const useFetchWorkoutSets = () => {
     }
 
     console.log(`Found ${workoutSets?.length || 0} sets for this workout`);
+    
+    // Log all sets to help debug persistence issues
+    if (workoutSets && workoutSets.length > 0) {
+      console.log("Workout sets by exercise:");
+      const setsByExercise = workoutSets.reduce((acc: Record<string, any[]>, set) => {
+        if (!set.exercise_id) return acc;
+        if (!acc[set.exercise_id]) acc[set.exercise_id] = [];
+        acc[set.exercise_id].push(set);
+        return acc;
+      }, {});
+      
+      Object.entries(setsByExercise).forEach(([exerciseId, sets]) => {
+        console.log(`Exercise ${exerciseId}: ${sets.length} sets`);
+        console.log(`Set orders: ${sets.map(s => s.set_order).join(', ')}`);
+      });
+    }
 
     // Fetch previous workout data for the same routine to use as reference
     const { data: routineData } = await supabase
@@ -125,7 +141,7 @@ export const useFetchWorkoutSets = () => {
         const weight = set.weight !== null && set.weight !== undefined ? set.weight.toString() : '0';
         const reps = set.reps !== null && set.reps !== undefined ? set.reps.toString() : '12';
         
-        console.log(`Set ${index} for ${exercise.name}: current [w: ${weight}, r: ${reps}], previous [w: ${previousSet.weight}, r: ${previousSet.reps}]`);
+        console.log(`Set ${index} (order ${set.set_order}) for ${exercise.name}: current [w: ${weight}, r: ${reps}], previous [w: ${previousSet.weight}, r: ${previousSet.reps}]`);
         
         return {
           id: set.id,

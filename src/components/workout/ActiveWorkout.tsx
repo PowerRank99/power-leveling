@@ -5,19 +5,11 @@ import ExerciseNotes from '@/components/workout/ExerciseNotes';
 import SetHeader from '@/components/workout/SetHeader';
 import SetRow from '@/components/workout/set/SetRow';
 import AddSetButton from '@/components/workout/AddSetButton';
+import { SetData } from '@/components/workout/set/types';
 
 interface ActiveWorkoutProps {
   exerciseName: string;
-  sets: Array<{
-    id: string;
-    weight: string;
-    reps: string;
-    completed: boolean;
-    previous?: {
-      weight: string;
-      reps: string;
-    };
-  }>;
+  sets: Array<SetData>;
   exerciseIndex: number;
   onAddSet: () => void;
   onRemoveSet: (setIndex: number) => void;
@@ -31,6 +23,7 @@ interface ActiveWorkoutProps {
 const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({ 
   exerciseName,
   sets,
+  exerciseIndex,
   onAddSet,
   onRemoveSet,
   onCompleteSet,
@@ -38,16 +31,26 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
   notes,
   onNotesChange
 }) => {
+  console.log(`ActiveWorkout render: ${exerciseName} with ${sets.length} sets`);
+  
   const handleWeightChange = (index: number, value: string) => {
+    console.log(`Weight change for ${exerciseName}, set ${index}: ${value}`);
     onUpdateSet(index, { weight: value });
   };
 
   const handleRepsChange = (index: number, value: string) => {
+    console.log(`Reps change for ${exerciseName}, set ${index}: ${value}`);
     onUpdateSet(index, { reps: value });
   };
 
   const handleSetCompletion = (index: number) => {
+    console.log(`Set completion toggle for ${exerciseName}, set ${index}`);
     onCompleteSet(index);
+  };
+  
+  const handleAddSet = () => {
+    console.log(`Adding new set to ${exerciseName}`);
+    onAddSet();
   };
 
   return (
@@ -71,7 +74,7 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
           />
         ))}
 
-        <AddSetButton onAddSet={onAddSet} />
+        <AddSetButton onAddSet={handleAddSet} />
       </div>
     </div>
   );
