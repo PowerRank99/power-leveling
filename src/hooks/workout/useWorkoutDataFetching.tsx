@@ -117,14 +117,13 @@ export function useWorkoutDataFetching() {
       // Build exercise data with sets
       const workoutExercises: WorkoutExercise[] = routineExercises.map(routineExercise => {
         const exercise = routineExercise.exercises;
-        const targetSets = routineExercise.target_sets || 3;
         
         // Filter sets for this exercise and sort them
         const exerciseSets = workoutSets
           ?.filter(set => set.exercise_id === exercise.id)
           .sort((a, b) => a.set_order - b.set_order) || [];
         
-        console.log(`[useWorkoutDataFetching] Exercise ${exercise.name} has ${exerciseSets.length} sets in database (target: ${targetSets})`);
+        console.log(`[useWorkoutDataFetching] Exercise ${exercise.name} has ${exerciseSets.length} sets in database`);
         
         // Get exercise history data
         const historyData = exerciseHistoryData[exercise.id];
@@ -132,15 +131,20 @@ export function useWorkoutDataFetching() {
         // Get previous workout data for this exercise
         const previousExerciseData = previousWorkoutData[exercise.id] || [];
         
+        // Format sets from database or create defaults
         let sets = [];
         
-        // Use existing sets from database
         if (exerciseSets.length > 0) {
+          // Use existing sets from database
           sets = exerciseSets.map((set, index) => {
+            // First try to get values from exercise history
+            // Then fallback to previous workout data
+            // Finally use defaults if nothing else is available
+            
             const previousSet = previousExerciseData.find(p => p.set_order === set.set_order) || 
-                            previousExerciseData[index] ||
-                            { weight: '0', reps: '12' };
-                            
+                              previousExerciseData[index] ||
+                              { weight: '0', reps: '12' };
+                              
             // Use exercise history as "previous" values if available
             const historyValues = historyData ? {
               weight: historyData.weight.toString(),
@@ -156,38 +160,43 @@ export function useWorkoutDataFetching() {
               previous: historyValues
             };
           });
-        }
-        
-        // CRITICAL FIX: If the number of sets in the database is less than target_sets,
-        // create additional default sets to match the target_sets count
-        if (sets.length < targetSets) {
-          const existingSetCount = sets.length;
-          console.log(`[useWorkoutDataFetching] Adding ${targetSets - existingSetCount} default sets to match target_sets=${targetSets}`);
+        } else {
+          // Create default sets using exercise history first, then previous workout data
+          const targetSets = Math.max(
+            historyData ? historyData.sets : 0,
+            previousExerciseData.length > 0 ? previousExerciseData.length : 0,
+            routineExercise.target_sets || 3
+          );
           
-          // Use the last existing set as a template for the new sets (if available)
-          const templateSet = sets.length > 0 ? sets[sets.length - 1] : null;
-          const defaultWeight = templateSet ? templateSet.weight : 
-                               (historyData ? historyData.weight.toString() : '0');
-          const defaultReps = templateSet ? templateSet.reps : 
-                             (historyData ? historyData.reps.toString() : '12');
+          console.log(`[useWorkoutDataFetching] Creating ${targetSets} default sets for ${exercise.name}`);
           
-          // Create additional default sets to match target_sets
-          for (let i = existingSetCount; i < targetSets; i++) {
-            sets.push({
-              id: `default-${exercise.id}-${i}`,
-              weight: defaultWeight,
-              reps: defaultReps,
+          sets = Array.from({ length: targetSets }).map((_, index) => {
+            // Prioritize exercise history for defaults
+            let weight = '0';
+            let reps = '12';
+            
+            if (historyData) {
+              weight = historyData.weight.toString();
+              reps = historyData.reps.toString();
+              console.log(`[useWorkoutDataFetching] Using history for ${exercise.name}: weight=${weight}, reps=${reps}`);
+            } else if (previousExerciseData[index]) {
+              weight = previousExerciseData[index].weight;
+              reps = previousExerciseData[index].reps;
+            }
+            
+            return {
+              id: `default-${exercise.id}-${index}`,
+              weight: weight,
+              reps: reps,
               completed: false,
-              set_order: i,
+              set_order: index,
               previous: {
-                weight: defaultWeight,
-                reps: defaultReps
+                weight: weight,
+                reps: reps
               }
-            });
-          }
+            };
+          });
         }
-        // If we have too many sets compared to target_sets, don't trim them
-        // We should respect the actual number of sets the user has created
         
         return {
           id: exercise.id,

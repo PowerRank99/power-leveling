@@ -58,12 +58,11 @@ export function useSetAdder(workoutId: string | null) {
         previous: lastSet?.previous || { weight: '0', reps: '12' }
       });
       
-      // CRITICAL FIX: Always update the target_sets in routine_exercises
-      // This ensures that when the workout is reopened, we display the correct number of sets
+      // Update the target_sets in routine_exercises for persistence in future workouts
       if (routineId) {
-        const newSetsCount = currentSets.length + 1;
-        console.log(`[useSetAdder] Updating routine ${routineId} exercise ${currentExercise.id} target sets to ${newSetsCount}`);
+        console.log(`[useSetAdder] Updating routine ${routineId} exercise ${currentExercise.id} target sets to ${currentSets.length + 1}`);
         
+        const newSetsCount = currentSets.length + 1;
         await SetService.updateRoutineExerciseSetsCount(
           routineId,
           currentExercise.id,

@@ -56,18 +56,15 @@ export function useSetRemover(workoutId: string | null) {
         );
       }
       
-      // CRITICAL FIX: Always update the routine exercise set count for consistency
-      // This ensures the target_sets value reflects the actual number of sets
+      // Update the routine exercise set count for persistence in future workouts
       if (routineId) {
         const newSetCount = currentExercise.sets.length - 1;
         console.log(`[useSetRemover] Updating routine ${routineId} exercise ${currentExercise.id} target sets to ${newSetCount}`);
         
-        // Make sure we never go below 1 set
-        const safeSetCount = Math.max(1, newSetCount);
         await SetService.updateRoutineExerciseSetsCount(
           routineId,
           currentExercise.id,
-          safeSetCount
+          newSetCount
         );
         
         // Note: We don't update exercise history here anymore

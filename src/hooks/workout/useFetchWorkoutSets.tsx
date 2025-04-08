@@ -121,7 +121,6 @@ export const useFetchWorkoutSets = () => {
     // Format exercises data for UI with the actual saved sets
     const workoutExercises: WorkoutExercise[] = routineExercises.map((routineExercise, exerciseIndex) => {
       const exercise = routineExercise.exercises;
-      const targetSets = routineExercise.target_sets || 3;
       
       // Filter sets for this exercise and sort them properly
       const exerciseSets = workoutSets
@@ -129,7 +128,6 @@ export const useFetchWorkoutSets = () => {
         .sort((a, b) => a.set_order - b.set_order) || [];
       
       console.log(`Exercise ${exercise.name} has ${exerciseSets.length} sets with IDs: ${exerciseSets.map(s => s.id).join(', ')}`);
-      console.log(`Target sets for ${exercise.name} is ${targetSets}`);
       
       // Get previous workout data for this exercise
       const previousExerciseData = previousWorkoutData[exercise.id] || [];
@@ -161,47 +159,34 @@ export const useFetchWorkoutSets = () => {
         };
       });
       
-      // CRITICAL FIX: If we have fewer sets from the DB than the target_sets, 
-      // create additional default sets to match target_sets
-      if (sets.length < targetSets) {
-        const existingSetCount = sets.length;
-        console.log(`Creating ${targetSets - existingSetCount} additional default sets for ${exercise.name} to match target_sets=${targetSets}`);
+      // If we have no sets, create default ones using previous workout data if available
+      if (sets.length === 0) {
+        const setCount = Math.max(
+          previousExerciseData.length > 0 ? previousExerciseData.length : 0,
+          routineExercise.target_sets || 3
+        );
         
-        // Template set: use the last set values if available
-        const templateSet = sets.length > 0 ? sets[sets.length - 1] : null;
+        console.log(`Creating ${setCount} default sets for ${exercise.name} using previous data`);
         
-        // For each missing set, create a default one
-        for (let i = existingSetCount; i < targetSets; i++) {
-          // Use either the template set values or previous workout values or defaults
-          const setOrder = i;
-          let defaultWeight = '0';
-          let defaultReps = '12';
+        sets = Array.from({ length: setCount }).map((_, idx) => {
+          const prevSet = previousExerciseData[idx] || { weight: '0', reps: '12' };
+          const setOrder = idx; // Simple consistent ordering
           
-          if (templateSet) {
-            defaultWeight = templateSet.weight;
-            defaultReps = templateSet.reps;
-          } else if (previousExerciseData[i]) {
-            defaultWeight = previousExerciseData[i].weight;
-            defaultReps = previousExerciseData[i].reps;
-          }
+          console.log(`Default set ${idx} (order ${setOrder}) for ${exercise.name}: using previous [w: ${prevSet.weight}, r: ${prevSet.reps}]`);
           
-          console.log(`Default set ${i} (order ${setOrder}) for ${exercise.name}: using [w: ${defaultWeight}, r: ${defaultReps}]`);
-          
-          sets.push({
-            id: `default-${exercise.id}-${i}`,
-            weight: defaultWeight,
-            reps: defaultReps,
+          return {
+            id: `default-${exercise.id}-${idx}`,
+            weight: prevSet.weight || '0',
+            reps: prevSet.reps || '12',
             completed: false,
             set_order: setOrder,
             previous: { 
-              weight: defaultWeight,
-              reps: defaultReps 
+              weight: prevSet.weight || '0', 
+              reps: prevSet.reps || '12' 
             }
-          });
-        }
+          };
+        });
       }
-      // Important: We don't trim excess sets if sets.length > targetSets
-      // This preserves any additional sets the user has added
       
       return {
         id: exercise.id,
