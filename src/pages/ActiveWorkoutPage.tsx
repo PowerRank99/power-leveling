@@ -51,50 +51,6 @@ const ActiveWorkoutPage = () => {
     }
   }, [id, navigate]);
   
-  // Handle workout completion
-  const handleFinishWorkout = async () => {
-    try {
-      const success = await finishWorkout();
-      if (success) {
-        toast.success("Treino Completo!", {
-          description: "Seu treino foi salvo com sucesso.",
-        });
-        navigate('/treino');
-      } else {
-        toast.error("Erro ao finalizar treino", {
-          description: "Ocorreu um erro ao salvar seu treino.",
-        });
-      }
-    } catch (error) {
-      console.error("Error in handleFinishWorkout:", error);
-      toast.error("Erro ao finalizar treino", {
-        description: "Ocorreu um erro ao salvar seu treino.",
-      });
-    }
-  };
-
-  // Handle workout discarding
-  const handleDiscardWorkout = async () => {
-    try {
-      const success = await discardWorkout();
-      if (success) {
-        toast.info("Treino descartado", {
-          description: "O treino foi descartado com sucesso.",
-        });
-        navigate('/treino');
-      } else {
-        toast.error("Erro ao descartar treino", {
-          description: "Ocorreu um erro ao descartar o treino.",
-        });
-      }
-    } catch (error) {
-      console.error("Error discarding workout:", error);
-      toast.error("Erro ao descartar treino", {
-        description: "Não foi possível descartar o treino.",
-      });
-    }
-  };
-  
   // Loading state
   if (isLoading) {
     return <WorkoutLoading />;
@@ -113,8 +69,8 @@ const ActiveWorkoutPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <WorkoutHeader 
-        onFinish={handleFinishWorkout}
-        onDiscard={handleDiscardWorkout}
+        onFinish={finishWorkout}
+        onDiscard={discardWorkout}
         isFinishing={isSubmitting}
         elapsedTime={formatTime(elapsedTime)}
       />
@@ -147,7 +103,7 @@ const ActiveWorkoutPage = () => {
       
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-gray-50 border-t border-gray-200">
         <FinishWorkoutButton 
-          onFinish={handleFinishWorkout}
+          onFinish={finishWorkout}
           isFinishing={isSubmitting}
         />
       </div>

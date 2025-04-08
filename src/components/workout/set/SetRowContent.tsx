@@ -26,13 +26,6 @@ const SetRowContent: React.FC<SetRowContentProps> = ({
   const isCompleted = set.completed;
   const rowClass = isCompleted ? "bg-gray-50" : "bg-white";
 
-  // Handle input changes by converting event to string value
-  const handleInputChange = (handler: (value: string) => void) => {
-    return (e: React.ChangeEvent<HTMLInputElement>) => {
-      handler(e.target.value);
-    };
-  };
-
   return (
     <div className={`grid grid-cols-12 gap-2 items-center py-4 ${rowClass} border-b border-gray-100`}>
       <div className="col-span-1 font-bold text-gray-800">{index + 1}</div>
@@ -42,7 +35,7 @@ const SetRowContent: React.FC<SetRowContentProps> = ({
       <div className="col-span-3">
         <InputField
           value={set.weight}
-          onChange={handleInputChange(onWeightChange)}
+          onChange={onWeightChange}
           inputMode="decimal"
         />
       </div>
@@ -50,7 +43,7 @@ const SetRowContent: React.FC<SetRowContentProps> = ({
       <div className="col-span-3">
         <InputField
           value={set.reps}
-          onChange={handleInputChange(onRepsChange)}
+          onChange={onRepsChange}
           inputMode="numeric"
         />
       </div>
