@@ -92,4 +92,39 @@ export class SetUpdateService {
       return { success: false, error };
     }
   }
+
+  /**
+   * Verifies the current target sets count for a routine exercise
+   */
+  static async verifyRoutineExerciseSetsCount(
+    routineId: string, 
+    exerciseId: string
+  ): Promise<DatabaseResult<number>> {
+    try {
+      console.log(`[SetUpdateService] Verifying target sets for routine ${routineId}, exercise ${exerciseId}`);
+      
+      if (!routineId) {
+        console.warn("[SetUpdateService] Missing routineId for verifying target sets count");
+        return { success: false, error: new Error("Missing routineId") };
+      }
+      
+      const { data, error } = await supabase
+        .from('routine_exercises')
+        .select('target_sets')
+        .eq('routine_id', routineId)
+        .eq('exercise_id', exerciseId)
+        .single();
+      
+      if (error) {
+        console.error("[SetUpdateService] Error verifying routine exercise set count:", error);
+        return { success: false, error };
+      }
+      
+      console.log(`[SetUpdateService] Current target sets: ${data.target_sets}`);
+      return { success: true, data: data.target_sets };
+    } catch (error) {
+      console.error("[SetUpdateService] Exception verifying routine exercise set count:", error);
+      return { success: false, error };
+    }
+  }
 }

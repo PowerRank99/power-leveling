@@ -28,6 +28,7 @@ export function useSetAdder(workoutId: string | null) {
       const newSetOrder = currentSets.length; // Simple incremental order
       
       console.log(`[useSetAdder] Adding new set to ${currentExercise.name} with order=${newSetOrder}, weight=${weightValue}, reps=${repsValue}`);
+      console.log(`[useSetAdder] Current set count before adding: ${currentSets.length}`);
       
       // Create the set in the database first
       const createResult = await SetService.createSet(
@@ -60,14 +61,30 @@ export function useSetAdder(workoutId: string | null) {
       
       // Update the target_sets in routine_exercises for persistence in future workouts
       if (routineId) {
-        console.log(`[useSetAdder] Updating routine ${routineId} exercise ${currentExercise.id} target sets to ${currentSets.length + 1}`);
-        
         const newSetsCount = currentSets.length + 1;
-        await SetService.updateRoutineExerciseSetsCount(
+        console.log(`[useSetAdder] Updating routine ${routineId} exercise ${currentExercise.id} target sets from ${currentSets.length} to ${newSetsCount}`);
+        
+        const updateResult = await SetService.updateRoutineExerciseSetsCount(
           routineId,
           currentExercise.id,
           newSetsCount
         );
+        
+        if (!updateResult.success) {
+          console.error(`[useSetAdder] Failed to update target sets count: ${JSON.stringify(updateResult.error)}`);
+        } else {
+          console.log(`[useSetAdder] Successfully updated routine exercise target sets to ${newSetsCount}`);
+        }
+        
+        // Verify the update was successful
+        const verificationResult = await SetService.verifyRoutineExerciseSetsCount(
+          routineId,
+          currentExercise.id
+        );
+        
+        if (verificationResult.success && verificationResult.data) {
+          console.log(`[useSetAdder] Verification: routine exercise now has ${verificationResult.data} target sets`);
+        }
         
         // Don't update exercise history immediately when adding a set
         // This prevents conflicts between completed sets and target sets

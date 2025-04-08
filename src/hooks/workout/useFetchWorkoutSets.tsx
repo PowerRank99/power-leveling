@@ -14,6 +14,11 @@ export const useFetchWorkoutSets = () => {
 
     console.log("Fetching workout sets for workout:", workoutId);
     
+    // Log target set counts from routine exercises for debugging
+    routineExercises.forEach(re => {
+      console.log(`Target sets for ${re.exercises.name} (${re.exercises.id}): ${re.target_sets}`);
+    });
+    
     // Fetch all workout sets for this workout
     const { data: workoutSets, error: fetchSetsError } = await supabase
       .from('workout_sets')
@@ -121,6 +126,9 @@ export const useFetchWorkoutSets = () => {
     // Format exercises data for UI with the actual saved sets
     const workoutExercises: WorkoutExercise[] = routineExercises.map((routineExercise, exerciseIndex) => {
       const exercise = routineExercise.exercises;
+      const targetSetCount = routineExercise.target_sets || 3;
+      
+      console.log(`Processing ${exercise.name} with target set count: ${targetSetCount}`);
       
       // Filter sets for this exercise and sort them properly
       const exerciseSets = workoutSets
@@ -128,6 +136,7 @@ export const useFetchWorkoutSets = () => {
         .sort((a, b) => a.set_order - b.set_order) || [];
       
       console.log(`Exercise ${exercise.name} has ${exerciseSets.length} sets with IDs: ${exerciseSets.map(s => s.id).join(', ')}`);
+      console.log(`Target set count from routine_exercises: ${targetSetCount}`);
       
       // Get previous workout data for this exercise
       const previousExerciseData = previousWorkoutData[exercise.id] || [];
@@ -159,23 +168,22 @@ export const useFetchWorkoutSets = () => {
         };
       });
       
-      // If we have no sets, create default ones using previous workout data if available
-      if (sets.length === 0) {
-        const setCount = Math.max(
-          previousExerciseData.length > 0 ? previousExerciseData.length : 0,
-          routineExercise.target_sets || 3
-        );
+      // If we have no sets or fewer sets than the target_sets, create default ones
+      if (sets.length === 0 || sets.length < targetSetCount) {
+        const currentSetCount = sets.length;
+        const setsToAdd = Math.max(targetSetCount - currentSetCount, 0);
         
-        console.log(`Creating ${setCount} default sets for ${exercise.name} using previous data`);
+        console.log(`Creating ${setsToAdd} default sets for ${exercise.name} to reach target of ${targetSetCount}`);
         
-        sets = Array.from({ length: setCount }).map((_, idx) => {
-          const prevSet = previousExerciseData[idx] || { weight: '0', reps: '12' };
-          const setOrder = idx; // Simple consistent ordering
+        const defaultSets = Array.from({ length: setsToAdd }).map((_, idx) => {
+          const setIndex = currentSetCount + idx;
+          const prevSet = previousExerciseData[setIndex] || { weight: '0', reps: '12' };
+          const setOrder = setIndex; // Simple consistent ordering
           
-          console.log(`Default set ${idx} (order ${setOrder}) for ${exercise.name}: using previous [w: ${prevSet.weight}, r: ${prevSet.reps}]`);
+          console.log(`Default set ${setIndex} (order ${setOrder}) for ${exercise.name}: using previous [w: ${prevSet.weight}, r: ${prevSet.reps}]`);
           
           return {
-            id: `default-${exercise.id}-${idx}`,
+            id: `default-${exercise.id}-${setIndex}`,
             weight: prevSet.weight || '0',
             reps: prevSet.reps || '12',
             completed: false,
@@ -186,6 +194,12 @@ export const useFetchWorkoutSets = () => {
             }
           };
         });
+        
+        // Append these default sets to any existing database sets
+        sets = [...sets, ...defaultSets];
+        console.log(`Final set count for ${exercise.name}: ${sets.length} (${currentSetCount} from DB + ${setsToAdd} defaults)`);
+      } else if (sets.length > targetSetCount) {
+        console.log(`WARNING: Exercise ${exercise.name} has ${sets.length} sets in DB but target is ${targetSetCount}`);
       }
       
       return {

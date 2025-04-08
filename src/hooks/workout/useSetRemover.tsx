@@ -31,6 +31,7 @@ export function useSetRemover(workoutId: string | null) {
       
       const setId = currentExercise.sets[setIndex].id;
       console.log(`[useSetRemover] Removing set ${setIndex + 1} for exercise ${currentExercise.name}, ID: ${setId}`);
+      console.log(`[useSetRemover] Current set count before removal: ${currentExercise.sets.length}`);
       
       // Update local state first
       const updatedExercises = [...exercises];
@@ -59,13 +60,29 @@ export function useSetRemover(workoutId: string | null) {
       // Update the routine exercise set count for persistence in future workouts
       if (routineId) {
         const newSetCount = currentExercise.sets.length - 1;
-        console.log(`[useSetRemover] Updating routine ${routineId} exercise ${currentExercise.id} target sets to ${newSetCount}`);
+        console.log(`[useSetRemover] Updating routine ${routineId} exercise ${currentExercise.id} target sets from ${currentExercise.sets.length} to ${newSetCount}`);
         
-        await SetService.updateRoutineExerciseSetsCount(
+        const updateResult = await SetService.updateRoutineExerciseSetsCount(
           routineId,
           currentExercise.id,
           newSetCount
         );
+        
+        if (!updateResult.success) {
+          console.error(`[useSetRemover] Failed to update target sets count: ${JSON.stringify(updateResult.error)}`);
+        } else {
+          console.log(`[useSetRemover] Successfully updated routine exercise target sets to ${newSetCount}`);
+        }
+        
+        // Verify the update was successful
+        const verificationResult = await SetService.verifyRoutineExerciseSetsCount(
+          routineId,
+          currentExercise.id
+        );
+        
+        if (verificationResult.success && verificationResult.data) {
+          console.log(`[useSetRemover] Verification: routine exercise now has ${verificationResult.data} target sets`);
+        }
         
         // Note: We don't update exercise history here anymore
         // History will be comprehensively updated when the workout is completed

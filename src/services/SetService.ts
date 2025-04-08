@@ -18,6 +18,7 @@ export class SetService {
   // Update operations
   static updateSet = SetUpdateService.updateSet;
   static updateRoutineExerciseSetsCount = SetUpdateService.updateRoutineExerciseSetsCount;
+  static verifyRoutineExerciseSetsCount = SetUpdateService.verifyRoutineExerciseSetsCount;
   
   // Delete operations
   static deleteSet = SetDeleteService.deleteSet;
