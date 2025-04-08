@@ -5,6 +5,8 @@ import { SetUpdateService } from './set/SetUpdateService';
 import { SetDeleteService } from './set/SetDeleteService';
 import { SetQueryService } from './set/SetQueryService';
 import { SetErrorService } from './set/SetErrorService';
+import { SetVerificationService } from './set/SetVerificationService';
+import { SetOrderingService } from './set/SetOrderingService';
 
 /**
  * SetService acts as a facade for all set-related operations
@@ -26,6 +28,14 @@ export class SetService {
   
   // Query operations
   static getSetsForExercise = SetQueryService.getSetsForExercise;
+  static countSetsForExercise = SetQueryService.countSetsForExercise;
+  
+  // Verification operations
+  static verifySetCount = SetVerificationService.verifySetCount;
+  static reconcileSetCount = SetVerificationService.reconcileSetCount;
+  
+  // Set ordering operations
+  static normalizeSetOrders = SetOrderingService.normalizeSetOrders;
   
   // Error handling
   static displayError = SetErrorService.displayError;

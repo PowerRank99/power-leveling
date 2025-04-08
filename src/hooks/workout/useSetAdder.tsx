@@ -1,38 +1,62 @@
 
+import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workoutTypes';
+import { toast } from 'sonner';
 import { SetService } from '@/services/SetService';
-import { useSetOperations } from './useSetOperations';
 
-/**
- * Hook for adding new sets to exercises
- */
-export function useSetAdder(workoutId: string | null) {
-  const { executeOperation, isProcessing } = useSetOperations(workoutId);
-  
-  /**
-   * Adds a new set to an exercise
-   */
+export const useSetAdder = (workoutId: string | null) => {
   const addSet = async (
-    exerciseIndex: number,
-    exercises: WorkoutExercise[],
+    exerciseIndex: number, 
+    exercises: WorkoutExercise[], 
     routineId: string
   ) => {
-    return executeOperation('adicionar série', async () => {
+    if (!workoutId || !exercises[exerciseIndex]) {
+      toast.error("Erro ao adicionar série", {
+        description: "Treino ou exercício não encontrado"
+      });
+      return null;
+    }
+    
+    try {
       const currentExercise = exercises[exerciseIndex];
-      const currentSets = currentExercise.sets;
-      const lastSet = currentSets.length > 0 ? currentSets[currentSets.length - 1] : null;
+      console.log(`[useSetAdder] Adding set to exercise ${currentExercise.name} (ID: ${currentExercise.id})`);
       
-      // Calculate values for the new set
+      // Get current sets from the exercise
+      const updatedExercises = [...exercises];
+      const currentSets = updatedExercises[exerciseIndex].sets;
+      const lastSet = currentSets[currentSets.length - 1];
+      
+      // First, get the actual count of sets in the database
+      const countResult = await SetService.countSetsForExercise(
+        workoutId,
+        currentExercise.id
+      );
+      
+      if (!countResult.success) {
+        console.error("[useSetAdder] Failed to get current set count:", countResult.error);
+        toast.error("Erro ao adicionar série", {
+          description: "Não foi possível verificar o número atual de séries"
+        });
+        return null;
+      }
+      
+      const actualSetCount = countResult.data!;
+      console.log(`[useSetAdder] Current set count in database: ${actualSetCount}`);
+      console.log(`[useSetAdder] Current set count in UI state: ${currentSets.length}`);
+      
+      // Calculate new set order based on actual database count
+      const newSetOrder = actualSetCount;
+      console.log(`[useSetAdder] New set will have order: ${newSetOrder}`);
+      
+      // Convert values to correct types for database
       const weightValue = lastSet ? parseFloat(lastSet.weight) || 0 : 0;
       const repsValue = lastSet ? parseInt(lastSet.reps) || 12 : 12;
-      const newSetOrder = currentSets.length; // Simple incremental order
       
-      console.log(`[useSetAdder] Adding new set to ${currentExercise.name} with order=${newSetOrder}, weight=${weightValue}, reps=${repsValue}`);
-      console.log(`[useSetAdder] Current set count before adding: ${currentSets.length}`);
+      // Create new set in database FIRST
+      console.log(`[useSetAdder] Creating set in database: workout=${workoutId}, exercise=${currentExercise.id}, order=${newSetOrder}, weight=${weightValue}, reps=${repsValue}`);
       
-      // Create the set in the database first
       const createResult = await SetService.createSet(
-        workoutId!,
+        workoutId,
         currentExercise.id,
         newSetOrder,
         weightValue,
@@ -41,65 +65,77 @@ export function useSetAdder(workoutId: string | null) {
       );
       
       if (!createResult.success) {
-        SetService.displayError('adicionar série', createResult.error);
-        return exercises;
+        SetService.displayError("adicionar série", createResult.error);
+        return exercises; // Return original exercises on error
       }
       
       const newSet = createResult.data!;
-      console.log(`[useSetAdder] Successfully added set with ID ${newSet.id}`);
+      console.log(`[useSetAdder] Successfully created set with ID: ${newSet.id}`);
       
-      // Update local state with the new set
-      const updatedExercises = [...exercises];
+      // Now update local state with the database-generated ID
       updatedExercises[exerciseIndex].sets.push({
         id: newSet.id,
-        weight: newSet.weight,
-        reps: newSet.reps,
-        completed: newSet.completed,
+        weight: String(newSet.weight || 0),
+        reps: String(newSet.reps || 12),
+        completed: false,
         set_order: newSet.set_order,
         previous: lastSet?.previous || { weight: '0', reps: '12' }
       });
       
-      // Update the target_sets in routine_exercises for persistence in future workouts
-      if (routineId) {
-        const newSetsCount = currentSets.length + 1;
-        console.log(`[useSetAdder] Updating routine ${routineId} exercise ${currentExercise.id} target sets from ${currentSets.length} to ${newSetsCount}`);
+      // Normalize set orders to ensure they're sequential
+      await SetService.normalizeSetOrders(workoutId, currentExercise.id);
+      
+      // Count sets again to verify our operation was successful
+      const verificationResult = await SetService.countSetsForExercise(
+        workoutId,
+        currentExercise.id
+      );
+      
+      if (verificationResult.success) {
+        const newCount = verificationResult.data!;
+        console.log(`[useSetAdder] Verification: database now has ${newCount} sets`);
+        console.log(`[useSetAdder] UI state now has ${updatedExercises[exerciseIndex].sets.length} sets`);
         
-        const updateResult = await SetService.updateRoutineExerciseSetsCount(
-          routineId,
-          currentExercise.id,
-          newSetsCount
-        );
-        
-        if (!updateResult.success) {
-          console.error(`[useSetAdder] Failed to update target sets count: ${JSON.stringify(updateResult.error)}`);
-        } else {
-          console.log(`[useSetAdder] Successfully updated routine exercise target sets to ${newSetsCount}`);
+        // Verify the counts match
+        if (newCount !== updatedExercises[exerciseIndex].sets.length) {
+          console.warn(`[useSetAdder] Count mismatch: DB=${newCount}, UI=${updatedExercises[exerciseIndex].sets.length}`);
         }
         
-        // Verify the update was successful
-        const verificationResult = await SetService.verifyRoutineExerciseSetsCount(
-          routineId,
-          currentExercise.id
-        );
-        
-        if (verificationResult.success && verificationResult.data) {
-          console.log(`[useSetAdder] Verification: routine exercise now has ${verificationResult.data} target sets`);
+        // Update the routine exercise set count for persistence
+        if (routineId) {
+          console.log(`[useSetAdder] Updating routine ${routineId} exercise ${currentExercise.id} target sets to ${newCount}`);
+          
+          const updateResult = await SetService.updateRoutineExerciseSetsCount(
+            routineId,
+            currentExercise.id,
+            newCount
+          );
+          
+          if (!updateResult.success) {
+            console.error(`[useSetAdder] Failed to update target sets count: ${JSON.stringify(updateResult.error)}`);
+          } else {
+            // Verify the update was successful
+            const routineVerificationResult = await SetService.verifyRoutineExerciseSetsCount(
+              routineId,
+              currentExercise.id
+            );
+            
+            if (routineVerificationResult.success) {
+              console.log(`[useSetAdder] Verification: routine_exercises.target_sets = ${routineVerificationResult.data}`);
+            }
+          }
         }
-        
-        // Don't update exercise history immediately when adding a set
-        // This prevents conflicts between completed sets and target sets
-        // History will be comprehensively updated when finishing the workout
-        console.log(`[useSetAdder] Set added but deferring history update until workout completion`);
-      } else {
-        console.warn("[useSetAdder] No routineId provided, cannot update target_sets in routine_exercises");
       }
       
       return updatedExercises;
-    });
+    } catch (error) {
+      console.error("[useSetAdder] Error adding set:", error);
+      toast.error("Erro ao adicionar série", {
+        description: "Não foi possível adicionar uma nova série"
+      });
+      return null;
+    }
   };
-  
-  return {
-    addSet,
-    isProcessing
-  };
-}
+
+  return { addSet };
+};

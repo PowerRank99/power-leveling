@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workout';
+import { SetService } from '@/services/SetService';
 
 export const useFetchWorkoutSets = () => {
   /**
@@ -37,26 +38,17 @@ export const useFetchWorkoutSets = () => {
       console.error("Error fetching workout sets:", fetchSetsError);
       throw fetchSetsError;
     }
-
-    console.log(`Found ${workoutSets?.length || 0} sets for this workout`);
     
-    // Log all sets for debug purposes
-    if (workoutSets && workoutSets.length > 0) {
-      console.log("Workout sets by exercise:");
-      const setsByExercise = workoutSets.reduce((acc: Record<string, any[]>, set) => {
-        if (!set.exercise_id) return acc;
-        if (!acc[set.exercise_id]) acc[set.exercise_id] = [];
-        acc[set.exercise_id].push(set);
-        return acc;
-      }, {});
+    const setCount = workoutSets?.length || 0;
+    console.log(`Found ${setCount} sets for this workout`);
+    
+    // Verify set counts and normalize orders before proceeding
+    for (const routineExercise of routineExercises) {
+      const exerciseId = routineExercise.exercises.id;
+      await SetService.normalizeSetOrders(workoutId, exerciseId);
       
-      Object.entries(setsByExercise).forEach(([exerciseId, sets]) => {
-        console.log(`Exercise ${exerciseId}: ${sets.length} sets`);
-        console.log(`Set orders: ${sets.map(s => s.set_order).join(', ')}`);
-        console.log(`Set IDs: ${sets.map(s => s.id).join(', ')}`);
-      });
-    } else {
-      console.warn("No sets found for this workout!");
+      const exerciseSets = workoutSets?.filter(set => set.exercise_id === exerciseId) || [];
+      console.log(`Exercise ${routineExercise.exercises.name} has ${exerciseSets.length} sets with IDs: ${exerciseSets.map(s => s.id).join(', ')}`);
     }
 
     // Fetch previous workout data for the same routine to use as reference
@@ -168,15 +160,21 @@ export const useFetchWorkoutSets = () => {
         };
       });
       
+      // Use sets from DB as the source of truth
+      // If we have sets in the database, use that count, otherwise use target_sets
+      const actualSetCount = exerciseSets.length;
+      const desiredSetCount = Math.max(actualSetCount, targetSetCount);
+      
+      console.log(`Exercise ${exercise.name}: actual=${actualSetCount}, target=${targetSetCount}, desired=${desiredSetCount}`);
+      
       // If we have no sets or fewer sets than the target_sets, create default ones
-      if (sets.length === 0 || sets.length < targetSetCount) {
-        const currentSetCount = sets.length;
-        const setsToAdd = Math.max(targetSetCount - currentSetCount, 0);
+      if (sets.length < desiredSetCount) {
+        const setsToAdd = desiredSetCount - sets.length;
         
-        console.log(`Creating ${setsToAdd} default sets for ${exercise.name} to reach target of ${targetSetCount}`);
+        console.log(`Creating ${setsToAdd} default sets for ${exercise.name} to reach target of ${desiredSetCount}`);
         
         const defaultSets = Array.from({ length: setsToAdd }).map((_, idx) => {
-          const setIndex = currentSetCount + idx;
+          const setIndex = sets.length + idx;
           const prevSet = previousExerciseData[setIndex] || { weight: '0', reps: '12' };
           const setOrder = setIndex; // Simple consistent ordering
           
@@ -197,9 +195,9 @@ export const useFetchWorkoutSets = () => {
         
         // Append these default sets to any existing database sets
         sets = [...sets, ...defaultSets];
-        console.log(`Final set count for ${exercise.name}: ${sets.length} (${currentSetCount} from DB + ${setsToAdd} defaults)`);
+        console.log(`Final set count for ${exercise.name}: ${sets.length} (${actualSetCount} from DB + ${setsToAdd} defaults)`);
       } else if (sets.length > targetSetCount) {
-        console.log(`WARNING: Exercise ${exercise.name} has ${sets.length} sets in DB but target is ${targetSetCount}`);
+        console.log(`Exercise ${exercise.name} has ${sets.length} sets in DB but target is ${targetSetCount}, using actual count from DB`);
       }
       
       return {
@@ -208,6 +206,29 @@ export const useFetchWorkoutSets = () => {
         sets
       };
     });
+
+    // After processing all exercises, reconcile any discrepancies
+    if (routineData?.routine_id) {
+      for (const exercise of workoutExercises) {
+        const actualSets = exercise.sets.filter(s => !s.id.startsWith('default-') && !s.id.startsWith('new-'));
+        const routineExercise = routineExercises.find(re => re.exercises.id === exercise.id);
+        
+        if (routineExercise && actualSets.length !== routineExercise.target_sets) {
+          console.log(`Reconciling count mismatch for ${exercise.name}: actual=${actualSets.length}, target=${routineExercise.target_sets}`);
+          
+          // Update target_sets in routine_exercises to match actual count
+          try {
+            await SetService.updateRoutineExerciseSetsCount(
+              routineData.routine_id,
+              exercise.id,
+              actualSets.length
+            );
+          } catch (error) {
+            console.error(`Error reconciling set count for ${exercise.name}:`, error);
+          }
+        }
+      }
+    }
 
     return workoutExercises;
   };

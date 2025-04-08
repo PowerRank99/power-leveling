@@ -46,4 +46,34 @@ export class SetQueryService {
       return { success: false, error };
     }
   }
+
+  /**
+   * Counts the actual number of sets for a specific workout exercise
+   */
+  static async countSetsForExercise(
+    workoutId: string,
+    exerciseId: string
+  ): Promise<DatabaseResult<number>> {
+    try {
+      console.log(`[SetQueryService] Counting sets for workout=${workoutId}, exercise=${exerciseId}`);
+      
+      const { count, error } = await supabase
+        .from('workout_sets')
+        .select('*', { count: 'exact', head: true })
+        .eq('workout_id', workoutId)
+        .eq('exercise_id', exerciseId);
+        
+      if (error) {
+        console.error("[SetQueryService] Error counting sets:", error);
+        return { success: false, error };
+      }
+      
+      console.log(`[SetQueryService] Count result: ${count} sets for exercise ${exerciseId}`);
+      
+      return { success: true, data: count || 0 };
+    } catch (error) {
+      console.error("[SetQueryService] Exception counting sets:", error);
+      return { success: false, error };
+    }
+  }
 }
