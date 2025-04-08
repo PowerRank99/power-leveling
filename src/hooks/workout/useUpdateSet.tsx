@@ -29,11 +29,11 @@ export const useUpdateSet = (workoutId: string | null) => {
       const currentSet = currentExercise.sets[setIndex];
       
       if (!currentSet) {
-        console.error(`Set not found at index ${setIndex} for exercise ${currentExercise.name}`);
+        console.error(`[useUpdateSet] Set not found at index ${setIndex} for exercise ${currentExercise.name}`);
         return null;
       }
       
-      console.log(`Updating set for ${currentExercise.name}, set #${setIndex + 1}`, data);
+      console.log(`[useUpdateSet] Updating set for ${currentExercise.name}, set #${setIndex + 1}`, data);
       
       // Update local state first for immediate feedback
       const updatedExercises = [...exercises];
@@ -52,13 +52,13 @@ export const useUpdateSet = (workoutId: string | null) => {
       if (data.weight !== undefined) {
         const weightValue = data.weight === '' ? 0 : parseFloat(data.weight) || 0;
         setData.weight = weightValue;
-        console.log(`Setting weight to ${weightValue} for set #${setIndex + 1}`);
+        console.log(`[useUpdateSet] Setting weight to ${weightValue} for set #${setIndex + 1}`);
       }
       
       if (data.reps !== undefined) {
         const repsValue = data.reps === '' ? 0 : parseInt(data.reps) || 0;
         setData.reps = repsValue;
-        console.log(`Setting reps to ${repsValue} for set #${setIndex + 1}`);
+        console.log(`[useUpdateSet] Setting reps to ${repsValue} for set #${setIndex + 1}`);
       }
       
       if (data.completed !== undefined) {
@@ -66,9 +66,15 @@ export const useUpdateSet = (workoutId: string | null) => {
         setData.completed_at = data.completed ? new Date().toISOString() : null;
       }
       
+      // Only make a database call if we have something to update
+      if (Object.keys(setData).length === 0) {
+        console.log(`[useUpdateSet] No changes to save for set ID: ${currentSet.id}`);
+        return updatedExercises;
+      }
+      
       // Handle temporary IDs (default- or new- prefixed IDs)
       if (currentSet.id.startsWith('default-') || currentSet.id.startsWith('new-')) {
-        console.log(`Creating new database record for temp set ID: ${currentSet.id}`);
+        console.log(`[useUpdateSet] Creating new database record for temp set ID: ${currentSet.id}`);
         
         // Generate a stable set_order - use exerciseIndex*100 + setIndex for consistency
         const setOrder = exerciseIndex * 100 + setIndex;
@@ -88,38 +94,40 @@ export const useUpdateSet = (workoutId: string | null) => {
           .single();
         
         if (insertError) {
-          console.error("Error creating set in database:", insertError);
+          console.error("[useUpdateSet] Error creating set in database:", insertError);
           toast.error("Erro ao salvar série", {
             description: "A série não pôde ser criada no banco de dados"
           });
         } else if (newSet) {
-          console.log(`Successfully created new set with ID: ${newSet.id}, set_order: ${setOrder}`);
+          console.log(`[useUpdateSet] Successfully created new set with ID: ${newSet.id}, set_order: ${setOrder}`);
           // Update the ID in our local state with the real database ID
           updatedExercises[exerciseIndex].sets[setIndex].id = newSet.id;
         }
       } 
-      // Regular update for existing database records
+      // Regular update for existing database records - make sure we don't overwrite values unnecessarily
       else if (Object.keys(setData).length > 0) {
-        console.log(`Updating existing set ID: ${currentSet.id} in database`);
+        console.log(`[useUpdateSet] Updating existing set ID: ${currentSet.id} in database with:`, setData);
         
-        const { error: updateError } = await supabase
+        // Use select() to verify the data was updated correctly
+        const { data: updatedData, error: updateError } = await supabase
           .from('workout_sets')
           .update(setData)
-          .eq('id', currentSet.id);
+          .eq('id', currentSet.id)
+          .select('weight, reps, completed');
           
         if (updateError) {
-          console.error("Error updating set in database:", updateError);
+          console.error("[useUpdateSet] Error updating set in database:", updateError);
           toast.error("Erro ao salvar série", {
             description: "As alterações podem não ter sido salvas"
           });
         } else {
-          console.log(`Successfully updated set ${currentSet.id} in database`);
+          console.log(`[useUpdateSet] Successfully updated set ${currentSet.id} in database:`, updatedData);
         }
       }
       
       return updatedExercises;
     } catch (error) {
-      console.error("Error updating set:", error);
+      console.error("[useUpdateSet] Error updating set:", error);
       toast.error("Erro ao atualizar série", {
         description: "Não foi possível salvar as alterações"
       });

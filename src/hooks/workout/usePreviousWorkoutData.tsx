@@ -29,7 +29,7 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
       
       try {
         setIsLoading(true);
-        console.log("Fetching previous workout data for routine:", routineId);
+        console.log("[usePreviousWorkoutData] Fetching previous workout data for routine:", routineId);
         
         // 1. Get the most recent completed workout for this routine
         const { data: previousWorkout, error: workoutError } = await supabase
@@ -43,23 +43,23 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
           .single();
           
         if (workoutError) {
-          console.log("No previous workout found for routine (error):", workoutError.message);
+          console.log("[usePreviousWorkoutData] No previous workout found for routine (error):", workoutError.message);
           return;
         }
         
         if (!previousWorkout) {
-          console.log("No previous workout found for routine:", routineId);
+          console.log("[usePreviousWorkoutData] No previous workout found for routine:", routineId);
           return;
         }
         
-        console.log("Found previous workout:", previousWorkout.id);
+        console.log("[usePreviousWorkoutData] Found previous workout:", previousWorkout.id);
         setPrevWorkoutId(previousWorkout.id);
         
         // Set previous rest timer settings if available
         if (previousWorkout && 
             previousWorkout.rest_timer_minutes !== null && 
             previousWorkout.rest_timer_seconds !== null) {
-          console.log(`Loading previous timer settings: ${previousWorkout.rest_timer_minutes}m ${previousWorkout.rest_timer_seconds}s`);
+          console.log(`[usePreviousWorkoutData] Loading previous timer settings: ${previousWorkout.rest_timer_minutes}m ${previousWorkout.rest_timer_seconds}s`);
           setRestTimerSettings({
             minutes: previousWorkout.rest_timer_minutes || 1,
             seconds: previousWorkout.rest_timer_seconds || 30
@@ -80,16 +80,16 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
           .eq('workout_id', previousWorkout.id);
           
         if (setsError) {
-          console.error("Error fetching previous workout sets:", setsError);
+          console.error("[usePreviousWorkoutData] Error fetching previous workout sets:", setsError);
           return;
         }
         
         if (!previousSets || previousSets.length === 0) {
-          console.log("No sets found in previous workout");
+          console.log("[usePreviousWorkoutData] No sets found in previous workout");
           return;
         }
         
-        console.log(`Found ${previousSets.length} sets from previous workout`);
+        console.log(`[usePreviousWorkoutData] Found ${previousSets.length} sets from previous workout`);
         
         // 3. Group sets by exercise ID
         const groupedSets: PreviousWorkoutData = {};
@@ -105,7 +105,7 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
           const weightValue = set.weight !== null ? set.weight.toString() : '0';
           const repsValue = set.reps !== null ? set.reps.toString() : '12';
           
-          console.log(`Adding previous set - exercise: ${set.exercise_id}, weight: ${weightValue}, reps: ${repsValue}, order: ${set.set_order}`);
+          console.log(`[usePreviousWorkoutData] Adding previous set - exercise: ${set.exercise_id}, weight: ${weightValue}, reps: ${repsValue}, order: ${set.set_order}`);
           
           groupedSets[set.exercise_id].push({
             weight: weightValue,
@@ -120,10 +120,10 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
         });
         
         setPreviousWorkoutData(groupedSets);
-        console.log("Processed previous workout data:", Object.keys(groupedSets).length, "exercises");
-        console.log("Previous workout data details:", JSON.stringify(groupedSets));
+        console.log("[usePreviousWorkoutData] Processed previous workout data:", Object.keys(groupedSets).length, "exercises");
+        console.log("[usePreviousWorkoutData] Previous workout data details:", JSON.stringify(groupedSets));
       } catch (error) {
-        console.error("Error fetching previous workout data:", error);
+        console.error("[usePreviousWorkoutData] Error fetching previous workout data:", error);
       } finally {
         setIsLoading(false);
       }

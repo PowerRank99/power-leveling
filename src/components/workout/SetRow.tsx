@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Check, Trash } from 'lucide-react';
 
@@ -41,24 +40,33 @@ const SetRow: React.FC<SetRowProps> = ({
   const isInitializedRef = useRef(false);
   const setIdRef = useRef(set.id);
   const previousValuesRef = useRef({weight: set.weight, reps: set.reps});
+  const lastUserEditRef = useRef<number | null>(null);
   
-  // Handle initial value setting once, and when set ID changes
+  useEffect(() => {
+    console.log(`[SetRow ${index}] Received props update - ID: ${set.id}, Weight: "${set.weight}", Reps: "${set.reps}"`);
+    if (set.previous) {
+      console.log(`[SetRow ${index}] Previous values - Weight: "${set.previous.weight}", Reps: "${set.previous.reps}"`);
+    }
+  }, [set, index]);
+  
   useEffect(() => {
     if (set.id !== setIdRef.current) {
-      console.log(`SetRow: Set ID changed from ${setIdRef.current} to ${set.id}, reinitializing values`);
+      console.log(`[SetRow] Set ID changed from ${setIdRef.current} to ${set.id}, reinitializing values`);
       setIdRef.current = set.id;
       isInitializedRef.current = false;
+      lastUserEditRef.current = null;
     }
     
     if (!isInitializedRef.current) {
-      console.log(`SetRow (${index}): Initializing values - ID: ${set.id}`);
-      console.log(`SetRow (${index}): Input values - weight: "${set.weight}", reps: "${set.reps}"`);
-      console.log(`SetRow (${index}): Previous values - weight: "${set.previous?.weight}", reps: "${set.previous?.reps}"`);
+      console.log(`[SetRow ${index}] Initializing values - ID: ${set.id}`);
+      console.log(`[SetRow ${index}] Input values - weight: "${set.weight}", reps: "${set.reps}"`);
+      if (set.previous) {
+        console.log(`[SetRow ${index}] Previous values - weight: "${set.previous.weight}", reps: "${set.previous.reps}"`);
+      }
       
       let newWeightValue = set.weight;
       let newRepsValue = set.reps;
       
-      // Use set values if they exist and are not '0'
       if (!newWeightValue || newWeightValue === '0') {
         newWeightValue = set.previous?.weight && set.previous.weight !== '0' ? 
           set.previous.weight : '0';
@@ -69,7 +77,7 @@ const SetRow: React.FC<SetRowProps> = ({
           set.previous.reps : '12';
       }
       
-      console.log(`SetRow (${index}): Setting initial values - weight: "${newWeightValue}", reps: "${newRepsValue}"`);
+      console.log(`[SetRow ${index}] Setting initial values - weight: "${newWeightValue}", reps: "${newRepsValue}"`);
       
       setWeightValue(newWeightValue);
       setRepsValue(newRepsValue);
@@ -78,25 +86,28 @@ const SetRow: React.FC<SetRowProps> = ({
     }
   }, [set.id, index, set.weight, set.reps, set.previous]);
   
-  // Handle updates to the set values from parent component
   useEffect(() => {
-    // Skip redundant updates when values haven't changed
     if (set.weight === previousValuesRef.current.weight && 
         set.reps === previousValuesRef.current.reps) {
       return;
     }
     
-    console.log(`SetRow (${index}): Received updated values - weight: "${set.weight}", reps: "${set.reps}"`);
+    const now = Date.now();
+    if (lastUserEditRef.current && now - lastUserEditRef.current < 5000) {
+      console.log(`[SetRow ${index}] Ignoring props update as user recently edited values`);
+      return;
+    }
     
-    // Only update if the new values are meaningful (not empty or '0')
+    console.log(`[SetRow ${index}] Received updated values - weight: "${set.weight}", reps: "${set.reps}"`);
+    
     if (set.weight && set.weight !== '0' && set.weight !== weightValue) {
-      console.log(`SetRow (${index}): Updating weight from "${weightValue}" to "${set.weight}"`);
+      console.log(`[SetRow ${index}] Updating weight from "${weightValue}" to "${set.weight}"`);
       setWeightValue(set.weight);
       previousValuesRef.current.weight = set.weight;
     }
     
     if (set.reps && set.reps !== '0' && set.reps !== repsValue) {
-      console.log(`SetRow (${index}): Updating reps from "${repsValue}" to "${set.reps}"`);
+      console.log(`[SetRow ${index}] Updating reps from "${repsValue}" to "${set.reps}"`);
       setRepsValue(set.reps);
       previousValuesRef.current.reps = set.reps;
     }
@@ -104,15 +115,17 @@ const SetRow: React.FC<SetRowProps> = ({
   
   const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    console.log(`SetRow (${index}): handleWeightChange - from "${weightValue}" to "${value}"`);
+    console.log(`[SetRow ${index}] handleWeightChange - from "${weightValue}" to "${value}"`);
     setWeightValue(value);
+    lastUserEditRef.current = Date.now();
     onWeightChange(value);
   };
   
   const handleRepsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    console.log(`SetRow (${index}): handleRepsChange - from "${repsValue}" to "${value}"`);
+    console.log(`[SetRow ${index}] handleRepsChange - from "${repsValue}" to "${value}"`);
     setRepsValue(value);
+    lastUserEditRef.current = Date.now();
     onRepsChange(value);
   };
   

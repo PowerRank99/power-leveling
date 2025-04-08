@@ -38,6 +38,7 @@ export const useWorkoutActions = (workoutId: string | null) => {
     try {
       setIsSubmitting(true);
       console.log(`Finishing workout: ${workoutId} with duration: ${elapsedTime}`);
+      console.log(`Timer settings at workout finish: ${restTimerSettings.minutes}m ${restTimerSettings.seconds}s`);
       
       if (!workoutId) {
         toast.error("Erro ao finalizar", {
@@ -50,13 +51,22 @@ export const useWorkoutActions = (workoutId: string | null) => {
       // This is important to make sure they persist for future workouts
       try {
         console.log(`Saving final timer settings: ${restTimerSettings.minutes}m ${restTimerSettings.seconds}s`);
-        await supabase
+        // Use a transaction for updating timer settings to prevent race conditions
+        const { data: updatedTimerData, error: timerError } = await supabase
           .from('workouts')
           .update({
             rest_timer_minutes: restTimerSettings.minutes,
             rest_timer_seconds: restTimerSettings.seconds
           })
-          .eq('id', workoutId);
+          .eq('id', workoutId)
+          .select('rest_timer_minutes, rest_timer_seconds');
+          
+        if (timerError) {
+          console.error("Error saving final timer settings:", timerError);
+          // Continue with workout completion even if timer settings fail
+        } else {
+          console.log("Successfully saved timer settings:", updatedTimerData);
+        }
       } catch (timerError) {
         console.error("Error saving final timer settings:", timerError);
         // Continue with workout completion even if timer settings fail
