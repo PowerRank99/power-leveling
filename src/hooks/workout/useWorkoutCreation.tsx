@@ -1,40 +1,49 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
+/**
+ * Hook for creating new workouts
+ */
 export const useWorkoutCreation = () => {
   /**
-   * Creates a new workout entry for a routine
+   * Creates a new workout in the database
    */
   const createNewWorkout = async (routineId: string, userId: string) => {
     if (!routineId || !userId) {
-      throw new Error("Cannot create workout: Missing routine ID or user ID");
+      console.error("Missing routineId or userId in createNewWorkout");
+      return null;
     }
     
-    console.log("Creating new workout for routine:", routineId);
-    
-    const { data: newWorkout, error: workoutError } = await supabase
-      .from('workouts')
-      .insert({
-        routine_id: routineId,
-        started_at: new Date().toISOString(),
-        user_id: userId
-      })
-      .select()
-      .single();
+    try {
+      console.log("Creating new workout for routine:", routineId, "user:", userId);
       
-    if (workoutError) {
-      console.error("Error creating workout:", workoutError);
-      throw workoutError;
+      const { data, error } = await supabase
+        .from('workouts')
+        .insert({
+          routine_id: routineId,
+          user_id: userId,
+          started_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+        
+      if (error) {
+        console.error("Error creating new workout:", error);
+        throw error;
+      }
+      
+      console.log("Created new workout with id:", data?.id);
+      return data?.id || null;
+    } catch (error) {
+      console.error("Error in createNewWorkout:", error);
+      toast.error("Erro ao criar treino", {
+        description: "Não foi possível iniciar um novo treino"
+      });
+      return null;
     }
-    
-    if (!newWorkout) {
-      throw new Error("Falha ao criar registro do treino");
-    }
-
-    console.log("New workout created:", newWorkout.id);
-    return newWorkout.id;
   };
-
+  
   return {
     createNewWorkout
   };

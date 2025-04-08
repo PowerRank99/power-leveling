@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from 'react';
-import { useWorkoutExercises } from './useWorkoutExercises';
+import { useWorkoutExercises } from '../useWorkoutExercises';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 

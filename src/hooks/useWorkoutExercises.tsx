@@ -4,7 +4,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { WorkoutExercise } from '@/types/workout';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
-import { useRoutineVerification } from './workout/useRoutineVerification';
+import { useRoutineVerification } from './workout/useWorkoutVerification';
 import { useExistingWorkout } from './workout/useExistingWorkout';
 import { useWorkoutCreation } from './workout/useWorkoutCreation';
 import { useWorkoutSetsCreation } from './workout/useWorkoutSetsCreation';
