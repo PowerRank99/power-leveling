@@ -35,10 +35,7 @@ const ActiveWorkoutPage = () => {
     discardWorkout,
     formatTime,
     elapsedTime,
-    restTimerSettings,
-    handleRestTimerChange,
-    isSubmitting,
-    isTimerSaving
+    isSubmitting
   } = useWorkout(id || '');
   
   useEffect(() => {
@@ -163,9 +160,6 @@ const ActiveWorkoutPage = () => {
                 exerciseId={exercise.id}
                 notes={notes[exercise.id] || ''}
                 onNotesChange={(value) => handleNotesChange(exercise.id, value)}
-                initialRestTimer={restTimerSettings}
-                onRestTimerChange={handleRestTimerChange}
-                isTimerSaving={isTimerSaving}
               />
             </Card>
           ))}

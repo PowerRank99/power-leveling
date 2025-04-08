@@ -11,15 +11,9 @@ interface PreviousWorkoutData {
   }[];
 }
 
-interface RestTimerSettings {
-  minutes: number;
-  seconds: number;
-}
-
 export const usePreviousWorkoutData = (routineId: string | null) => {
   const { user } = useAuth();
   const [previousWorkoutData, setPreviousWorkoutData] = useState<PreviousWorkoutData>({});
-  const [restTimerSettings, setRestTimerSettings] = useState<RestTimerSettings>({ minutes: 1, seconds: 30 });
   const [isLoading, setIsLoading] = useState(false);
   const [prevWorkoutId, setPrevWorkoutId] = useState<string | null>(null);
   
@@ -34,7 +28,7 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
         // 1. Get the most recent completed workout for this routine
         const { data: previousWorkout, error: workoutError } = await supabase
           .from('workouts')
-          .select('id, rest_timer_minutes, rest_timer_seconds')
+          .select('id')
           .eq('routine_id', routineId)
           .eq('user_id', user.id)
           .not('completed_at', 'is', null)
@@ -54,17 +48,6 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
         
         console.log("[usePreviousWorkoutData] Found previous workout:", previousWorkout.id);
         setPrevWorkoutId(previousWorkout.id);
-        
-        // Set previous rest timer settings if available
-        if (previousWorkout && 
-            previousWorkout.rest_timer_minutes !== null && 
-            previousWorkout.rest_timer_seconds !== null) {
-          console.log(`[usePreviousWorkoutData] Loading previous timer settings: ${previousWorkout.rest_timer_minutes}m ${previousWorkout.rest_timer_seconds}s`);
-          setRestTimerSettings({
-            minutes: previousWorkout.rest_timer_minutes || 1,
-            seconds: previousWorkout.rest_timer_seconds || 30
-          });
-        }
         
         // 2. Get all sets from the previous workout
         const { data: previousSets, error: setsError } = await supabase
@@ -134,7 +117,6 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
   
   return {
     previousWorkoutData,
-    restTimerSettings,
     isLoading,
     prevWorkoutId
   };

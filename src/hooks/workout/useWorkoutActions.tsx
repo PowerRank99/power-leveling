@@ -29,7 +29,7 @@ export const useWorkoutActions = (workoutId: string | null) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { finishWorkout: finishWorkoutAction } = useWorkoutCompletion(workoutId);
   
-  const finishWorkout = useCallback(async (elapsedTime: number, restTimerSettings: { minutes: number, seconds: number }) => {
+  const finishWorkout = useCallback(async (elapsedTime: number) => {
     if (isSubmitting) {
       console.log("Already submitting, ignoring duplicate request");
       return false;
@@ -38,7 +38,6 @@ export const useWorkoutActions = (workoutId: string | null) => {
     try {
       setIsSubmitting(true);
       console.log(`Finishing workout: ${workoutId} with duration: ${elapsedTime}`);
-      console.log(`Timer settings at workout finish: ${restTimerSettings.minutes}m ${restTimerSettings.seconds}s`);
       
       if (!workoutId) {
         toast.error("Erro ao finalizar", {
@@ -47,31 +46,7 @@ export const useWorkoutActions = (workoutId: string | null) => {
         return false;
       }
       
-      // First, ensure the timer settings are saved
-      // Using a separate call to ensure timer settings don't affect workout data
-      try {
-        console.log(`Saving final timer settings: ${restTimerSettings.minutes}m ${restTimerSettings.seconds}s`);
-        
-        const { error: timerError } = await supabase
-          .from('workouts')
-          .update({
-            rest_timer_minutes: restTimerSettings.minutes,
-            rest_timer_seconds: restTimerSettings.seconds
-          })
-          .eq('id', workoutId);
-          
-        if (timerError) {
-          console.error("Error saving final timer settings:", timerError);
-          // Continue with workout completion even if timer settings fail
-        } else {
-          console.log("Successfully saved timer settings");
-        }
-      } catch (timerError) {
-        console.error("Error saving final timer settings:", timerError);
-        // Continue with workout completion even if timer settings fail
-      }
-      
-      // Proceed with finishing the workout - but don't touch timer settings again
+      // Proceed with finishing the workout
       const success = await finishWorkoutAction(elapsedTime);
       
       if (success) {

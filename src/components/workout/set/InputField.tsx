@@ -21,7 +21,7 @@ const InputField: React.FC<InputFieldProps> = ({ value, onChange, inputMode }) =
     
     // Skip updates right after user edits to prevent flickering
     const now = Date.now();
-    if (lastUserEditRef.current && now - lastUserEditRef.current < 300) {
+    if (lastUserEditRef.current && now - lastUserEditRef.current < 1000) {
       return;
     }
     

@@ -7,7 +7,6 @@ import { useWorkoutExercises } from './useWorkoutExercises';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useSetManagement } from './workout/useSetManagement';
-import { useRestTimer } from './workout/useRestTimer';
 import { useWorkoutActions } from './workout/useWorkoutActions';
 import { usePreviousWorkoutData } from './workout/usePreviousWorkoutData';
 
@@ -26,15 +25,8 @@ export const useWorkout = (routineId: string) => {
   const { elapsedTime, formatTime } = useWorkoutTimer();
   const { fetchRoutineExercises, isCreatingWorkout } = useWorkoutExercises();
   const { updateSet: updateSetAction, addSet: addSetAction, removeSet: removeSetAction } = useSetManagement(workoutId);
-  const { restTimerSettings, setRestTimerSettings, handleRestTimerChange, isSaving: isTimerSaving } = useRestTimer(workoutId);
   const { finishWorkout: finishWorkoutAction, discardWorkout: discardWorkoutAction, isSubmitting } = useWorkoutActions(workoutId);
-  const { previousWorkoutData, restTimerSettings: savedRestTimerSettings } = usePreviousWorkoutData(routineId);
-  
-  useEffect(() => {
-    if (savedRestTimerSettings) {
-      setRestTimerSettings(savedRestTimerSettings);
-    }
-  }, [savedRestTimerSettings, setRestTimerSettings]);
+  const { previousWorkoutData } = usePreviousWorkoutData(routineId);
 
   const setupWorkout = useCallback(async () => {
     if (!routineId) {
@@ -108,7 +100,7 @@ export const useWorkout = (routineId: string) => {
   };
   
   const finishWorkout = async () => {
-    return finishWorkoutAction(elapsedTime, restTimerSettings);
+    return finishWorkoutAction(elapsedTime);
   };
 
   const discardWorkout = async () => {
@@ -128,9 +120,6 @@ export const useWorkout = (routineId: string) => {
     discardWorkout,
     elapsedTime,
     formatTime,
-    restTimerSettings,
-    handleRestTimerChange,
-    isSubmitting,
-    isTimerSaving
+    isSubmitting
   };
 };

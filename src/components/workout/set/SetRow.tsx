@@ -95,9 +95,9 @@ const SetRow: React.FC<SetRowProps> = ({
       return;
     }
     
-    // Important: Extended protection time after user edit to prevent timer-related overrides
+    // Important: Extended protection time after user edit to prevent overrides
     const now = Date.now();
-    if (lastUserEditRef.current && now - lastUserEditRef.current < 30000) { // 30 seconds protection
+    if (lastUserEditRef.current && now - lastUserEditRef.current < 60000) { // 60 seconds protection
       console.log(`[SetRow ${index}] Ignoring props update as user recently edited values (${Math.round((now - lastUserEditRef.current)/1000)}s ago)`);
       return;
     }
