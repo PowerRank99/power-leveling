@@ -57,42 +57,7 @@ export const useWorkout = (routineId: string) => {
       
       if (workoutExercises && workoutExercises.length > 0 && newWorkoutId) {
         console.log("Workout setup successful with", workoutExercises.length, "exercises");
-        
-        if (Object.keys(previousWorkoutData).length > 0) {
-          const exercisesWithPrevious = workoutExercises.map(exercise => {
-            const previousSets = previousWorkoutData[exercise.id];
-            
-            if (previousSets) {
-              return {
-                ...exercise,
-                sets: exercise.sets.map((set, idx) => {
-                  const prevSet = previousSets[idx];
-                  
-                  if (prevSet) {
-                    return {
-                      ...set,
-                      weight: prevSet.weight,
-                      reps: prevSet.reps,
-                      previous: {
-                        weight: prevSet.weight,
-                        reps: prevSet.reps
-                      }
-                    };
-                  }
-                  
-                  return set;
-                })
-              };
-            }
-            
-            return exercise;
-          });
-          
-          setExercises(exercisesWithPrevious);
-        } else {
-          setExercises(workoutExercises);
-        }
-        
+        setExercises(workoutExercises);
         setWorkoutId(newWorkoutId);
         setIsInitialized(true);
       } else {
@@ -112,7 +77,7 @@ export const useWorkout = (routineId: string) => {
     } finally {
       setIsLoading(false);
     }
-  }, [routineId, fetchRoutineExercises, navigate, isInitialized, isCreatingWorkout, previousWorkoutData]);
+  }, [routineId, fetchRoutineExercises, navigate, isInitialized, isCreatingWorkout]);
   
   useEffect(() => {
     if (!isInitialized && !isCreatingWorkout) {

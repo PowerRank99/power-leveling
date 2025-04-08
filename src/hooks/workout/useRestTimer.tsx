@@ -1,18 +1,49 @@
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 // Maximum number of retries for database operations
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // milliseconds
-const DEBOUNCE_DELAY = 1000; // 1 second debounce for timer settings updates
+const DEBOUNCE_DELAY = 2000; // 2 seconds debounce for timer settings updates
 
 export const useRestTimer = (workoutId: string | null) => {
   const [restTimerSettings, setRestTimerSettings] = useState({ minutes: 1, seconds: 30 });
   const [isSaving, setIsSaving] = useState(false);
   const saveTimerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pendingUpdateRef = useRef<{ minutes: number; seconds: number } | null>(null);
+  
+  // Load saved timer settings when the workout ID changes
+  useEffect(() => {
+    const loadTimerSettings = async () => {
+      if (!workoutId) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('workouts')
+          .select('rest_timer_minutes, rest_timer_seconds')
+          .eq('id', workoutId)
+          .single();
+          
+        if (error) {
+          console.error("Error loading timer settings:", error);
+          return;
+        }
+        
+        if (data && (data.rest_timer_minutes !== null || data.rest_timer_seconds !== null)) {
+          setRestTimerSettings({
+            minutes: data.rest_timer_minutes ?? 1,
+            seconds: data.rest_timer_seconds ?? 30
+          });
+        }
+      } catch (error) {
+        console.error("Error loading timer settings:", error);
+      }
+    };
+    
+    loadTimerSettings();
+  }, [workoutId]);
   
   // Retry mechanism for database operations
   const saveTimerSettingsWithRetry = useCallback(async (minutes: number, seconds: number, retryCount = 0) => {
@@ -73,6 +104,7 @@ export const useRestTimer = (workoutId: string | null) => {
     // Debounce the save operation to reduce database calls
     if (saveTimerTimeoutRef.current) {
       clearTimeout(saveTimerTimeoutRef.current);
+      
       // Store this as a pending update if we're currently saving
       if (isSaving) {
         pendingUpdateRef.current = { minutes, seconds };
@@ -83,16 +115,30 @@ export const useRestTimer = (workoutId: string | null) => {
     // Set up a new debounced save
     saveTimerTimeoutRef.current = setTimeout(() => {
       if (workoutId) {
-        // We don't await this - it runs in the background
-        saveTimerSettingsWithRetry(minutes, seconds).then(success => {
-          if (success) {
-            console.log("Timer settings saved successfully");
-          }
-        });
+        // We run this in the background without awaiting
+        saveTimerSettingsWithRetry(minutes, seconds)
+          .then(success => {
+            if (success) {
+              console.log("Timer settings saved successfully");
+            }
+          })
+          .catch(err => {
+            console.error("Background timer save failed:", err);
+          });
       }
       saveTimerTimeoutRef.current = null;
     }, DEBOUNCE_DELAY);
+    
   }, [workoutId, saveTimerSettingsWithRetry, isSaving]);
+  
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimerTimeoutRef.current) {
+        clearTimeout(saveTimerTimeoutRef.current);
+      }
+    };
+  }, []);
   
   return {
     restTimerSettings,
