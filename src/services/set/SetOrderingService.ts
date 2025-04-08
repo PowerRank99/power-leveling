@@ -38,6 +38,20 @@ export class SetOrderingService {
       console.log(`[SetOrderingService] Found ${sets.length} sets to normalize`);
       console.log(`[SetOrderingService] Current set orders: ${sets.map(s => s.set_order).join(', ')}`);
       
+      // Check if sets need normalization
+      let needsNormalization = false;
+      for (let i = 0; i < sets.length; i++) {
+        if (sets[i].set_order !== i) {
+          needsNormalization = true;
+          break;
+        }
+      }
+      
+      if (!needsNormalization) {
+        console.log("[SetOrderingService] Sets already have correct sequential ordering");
+        return { success: true };
+      }
+      
       // Update each set with a new sequential order
       for (let i = 0; i < sets.length; i++) {
         if (sets[i].set_order === i) {

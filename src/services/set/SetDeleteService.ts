@@ -47,39 +47,8 @@ export class SetDeleteService {
       
       console.log(`[SetDeleteService] Successfully deleted set ${setId}`);
       
-      // Get all remaining sets for this exercise that have a higher order
-      const { data: higherSets, error: higherSetsError } = await supabase
-        .from('workout_sets')
-        .select('id, set_order')
-        .eq('workout_id', workout_id)
-        .eq('exercise_id', exercise_id)
-        .gt('set_order', set_order)
-        .order('set_order');
-        
-      if (higherSetsError) {
-        console.error(`[SetDeleteService] Error fetching higher ordered sets:`, higherSetsError);
-        return { success: false, error: higherSetsError };
-      }
-      
-      // Decrement the order of all higher sets to fill the gap
-      if (higherSets && higherSets.length > 0) {
-        console.log(`[SetDeleteService] Reordering ${higherSets.length} sets after deletion`);
-        
-        for (const set of higherSets) {
-          const newOrder = set.set_order - 1;
-          console.log(`[SetDeleteService] Updating set ${set.id} order from ${set.set_order} to ${newOrder}`);
-          
-          const { error: updateError } = await supabase
-            .from('workout_sets')
-            .update({ set_order: newOrder })
-            .eq('id', set.id);
-            
-          if (updateError) {
-            console.error(`[SetDeleteService] Error updating set ${set.id} order:`, updateError);
-            continue; // Continue with other updates even if one fails
-          }
-        }
-      }
+      // After deletion, normalize the set orders to ensure they remain sequential
+      await this.normalizeSetOrders(workout_id, exercise_id);
       
       return { success: true };
     } catch (error) {
@@ -129,10 +98,9 @@ export class SetDeleteService {
         return { success: true };
       }
       
-      console.log(`[SetDeleteService] Found ${currentSets.length} sets in database, reordering to ${databaseSets.length} sets`);
+      console.log(`[SetDeleteService] Found ${currentSets.length} sets in database for reordering`);
       
-      // For each set in the database, update its order based on position in our array
-      // This ensures all sets have sequential order values starting from 0
+      // For each set in the database, update its order based on position in array
       for (let i = 0; i < currentSets.length; i++) {
         const set = currentSets[i];
         const newOrder = i;
@@ -159,6 +127,66 @@ export class SetDeleteService {
       return { success: true };
     } catch (error) {
       console.error("[SetDeleteService] Exception reordering sets:", error);
+      return { success: false, error };
+    }
+  }
+  
+  /**
+   * Normalizes set orders to ensure they are sequential
+   * This is automatically called after deletion
+   */
+  static async normalizeSetOrders(
+    workoutId: string,
+    exerciseId: string
+  ): Promise<DatabaseResult<void>> {
+    try {
+      console.log(`[SetDeleteService] Normalizing set orders after deletion for workout=${workoutId}, exercise=${exerciseId}`);
+      
+      // Get all remaining sets for this exercise, ordered by current set_order
+      const { data: sets, error: fetchError } = await supabase
+        .from('workout_sets')
+        .select('id, set_order')
+        .eq('workout_id', workoutId)
+        .eq('exercise_id', exerciseId)
+        .order('set_order');
+        
+      if (fetchError) {
+        console.error("[SetDeleteService] Error fetching sets for normalization:", fetchError);
+        return { success: false, error: fetchError };
+      }
+      
+      if (!sets || sets.length === 0) {
+        console.log("[SetDeleteService] No sets to normalize after deletion");
+        return { success: true };
+      }
+      
+      console.log(`[SetDeleteService] Found ${sets.length} sets to normalize after deletion`);
+      console.log(`[SetDeleteService] Current set orders: ${sets.map(s => s.set_order).join(', ')}`);
+      
+      // Update each set with a new sequential order
+      for (let i = 0; i < sets.length; i++) {
+        if (sets[i].set_order === i) {
+          console.log(`[SetDeleteService] Set ${sets[i].id} already has correct order ${i}`);
+          continue; // Skip if already has the correct order
+        }
+        
+        console.log(`[SetDeleteService] Updating set ${sets[i].id} order from ${sets[i].set_order} to ${i}`);
+        
+        const { error: updateError } = await supabase
+          .from('workout_sets')
+          .update({ set_order: i })
+          .eq('id', sets[i].id);
+          
+        if (updateError) {
+          console.error(`[SetDeleteService] Error updating set ${sets[i].id} order:`, updateError);
+          // Continue with other updates even if one fails
+        }
+      }
+      
+      console.log("[SetDeleteService] Successfully normalized set orders after deletion");
+      return { success: true };
+    } catch (error) {
+      console.error("[SetDeleteService] Exception normalizing set orders:", error);
       return { success: false, error };
     }
   }

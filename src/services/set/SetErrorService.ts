@@ -6,13 +6,25 @@ import { toast } from 'sonner';
  */
 export class SetErrorService {
   /**
-   * Handles error display to the user
+   * Displays a user-friendly error message for set operations
    */
   static displayError(operation: string, error: any): void {
     console.error(`[SetErrorService] Error during ${operation}:`, error);
     
+    let errorMessage = "Não foi possível completar a operação";
+    
+    // Extract more specific error information if available
+    if (error?.message) {
+      errorMessage = error.message;
+    } else if (error?.details) {
+      errorMessage = error.details;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+    
     toast.error(`Erro ao ${operation}`, {
-      description: "Ocorreu um problema. Tente novamente."
+      description: errorMessage,
+      duration: 5000
     });
   }
 }

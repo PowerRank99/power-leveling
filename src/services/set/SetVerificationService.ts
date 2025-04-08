@@ -81,15 +81,13 @@ export class SetVerificationService {
       
       console.log(`[SetVerificationService] Actual set count from DB: ${actualCount}`);
       
-      if (actualCount === 0) {
-        console.warn("[SetVerificationService] No sets found, should have at least one set");
-        return { success: false, error: new Error("No sets found") };
-      }
+      // For safety, ensure we always have at least one set
+      const safeCount = actualCount === 0 ? 1 : actualCount;
       
       // Update routine_exercises target_sets to match actual count
       const { data: updateData, error: updateError } = await supabase
         .from('routine_exercises')
-        .update({ target_sets: actualCount })
+        .update({ target_sets: safeCount })
         .eq('routine_id', routineId)
         .eq('exercise_id', exerciseId)
         .select('target_sets');
@@ -106,7 +104,37 @@ export class SetVerificationService {
       
       console.log(`[SetVerificationService] Updated target_sets to ${updateData[0].target_sets}`);
       
-      return { success: true, data: actualCount };
+      // Also update exercise_history.sets if needed
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        
+        if (userData?.user) {
+          const { data: historyData, error: historyError } = await supabase
+            .from('exercise_history')
+            .select('sets')
+            .eq('user_id', userData.user.id)
+            .eq('exercise_id', exerciseId)
+            .single();
+            
+          if (!historyError && historyData) {
+            // Only update if current history count is different
+            if (historyData.sets !== safeCount) {
+              console.log(`[SetVerificationService] Updating exercise_history.sets from ${historyData.sets} to ${safeCount}`);
+              
+              await supabase
+                .from('exercise_history')
+                .update({ sets: safeCount })
+                .eq('user_id', userData.user.id)
+                .eq('exercise_id', exerciseId);
+            }
+          }
+        }
+      } catch (historyError) {
+        console.error("[SetVerificationService] Error updating exercise history:", historyError);
+        // Non-critical so continue
+      }
+      
+      return { success: true, data: safeCount };
     } catch (error) {
       console.error("[SetVerificationService] Exception reconciling set count:", error);
       return { success: false, error };
