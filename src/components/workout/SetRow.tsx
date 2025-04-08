@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Check, Trash } from 'lucide-react';
 
 interface SetRowProps {
@@ -35,6 +35,28 @@ const SetRow: React.FC<SetRowProps> = ({
   const [swiping, setSwiping] = useState(false);
   const [startX, setStartX] = useState(0);
   const [offsetX, setOffsetX] = useState(0);
+  
+  // Add local state to ensure values are properly displayed
+  const [weightValue, setWeightValue] = useState(set.weight);
+  const [repsValue, setRepsValue] = useState(set.reps);
+  
+  // Update local state when props change
+  useEffect(() => {
+    setWeightValue(set.weight);
+    setRepsValue(set.reps);
+  }, [set.weight, set.reps]);
+  
+  const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setWeightValue(value);
+    onWeightChange(value);
+  };
+  
+  const handleRepsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setRepsValue(value);
+    onRepsChange(value);
+  };
   
   const handleTouchStart = (e: React.TouchEvent) => {
     setStartX(e.touches[0].clientX);
@@ -96,8 +118,8 @@ const SetRow: React.FC<SetRowProps> = ({
           <input
             type="text"
             className="w-full border border-gray-200 rounded p-2 text-center"
-            value={set.weight}
-            onChange={(e) => onWeightChange(e.target.value)}
+            value={weightValue}
+            onChange={handleWeightChange}
           />
         </div>
         
@@ -105,8 +127,8 @@ const SetRow: React.FC<SetRowProps> = ({
           <input
             type="text"
             className="w-full border border-gray-200 rounded p-2 text-center"
-            value={set.reps}
-            onChange={(e) => onRepsChange(e.target.value)}
+            value={repsValue}
+            onChange={handleRepsChange}
           />
         </div>
         

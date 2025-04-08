@@ -36,7 +36,7 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
           .select('id, rest_timer_minutes, rest_timer_seconds')
           .eq('routine_id', routineId)
           .eq('user_id', user.id)
-          .not('completed_at', 'is', null) // Fixed syntax: use .not() with 'is' and null
+          .not('completed_at', 'is', null)
           .order('completed_at', { ascending: false })
           .limit(1)
           .single();
@@ -75,9 +75,7 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
             completed,
             set_order
           `)
-          .eq('workout_id', previousWorkout.id)
-          .eq('completed', true) // Only get completed sets
-          .order('set_order');
+          .eq('workout_id', previousWorkout.id);
           
         if (setsError) {
           console.error("Error fetching previous workout sets:", setsError);
@@ -85,11 +83,11 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
         }
         
         if (!previousSets || previousSets.length === 0) {
-          console.log("No completed sets found in previous workout");
+          console.log("No sets found in previous workout");
           return;
         }
         
-        console.log(`Found ${previousSets.length} completed sets from previous workout`);
+        console.log(`Found ${previousSets.length} sets from previous workout`);
         
         // 3. Group sets by exercise ID
         const groupedSets: PreviousWorkoutData = {};
@@ -115,6 +113,7 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
         
         setPreviousWorkoutData(groupedSets);
         console.log("Processed previous workout data:", Object.keys(groupedSets).length, "exercises");
+        console.log("Previous workout data details:", groupedSets);
       } catch (error) {
         console.error("Error fetching previous workout data:", error);
       } finally {
