@@ -20,7 +20,9 @@ export function useExerciseHistoryDisplay(exerciseId?: string) {
       
       try {
         const historyData = await ExerciseHistoryService.getExerciseHistory(exerciseId);
-        setHistory(historyData);
+        if (historyData) {
+          setHistory(historyData as ExerciseHistory);
+        }
       } catch (err) {
         console.error("Error fetching exercise history:", err);
         setError("Não foi possível carregar o histórico deste exercício");
