@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -45,23 +45,27 @@ const RestTimer: React.FC<RestTimerProps> = ({
   const [minutes, setMinutes] = useState(initialMinutes);
   const [seconds, setSeconds] = useState(initialSeconds);
   const [isRunning, setIsRunning] = useState(autoStart);
-  const [totalSeconds, setTotalSeconds] = useState(minutes * 60 + seconds);
+  const [totalSeconds, setTotalSeconds] = useState(initialMinutes * 60 + initialSeconds);
   const [showTimerOptions, setShowTimerOptions] = useState(true); // Default to showing options
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const timerChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   useEffect(() => {
-    // Update initial values when props change
-    setMinutes(initialMinutes);
-    setSeconds(initialSeconds);
-    setTotalSeconds(initialMinutes * 60 + initialSeconds);
-  }, [initialMinutes, initialSeconds]);
+    // Update initial values when props change, but only if they're different
+    // to prevent unnecessary re-renders and database calls
+    if (initialMinutes !== minutes || initialSeconds !== seconds) {
+      setMinutes(initialMinutes);
+      setSeconds(initialSeconds);
+      setTotalSeconds(initialMinutes * 60 + initialSeconds);
+    }
+  }, [initialMinutes, initialSeconds, minutes, seconds]);
   
   useEffect(() => {
     if (isRunning) {
       intervalRef.current = setInterval(() => {
         setTotalSeconds(prev => {
           if (prev <= 1) {
-            clearInterval(intervalRef.current as NodeJS.Timeout);
+            if (intervalRef.current) clearInterval(intervalRef.current);
             setIsRunning(false);
             if (onComplete) onComplete();
             return 0;
@@ -76,40 +80,60 @@ const RestTimer: React.FC<RestTimerProps> = ({
     };
   }, [isRunning, onComplete]);
   
+  // Debounced timer change to prevent excessive database updates
+  const debouncedTimerChange = useCallback((mins: number, secs: number) => {
+    if (timerChangeTimeoutRef.current) {
+      clearTimeout(timerChangeTimeoutRef.current);
+    }
+    
+    timerChangeTimeoutRef.current = setTimeout(() => {
+      if (onTimerChange) {
+        onTimerChange(mins, secs);
+      }
+      timerChangeTimeoutRef.current = null;
+    }, 500);
+  }, [onTimerChange]);
+  
   // Update minutes and seconds when totalSeconds changes
   useEffect(() => {
     const mins = Math.floor(totalSeconds / 60);
     const secs = totalSeconds % 60;
-    setMinutes(mins);
-    setSeconds(secs);
     
-    if (onTimerChange) {
-      onTimerChange(mins, secs);
+    if (mins !== minutes || secs !== seconds) {
+      setMinutes(mins);
+      setSeconds(secs);
+      
+      // Only trigger timer change if actual values changed
+      debouncedTimerChange(mins, secs);
     }
-  }, [totalSeconds, onTimerChange]);
+  }, [totalSeconds, minutes, seconds, debouncedTimerChange]);
   
-  const toggleTimer = () => {
-    setIsRunning(!isRunning);
-  };
+  const toggleTimer = useCallback(() => {
+    setIsRunning(prev => !prev);
+  }, []);
   
-  const resetTimer = () => {
+  const resetTimer = useCallback(() => {
     setTotalSeconds(initialMinutes * 60 + initialSeconds);
     setIsRunning(true);
-  };
+  }, [initialMinutes, initialSeconds]);
 
-  const handleTimerPresetChange = (value: string) => {
+  const handleTimerPresetChange = useCallback((value: string) => {
     const preset = TIMER_PRESETS.find(p => p.label === value);
     if (preset) {
       setTotalSeconds(preset.minutes * 60 + preset.seconds);
       setIsRunning(true);
+      
       if (onTimerChange) {
         onTimerChange(preset.minutes, preset.seconds);
       }
     }
-  };
+  }, [onTimerChange]);
   
   // Calculate progress percentage
-  const progressPercentage = 100 - ((totalSeconds / (initialMinutes * 60 + initialSeconds)) * 100);
+  const initialTotalSeconds = initialMinutes * 60 + initialSeconds;
+  const progressPercentage = initialTotalSeconds > 0 
+    ? 100 - ((totalSeconds / initialTotalSeconds) * 100) 
+    : 0;
   
   return (
     <div className="bg-gray-100 rounded-lg p-4">
@@ -135,7 +159,7 @@ const RestTimer: React.FC<RestTimerProps> = ({
         <div className="w-full bg-gray-200 rounded-full h-1.5 mb-4">
           <div 
             className="bg-blue-500 h-1.5 rounded-full transition-all duration-200" 
-            style={{ width: `${progressPercentage}%` }} 
+            style={{ width: `${Math.min(Math.max(progressPercentage, 0), 100)}%` }} 
           />
         </div>
         

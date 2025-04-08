@@ -45,8 +45,8 @@ export const useWorkoutActions = (workoutId: string | null) => {
         return false;
       }
       
-      // Skip saving timer settings here - we're already saving them in useRestTimer
-      // This removes a potential point of failure during workout completion
+      // No timer settings save during workout completion to prevent race conditions
+      // We just complete the workout directly
       
       // Finish the workout
       const success = await finishWorkoutAction(elapsedTime);
