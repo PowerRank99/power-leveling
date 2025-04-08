@@ -4,7 +4,7 @@ import RestTimer from '@/components/workout/RestTimer';
 import ExerciseHeader from '@/components/workout/ExerciseHeader';
 import ExerciseNotes from '@/components/workout/ExerciseNotes';
 import SetHeader from '@/components/workout/SetHeader';
-import SetRow from '@/components/workout/SetRow';
+import SetRow from '@/components/workout/set/SetRow';  // Updated import path
 import AddSetButton from '@/components/workout/AddSetButton';
 import RestTimerToggle from '@/components/workout/RestTimerToggle';
 
