@@ -26,23 +26,38 @@ export const useWorkoutSetsCreation = () => {
       
       if (routineData?.routine_id) {
         try {
+          console.log("Looking for previous workouts with routine ID:", routineData.routine_id);
+          
           // Get most recent completed workout for this routine
-          const { data: previousWorkout } = await supabase
+          const { data: previousWorkout, error: prevWorkoutError } = await supabase
             .from('workouts')
             .select('id')
             .eq('routine_id', routineData.routine_id)
             .not('id', 'eq', workoutId) 
+            .is('completed_at', 'not.null') // Only fetch completed workouts
             .order('completed_at', { ascending: false })
             .limit(1);
           
+          if (prevWorkoutError) {
+            console.error("Error fetching previous workout:", prevWorkoutError);
+          }
+          
           if (previousWorkout && previousWorkout.length > 0) {
+            console.log("Found previous workout:", previousWorkout[0].id);
+            
             // Get all completed sets from the previous workout
-            const { data: previousSets } = await supabase
+            const { data: previousSets, error: prevSetsError } = await supabase
               .from('workout_sets')
               .select('exercise_id, weight, reps, set_order')
               .eq('workout_id', previousWorkout[0].id);
             
+            if (prevSetsError) {
+              console.error("Error fetching previous sets:", prevSetsError);
+            }
+            
             if (previousSets && previousSets.length > 0) {
+              console.log("Found previous sets:", previousSets.length);
+              
               // Group by exercise ID
               previousWorkoutData = previousSets.reduce((acc: Record<string, any[]>, curr) => {
                 if (!curr.exercise_id) return acc;
@@ -55,6 +70,8 @@ export const useWorkoutSetsCreation = () => {
                 return acc;
               }, {});
             }
+          } else {
+            console.log("No previous completed workouts found for this routine");
           }
         } catch (error) {
           console.error("Error fetching previous workout data:", error);
@@ -72,7 +89,10 @@ export const useWorkoutSetsCreation = () => {
         const previousSetData = previousWorkoutData[exerciseId] || [];
         
         // Use either previous set count or target sets (default to 3 if neither exists)
-        const targetSets = previousSetData.length || routineExercise.target_sets || 3;
+        const targetSets = previousSetData.length > 0 ? previousSetData.length : 
+                          (routineExercise.target_sets || 3);
+        
+        console.log(`Exercise ${exerciseId} (${routineExercise.exercises.name}): Creating ${targetSets} sets (${previousSetData.length} found in previous workout)`);
         
         // Parse target reps properly
         const targetRepsString = routineExercise.target_reps || '12';
@@ -85,15 +105,18 @@ export const useWorkoutSetsCreation = () => {
           const repTarget = setIndex < targetReps.length ? targetReps[setIndex] : targetReps[targetReps.length - 1];
           
           // Try to find a matching previous set
-          const previousMatchingSet = previousSetData.find(set => set.set_order === i * 100 + setIndex) || 
+          const previousMatchingSet = previousSetData.find(set => set.set_order === setIndex) || 
                                      previousSetData[setIndex];
+          
+          const weight = previousMatchingSet?.weight || 0;
+          const reps = previousMatchingSet?.reps || parseInt(repTarget) || 0;
           
           workoutSetsToInsert.push({
             workout_id: workoutId,
             exercise_id: exerciseId,
-            set_order: i * 100 + setIndex,
-            reps: previousMatchingSet?.reps || parseInt(repTarget) || 0,
-            weight: previousMatchingSet?.weight || 0,
+            set_order: setIndex, // Simplified set_order to just be the index
+            reps: reps,
+            weight: weight,
             completed: false
           });
         }

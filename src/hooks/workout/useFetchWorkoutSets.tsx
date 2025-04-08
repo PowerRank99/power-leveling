@@ -11,6 +11,8 @@ export const useFetchWorkoutSets = () => {
       return null;
     }
 
+    console.log("Fetching workout sets for workout:", workoutId);
+    
     // Fetch all workout sets for this workout
     const { data: workoutSets, error: fetchSetsError } = await supabase
       .from('workout_sets')
@@ -29,6 +31,8 @@ export const useFetchWorkoutSets = () => {
       console.error("Error fetching workout sets:", fetchSetsError);
       throw fetchSetsError;
     }
+
+    console.log(`Found ${workoutSets.length} sets for this workout`);
 
     // Fetch previous workout data for the same routine to use as reference
     const { data: routineData } = await supabase
@@ -52,6 +56,8 @@ export const useFetchWorkoutSets = () => {
           .limit(1);
         
         if (previousWorkout && previousWorkout.length > 0) {
+          console.log("Found previous workout for reference:", previousWorkout[0].id);
+          
           // Get all completed sets from the previous workout
           const { data: previousSets } = await supabase
             .from('workout_sets')
@@ -59,6 +65,8 @@ export const useFetchWorkoutSets = () => {
             .eq('workout_id', previousWorkout[0].id);
           
           if (previousSets && previousSets.length > 0) {
+            console.log(`Found ${previousSets.length} sets from previous workout`);
+            
             // Group by exercise ID
             previousWorkoutData = previousSets.reduce((acc: Record<string, any[]>, curr) => {
               if (!curr.exercise_id) return acc;
@@ -86,11 +94,10 @@ export const useFetchWorkoutSets = () => {
         set.exercise_id === exercise.id
       ).sort((a, b) => a.set_order - b.set_order);
       
+      console.log(`Exercise ${exercise.name} has ${exerciseSets.length} sets`);
+      
       // Get previous workout data for this exercise
       const previousExerciseData = previousWorkoutData[exercise.id];
-      
-      // Count how many sets we had last time
-      const previousSetCount = previousExerciseData ? previousExerciseData.length : routineExercise.target_sets;
       
       // Format sets
       let sets = exerciseSets.map((set, index) => {
@@ -100,8 +107,8 @@ export const useFetchWorkoutSets = () => {
         
         return {
           id: set.id,
-          weight: set.weight?.toString() || previousSet?.weight || '0',
-          reps: set.reps?.toString() || previousSet?.reps || '0',
+          weight: set.weight?.toString() || '0',
+          reps: set.reps?.toString() || '0',
           completed: set.completed,
           previous: previousSet || {
             weight: '0',
@@ -112,7 +119,7 @@ export const useFetchWorkoutSets = () => {
       
       // If we have no sets, create default ones using previous workout data if available
       if (sets.length === 0) {
-        const setCount = previousSetCount || routineExercise.target_sets || 3;
+        const setCount = routineExercise.target_sets || 3;
         
         sets = Array.from({ length: setCount }).map((_, idx) => {
           const prevSet = previousExerciseData && previousExerciseData[idx];

@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 export const useAddSet = (workoutId: string | null) => {
   const updateRoutineExerciseSetCount = async (exerciseId: string, routineId: string, newSetCount: number) => {
     try {
+      console.log(`Updating routine ${routineId}, exercise ${exerciseId} to ${newSetCount} sets`);
+      
       const { error } = await supabase
         .from('routine_exercises')
         .update({ target_sets: newSetCount })
@@ -14,6 +16,8 @@ export const useAddSet = (workoutId: string | null) => {
       
       if (error) {
         console.error("Error updating routine exercise set count:", error);
+      } else {
+        console.log("Successfully updated routine exercise target sets");
       }
     } catch (error) {
       console.error("Error updating routine exercise set count:", error);
@@ -35,10 +39,16 @@ export const useAddSet = (workoutId: string | null) => {
       
       const currentExercise = exercises[exerciseIndex];
       
+      // Get current sets and determine the next set order
       const updatedExercises = [...exercises];
       const currentSets = updatedExercises[exerciseIndex].sets;
       const lastSet = currentSets[currentSets.length - 1];
       
+      // Determine the next set order
+      const newSetOrder = currentSets.length;
+      console.log(`Adding new set with order ${newSetOrder} for exercise ${currentExercise.name}`);
+      
+      // Create the temporary set object
       const newSetId = `new-${Date.now()}`;
       const newSet = {
         id: newSetId,
@@ -48,10 +58,10 @@ export const useAddSet = (workoutId: string | null) => {
         previous: lastSet?.previous || { weight: '0', reps: '12' }
       };
       
+      // Add to local state
       updatedExercises[exerciseIndex].sets.push(newSet);
       
-      const newSetOrder = currentSets.length;
-      
+      // Add to database
       const { data, error } = await supabase
         .from('workout_sets')
         .insert({
@@ -70,14 +80,18 @@ export const useAddSet = (workoutId: string | null) => {
         toast.error("Erro ao adicionar série", {
           description: "A série pode não ter sido salva corretamente"
         });
+      } else {
+        console.log("Successfully added new set to database with ID:", data.id);
       }
       
       if (data) {
+        // Update the ID in our state with the real one from the database
         const updatedExercisesWithId = [...updatedExercises];
         const setIndex = updatedExercisesWithId[exerciseIndex].sets.length - 1;
         updatedExercisesWithId[exerciseIndex].sets[setIndex].id = data.id;
         
-        updateRoutineExerciseSetCount(currentExercise.id, routineId, currentSets.length + 1);
+        // Update the target_sets in routine_exercises to persist for next workouts
+        await updateRoutineExerciseSetCount(currentExercise.id, routineId, currentSets.length + 1);
         
         return updatedExercisesWithId;
       }

@@ -15,11 +15,18 @@ export const useUpdateSet = (workoutId: string | null) => {
         toast.error("Erro ao atualizar série", {
           description: "Treino ou exercício não encontrado"
         });
-        return;
+        return null;
       }
       
       const currentExercise = exercises[exerciseIndex];
+      const currentSet = currentExercise.sets[setIndex];
       
+      if (!currentSet) {
+        console.error("Set not found at index", setIndex);
+        return null;
+      }
+      
+      // Update local state first for immediate feedback
       const updatedExercises = [...exercises];
       const updatedSets = [...updatedExercises[exerciseIndex].sets];
       
@@ -30,28 +37,45 @@ export const useUpdateSet = (workoutId: string | null) => {
       
       updatedExercises[exerciseIndex].sets = updatedSets;
       
+      // Prepare data for database update
       const setData: Record<string, any> = {};
-      if (data.weight !== undefined) setData.weight = parseFloat(data.weight) || 0;
-      if (data.reps !== undefined) setData.reps = parseInt(data.reps) || 0;
-      if (data.completed !== undefined) {
-        setData.completed = data.completed;
-        if (data.completed) {
-          setData.completed_at = new Date().toISOString();
-        } else {
-          setData.completed_at = null;
-        }
+      
+      if (data.weight !== undefined) {
+        const weightValue = parseFloat(data.weight) || 0;
+        setData.weight = weightValue;
+        console.log(`Updating set ${currentSet.id} weight to ${weightValue}`);
       }
       
-      const { error } = await supabase
-        .from('workout_sets')
-        .update(setData)
-        .eq('id', updatedSets[setIndex].id);
-        
-      if (error) {
-        console.error("Error updating set:", error);
-        toast.error("Erro ao salvar série", {
-          description: "As alterações podem não ter sido salvas"
-        });
+      if (data.reps !== undefined) {
+        const repsValue = parseInt(data.reps) || 0;
+        setData.reps = repsValue;
+        console.log(`Updating set ${currentSet.id} reps to ${repsValue}`);
+      }
+      
+      if (data.completed !== undefined) {
+        setData.completed = data.completed;
+        setData.completed_at = data.completed ? new Date().toISOString() : null;
+        console.log(`Updating set ${currentSet.id} completed to ${data.completed}`);
+      }
+      
+      // Skip the database update if the ID starts with "default-" or "new-"
+      // These are temporary IDs for sets that don't exist in the database yet
+      if (currentSet.id && !currentSet.id.startsWith('default-') && !currentSet.id.startsWith('new-')) {
+        const { error } = await supabase
+          .from('workout_sets')
+          .update(setData)
+          .eq('id', currentSet.id);
+          
+        if (error) {
+          console.error("Error updating set in database:", error);
+          toast.error("Erro ao salvar série", {
+            description: "As alterações podem não ter sido salvas"
+          });
+        } else {
+          console.log(`Successfully updated set ${currentSet.id} in database`);
+        }
+      } else {
+        console.warn(`Skipping database update for temporary set ID: ${currentSet.id}`);
       }
       
       return updatedExercises;
