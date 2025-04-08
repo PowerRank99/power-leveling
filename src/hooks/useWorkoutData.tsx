@@ -1,10 +1,9 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { useLocation } from 'react-router-dom';
-import { toast } from 'sonner';
+import { toast as sonnerToast } from 'sonner';
 
 export interface Routine {
   id: string;
@@ -79,19 +78,19 @@ export const useWorkoutData = () => {
       setSavedRoutines(prevRoutines => prevRoutines.filter(routine => routine.id !== routineId));
       
       // Show success message
-      toast.success("Rotina excluída com sucesso");
+      sonnerToast.success("Rotina excluída com sucesso");
       
       return true;
     } catch (error: any) {
       console.error("Error in deleteRoutine:", error);
-      toast.error("Erro ao excluir rotina", {
+      sonnerToast.error("Erro ao excluir rotina", {
         description: error.message || "Não foi possível excluir a rotina. Tente novamente."
       });
       return false;
     } finally {
       setDeleteInProgress(prev => ({ ...prev, [routineId]: false }));
     }
-  }, [user, toast, deleteInProgress]);
+  }, [user, deleteInProgress]);
   
   // Function to delete a workout
   const deleteWorkout = useCallback(async (workoutId: string) => {
@@ -130,19 +129,19 @@ export const useWorkoutData = () => {
       setRecentWorkouts(prevWorkouts => prevWorkouts.filter(workout => workout.id !== workoutId));
       
       // Show success message
-      toast.success("Treino excluído com sucesso");
+      sonnerToast.success("Treino excluído com sucesso");
       
       return true;
     } catch (error: any) {
       console.error("Error in deleteWorkout:", error);
-      toast.error("Erro ao excluir treino", {
+      sonnerToast.error("Erro ao excluir treino", {
         description: error.message || "Não foi possível excluir o treino. Tente novamente."
       });
       return false;
     } finally {
       setDeleteInProgress(prev => ({ ...prev, [workoutId]: false }));
     }
-  }, [user, toast, deleteInProgress]);
+  }, [user, deleteInProgress]);
   
   useEffect(() => {
     let isMounted = true;
