@@ -1,28 +1,21 @@
 
 import React from 'react';
-import { EditIcon } from '@/components/icons/NavIcons';
 
 interface ExerciseNotesProps {
   notes: string;
-  onNotesChange: (value: string) => void;
+  onChange: (value: string) => void;
 }
 
-const ExerciseNotes: React.FC<ExerciseNotesProps> = ({ notes, onNotesChange }) => {
+const ExerciseNotes: React.FC<ExerciseNotesProps> = ({ notes, onChange }) => {
   return (
-    <div className="p-4">
-      <div className="bg-white border border-gray-200 p-4 rounded-lg">
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="font-bold">Anotações</h3>
-          <EditIcon className="w-5 h-5 text-gray-400" />
-        </div>
-        
-        <textarea 
-          placeholder="Adicionar notas sobre o exercício..."
-          className="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 min-h-[100px]"
-          value={notes}
-          onChange={(e) => onNotesChange(e.target.value)}
-        ></textarea>
-      </div>
+    <div className="mb-4">
+      <input
+        type="text"
+        placeholder="Add notes here..."
+        className="w-full px-0 py-2 text-gray-500 border-0 border-b border-gray-200 focus:outline-none focus:ring-0 focus:border-gray-300 bg-transparent"
+        value={notes}
+        onChange={(e) => onChange(e.target.value)}
+      />
     </div>
   );
 };
