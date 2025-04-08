@@ -6,7 +6,7 @@ import { useState, useCallback } from 'react';
 
 const TIMEOUT_MS = 10000; // 10 seconds timeout for operations
 
-// Modified timeout function that properly handles Supabase queries
+// Modified timeout function with proper generic typing
 const withTimeout = async <T,>(promiseFactory: () => Promise<T>, ms: number): Promise<T> => {
   let timeoutId: NodeJS.Timeout;
   
