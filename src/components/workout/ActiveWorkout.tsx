@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import ExerciseHeader from '@/components/workout/ExerciseHeader';
 import ExerciseNotes from '@/components/workout/ExerciseNotes';
 import SetHeader from '@/components/workout/SetHeader';
@@ -38,7 +38,6 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
   notes,
   onNotesChange
 }) => {
-  
   const handleWeightChange = (index: number, value: string) => {
     onUpdateSet(index, { weight: value });
   };

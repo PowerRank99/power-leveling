@@ -11,10 +11,13 @@ export const useWorkoutSetsCreation = () => {
     routineExercises: any[]
   ) => {
     if (!workoutId || !routineExercises.length) {
+      console.error("Missing workoutId or routineExercises in createWorkoutSets");
       return false;
     }
 
     try {
+      console.log(`Creating workout sets for workout ${workoutId} with ${routineExercises.length} exercises`);
+      
       // First, check if there's a previous workout to copy sets from
       const { data: routineData } = await supabase
         .from('workouts')
@@ -34,7 +37,7 @@ export const useWorkoutSetsCreation = () => {
             .select('id')
             .eq('routine_id', routineData.routine_id)
             .not('id', 'eq', workoutId) 
-            .not('completed_at', 'is', null) // Fixed syntax: use .not() with 'is' and null
+            .not('completed_at', 'is', null)
             .order('completed_at', { ascending: false })
             .limit(1);
           
@@ -75,6 +78,8 @@ export const useWorkoutSetsCreation = () => {
               Object.keys(previousWorkoutData).forEach(exerciseId => {
                 previousWorkoutData[exerciseId].sort((a, b) => a.set_order - b.set_order);
               });
+              
+              console.log("Previous workout data processed:", Object.keys(previousWorkoutData).length, "exercises");
             }
           } else {
             console.log("No previous completed workouts found for this routine");
@@ -110,17 +115,19 @@ export const useWorkoutSetsCreation = () => {
         for (let setIndex = 0; setIndex < targetSets; setIndex++) {
           const repTarget = setIndex < targetReps.length ? targetReps[setIndex] : targetReps[targetReps.length - 1];
           
-          // Try to find a matching previous set by set_order first
+          // Try to find a matching previous set by set_order first, or by index as fallback
           const previousMatchingSet = previousSetData.find(set => set.set_order === setIndex) || 
                                      previousSetData[setIndex];
           
           const weight = previousMatchingSet?.weight || 0;
           const reps = previousMatchingSet?.reps || parseInt(repTarget) || 0;
           
+          console.log(`  - Set ${setIndex}: weight=${weight}, reps=${reps}, order=${i * 100 + setIndex}`);
+          
           workoutSetsToInsert.push({
             workout_id: workoutId,
             exercise_id: exerciseId,
-            set_order: setIndex, // Use setIndex as set_order to ensure consistent ordering
+            set_order: i * 100 + setIndex, // Use consistent order formula: exerciseIndex * 100 + setIndex
             reps: reps,
             weight: weight,
             completed: false
@@ -129,10 +136,11 @@ export const useWorkoutSetsCreation = () => {
       }
       
       if (workoutSetsToInsert.length > 0) {
-        console.log("Creating workout sets:", workoutSetsToInsert.length);
-        const { error: setsError } = await supabase
+        console.log(`Creating ${workoutSetsToInsert.length} workout sets in database`);
+        const { data, error: setsError } = await supabase
           .from('workout_sets')
-          .insert(workoutSetsToInsert);
+          .insert(workoutSetsToInsert)
+          .select();
           
         if (setsError) {
           console.error("Error creating workout sets:", setsError);
@@ -141,6 +149,8 @@ export const useWorkoutSetsCreation = () => {
           });
           return false;
         }
+        
+        console.log(`Successfully created ${data?.length || 0} workout sets`);
       }
       
       return true;

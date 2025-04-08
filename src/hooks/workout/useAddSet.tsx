@@ -8,19 +8,23 @@ export const useAddSet = (workoutId: string | null) => {
     try {
       console.log(`Updating routine ${routineId}, exercise ${exerciseId} to ${newSetCount} sets`);
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('routine_exercises')
         .update({ target_sets: newSetCount })
         .eq('routine_id', routineId)
-        .eq('exercise_id', exerciseId);
+        .eq('exercise_id', exerciseId)
+        .select();
       
       if (error) {
         console.error("Error updating routine exercise set count:", error);
+        return false;
       } else {
-        console.log("Successfully updated routine exercise target sets");
+        console.log("Successfully updated routine exercise target sets:", data);
+        return true;
       }
     } catch (error) {
       console.error("Error updating routine exercise set count:", error);
+      return false;
     }
   };
 
@@ -48,7 +52,7 @@ export const useAddSet = (workoutId: string | null) => {
       const newSetOrder = exerciseIndex * 100 + currentSets.length;
       console.log(`Adding new set with order ${newSetOrder} for exercise ${currentExercise.name}`);
       
-      // Create the temporary set object
+      // Create the temporary set object with values from last set
       const newSetId = `new-${Date.now()}`;
       const newSet = {
         id: newSetId,
@@ -58,8 +62,14 @@ export const useAddSet = (workoutId: string | null) => {
         previous: lastSet?.previous || { weight: '0', reps: '12' }
       };
       
-      // Add to local state
+      // Add to local state first for immediate UI feedback
       updatedExercises[exerciseIndex].sets.push(newSet);
+      
+      // Convert values to correct types for database
+      const weightValue = parseFloat(newSet.weight) || 0;
+      const repsValue = parseInt(newSet.reps) || 0;
+      
+      console.log(`Saving new set to database: workout=${workoutId}, exercise=${currentExercise.id}, order=${newSetOrder}, weight=${weightValue}, reps=${repsValue}`);
       
       // Add to database with consistent set_order
       const { data, error } = await supabase
@@ -68,8 +78,8 @@ export const useAddSet = (workoutId: string | null) => {
           workout_id: workoutId,
           exercise_id: currentExercise.id,
           set_order: newSetOrder,
-          weight: parseFloat(newSet.weight) || 0,
-          reps: parseInt(newSet.reps) || 0,
+          weight: weightValue,
+          reps: repsValue,
           completed: false
         })
         .select()

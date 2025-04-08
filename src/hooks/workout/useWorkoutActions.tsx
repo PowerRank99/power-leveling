@@ -108,12 +108,16 @@ export const useWorkoutActions = (workoutId: string | null) => {
           },
           TIMEOUT_MS
         );
+        
+        toast.info("Treino descartado", {
+          description: "O treino foi descartado com sucesso."
+        });
+        
+        return true;
       } catch (error) {
         console.error("Error or timeout deleting workout:", error);
         throw new Error("Erro ao excluir treino e suas séries");
       }
-      
-      return true;
     } catch (error) {
       console.error("Error discarding workout:", error);
       toast.error("Erro ao descartar treino", {
