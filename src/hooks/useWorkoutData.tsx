@@ -26,7 +26,8 @@ export const useWorkoutData = () => {
     recentWorkouts,
     setRecentWorkouts,
     deleteWorkout,
-    isDeletingWorkout
+    isDeletingWorkout,
+    deletedWorkoutIds
   } = useWorkouts(user?.id);
   
   const {
@@ -38,6 +39,7 @@ export const useWorkoutData = () => {
     user?.id,
     setSavedRoutines,
     setRecentWorkouts,
+    deletedWorkoutIds,
     location.pathname,
     lastRefresh
   );

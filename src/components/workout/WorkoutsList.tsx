@@ -55,7 +55,7 @@ const WorkoutsList: React.FC<WorkoutsListProps> = ({
   }
   
   return (
-    <>
+    <div>
       {workouts.map(workout => (
         <WorkoutContextMenu
           key={workout.id}
@@ -64,7 +64,6 @@ const WorkoutsList: React.FC<WorkoutsListProps> = ({
           onDeleteWorkout={onDeleteWorkout}
         >
           <WorkoutCard 
-            key={workout.id}
             id={workout.id}
             name={workout.name}
             date={workout.date}
@@ -77,7 +76,7 @@ const WorkoutsList: React.FC<WorkoutsListProps> = ({
           />
         </WorkoutContextMenu>
       ))}
-    </>
+    </div>
   );
 };
 

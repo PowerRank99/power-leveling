@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast as sonnerToast } from 'sonner';
@@ -7,6 +6,7 @@ import { RecentWorkout } from '../types/workoutDataTypes';
 export const useWorkouts = (userId: string | undefined) => {
   const [recentWorkouts, setRecentWorkouts] = useState<RecentWorkout[]>([]);
   const [deleteInProgress, setDeleteInProgress] = useState<{[key: string]: boolean}>({});
+  const [deletedWorkoutIds, setDeletedWorkoutIds] = useState<string[]>([]);
   
   // Function to delete a workout
   const deleteWorkout = useCallback(async (workoutId: string) => {
@@ -44,6 +44,9 @@ export const useWorkouts = (userId: string | undefined) => {
       // Update the UI by removing the deleted workout from state
       setRecentWorkouts(prevWorkouts => prevWorkouts.filter(workout => workout.id !== workoutId));
       
+      // Keep track of deleted workout IDs to filter them out on refetch
+      setDeletedWorkoutIds(prev => [...prev, workoutId]);
+      
       // Show success message
       sonnerToast.success("Treino excluído com sucesso");
       
@@ -63,6 +66,7 @@ export const useWorkouts = (userId: string | undefined) => {
     recentWorkouts,
     setRecentWorkouts,
     deleteWorkout,
-    isDeletingWorkout: (id: string) => deleteInProgress[id] || false
+    isDeletingWorkout: (id: string) => deleteInProgress[id] || false,
+    deletedWorkoutIds
   };
 };

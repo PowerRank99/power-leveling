@@ -8,6 +8,7 @@ export const useWorkoutDataFetch = (
   userId: string | undefined,
   setRoutines: (routines: Routine[]) => void,
   setWorkouts: (workouts: RecentWorkout[]) => void,
+  deletedWorkoutIds: string[],
   pathname: string,
   lastRefresh: number
 ) => {
@@ -78,13 +79,13 @@ export const useWorkoutDataFetch = (
           setRoutines([]);
         }
         
-        // Fetch recent workouts - UPDATED to only show completed workouts
+        // Fetch recent workouts - UPDATED to only show completed workouts and filter out deleted ones
         const { data: workouts, error: workoutsError } = await supabase
           .from('workouts')
           .select('id, started_at, completed_at, duration_seconds, routine_id')
           .eq('user_id', userId)
-          .not('completed_at', 'is', null) // Only get completed workouts
-          .order('completed_at', { ascending: false }) // Order by completed_at instead of started_at
+          .not('completed_at', 'is', null)
+          .order('completed_at', { ascending: false })
           .limit(5);
         
         if (workoutsError) {
@@ -95,8 +96,15 @@ export const useWorkoutDataFetch = (
         if (workouts && workouts.length > 0 && isMounted) {
           console.log(`Found ${workouts.length} completed workouts`);
           
+          // Filter out any deleted workouts
+          const filteredWorkouts = workouts.filter(
+            workout => !deletedWorkoutIds.includes(workout.id)
+          );
+          
+          console.log(`After filtering deleted workouts: ${filteredWorkouts.length} workouts remain`);
+          
           // Process workouts with additional details
-          const workoutsWithDetails = await Promise.all(workouts.map(async (workout) => {
+          const workoutsWithDetails = await Promise.all(filteredWorkouts.map(async (workout) => {
             try {
               let routineName = 'Treino sem nome';
               if (workout.routine_id) {
@@ -196,7 +204,7 @@ export const useWorkoutDataFetch = (
     return () => {
       isMounted = false;
     };
-  }, [userId, toast, pathname, lastRefresh, setRoutines, setWorkouts]);
+  }, [userId, toast, pathname, lastRefresh, setRoutines, setWorkouts, deletedWorkoutIds]);
 
   return {
     isLoading,
