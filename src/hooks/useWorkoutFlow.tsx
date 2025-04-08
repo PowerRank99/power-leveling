@@ -52,7 +52,8 @@ export const useWorkoutFlow = () => {
   const addSet = async (exerciseIndex: number) => {
     try {
       console.log("Adding set to exercise:", exerciseIndex);
-      return await addSetBase(exerciseIndex);
+      // Fix: Remove the argument since addSetBase doesn't accept any arguments
+      return await addSetBase();
     } catch (error) {
       console.error("Error adding set in flow:", error);
       return null;
