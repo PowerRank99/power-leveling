@@ -1,97 +1,108 @@
 
-import { WorkoutExercise } from '@/types/workout';
-import { SetService } from '@/services/SetService';
+import { WorkoutExercise } from '@/types/workoutTypes';
+import { ExerciseHistoryService } from '@/services/ExerciseHistoryService';
 
 /**
- * Service responsible for formatting workout data for the UI
+ * Service responsible for formatting workout data
  */
 export class WorkoutDataFormatter {
   /**
-   * Formats workout data for the UI with appropriate sets
+   * Formats workout exercises with appropriate sets
    */
   static formatWorkoutExercises(
     routineExercises: any[],
-    workoutSets: any[],
+    workoutSets: any[] | null,
     previousWorkoutData: Record<string, any[]>
   ): WorkoutExercise[] {
-    // Format exercises data for UI with the actual saved sets
-    const workoutExercises: WorkoutExercise[] = routineExercises.map((routineExercise) => {
+    // Extract all exercise IDs for bulk fetching
+    const exerciseIds = routineExercises.map(re => re.exercises.id);
+    
+    // Get exercise history data synchronously (we'll await this later)
+    const exerciseHistoryPromise = ExerciseHistoryService.getMultipleExerciseHistory(exerciseIds);
+    
+    // Build exercise data with sets
+    return routineExercises.map(async (routineExercise) => {
       const exercise = routineExercise.exercises;
-      const targetSetCount = routineExercise.target_sets || 3;
       
-      console.log(`Processing ${exercise.name} with target set count: ${targetSetCount}`);
-      
-      // Filter sets for this exercise and sort them properly
+      // Filter sets for this exercise and sort them
       const exerciseSets = workoutSets
         ?.filter(set => set.exercise_id === exercise.id)
         .sort((a, b) => a.set_order - b.set_order) || [];
       
-      console.log(`Exercise ${exercise.name} has ${exerciseSets.length} sets with IDs: ${exerciseSets.map(s => s.id).join(', ')}`);
-      console.log(`Target set count from routine_exercises: ${targetSetCount}`);
+      console.log(`[WorkoutDataFormatter] Exercise ${exercise.name} has ${exerciseSets.length} sets in database`);
+      
+      // Wait for exercise history data
+      const exerciseHistoryData = await exerciseHistoryPromise;
+      const historyData = exerciseHistoryData[exercise.id];
       
       // Get previous workout data for this exercise
       const previousExerciseData = previousWorkoutData[exercise.id] || [];
-      console.log(`Exercise ${exercise.name} has ${previousExerciseData.length} previous sets`);
       
-      // Format sets from the database (these are the real sets that exist)
-      let sets = exerciseSets.map((set, index) => {
-        // Find matching set from previous workout by set_order or index
-        const previousSet = previousExerciseData.find(p => p.set_order === set.set_order) || 
-                          previousExerciseData[index] ||
-                          { weight: '0', reps: '12' };
-        
-        // Ensure weight and reps are always strings for UI consistency
-        const weight = set.weight !== null && set.weight !== undefined ? set.weight.toString() : '0';
-        const reps = set.reps !== null && set.reps !== undefined ? set.reps.toString() : '12';
-        
-        console.log(`Set ${index} (ID: ${set.id}, order ${set.set_order}) for ${exercise.name}: current [w: ${weight}, r: ${reps}], previous [w: ${previousSet.weight}, r: ${previousSet.reps}]`);
-        
-        return {
-          id: set.id,
-          weight: weight,
-          reps: reps,
-          completed: set.completed || false,
-          set_order: set.set_order, // Include set_order for reference
-          previous: {
-            weight: previousSet.weight || '0',
-            reps: previousSet.reps || '12'
-          }
-        };
-      });
+      // Format sets from database or create defaults
+      let sets = [];
       
-      // IMPORTANT: The source of truth is the database
-      // If we have fewer sets in DB than target_sets, create default placeholders
-      const actualSetCount = exerciseSets.length;
-      
-      // Add default sets only if we have fewer database sets than the target
-      if (actualSetCount < targetSetCount) {
-        const setsToAdd = targetSetCount - actualSetCount;
-        
-        console.log(`Creating ${setsToAdd} default sets for ${exercise.name} to reach target of ${targetSetCount}`);
-        
-        const defaultSets = Array.from({ length: setsToAdd }).map((_, idx) => {
-          const setIndex = sets.length + idx;
-          const prevSet = previousExerciseData[setIndex] || { weight: '0', reps: '12' };
-          const setOrder = setIndex; // Simple consistent ordering
+      if (exerciseSets.length > 0) {
+        // Use existing sets from database
+        sets = exerciseSets.map((set, index) => {
+          // First try to get values from exercise history
+          // Then fallback to previous workout data
+          // Finally use defaults if nothing else is available
           
-          console.log(`Default set ${setIndex} (order ${setOrder}) for ${exercise.name}: using previous [w: ${prevSet.weight}, r: ${prevSet.reps}]`);
+          const previousSet = previousExerciseData.find(p => p.set_order === set.set_order) || 
+                            previousExerciseData[index] ||
+                            { weight: '0', reps: '12' };
+                            
+          // Use exercise history as "previous" values if available
+          const historyValues = historyData ? {
+            weight: historyData.weight.toString(),
+            reps: historyData.reps.toString()
+          } : previousSet;
           
           return {
-            id: `default-${exercise.id}-${setIndex}`,
-            weight: prevSet.weight || '0',
-            reps: prevSet.reps || '12',
+            id: set.id,
+            weight: set.weight?.toString() || '0',
+            reps: set.reps?.toString() || '0',
+            completed: set.completed || false,
+            set_order: set.set_order,
+            previous: historyValues
+          };
+        });
+      } else {
+        // Create default sets using exercise history first, then previous workout data
+        const targetSets = Math.max(
+          historyData ? historyData.sets : 0,
+          previousExerciseData.length > 0 ? previousExerciseData.length : 0,
+          routineExercise.target_sets || 3
+        );
+        
+        console.log(`[WorkoutDataFormatter] Creating ${targetSets} default sets for ${exercise.name}`);
+        
+        sets = Array.from({ length: targetSets }).map((_, index) => {
+          // Prioritize exercise history for defaults
+          let weight = '0';
+          let reps = '12';
+          
+          if (historyData) {
+            weight = historyData.weight.toString();
+            reps = historyData.reps.toString();
+            console.log(`[WorkoutDataFormatter] Using history for ${exercise.name}: weight=${weight}, reps=${reps}`);
+          } else if (previousExerciseData[index]) {
+            weight = previousExerciseData[index].weight;
+            reps = previousExerciseData[index].reps;
+          }
+          
+          return {
+            id: `default-${exercise.id}-${index}`,
+            weight: weight,
+            reps: reps,
             completed: false,
-            set_order: setOrder,
-            previous: { 
-              weight: prevSet.weight || '0', 
-              reps: prevSet.reps || '12' 
+            set_order: index,
+            previous: {
+              weight: weight,
+              reps: reps
             }
           };
         });
-        
-        // Append these default sets to any existing database sets
-        sets = [...sets, ...defaultSets];
-        console.log(`Final set count for ${exercise.name}: ${sets.length} (${actualSetCount} from DB + ${setsToAdd} defaults)`);
       }
       
       return {
@@ -100,7 +111,5 @@ export class WorkoutDataFormatter {
         sets
       };
     });
-
-    return workoutExercises;
   }
 }

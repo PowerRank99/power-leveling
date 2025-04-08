@@ -6,75 +6,72 @@ import { supabase } from '@/integrations/supabase/client';
  */
 export class PreviousWorkoutService {
   /**
-   * Fetches previous workout data for a specific routine
+   * Fetches previous workout data for a routine
    */
-  static async fetchPreviousWorkoutData(routineId: string, currentWorkoutId: string) {
+  static async fetchPreviousWorkoutData(routineId: string, currentWorkoutId?: string) {
     try {
-      console.log("Looking for previous workouts with routine ID:", routineId);
+      console.log("[PreviousWorkoutService] Fetching previous workout data for routine:", routineId);
       
-      // Get most recent completed workout for this routine (excluding current one)
-      const { data: previousWorkout } = await supabase
+      // Build query to get most recent completed workout for this routine
+      let query = supabase
         .from('workouts')
         .select('id')
         .eq('routine_id', routineId)
-        .not('id', 'eq', currentWorkoutId) 
         .not('completed_at', 'is', null)
         .order('completed_at', { ascending: false })
         .limit(1);
+        
+      // If we have a current workout ID, exclude it
+      if (currentWorkoutId) {
+        query = query.neq('id', currentWorkoutId);
+      }
       
+      const { data: previousWorkout } = await query;
+      
+      // No previous workout found
       if (!previousWorkout || previousWorkout.length === 0) {
-        console.log("No previous completed workouts found for this routine");
+        console.log("[PreviousWorkoutService] No previous workout found for this routine");
         return {};
       }
       
-      console.log("Found previous workout for reference:", previousWorkout[0].id);
+      const previousWorkoutId = previousWorkout[0].id;
+      console.log("[PreviousWorkoutService] Found previous workout:", previousWorkoutId);
       
-      // Get all completed sets from the previous workout
+      // Get all sets from the previous workout
       const { data: previousSets, error } = await supabase
         .from('workout_sets')
         .select('exercise_id, weight, reps, set_order')
-        .eq('workout_id', previousWorkout[0].id)
+        .eq('workout_id', previousWorkoutId)
         .order('set_order');
       
       if (error) {
-        console.error("Error fetching previous sets:", error);
+        console.error("[PreviousWorkoutService] Error fetching previous sets:", error);
         return {};
       }
       
-      if (!previousSets || previousSets.length === 0) {
-        console.log("No sets found in previous workout");
-        return {};
-      }
-      
-      console.log(`Found ${previousSets.length} sets from previous workout`);
-      
-      // Group by exercise ID
-      const previousWorkoutData = previousSets.reduce((acc: Record<string, any[]>, curr) => {
-        if (!curr.exercise_id) return acc;
-        if (!acc[curr.exercise_id]) acc[curr.exercise_id] = [];
+      // Group sets by exercise
+      const previousWorkoutData = previousSets?.reduce((acc: Record<string, any[]>, set) => {
+        if (!set.exercise_id) return acc;
+        if (!acc[set.exercise_id]) acc[set.exercise_id] = [];
         
-        // Ensure values are always strings for UI consistency
-        const weightStr = curr.weight !== null && curr.weight !== undefined ? curr.weight.toString() : '0';
-        const repsStr = curr.reps !== null && curr.reps !== undefined ? curr.reps.toString() : '12';
-        
-        acc[curr.exercise_id].push({
-          weight: weightStr,
-          reps: repsStr,
-          set_order: curr.set_order
+        acc[set.exercise_id].push({
+          weight: set.weight?.toString() || '0',
+          reps: set.reps?.toString() || '0',
+          set_order: set.set_order
         });
+        
         return acc;
-      }, {});
+      }, {}) || {};
       
-      // Sort sets by set_order for each exercise
+      // Sort sets by set_order
       Object.keys(previousWorkoutData).forEach(exerciseId => {
-        previousWorkoutData[exerciseId].sort((a, b) => a.set_order - b.set_order);
+        previousWorkoutData[exerciseId].sort((a: any, b: any) => a.set_order - b.set_order);
       });
       
-      console.log("Previous workout data loaded:", Object.keys(previousWorkoutData).length, "exercises");
-      
+      console.log("[PreviousWorkoutService] Loaded previous data for", Object.keys(previousWorkoutData).length, "exercises");
       return previousWorkoutData;
     } catch (error) {
-      console.error("Error fetching previous workout data:", error);
+      console.error("[PreviousWorkoutService] Error fetching previous workout data:", error);
       return {};
     }
   }
