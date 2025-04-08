@@ -29,16 +29,23 @@ const RestTimer: React.FC<RestTimerProps> = ({
   const [showTimerOptions, setShowTimerOptions] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const timerChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const initialValuesRef = useRef({minutes: initialMinutes, seconds: initialSeconds});
   
+  // Update when external props change
   useEffect(() => {
-    // Update initial values when props change
-    if (initialMinutes !== minutes || initialSeconds !== seconds) {
+    // Only update if the values have actually changed
+    if (initialMinutes !== initialValuesRef.current.minutes || 
+        initialSeconds !== initialValuesRef.current.seconds) {
+      console.log(`[RestTimer] Props updated: ${initialMinutes}m ${initialSeconds}s`);
+      
+      initialValuesRef.current = {minutes: initialMinutes, seconds: initialSeconds};
       setMinutes(initialMinutes);
       setSeconds(initialSeconds);
       setTotalSeconds(initialMinutes * 60 + initialSeconds);
     }
-  }, [initialMinutes, initialSeconds, minutes, seconds]);
+  }, [initialMinutes, initialSeconds]);
   
+  // Timer tick effect
   useEffect(() => {
     if (isRunning) {
       intervalRef.current = setInterval(() => {
@@ -59,7 +66,7 @@ const RestTimer: React.FC<RestTimerProps> = ({
     };
   }, [isRunning, onComplete]);
   
-  // Debounced timer change
+  // Debounced timer change with better error handling
   const debouncedTimerChange = useCallback((mins: number, secs: number) => {
     if (timerChangeTimeoutRef.current) {
       clearTimeout(timerChangeTimeoutRef.current);
@@ -67,7 +74,12 @@ const RestTimer: React.FC<RestTimerProps> = ({
     
     timerChangeTimeoutRef.current = setTimeout(() => {
       if (onTimerChange) {
-        onTimerChange(mins, secs);
+        console.log(`[RestTimer] Notifying parent of timer change: ${mins}m ${secs}s`);
+        try {
+          onTimerChange(mins, secs);
+        } catch (err) {
+          console.error("[RestTimer] Error in onTimerChange callback:", err);
+        }
       }
       timerChangeTimeoutRef.current = null;
     }, 500);
@@ -82,39 +94,64 @@ const RestTimer: React.FC<RestTimerProps> = ({
       setMinutes(mins);
       setSeconds(secs);
       
-      debouncedTimerChange(mins, secs);
+      // Only notify of changes that aren't caused by the initial setup
+      if (isRunning || (mins !== initialMinutes || secs !== initialSeconds)) {
+        debouncedTimerChange(mins, secs);
+      }
     }
-  }, [totalSeconds, minutes, seconds, debouncedTimerChange]);
+  }, [totalSeconds, minutes, seconds, debouncedTimerChange, initialMinutes, initialSeconds, isRunning]);
   
   const toggleTimer = useCallback(() => {
     setIsRunning(prev => !prev);
   }, []);
   
   const resetTimer = useCallback(() => {
-    setTotalSeconds(initialMinutes * 60 + initialSeconds);
+    const resetMins = initialValuesRef.current.minutes;
+    const resetSecs = initialValuesRef.current.seconds;
+    console.log(`[RestTimer] Resetting timer to ${resetMins}m ${resetSecs}s`);
+    
+    setTotalSeconds(resetMins * 60 + resetSecs);
     setIsRunning(true);
-  }, [initialMinutes, initialSeconds]);
+  }, []);
 
   const handleTimerPresetChange = useCallback((value: string) => {
     const preset = TIMER_PRESETS.find(p => p.label === value);
     if (preset) {
+      console.log(`[RestTimer] Preset selected: ${preset.label} (${preset.minutes}m ${preset.seconds}s)`);
+      
       setTotalSeconds(preset.minutes * 60 + preset.seconds);
       setIsRunning(true);
       
+      // Update our ref to prevent unnecessary updates
+      initialValuesRef.current = {minutes: preset.minutes, seconds: preset.seconds};
+      
       if (onTimerChange) {
-        onTimerChange(preset.minutes, preset.seconds);
+        try {
+          onTimerChange(preset.minutes, preset.seconds);
+        } catch (err) {
+          console.error("[RestTimer] Error in onTimerChange callback during preset selection:", err);
+        }
       }
     }
   }, [onTimerChange]);
   
   // Calculate progress percentage
-  const initialTotalSeconds = initialMinutes * 60 + initialSeconds;
+  const initialTotalSeconds = initialValuesRef.current.minutes * 60 + initialValuesRef.current.seconds;
   const progressPercentage = initialTotalSeconds > 0 
     ? 100 - ((totalSeconds / initialTotalSeconds) * 100) 
     : 0;
     
   // Format default value for preset selector
-  const defaultPresetValue = `${initialMinutes}m${initialSeconds > 0 ? ` ${initialSeconds}s` : ''}`;
+  const defaultPresetValue = `${initialValuesRef.current.minutes}m${initialValuesRef.current.seconds > 0 ? ` ${initialValuesRef.current.seconds}s` : ''}`;
+  
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      console.log("[RestTimer] Component unmounting, clearing timers");
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (timerChangeTimeoutRef.current) clearTimeout(timerChangeTimeoutRef.current);
+    };
+  }, []);
   
   return (
     <div className="bg-gray-100 rounded-lg p-4">

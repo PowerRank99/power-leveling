@@ -49,6 +49,7 @@ export const useUpdateSet = (workoutId: string | null) => {
       // Prepare data for database update - ensure consistent formatting
       const setData: Record<string, any> = {};
       
+      // Never send empty values to the database
       if (data.weight !== undefined) {
         const weightValue = data.weight === '' ? 0 : parseFloat(data.weight) || 0;
         setData.weight = weightValue;
@@ -108,20 +109,25 @@ export const useUpdateSet = (workoutId: string | null) => {
       else if (Object.keys(setData).length > 0) {
         console.log(`[useUpdateSet] Updating existing set ID: ${currentSet.id} in database with:`, setData);
         
-        // Use select() to verify the data was updated correctly
-        const { data: updatedData, error: updateError } = await supabase
-          .from('workout_sets')
-          .update(setData)
-          .eq('id', currentSet.id)
-          .select('weight, reps, completed');
-          
-        if (updateError) {
-          console.error("[useUpdateSet] Error updating set in database:", updateError);
-          toast.error("Erro ao salvar série", {
-            description: "As alterações podem não ter sido salvas"
-          });
-        } else {
-          console.log(`[useUpdateSet] Successfully updated set ${currentSet.id} in database:`, updatedData);
+        try {
+          // Use select() to verify the data was updated correctly
+          const { data: updatedData, error: updateError } = await supabase
+            .from('workout_sets')
+            .update(setData)
+            .eq('id', currentSet.id)
+            .select('weight, reps, completed');
+            
+          if (updateError) {
+            console.error("[useUpdateSet] Error updating set in database:", updateError);
+            toast.error("Erro ao salvar série", {
+              description: "As alterações podem não ter sido salvas"
+            });
+          } else {
+            console.log(`[useUpdateSet] Successfully updated set ${currentSet.id} in database:`, updatedData);
+          }
+        } catch (err) {
+          console.error("[useUpdateSet] Exception during database update:", err);
+          // Continue execution - don't block the UI for database errors
         }
       }
       

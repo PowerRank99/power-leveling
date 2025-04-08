@@ -31,13 +31,16 @@ const SetRow: React.FC<SetRowProps> = ({
   onRepsChange,
   showRemoveButton
 }) => {
+  // Track if values have been manually edited by the user
   const [weightValue, setWeightValue] = useState(set.weight || '0');
   const [repsValue, setRepsValue] = useState(set.reps || '0');
   const isInitializedRef = useRef(false);
   const setIdRef = useRef(set.id);
   const previousValuesRef = useRef({weight: set.weight, reps: set.reps});
+  // Increase the protection time to avoid overrides from state changes
   const lastUserEditRef = useRef<number | null>(null);
   
+  // Debug log for tracking prop updates
   useEffect(() => {
     console.log(`[SetRow ${index}] Received props update - ID: ${set.id}, Weight: "${set.weight}", Reps: "${set.reps}"`);
     if (set.previous) {
@@ -45,7 +48,9 @@ const SetRow: React.FC<SetRowProps> = ({
     }
   }, [set, index]);
   
+  // Handle set ID changes and initialization
   useEffect(() => {
+    // Reset on ID change (new set)
     if (set.id !== setIdRef.current) {
       console.log(`[SetRow] Set ID changed from ${setIdRef.current} to ${set.id}, reinitializing values`);
       setIdRef.current = set.id;
@@ -53,16 +58,16 @@ const SetRow: React.FC<SetRowProps> = ({
       lastUserEditRef.current = null;
     }
     
+    // Initialize values on first render or ID change
     if (!isInitializedRef.current) {
       console.log(`[SetRow ${index}] Initializing values - ID: ${set.id}`);
       console.log(`[SetRow ${index}] Input values - weight: "${set.weight}", reps: "${set.reps}"`);
-      if (set.previous) {
-        console.log(`[SetRow ${index}] Previous values - weight: "${set.previous.weight}", reps: "${set.previous.reps}"`);
-      }
       
+      // Set initial values with a more robust fallback strategy
       let newWeightValue = set.weight;
       let newRepsValue = set.reps;
       
+      // Only use previous values as fallback if current values are empty
       if (!newWeightValue || newWeightValue === '0') {
         newWeightValue = set.previous?.weight && set.previous.weight !== '0' ? 
           set.previous.weight : '0';
@@ -82,20 +87,24 @@ const SetRow: React.FC<SetRowProps> = ({
     }
   }, [set.id, index, set.weight, set.reps, set.previous]);
   
+  // Handle prop updates without overriding user input
   useEffect(() => {
+    // Skip if values haven't changed
     if (set.weight === previousValuesRef.current.weight && 
         set.reps === previousValuesRef.current.reps) {
       return;
     }
     
+    // Important: Extended protection time after user edit to prevent timer-related overrides
     const now = Date.now();
-    if (lastUserEditRef.current && now - lastUserEditRef.current < 5000) {
-      console.log(`[SetRow ${index}] Ignoring props update as user recently edited values`);
+    if (lastUserEditRef.current && now - lastUserEditRef.current < 30000) { // 30 seconds protection
+      console.log(`[SetRow ${index}] Ignoring props update as user recently edited values (${Math.round((now - lastUserEditRef.current)/1000)}s ago)`);
       return;
     }
     
     console.log(`[SetRow ${index}] Received updated values - weight: "${set.weight}", reps: "${set.reps}"`);
     
+    // Only update if we have meaningful values (ignore zeros and empty strings)
     if (set.weight && set.weight !== '0' && set.weight !== weightValue) {
       console.log(`[SetRow ${index}] Updating weight from "${weightValue}" to "${set.weight}"`);
       setWeightValue(set.weight);
@@ -109,6 +118,7 @@ const SetRow: React.FC<SetRowProps> = ({
     }
   }, [set.weight, set.reps, weightValue, repsValue, index]);
   
+  // Handle local state changes with user edits
   const handleWeightChange = (value: string) => {
     console.log(`[SetRow ${index}] handleWeightChange - from "${weightValue}" to "${value}"`);
     setWeightValue(value);
@@ -123,7 +133,7 @@ const SetRow: React.FC<SetRowProps> = ({
     onRepsChange(value);
   };
   
-  // Update our set data from local state
+  // Use our local state for the current data
   const currentSetData: SetData = {
     ...set,
     weight: weightValue,

@@ -1,10 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import RestTimer from '@/components/workout/RestTimer';
 import ExerciseHeader from '@/components/workout/ExerciseHeader';
 import ExerciseNotes from '@/components/workout/ExerciseNotes';
 import SetHeader from '@/components/workout/SetHeader';
-import SetRow from '@/components/workout/set/SetRow';  // Updated import path
+import SetRow from '@/components/workout/set/SetRow';  // Using the updated component
 import AddSetButton from '@/components/workout/AddSetButton';
 import RestTimerToggle from '@/components/workout/RestTimerToggle';
 
@@ -53,6 +53,12 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
   const [restTimeMinutes, setRestTimeMinutes] = useState(initialRestTimer.minutes);
   const [restTimeSeconds, setRestTimeSeconds] = useState(initialRestTimer.seconds);
   const [autoStartTimer, setAutoStartTimer] = useState(false);
+  
+  // Update local timer state when prop changes
+  useEffect(() => {
+    setRestTimeMinutes(initialRestTimer.minutes);
+    setRestTimeSeconds(initialRestTimer.seconds);
+  }, [initialRestTimer]);
   
   const handleWeightChange = (index: number, value: string) => {
     onUpdateSet(index, { weight: value });

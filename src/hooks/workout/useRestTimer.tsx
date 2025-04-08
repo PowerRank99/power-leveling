@@ -56,7 +56,7 @@ export const useRestTimer = (workoutId: string | null) => {
     loadTimerSettings();
   }, [workoutId]);
   
-  // Retry mechanism for database operations
+  // Retry mechanism for database operations - ensure we only update timer settings
   const saveTimerSettingsWithRetry = useCallback(async (minutes: number, seconds: number, retryCount = 0) => {
     if (!workoutId) return false;
     
@@ -65,7 +65,7 @@ export const useRestTimer = (workoutId: string | null) => {
       saveInProgressRef.current = true;
       console.log(`[useRestTimer] Saving timer settings: ${minutes}m ${seconds}s (attempt ${retryCount + 1})`);
       
-      // Only update timer settings, not touching any other fields
+      // Important: only update rest_timer fields, don't touch any other data
       const { data, error } = await supabase
         .from('workouts')
         .update({

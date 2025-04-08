@@ -48,31 +48,30 @@ export const useWorkoutActions = (workoutId: string | null) => {
       }
       
       // First, ensure the timer settings are saved
-      // This is important to make sure they persist for future workouts
+      // Using a separate call to ensure timer settings don't affect workout data
       try {
         console.log(`Saving final timer settings: ${restTimerSettings.minutes}m ${restTimerSettings.seconds}s`);
-        // Use a transaction for updating timer settings to prevent race conditions
-        const { data: updatedTimerData, error: timerError } = await supabase
+        
+        const { error: timerError } = await supabase
           .from('workouts')
           .update({
             rest_timer_minutes: restTimerSettings.minutes,
             rest_timer_seconds: restTimerSettings.seconds
           })
-          .eq('id', workoutId)
-          .select('rest_timer_minutes, rest_timer_seconds');
+          .eq('id', workoutId);
           
         if (timerError) {
           console.error("Error saving final timer settings:", timerError);
           // Continue with workout completion even if timer settings fail
         } else {
-          console.log("Successfully saved timer settings:", updatedTimerData);
+          console.log("Successfully saved timer settings");
         }
       } catch (timerError) {
         console.error("Error saving final timer settings:", timerError);
         // Continue with workout completion even if timer settings fail
       }
       
-      // Proceed with finishing the workout
+      // Proceed with finishing the workout - but don't touch timer settings again
       const success = await finishWorkoutAction(elapsedTime);
       
       if (success) {
