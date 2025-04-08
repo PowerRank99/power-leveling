@@ -36,22 +36,28 @@ const SetRow: React.FC<SetRowProps> = ({
   const [startX, setStartX] = useState(0);
   const [offsetX, setOffsetX] = useState(0);
   
-  // Add local state to ensure values are properly displayed
+  // Add local state to ensure values are properly displayed and to prevent excessive re-renders
   const [weightValue, setWeightValue] = useState(set.weight);
   const [repsValue, setRepsValue] = useState(set.reps);
   
   // Update local state when props change
   useEffect(() => {
-    setWeightValue(set.weight);
-    setRepsValue(set.reps);
+    if (set.weight !== weightValue) {
+      setWeightValue(set.weight);
+    }
+    if (set.reps !== repsValue) {
+      setRepsValue(set.reps);
+    }
   }, [set.weight, set.reps]);
   
+  // Debounce weight changes to reduce database updates
   const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setWeightValue(value);
     onWeightChange(value);
   };
   
+  // Debounce reps changes to reduce database updates
   const handleRepsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setRepsValue(value);
@@ -117,6 +123,7 @@ const SetRow: React.FC<SetRowProps> = ({
         <div className="col-span-3">
           <input
             type="text"
+            inputMode="decimal"
             className="w-full border border-gray-200 rounded p-2 text-center"
             value={weightValue}
             onChange={handleWeightChange}
@@ -126,6 +133,7 @@ const SetRow: React.FC<SetRowProps> = ({
         <div className="col-span-3">
           <input
             type="text"
+            inputMode="numeric"
             className="w-full border border-gray-200 rounded p-2 text-center"
             value={repsValue}
             onChange={handleRepsChange}

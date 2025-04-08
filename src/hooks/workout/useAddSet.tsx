@@ -39,13 +39,13 @@ export const useAddSet = (workoutId: string | null) => {
       
       const currentExercise = exercises[exerciseIndex];
       
-      // Get current sets and determine the next set order
+      // Get current sets
       const updatedExercises = [...exercises];
       const currentSets = updatedExercises[exerciseIndex].sets;
       const lastSet = currentSets[currentSets.length - 1];
       
-      // Determine the next set order - critical for persistence
-      const newSetOrder = currentSets.length; // Use the length as the next set order
+      // Calculate next set order using consistent formula
+      const newSetOrder = exerciseIndex * 100 + currentSets.length;
       console.log(`Adding new set with order ${newSetOrder} for exercise ${currentExercise.name}`);
       
       // Create the temporary set object
@@ -61,7 +61,7 @@ export const useAddSet = (workoutId: string | null) => {
       // Add to local state
       updatedExercises[exerciseIndex].sets.push(newSet);
       
-      // Add to database
+      // Add to database with consistent set_order
       const { data, error } = await supabase
         .from('workout_sets')
         .insert({
@@ -82,9 +82,7 @@ export const useAddSet = (workoutId: string | null) => {
         });
       } else {
         console.log("Successfully added new set to database with ID:", data.id);
-      }
-      
-      if (data) {
+        
         // Update the ID in our state with the real one from the database
         const updatedExercisesWithId = [...updatedExercises];
         const setIndex = updatedExercisesWithId[exerciseIndex].sets.length - 1;

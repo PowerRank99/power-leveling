@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workout';
 import { toast } from 'sonner';
@@ -46,6 +45,8 @@ export const useRemoveSet = (workoutId: string | null) => {
         return exercises;
       }
       
+      console.log(`Removing set ${setIndex + 1} for exercise ${currentExercise.name}, ID: ${setId}`);
+      
       const updatedExercises = [...exercises];
       updatedExercises[exerciseIndex].sets = [
         ...currentExercise.sets.slice(0, setIndex),
@@ -66,32 +67,10 @@ export const useRemoveSet = (workoutId: string | null) => {
           });
         } else {
           console.log(`Successfully removed set ${setId} from database`);
-        }
-      }
-      
-      // Update the remaining set_order values to ensure they're sequential
-      const remainingSets = updatedExercises[exerciseIndex].sets;
-      
-      // Only update IDs that are in the database (not temporary)
-      const databaseSets = remainingSets.filter(set => 
-        !set.id.startsWith('default-') && !set.id.startsWith('new-')
-      );
-      
-      for (let i = 0; i < databaseSets.length; i++) {
-        const set = databaseSets[i];
-        const actualIndex = remainingSets.findIndex(s => s.id === set.id);
-        
-        if (actualIndex !== -1) {
-          try {
-            await supabase
-              .from('workout_sets')
-              .update({ set_order: i })
-              .eq('id', set.id);
-            
-            console.log(`Updated set ${set.id} order to ${i}`);
-          } catch (orderError) {
-            console.error(`Error updating set ${set.id} order:`, orderError);
-          }
+          
+          // Update the set_order for all remaining sets to keep them sequential
+          // This is critical to maintain consistency
+          await reorderRemainingDatabaseSets(currentExercise.id, workoutId, exerciseIndex, updatedExercises[exerciseIndex].sets);
         }
       }
       
@@ -105,6 +84,37 @@ export const useRemoveSet = (workoutId: string | null) => {
         description: "Não foi possível remover a série"
       });
       return null;
+    }
+  };
+  
+  // Helper function to reorder sets after a deletion
+  const reorderRemainingDatabaseSets = async (exerciseId: string, workoutId: string, exerciseIndex: number, remainingSets: any[]) => {
+    try {
+      // Only update sets that are in the database (not temporary)
+      const databaseSets = remainingSets.filter(set => 
+        !set.id.startsWith('default-') && !set.id.startsWith('new-')
+      );
+      
+      console.log(`Reordering ${databaseSets.length} database sets after removal`);
+      
+      // Update each set with its new order
+      for (let i = 0; i < databaseSets.length; i++) {
+        const set = databaseSets[i];
+        const newSetOrder = exerciseIndex * 100 + i;
+        
+        const { error } = await supabase
+          .from('workout_sets')
+          .update({ set_order: newSetOrder })
+          .eq('id', set.id);
+          
+        if (error) {
+          console.error(`Error updating set ${set.id} order:`, error);
+        } else {
+          console.log(`Updated set ${set.id} order to ${newSetOrder}`);
+        }
+      }
+    } catch (error) {
+      console.error("Error reordering sets:", error);
     }
   };
 

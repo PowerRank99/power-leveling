@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workout';
 
@@ -94,7 +93,7 @@ export const useFetchWorkoutSets = () => {
     }
 
     // Format exercises data for UI with the actual saved sets
-    const workoutExercises: WorkoutExercise[] = routineExercises.map(routineExercise => {
+    const workoutExercises: WorkoutExercise[] = routineExercises.map((routineExercise, exerciseIndex) => {
       const exercise = routineExercise.exercises;
       
       // Filter sets for this exercise
@@ -106,7 +105,6 @@ export const useFetchWorkoutSets = () => {
       
       // Get previous workout data for this exercise
       const previousExerciseData = previousWorkoutData[exercise.id] || [];
-      console.log(`Previous exercise data for ${exercise.name}:`, previousExerciseData);
       
       // Format sets
       let sets = exerciseSets.map((set, index) => {
@@ -115,17 +113,17 @@ export const useFetchWorkoutSets = () => {
                            previousExerciseData[index] ||
                            { weight: '0', reps: '12' };
         
-        // If weight or reps are null/undefined/empty, use values from previous workout
-        let weight = set.weight?.toString();
-        let reps = set.reps?.toString();
+        // Ensure weight and reps are always strings for UI consistency
+        let weight = set.weight !== null && set.weight !== undefined ? set.weight.toString() : '';
+        let reps = set.reps !== null && set.reps !== undefined ? set.reps.toString() : '';
         
-        // If weight or reps are null/undefined/empty, use values from previous workout
-        if (weight === null || weight === undefined || weight === '') {
-          weight = previousSet.weight;
+        // If weight or reps are empty strings, use values from previous workout
+        if (weight === '') {
+          weight = previousSet.weight || '0';
         }
         
-        if (reps === null || reps === undefined || reps === '') {
-          reps = previousSet.reps;
+        if (reps === '') {
+          reps = previousSet.reps || '12';
         }
         
         return {
@@ -155,8 +153,8 @@ export const useFetchWorkoutSets = () => {
           
           return {
             id: `default-${exercise.id}-${idx}`,
-            weight: prevSet.weight,
-            reps: prevSet.reps,
+            weight: prevSet.weight || '0',
+            reps: prevSet.reps || '12',
             completed: false,
             previous: { 
               weight: prevSet.weight || '0', 
