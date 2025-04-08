@@ -27,9 +27,10 @@ export const useSetAdder = (workoutId: string | null) => {
       const currentExercise = exercises[exerciseIndex];
       console.log(`[useSetAdder] Adding set to exercise ${currentExercise.name} (ID: ${currentExercise.id})`);
       
-      // Get current sets from the exercise
+      // Get current sets from the exercise, filtering out default sets
       const updatedExercises = [...exercises];
       const currentSets = updatedExercises[exerciseIndex].sets;
+      const realSets = currentSets.filter(set => !set.id.startsWith('default-') && !set.id.startsWith('new-'));
       const lastSet = currentSets[currentSets.length - 1];
       
       // First, get the actual count of sets in the database
@@ -48,7 +49,7 @@ export const useSetAdder = (workoutId: string | null) => {
       
       const actualSetCount = countResult.data!;
       console.log(`[useSetAdder] Current set count in database: ${actualSetCount}`);
-      console.log(`[useSetAdder] Current set count in UI state: ${currentSets.length}`);
+      console.log(`[useSetAdder] Current real set count in UI state: ${realSets.length}`);
       
       // Calculate new set order based on actual database count
       const newSetOrder = actualSetCount;
@@ -79,14 +80,31 @@ export const useSetAdder = (workoutId: string | null) => {
       console.log(`[useSetAdder] Successfully created set with ID: ${newSet.id}`);
       
       // Now update local state with the database-generated ID
-      updatedExercises[exerciseIndex].sets.push({
-        id: newSet.id,
-        weight: String(newSet.weight || 0),
-        reps: String(newSet.reps || 12),
-        completed: false,
-        set_order: newSet.set_order,
-        previous: lastSet?.previous || { weight: '0', reps: '12' }
-      });
+      // First check if we should replace a default set
+      const defaultSetIndex = currentSets.findIndex(set => set.id.startsWith('default-'));
+      
+      if (defaultSetIndex !== -1) {
+        // Replace the first default set with our new real set
+        console.log(`[useSetAdder] Replacing default set at index ${defaultSetIndex} with real set ${newSet.id}`);
+        updatedExercises[exerciseIndex].sets[defaultSetIndex] = {
+          id: newSet.id,
+          weight: String(newSet.weight || 0),
+          reps: String(newSet.reps || 12),
+          completed: false,
+          set_order: newSet.set_order,
+          previous: lastSet?.previous || { weight: '0', reps: '12' }
+        };
+      } else {
+        // Just add the new set
+        updatedExercises[exerciseIndex].sets.push({
+          id: newSet.id,
+          weight: String(newSet.weight || 0),
+          reps: String(newSet.reps || 12),
+          completed: false,
+          set_order: newSet.set_order,
+          previous: lastSet?.previous || { weight: '0', reps: '12' }
+        });
+      }
       
       // Normalize set orders to ensure they're sequential
       await SetService.normalizeSetOrders(workoutId, currentExercise.id);
@@ -100,11 +118,16 @@ export const useSetAdder = (workoutId: string | null) => {
       if (verificationResult.success) {
         const newCount = verificationResult.data!;
         console.log(`[useSetAdder] Verification: database now has ${newCount} sets`);
-        console.log(`[useSetAdder] UI state now has ${updatedExercises[exerciseIndex].sets.length} sets`);
+        
+        // Count real sets in UI state 
+        const newRealSets = updatedExercises[exerciseIndex].sets.filter(
+          set => !set.id.startsWith('default-') && !set.id.startsWith('new-')
+        );
+        console.log(`[useSetAdder] UI state now has ${newRealSets.length} real sets`);
         
         // Verify the counts match
-        if (newCount !== updatedExercises[exerciseIndex].sets.length) {
-          console.warn(`[useSetAdder] Count mismatch: DB=${newCount}, UI=${updatedExercises[exerciseIndex].sets.length}`);
+        if (newCount !== newRealSets.length) {
+          console.warn(`[useSetAdder] Count mismatch: DB=${newCount}, real UI sets=${newRealSets.length}`);
         }
         
         // Update the routine exercise set count for persistence

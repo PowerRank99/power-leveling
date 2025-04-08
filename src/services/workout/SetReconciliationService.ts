@@ -17,6 +17,7 @@ export class SetReconciliationService {
     if (!routineId) return;
     
     for (const exercise of workoutExercises) {
+      // Only count sets with real database IDs (not default or new ones)
       const actualSets = exercise.sets.filter(s => !s.id.startsWith('default-') && !s.id.startsWith('new-'));
       const routineExercise = routineExercises.find(re => re.exercises.id === exercise.id);
       

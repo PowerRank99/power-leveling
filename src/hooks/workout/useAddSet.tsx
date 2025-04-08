@@ -7,6 +7,25 @@ export const useAddSet = (workoutId: string | null) => {
     try {
       console.log(`Updating routine ${routineId}, exercise ${exerciseId} to ${newSetCount} sets`);
       
+      // Verify current count first
+      const { data: currentData, error: queryError } = await supabase
+        .from('routine_exercises')
+        .select('target_sets')
+        .eq('routine_id', routineId)
+        .eq('exercise_id', exerciseId)
+        .single();
+      
+      if (queryError) {
+        console.error("Error checking routine exercise set count:", queryError);
+        return false;
+      }
+      
+      // Only update if our new count is different
+      if (currentData && currentData.target_sets === newSetCount) {
+        console.log(`Current target_sets already matches ${newSetCount}, skipping update`);
+        return true;
+      }
+      
       const { data, error } = await supabase
         .from('routine_exercises')
         .update({ target_sets: newSetCount })
@@ -47,10 +66,13 @@ export const useAddSet = (workoutId: string | null) => {
       // Get current sets
       const updatedExercises = [...exercises];
       const currentSets = updatedExercises[exerciseIndex].sets;
+      
+      // Filter to find only real sets (not default placeholder sets)
+      const realSets = currentSets.filter(set => !set.id.startsWith('default-') && !set.id.startsWith('new-'));
       const lastSet = currentSets[currentSets.length - 1];
       
       // Calculate consistently set order - IMPORTANT: Keep this consistent across the app
-      const newSetOrder = currentSets.length; // Simple incrementing number within exercise
+      const newSetOrder = realSets.length; // Simple incrementing number within exercise
       console.log(`Adding new set with order ${newSetOrder} for exercise ${currentExercise.name}`);
       
       // Convert values to correct types for database
@@ -87,15 +109,35 @@ export const useAddSet = (workoutId: string | null) => {
       console.log("Successfully added new set to database with ID:", newSet.id);
 
       // Now update local state with the database-generated ID
-      updatedExercises[exerciseIndex].sets.push({
-        id: newSet.id, // Use the real database ID
-        weight: String(newSet.weight || 0),
-        reps: String(newSet.reps || 12),
-        completed: false,
-        previous: lastSet?.previous || { weight: '0', reps: '12' }
-      });
+      // First, check if this was replacing a default set
+      const defaultSetIndex = currentSets.findIndex(set => set.id.startsWith('default-'));
       
-      const newSetsCount = currentSets.length + 1;
+      if (defaultSetIndex !== -1) {
+        // Replace the first default set with our new real set
+        console.log(`Replacing default set at index ${defaultSetIndex} with real set ${newSet.id}`);
+        updatedExercises[exerciseIndex].sets[defaultSetIndex] = {
+          id: newSet.id, // Use the real database ID
+          weight: String(newSet.weight || 0),
+          reps: String(newSet.reps || 12),
+          completed: false,
+          previous: lastSet?.previous || { weight: '0', reps: '12' }
+        };
+      } else {
+        // No default set to replace, add a new one
+        updatedExercises[exerciseIndex].sets.push({
+          id: newSet.id, // Use the real database ID
+          weight: String(newSet.weight || 0),
+          reps: String(newSet.reps || 12),
+          completed: false,
+          previous: lastSet?.previous || { weight: '0', reps: '12' }
+        });
+      }
+      
+      // Count the number of REAL sets now (not default ones)
+      const newRealSets = updatedExercises[exerciseIndex].sets.filter(
+        set => !set.id.startsWith('default-') && !set.id.startsWith('new-')
+      );
+      const newSetsCount = newRealSets.length;
       
       // Update the target_sets in routine_exercises to persist for next workouts
       const routineUpdateResult = await updateRoutineExerciseSetCount(

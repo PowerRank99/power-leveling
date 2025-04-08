@@ -33,7 +33,7 @@ export class WorkoutDataFormatter {
       const previousExerciseData = previousWorkoutData[exercise.id] || [];
       console.log(`Exercise ${exercise.name} has ${previousExerciseData.length} previous sets`);
       
-      // Format sets
+      // Format sets from the database (these are the real sets that exist)
       let sets = exerciseSets.map((set, index) => {
         // Find matching set from previous workout by set_order or index
         const previousSet = previousExerciseData.find(p => p.set_order === set.set_order) || 
@@ -59,18 +59,15 @@ export class WorkoutDataFormatter {
         };
       });
       
-      // Use sets from DB as the source of truth
-      // If we have sets in the database, use that count, otherwise use target_sets
+      // IMPORTANT: The source of truth is the database
+      // If we have fewer sets in DB than target_sets, create default placeholders
       const actualSetCount = exerciseSets.length;
-      const desiredSetCount = Math.max(actualSetCount, targetSetCount);
       
-      console.log(`Exercise ${exercise.name}: actual=${actualSetCount}, target=${targetSetCount}, desired=${desiredSetCount}`);
-      
-      // If we have no sets or fewer sets than the target_sets, create default ones
-      if (sets.length < desiredSetCount) {
-        const setsToAdd = desiredSetCount - sets.length;
+      // Add default sets only if we have fewer database sets than the target
+      if (actualSetCount < targetSetCount) {
+        const setsToAdd = targetSetCount - actualSetCount;
         
-        console.log(`Creating ${setsToAdd} default sets for ${exercise.name} to reach target of ${desiredSetCount}`);
+        console.log(`Creating ${setsToAdd} default sets for ${exercise.name} to reach target of ${targetSetCount}`);
         
         const defaultSets = Array.from({ length: setsToAdd }).map((_, idx) => {
           const setIndex = sets.length + idx;
@@ -95,8 +92,6 @@ export class WorkoutDataFormatter {
         // Append these default sets to any existing database sets
         sets = [...sets, ...defaultSets];
         console.log(`Final set count for ${exercise.name}: ${sets.length} (${actualSetCount} from DB + ${setsToAdd} defaults)`);
-      } else if (sets.length > targetSetCount) {
-        console.log(`Exercise ${exercise.name} has ${sets.length} sets in DB but target is ${targetSetCount}, using actual count from DB`);
       }
       
       return {
