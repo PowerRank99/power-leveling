@@ -33,8 +33,35 @@ export const useWorkoutCompletion = (
       }
 
       // Group and analyze sets by exercise
-      const exerciseMap: Record<string, { maxWeight: number, avgReps: number, setCount: number }> = {};
+      const exerciseMap: Record<string, { maxWeight: number, avgReps: number, setCount: number, completedCount: number }> = {};
 
+      // First get all exercises with their total set counts
+      const { data: allSets, error: allSetsError } = await supabase
+        .from('workout_sets')
+        .select('exercise_id')
+        .eq('workout_id', workoutId);
+        
+      if (allSetsError) {
+        console.error("Error fetching all sets:", allSetsError);
+      } else if (allSets) {
+        // Count all sets per exercise
+        allSets.forEach(set => {
+          if (!set.exercise_id) return;
+          
+          if (!exerciseMap[set.exercise_id]) {
+            exerciseMap[set.exercise_id] = {
+              maxWeight: 0,
+              avgReps: 0,
+              setCount: 0,
+              completedCount: 0
+            };
+          }
+          
+          exerciseMap[set.exercise_id].setCount++;
+        });
+      }
+
+      // Now process completed sets
       completedSets.forEach(set => {
         if (!set.exercise_id) return;
         
@@ -42,7 +69,8 @@ export const useWorkoutCompletion = (
           exerciseMap[set.exercise_id] = {
             maxWeight: 0,
             avgReps: 0,
-            setCount: 0
+            setCount: 1,  // Default to 1 if we couldn't get the total count
+            completedCount: 0
           };
         }
         
@@ -55,20 +83,20 @@ export const useWorkoutCompletion = (
         
         // Sum reps for average calculation
         record.avgReps += Number(set.reps || 0);
-        record.setCount++;
+        record.completedCount++;
       });
       
       // Process and save history for each exercise
       for (const [exerciseId, data] of Object.entries(exerciseMap)) {
-        if (data.setCount === 0) continue;
+        if (data.completedCount === 0) continue;
         
-        const avgReps = Math.round(data.avgReps / data.setCount);
+        const avgReps = Math.round(data.avgReps / data.completedCount);
         
         await ExerciseHistoryService.updateExerciseHistory(
           exerciseId,
           data.maxWeight,
           avgReps,
-          data.setCount
+          data.setCount  // Use the total set count, not just completed sets
         );
         
         console.log(`Exercise history updated for ${exerciseId}: weight=${data.maxWeight}, reps=${avgReps}, sets=${data.setCount}`);
@@ -151,4 +179,4 @@ export const useWorkoutCompletion = (
     discardWorkout,
     isSubmitting
   };
-};
+}

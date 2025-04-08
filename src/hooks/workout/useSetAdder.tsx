@@ -2,6 +2,7 @@
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { SetService } from '@/services/SetService';
 import { useSetOperations } from './useSetOperations';
+import { ExerciseHistoryService } from '@/services/ExerciseHistoryService';
 
 /**
  * Hook for adding new sets to exercises
@@ -68,6 +69,20 @@ export function useSetAdder(workoutId: string | null) {
           currentExercise.id,
           newSetsCount
         );
+        
+        // After adding a new set, update the exercise history to reflect the new set count
+        // This ensures that history shows the correct number of sets even if they're not all completed
+        const historyData = await ExerciseHistoryService.getExerciseHistory(currentExercise.id);
+        if (historyData) {
+          // Preserve existing data but update the sets count
+          await ExerciseHistoryService.updateExerciseHistory(
+            currentExercise.id,
+            historyData.weight,
+            historyData.reps,
+            newSetsCount
+          );
+          console.log(`[useSetAdder] Updated exercise history with new set count: ${newSetsCount}`);
+        }
       } else {
         console.warn("[useSetAdder] No routineId provided, cannot update target_sets in routine_exercises");
       }

@@ -71,13 +71,13 @@ export function useSetUpdater(workoutId: string | null) {
           set_order: setIndex
         };
         
-        // If this is a completed set, update exercise history
+        // If this is a completed set, update exercise history with the CURRENT NUMBER OF SETS
         if (completedValue) {
           await ExerciseHistoryService.updateExerciseHistory(
             currentExercise.id,
             weightValue,
             repsValue,
-            currentExercise.sets.length
+            currentExercise.sets.length // Use the current number of sets
           );
         }
         
@@ -127,7 +127,7 @@ export function useSetUpdater(workoutId: string | null) {
             currentExercise.id,
             weightValue,
             repsValue,
-            currentExercise.sets.length
+            currentExercise.sets.length // Use the current number of sets
           );
         }
         
