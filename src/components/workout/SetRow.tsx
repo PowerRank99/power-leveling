@@ -35,15 +35,20 @@ const SetRow: React.FC<SetRowProps> = ({
   const [startX, setStartX] = useState(0);
   const [offsetX, setOffsetX] = useState(0);
   
-  const [weightValue, setWeightValue] = useState(set.weight);
-  const [repsValue, setRepsValue] = useState(set.reps);
+  const [weightValue, setWeightValue] = useState(set.weight || '0');
+  const [repsValue, setRepsValue] = useState(set.reps || '0');
   
   useEffect(() => {
-    if (set.weight !== weightValue && !weightValue) {
-      setWeightValue(set.weight || (set.previous?.weight || '0'));
+    if (set.weight && set.weight !== '0') {
+      setWeightValue(set.weight);
+    } else if (set.previous?.weight && set.previous.weight !== '0') {
+      setWeightValue(set.previous.weight);
     }
-    if (set.reps !== repsValue && !repsValue) {
-      setRepsValue(set.reps || (set.previous?.reps || '0'));
+    
+    if (set.reps && set.reps !== '0') {
+      setRepsValue(set.reps);
+    } else if (set.previous?.reps && set.previous.reps !== '0') {
+      setRepsValue(set.previous.reps);
     }
   }, [set.id]);
   
