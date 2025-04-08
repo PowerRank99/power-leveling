@@ -37,6 +37,7 @@ const SetRowContent: React.FC<SetRowContentProps> = ({
           value={set.weight}
           onChange={onWeightChange}
           inputMode="decimal"
+          disabled={isCompleted}
         />
       </div>
       
@@ -45,6 +46,7 @@ const SetRowContent: React.FC<SetRowContentProps> = ({
           value={set.reps}
           onChange={onRepsChange}
           inputMode="numeric"
+          disabled={isCompleted}
         />
       </div>
       

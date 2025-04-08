@@ -9,7 +9,8 @@ import { useSetPersistence } from '../workout/useSetPersistence';
 export const useWorkoutSets = (
   workoutId: string | null, 
   exercises: WorkoutExercise[], 
-  setCurrentExerciseIndex: React.Dispatch<React.SetStateAction<number>>
+  setCurrentExerciseIndex: React.Dispatch<React.SetStateAction<number>>,
+  routineId: string
 ) => {
   const { updateSet, addSet, removeSet, isProcessing } = useSetPersistence(workoutId);
   const [processedExercises, setProcessedExercises] = useState<WorkoutExercise[]>(exercises);
@@ -21,7 +22,7 @@ export const useWorkoutSets = (
     if (isProcessing) return;
     console.log(`[useWorkoutSets] Adding set for exercise index ${exerciseIndex}`);
     
-    const result = await addSet(exerciseIndex, exercises, '');
+    const result = await addSet(exerciseIndex, exercises, routineId);
     if (result) {
       setProcessedExercises(result);
     }
@@ -34,7 +35,7 @@ export const useWorkoutSets = (
     if (isProcessing) return;
     console.log(`[useWorkoutSets] Removing set ${setIndex} from exercise ${exerciseIndex}`);
     
-    const result = await removeSet(exerciseIndex, exercises, setIndex, '');
+    const result = await removeSet(exerciseIndex, exercises, setIndex, routineId);
     if (result) {
       setProcessedExercises(result);
     }

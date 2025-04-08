@@ -151,18 +151,24 @@ export class SetService {
     try {
       console.log(`[SetService] Updating routine ${routineId}, exercise ${exerciseId} to ${setCount} sets`);
       
-      const { error } = await supabase
+      if (!routineId) {
+        console.warn("[SetService] Missing routineId for updating target sets count");
+        return { success: false, error: new Error("Missing routineId") };
+      }
+      
+      const { data, error } = await supabase
         .from('routine_exercises')
         .update({ target_sets: setCount })
         .eq('routine_id', routineId)
-        .eq('exercise_id', exerciseId);
+        .eq('exercise_id', exerciseId)
+        .select();
       
       if (error) {
         console.error("[SetService] Error updating routine exercise set count:", error);
         return { success: false, error };
       }
       
-      console.log(`[SetService] Successfully updated routine exercise target sets to ${setCount}`);
+      console.log(`[SetService] Successfully updated routine exercise target sets to ${setCount}:`, data);
       return { success: true };
     } catch (error) {
       console.error("[SetService] Exception updating routine exercise set count:", error);

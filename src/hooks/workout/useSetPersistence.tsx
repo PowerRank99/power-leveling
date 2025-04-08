@@ -194,12 +194,18 @@ export function useSetPersistence(workoutId: string | null) {
       });
       
       // Update the target_sets in routine_exercises for persistence in future workouts
-      const newSetsCount = currentSets.length + 1;
-      await SetService.updateRoutineExerciseSetsCount(
-        routineId,
-        currentExercise.id,
-        newSetsCount
-      );
+      if (routineId) {
+        console.log(`[useSetPersistence] Updating routine ${routineId} exercise ${currentExercise.id} target sets to ${currentSets.length + 1}`);
+        
+        const newSetsCount = currentSets.length + 1;
+        await SetService.updateRoutineExerciseSetsCount(
+          routineId,
+          currentExercise.id,
+          newSetsCount
+        );
+      } else {
+        console.warn("[useSetPersistence] No routineId provided, cannot update target_sets in routine_exercises");
+      }
       
       return updatedExercises;
     } catch (error) {
@@ -274,11 +280,17 @@ export function useSetPersistence(workoutId: string | null) {
       }
       
       // Update the routine exercise set count for persistence in future workouts
-      await SetService.updateRoutineExerciseSetsCount(
-        routineId,
-        currentExercise.id,
-        currentExercise.sets.length - 1
-      );
+      if (routineId) {
+        console.log(`[useSetPersistence] Updating routine ${routineId} exercise ${currentExercise.id} target sets to ${currentExercise.sets.length - 1}`);
+        
+        await SetService.updateRoutineExerciseSetsCount(
+          routineId,
+          currentExercise.id,
+          currentExercise.sets.length - 1
+        );
+      } else {
+        console.warn("[useSetPersistence] No routineId provided, cannot update target_sets in routine_exercises");
+      }
       
       return updatedExercises;
     } catch (error) {

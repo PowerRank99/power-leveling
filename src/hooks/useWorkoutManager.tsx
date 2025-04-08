@@ -32,7 +32,7 @@ export const useWorkoutManager = (routineId: string) => {
     handleUpdateSet,
     handleCompleteSet,
     isProcessing
-  } = useWorkoutSets(workoutId, exercises, setCurrentExerciseIndex);
+  } = useWorkoutSets(workoutId, exercises, setCurrentExerciseIndex, routineId);
 
   const {
     finishWorkout,
