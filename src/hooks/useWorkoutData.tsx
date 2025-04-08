@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from 'react-router-dom';
@@ -14,7 +13,6 @@ export const useWorkoutData = () => {
   const location = useLocation();
   const [lastRefresh, setLastRefresh] = useState<number>(Date.now());
   
-  // Use our new separated hooks
   const {
     savedRoutines,
     setSavedRoutines,
@@ -44,14 +42,12 @@ export const useWorkoutData = () => {
     lastRefresh
   );
   
-  // Function to force a refresh
   const refreshData = useCallback(() => {
     console.log("Force refreshing workout data");
     setLastRefresh(Date.now());
     refreshDataInternal();
   }, [refreshDataInternal]);
   
-  // Combined function to check if an item is being deleted
   const isDeletingItem = useCallback((id: string) => {
     return isDeletingRoutine(id) || isDeletingWorkout(id);
   }, [isDeletingRoutine, isDeletingWorkout]);
