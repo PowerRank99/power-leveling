@@ -10,9 +10,15 @@ interface PreviousWorkoutData {
   }[];
 }
 
+interface RestTimerSettings {
+  minutes: number;
+  seconds: number;
+}
+
 export const usePreviousWorkoutData = (routineId: string | null) => {
   const { user } = useAuth();
   const [previousWorkoutData, setPreviousWorkoutData] = useState<PreviousWorkoutData>({});
+  const [restTimerSettings, setRestTimerSettings] = useState<RestTimerSettings>({ minutes: 1, seconds: 30 });
   const [isLoading, setIsLoading] = useState(false);
   
   useEffect(() => {
@@ -25,7 +31,7 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
         // 1. Get the most recent completed workout for this routine
         const { data: previousWorkout, error: workoutError } = await supabase
           .from('workouts')
-          .select('id')
+          .select('id, rest_timer_minutes, rest_timer_seconds')
           .eq('routine_id', routineId)
           .eq('user_id', user.id)
           .not('completed_at', 'is', null)
@@ -33,9 +39,17 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
           .limit(1)
           .single();
           
-        if (workoutError || !previousWorkout) {
+        if (workoutError) {
           console.log("No previous workout found for routine:", routineId);
           return;
+        }
+        
+        // Set previous rest timer settings if available
+        if (previousWorkout?.rest_timer_minutes !== null && previousWorkout?.rest_timer_seconds !== null) {
+          setRestTimerSettings({
+            minutes: previousWorkout.rest_timer_minutes || 1,
+            seconds: previousWorkout.rest_timer_seconds || 30
+          });
         }
         
         // 2. Get all sets from the previous workout
@@ -88,6 +102,7 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
   
   return {
     previousWorkoutData,
+    restTimerSettings,
     isLoading
   };
 };

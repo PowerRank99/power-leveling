@@ -31,10 +31,13 @@ const ActiveWorkoutPage = () => {
     totalExercises,
     updateSet,
     addSet,
+    removeSet,
     finishWorkout,
     discardWorkout,
     formatTime,
-    elapsedTime
+    elapsedTime,
+    restTimerSettings,
+    handleRestTimerChange
   } = useWorkout(id || '');
   
   useEffect(() => {
@@ -48,6 +51,10 @@ const ActiveWorkoutPage = () => {
   
   const handleAddSet = (exerciseIndex: number) => {
     addSet(exerciseIndex);
+  };
+  
+  const handleRemoveSet = (exerciseIndex: number, setIndex: number) => {
+    removeSet(exerciseIndex, setIndex);
   };
   
   const handleCompleteSet = (exerciseIndex: number, setIndex: number) => {
@@ -147,11 +154,14 @@ const ActiveWorkoutPage = () => {
                 sets={exercise.sets}
                 exerciseIndex={exerciseIndex}
                 onAddSet={() => handleAddSet(exerciseIndex)}
+                onRemoveSet={(setIndex) => handleRemoveSet(exerciseIndex, setIndex)}
                 onCompleteSet={(setIndex) => handleCompleteSet(exerciseIndex, setIndex)}
                 onUpdateSet={(setIndex, data) => handleUpdateSet(exerciseIndex, setIndex, data)}
                 exerciseId={exercise.id}
                 notes={notes[exercise.id] || ''}
                 onNotesChange={(value) => handleNotesChange(exercise.id, value)}
+                initialRestTimer={restTimerSettings}
+                onRestTimerChange={handleRestTimerChange}
               />
             </Card>
           ))}

@@ -8,6 +8,7 @@ import { useWorkoutExercises } from './useWorkoutExercises';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { usePreviousWorkoutData } from './workout/usePreviousWorkoutData';
 
 export type { WorkoutExercise } from '@/types/workout';
 
@@ -20,10 +21,21 @@ export const useWorkout = (routineId: string) => {
   const [workoutId, setWorkoutId] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const { toast: uiToast } = useToast();
+  const [restTimerSettings, setRestTimerSettings] = useState({ minutes: 1, seconds: 30 });
+  
+  // Get previous workout data for this routine
+  const { previousWorkoutData, restTimerSettings: savedRestTimerSettings } = usePreviousWorkoutData(routineId);
   
   const { elapsedTime, formatTime } = useWorkoutTimer();
   const { finishWorkout: finishWorkoutAction } = useWorkoutCompletion(workoutId);
   const { fetchRoutineExercises, isCreatingWorkout } = useWorkoutExercises();
+
+  // Update rest timer settings from previous workout when available
+  useEffect(() => {
+    if (savedRestTimerSettings) {
+      setRestTimerSettings(savedRestTimerSettings);
+    }
+  }, [savedRestTimerSettings]);
 
   const setupWorkout = useCallback(async () => {
     if (!routineId) {
@@ -46,7 +58,44 @@ export const useWorkout = (routineId: string) => {
       
       if (workoutExercises && workoutExercises.length > 0 && newWorkoutId) {
         console.log("Workout setup successful with", workoutExercises.length, "exercises");
-        setExercises(workoutExercises);
+        
+        // Apply previous workout data for exercises if available
+        if (Object.keys(previousWorkoutData).length > 0) {
+          const exercisesWithPrevious = workoutExercises.map(exercise => {
+            const previousSets = previousWorkoutData[exercise.id];
+            
+            if (previousSets) {
+              // Pre-fill with previous workout data
+              return {
+                ...exercise,
+                sets: exercise.sets.map((set, idx) => {
+                  const prevSet = previousSets[idx];
+                  
+                  if (prevSet) {
+                    return {
+                      ...set,
+                      weight: prevSet.weight,
+                      reps: prevSet.reps,
+                      previous: {
+                        weight: prevSet.weight,
+                        reps: prevSet.reps
+                      }
+                    };
+                  }
+                  
+                  return set;
+                })
+              };
+            }
+            
+            return exercise;
+          });
+          
+          setExercises(exercisesWithPrevious);
+        } else {
+          setExercises(workoutExercises);
+        }
+        
         setWorkoutId(newWorkoutId);
         setIsInitialized(true);
       } else {
@@ -67,7 +116,7 @@ export const useWorkout = (routineId: string) => {
     } finally {
       setIsLoading(false);
     }
-  }, [routineId, fetchRoutineExercises, navigate, isInitialized, isCreatingWorkout]);
+  }, [routineId, fetchRoutineExercises, navigate, isInitialized, isCreatingWorkout, previousWorkoutData]);
   
   useEffect(() => {
     if (!isInitialized && !isCreatingWorkout) {
@@ -159,7 +208,7 @@ export const useWorkout = (routineId: string) => {
       setExercises(updatedExercises);
       
       // Add to database
-      const newSetOrder = exerciseIndex * 100 + updatedExercises[exerciseIndex].sets.length - 1;
+      const newSetOrder = currentSets.length;
       
       const { data, error } = await supabase
         .from('workout_sets')
@@ -187,6 +236,9 @@ export const useWorkout = (routineId: string) => {
         const setIndex = updatedExercisesWithId[exerciseIndex].sets.length - 1;
         updatedExercisesWithId[exerciseIndex].sets[setIndex].id = data.id;
         setExercises(updatedExercisesWithId);
+        
+        // Also update the routine_exercises target_sets to persist this change
+        updateRoutineExerciseSetCount(currentExercise.id, routineId, currentSets.length + 1);
       }
     } catch (error) {
       console.error("Error adding set:", error);
@@ -196,23 +248,120 @@ export const useWorkout = (routineId: string) => {
     }
   };
   
-  const goToNextExercise = () => {
-    if (currentExerciseIndex < exercises.length - 1) {
-      setCurrentExerciseIndex(currentExerciseIndex + 1);
-      toast.success("Próximo exercício", {
-        description: "Avançou para o próximo exercício"
+  const removeSet = async (exerciseIndex: number, setIndex: number) => {
+    try {
+      if (!workoutId || !exercises[exerciseIndex]) {
+        toast.error("Erro ao remover série", {
+          description: "Treino ou exercício não encontrado"
+        });
+        return;
+      }
+      
+      const currentExercise = exercises[exerciseIndex];
+      const setId = currentExercise.sets[setIndex].id;
+      
+      // Only proceed if there will be at least one set left
+      if (currentExercise.sets.length <= 1) {
+        toast.error("Não é possível remover", {
+          description: "Deve haver pelo menos uma série"
+        });
+        return;
+      }
+      
+      // Update local state first
+      const updatedExercises = [...exercises];
+      updatedExercises[exerciseIndex].sets = [
+        ...currentExercise.sets.slice(0, setIndex),
+        ...currentExercise.sets.slice(setIndex + 1)
+      ];
+      
+      setExercises(updatedExercises);
+      
+      // Remove from database
+      const { error } = await supabase
+        .from('workout_sets')
+        .delete()
+        .eq('id', setId);
+      
+      if (error) {
+        console.error("Error removing set:", error);
+        toast.error("Erro ao remover série", {
+          description: "A série pode não ter sido removida corretamente"
+        });
+      } else {
+        // Update the routine_exercises target_sets to persist this change
+        updateRoutineExerciseSetCount(currentExercise.id, routineId, currentExercise.sets.length - 1);
+      }
+    } catch (error) {
+      console.error("Error removing set:", error);
+      toast.error("Erro ao remover série", {
+        description: "Não foi possível remover a série"
       });
     }
   };
   
-  const finishWorkout = async () => {
-    const success = await finishWorkoutAction(elapsedTime);
-    if (success) {
-      toast.success("Treino finalizado!", {
-        description: "Seu treino foi salvo com sucesso."
-      });
+  // Helper to update the target_sets in routine_exercises
+  const updateRoutineExerciseSetCount = async (exerciseId: string, routineId: string, newSetCount: number) => {
+    try {
+      const { error } = await supabase
+        .from('routine_exercises')
+        .update({ target_sets: newSetCount })
+        .eq('routine_id', routineId)
+        .eq('exercise_id', exerciseId);
+      
+      if (error) {
+        console.error("Error updating routine exercise set count:", error);
+      }
+    } catch (error) {
+      console.error("Error updating routine exercise set count:", error);
     }
-    return success;
+  };
+  
+  const handleRestTimerChange = (minutes: number, seconds: number) => {
+    setRestTimerSettings({ minutes, seconds });
+    
+    // Update rest timer settings in the current workout
+    if (workoutId) {
+      supabase
+        .from('workouts')
+        .update({
+          rest_timer_minutes: minutes,
+          rest_timer_seconds: seconds
+        })
+        .eq('id', workoutId)
+        .then(({ error }) => {
+          if (error) {
+            console.error("Error saving timer settings:", error);
+          }
+        });
+    }
+  };
+  
+  const finishWorkout = async () => {
+    try {
+      // Save the rest timer settings when finishing the workout
+      if (workoutId) {
+        await supabase
+          .from('workouts')
+          .update({
+            rest_timer_minutes: restTimerSettings.minutes,
+            rest_timer_seconds: restTimerSettings.seconds
+          })
+          .eq('id', workoutId);
+      }
+      
+      // Complete the workout
+      const success = await finishWorkoutAction(elapsedTime);
+      if (success) {
+        toast.success("Treino finalizado!", {
+          description: "Seu treino foi salvo com sucesso."
+        });
+      }
+      return success;
+    } catch (error) {
+      console.error("Error finishing workout:", error);
+      return false;
+    }
   };
 
   const discardWorkout = async () => {
@@ -263,10 +412,12 @@ export const useWorkout = (routineId: string) => {
     totalExercises: exercises.length,
     updateSet,
     addSet,
-    goToNextExercise,
+    removeSet,
     finishWorkout,
     discardWorkout,
     elapsedTime,
-    formatTime
+    formatTime,
+    restTimerSettings,
+    handleRestTimerChange
   };
 };

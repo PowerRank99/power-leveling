@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Clock, Plus, Check, MoreVertical } from 'lucide-react';
+import { Clock, Plus, Minus, Check, MoreVertical, Trash } from 'lucide-react';
 import type { WorkoutExercise } from '@/hooks/useWorkout';
 import RestTimer from '@/components/workout/RestTimer';
 
@@ -18,25 +18,35 @@ interface ActiveWorkoutProps {
   }>;
   exerciseIndex: number;
   onAddSet: () => void;
+  onRemoveSet: (setIndex: number) => void;
   onCompleteSet: (index: number) => void;
   onUpdateSet: (index: number, data: { weight?: string; reps?: string }) => void;
   exerciseId: string;
   notes: string;
   onNotesChange: (value: string) => void;
+  initialRestTimer?: {
+    minutes: number;
+    seconds: number;
+  };
+  onRestTimerChange?: (minutes: number, seconds: number) => void;
 }
 
 const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({ 
   exerciseName,
   sets,
   onAddSet,
+  onRemoveSet,
   onCompleteSet,
   onUpdateSet,
   notes,
-  onNotesChange
+  onNotesChange,
+  initialRestTimer = { minutes: 1, seconds: 30 },
+  onRestTimerChange
 }) => {
   const [showRestTimer, setShowRestTimer] = useState(false);
-  const [restTimeMinutes, setRestTimeMinutes] = useState(1);
-  const [restTimeSeconds, setRestTimeSeconds] = useState(30);
+  const [restTimeMinutes, setRestTimeMinutes] = useState(initialRestTimer.minutes);
+  const [restTimeSeconds, setRestTimeSeconds] = useState(initialRestTimer.seconds);
+  const [autoStartTimer, setAutoStartTimer] = useState(false);
   
   const handleWeightChange = (index: number, value: string) => {
     onUpdateSet(index, { weight: value });
@@ -48,13 +58,24 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
 
   const handleSetCompletion = (index: number) => {
     onCompleteSet(index);
-    // Show rest timer when completing a set
+    // Show and auto-start rest timer when completing a set
     setShowRestTimer(true);
+    setAutoStartTimer(true);
   };
 
   const handleRestComplete = () => {
     // Hide timer when rest is complete
     setShowRestTimer(false);
+    setAutoStartTimer(false);
+  };
+  
+  const handleTimerChange = (minutes: number, seconds: number) => {
+    setRestTimeMinutes(minutes);
+    setRestTimeSeconds(seconds);
+    
+    if (onRestTimerChange) {
+      onRestTimerChange(minutes, seconds);
+    }
   };
 
   return (
@@ -91,10 +112,8 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
             minutes={restTimeMinutes} 
             seconds={restTimeSeconds} 
             onComplete={handleRestComplete} 
-            onTimerChange={(min, sec) => {
-              setRestTimeMinutes(min);
-              setRestTimeSeconds(sec);
-            }}
+            onTimerChange={handleTimerChange}
+            autoStart={autoStartTimer}
           />
         </div>
       ) : (
@@ -110,10 +129,10 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
       <div className="mb-6">
         <div className="grid grid-cols-12 gap-2 mb-3 text-sm font-medium text-gray-500">
           <div className="col-span-1">SET</div>
-          <div className="col-span-4">PREVIOUS</div>
+          <div className="col-span-3">PREVIOUS</div>
           <div className="col-span-3 text-center">KG</div>
           <div className="col-span-3 text-center">REPS</div>
-          <div className="col-span-1 text-center">✓</div>
+          <div className="col-span-2 text-center">ACTIONS</div>
         </div>
 
         {sets.map((set, index) => {
@@ -123,7 +142,7 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
           return (
             <div key={set.id} className={`grid grid-cols-12 gap-2 items-center py-4 ${rowClass} border-b border-gray-100`}>
               <div className="col-span-1 font-bold text-gray-800">{index + 1}</div>
-              <div className="col-span-4 text-gray-500 text-sm">
+              <div className="col-span-3 text-gray-500 text-sm">
                 {set.previous ? `${set.previous.weight}kg × ${set.previous.reps}` : '-'}
               </div>
               
@@ -145,7 +164,7 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
                 />
               </div>
               
-              <div className="col-span-1 flex justify-center">
+              <div className="col-span-2 flex justify-center gap-2">
                 <button
                   onClick={() => handleSetCompletion(index)}
                   className={`w-8 h-8 rounded-md flex items-center justify-center ${
@@ -156,18 +175,30 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
                 >
                   {isCompleted && <Check className="w-4 h-4" />}
                 </button>
+                
+                {/* Only show delete button if there's more than one set */}
+                {sets.length > 1 && (
+                  <button
+                    onClick={() => onRemoveSet(index)}
+                    className="w-8 h-8 rounded-md flex items-center justify-center border border-gray-300 bg-white text-red-500 hover:bg-red-50"
+                  >
+                    <Trash className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
           );
         })}
 
-        <button 
-          className="flex items-center justify-center w-full py-4 mt-4 bg-gray-100 rounded-md text-gray-700 font-medium"
-          onClick={onAddSet}
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Add Set
-        </button>
+        <div className="flex gap-2 justify-center mt-4">
+          <button 
+            className="flex items-center justify-center py-2 px-3 bg-gray-100 rounded-md text-gray-700 font-medium"
+            onClick={onAddSet}
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Add Set
+          </button>
+        </div>
       </div>
     </div>
   );

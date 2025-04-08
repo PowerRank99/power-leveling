@@ -15,6 +15,7 @@ interface RestTimerProps {
   seconds?: number;
   onComplete?: () => void;
   onTimerChange?: (minutes: number, seconds: number) => void;
+  autoStart?: boolean;
 }
 
 const TIMER_PRESETS = [
@@ -31,14 +32,22 @@ const RestTimer: React.FC<RestTimerProps> = ({
   minutes: initialMinutes = 1,
   seconds: initialSeconds = 30,
   onComplete,
-  onTimerChange
+  onTimerChange,
+  autoStart = false
 }) => {
   const [minutes, setMinutes] = useState(initialMinutes);
   const [seconds, setSeconds] = useState(initialSeconds);
-  const [isRunning, setIsRunning] = useState(true);
+  const [isRunning, setIsRunning] = useState(autoStart);
   const [totalSeconds, setTotalSeconds] = useState(minutes * 60 + seconds);
   const [showTimerOptions, setShowTimerOptions] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  useEffect(() => {
+    // Update initial values when props change
+    setMinutes(initialMinutes);
+    setSeconds(initialSeconds);
+    setTotalSeconds(initialMinutes * 60 + initialSeconds);
+  }, [initialMinutes, initialSeconds]);
   
   useEffect(() => {
     if (isRunning) {
