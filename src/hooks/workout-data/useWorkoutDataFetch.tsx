@@ -28,7 +28,9 @@ export const useWorkoutDataFetch = (
   const {
     isLoadingWorkouts,
     workoutsError,
-    hasAttemptedWorkoutsLoad
+    hasAttemptedWorkoutsLoad,
+    hasMoreWorkouts,
+    loadMoreWorkouts
   } = useFetchWorkouts(userId, setWorkouts, deletedWorkoutIds, lastRefresh);
 
   // Track overall loading state
@@ -66,6 +68,8 @@ export const useWorkoutDataFetch = (
     isLoading,
     refreshData,
     error,
-    hasAttemptedLoad
+    hasAttemptedLoad,
+    hasMoreWorkouts,
+    loadMoreWorkouts
   };
 };

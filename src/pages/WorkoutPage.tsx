@@ -22,7 +22,10 @@ const WorkoutPage = () => {
     hasAttemptedLoad,
     deleteRoutine,
     deleteWorkout,
-    isDeletingItem
+    isDeletingItem,
+    hasMoreWorkouts,
+    isLoadingMore,
+    loadMoreWorkouts
   } = useWorkoutData();
   
   // Refresh data when component mounts
@@ -91,6 +94,9 @@ const WorkoutPage = () => {
               hasAttemptedLoad={hasAttemptedLoad}
               onDeleteWorkout={deleteWorkout}
               isDeletingItem={isDeletingItem}
+              hasMoreWorkouts={hasMoreWorkouts}
+              isLoadingMore={isLoadingMore}
+              onLoadMore={loadMoreWorkouts}
             />
           </div>
         </div>

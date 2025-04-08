@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from 'react-router-dom';
@@ -25,14 +26,20 @@ export const useWorkoutData = () => {
     setRecentWorkouts,
     deleteWorkout,
     isDeletingWorkout,
-    deletedWorkoutIds
+    deletedWorkoutIds,
+    hasMoreWorkouts,
+    isLoadingMore,
+    loadMoreWorkouts,
+    setHasMoreWorkouts
   } = useWorkouts(user?.id);
   
   const {
     isLoading,
     refreshData: refreshDataInternal,
     error,
-    hasAttemptedLoad
+    hasAttemptedLoad,
+    loadMoreWorkouts: loadMoreWorkoutsInternal,
+    hasMoreWorkouts: hasMoreWorkoutsInternal
   } = useWorkoutDataFetch(
     user?.id,
     setSavedRoutines,
@@ -52,6 +59,12 @@ export const useWorkoutData = () => {
     return isDeletingRoutine(id) || isDeletingWorkout(id);
   }, [isDeletingRoutine, isDeletingWorkout]);
 
+  // Function to load more workouts
+  const handleLoadMore = useCallback(async () => {
+    if (isLoadingMore || !hasMoreWorkoutsInternal) return;
+    await loadMoreWorkouts(() => loadMoreWorkoutsInternal());
+  }, [isLoadingMore, hasMoreWorkoutsInternal, loadMoreWorkouts, loadMoreWorkoutsInternal]);
+
   return {
     savedRoutines,
     recentWorkouts,
@@ -61,6 +74,9 @@ export const useWorkoutData = () => {
     hasAttemptedLoad,
     deleteRoutine,
     deleteWorkout,
-    isDeletingItem
+    isDeletingItem,
+    hasMoreWorkouts: hasMoreWorkoutsInternal,
+    isLoadingMore,
+    loadMoreWorkouts: handleLoadMore
   };
 };
