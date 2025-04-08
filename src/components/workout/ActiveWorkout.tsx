@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import RestTimer from '@/components/workout/RestTimer';
 import ExerciseHeader from '@/components/workout/ExerciseHeader';
@@ -32,6 +33,7 @@ interface ActiveWorkoutProps {
     seconds: number;
   };
   onRestTimerChange?: (minutes: number, seconds: number) => void;
+  isTimerSaving?: boolean;
 }
 
 const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({ 
@@ -44,7 +46,8 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
   notes,
   onNotesChange,
   initialRestTimer = { minutes: 1, seconds: 30 },
-  onRestTimerChange
+  onRestTimerChange,
+  isTimerSaving = false
 }) => {
   const [showDetailedTimer, setShowDetailedTimer] = useState(false);
   const [restTimeMinutes, setRestTimeMinutes] = useState(initialRestTimer.minutes);
@@ -99,7 +102,8 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
           <RestTimerToggle 
             minutes={restTimeMinutes} 
             seconds={restTimeSeconds} 
-            onShowTimer={() => setShowDetailedTimer(true)} 
+            onShowTimer={() => setShowDetailedTimer(true)}
+            isSaving={isTimerSaving}
           />
         )}
       </div>

@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useWorkoutCompletion } from '../useWorkoutCompletion';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 const TIMEOUT_MS = 10000; // 10 seconds timeout for operations
 
@@ -29,7 +29,7 @@ export const useWorkoutActions = (workoutId: string | null) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { finishWorkout: finishWorkoutAction } = useWorkoutCompletion(workoutId);
   
-  const finishWorkout = async (elapsedTime: number, restTimerSettings: { minutes: number, seconds: number }) => {
+  const finishWorkout = useCallback(async (elapsedTime: number, restTimerSettings: { minutes: number, seconds: number }) => {
     if (isSubmitting) {
       console.log("Already submitting, ignoring duplicate request");
       return false;
@@ -45,27 +45,8 @@ export const useWorkoutActions = (workoutId: string | null) => {
         return false;
       }
       
-      // Save timer settings first
-      try {
-        await withTimeout(
-          async () => {
-            const { error } = await supabase
-              .from('workouts')
-              .update({
-                rest_timer_minutes: restTimerSettings.minutes,
-                rest_timer_seconds: restTimerSettings.seconds
-              } as any)
-              .eq('id', workoutId);
-              
-            if (error) throw error;
-            return true;
-          },
-          TIMEOUT_MS
-        );
-      } catch (timerError) {
-        console.error("Error or timeout saving timer settings:", timerError);
-        // Continue even if timer settings fail - this is non-critical
-      }
+      // Skip saving timer settings here - we're already saving them in useRestTimer
+      // This removes a potential point of failure during workout completion
       
       // Finish the workout
       const success = await finishWorkoutAction(elapsedTime);
@@ -86,9 +67,9 @@ export const useWorkoutActions = (workoutId: string | null) => {
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [isSubmitting, workoutId, finishWorkoutAction]);
 
-  const discardWorkout = async () => {
+  const discardWorkout = useCallback(async () => {
     if (isSubmitting) {
       console.log("Already submitting, ignoring duplicate request");
       return false;
@@ -153,7 +134,7 @@ export const useWorkoutActions = (workoutId: string | null) => {
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [isSubmitting, workoutId]);
   
   return {
     finishWorkout,
