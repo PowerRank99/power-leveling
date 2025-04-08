@@ -5,47 +5,20 @@ import { TimerNotificationService } from '@/services/timer/TimerNotificationServ
 import { useAuth } from '@/hooks/useAuth';
 import { TimerService } from '@/services/timer/TimerService';
 
-export const useTimerEffects = (
-  timerState: TimerState,
-  setTimerState: React.Dispatch<React.SetStateAction<TimerState>>,
-  timerSettings: TimerSettings,
-  setTimerSettings: React.Dispatch<React.SetStateAction<TimerSettings>>,
-  timerInterval: React.MutableRefObject<number | null>,
-  lastSavedDurations: Record<string, number>,
-  isSubmitting: boolean,
-  props?: { onFinish?: () => void }
-) => {
+export const useTimerEffects = ({
+  timerState,
+  setTimerState,
+  timerSettings,
+  timerInterval,
+  onFinish
+}: {
+  timerState: TimerState;
+  setTimerState: React.Dispatch<React.SetStateAction<TimerState>>;
+  timerSettings: TimerSettings;
+  timerInterval: React.MutableRefObject<number | null>;
+  onFinish?: () => void;
+}) => {
   const { user } = useAuth();
-
-  // Load timer settings on mount
-  useEffect(() => {
-    const loadTimerSettings = async () => {
-      if (!user) return;
-      
-      try {
-        const result = await TimerService.getUserTimerSettings(user.id);
-        if (result.success && result.data) {
-          setTimerSettings({
-            soundEnabled: result.data.timer_sound_enabled,
-            vibrationEnabled: result.data.timer_vibration_enabled,
-            notificationEnabled: result.data.timer_notification_enabled
-          });
-          
-          // Update default timer duration
-          setTimerState(prev => ({
-            ...prev,
-            totalSeconds: result.data.default_rest_timer_seconds || 90
-          }));
-          
-          console.log("[useTimerEffects] Loaded timer settings:", result.data);
-        }
-      } catch (error) {
-        console.error("[useTimerEffects] Error loading timer settings:", error);
-      }
-    };
-    
-    loadTimerSettings();
-  }, [user, setTimerSettings, setTimerState]);
 
   // Timer tick handler
   useEffect(() => {
@@ -69,8 +42,8 @@ export const useTimerEffects = (
           // Trigger completion actions
           TimerNotificationService.notifyTimerComplete(prev.exerciseName || 'exercício', timerSettings);
           
-          if (props?.onFinish) {
-            props.onFinish();
+          if (onFinish) {
+            onFinish();
           }
           
           // Return completed state
@@ -111,32 +84,8 @@ export const useTimerEffects = (
     timerState.isPaused, 
     timerState.remainingSeconds, 
     timerSettings,
-    props,
+    onFinish,
     setTimerState,
     timerInterval
   ]);
-
-  // Save timer duration to backend when workout is being submitted
-  useEffect(() => {
-    const saveAllExerciseTimers = async () => {
-      if (!user || !isSubmitting || Object.keys(lastSavedDurations).length === 0) return;
-      
-      try {
-        console.log("[useTimerEffects] Saving exercise timer durations", lastSavedDurations);
-        
-        // Save each exercise timer duration
-        const savePromises = Object.entries(lastSavedDurations).map(([exerciseId, duration]) => 
-          TimerService.saveExerciseTimerDuration(user.id, exerciseId, duration)
-        );
-        
-        await Promise.all(savePromises);
-        
-        console.log("[useTimerEffects] Saved all timer durations successfully");
-      } catch (error) {
-        console.error("[useTimerEffects] Error saving timer durations:", error);
-      }
-    };
-    
-    saveAllExerciseTimers();
-  }, [isSubmitting, lastSavedDurations, user]);
 };
