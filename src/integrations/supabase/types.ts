@@ -50,6 +50,41 @@ export type Database = {
           },
         ]
       }
+      exercise_timers: {
+        Row: {
+          created_at: string
+          duration_seconds: number
+          exercise_id: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number
+          exercise_id: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number
+          exercise_id?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_timers_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exercises: {
         Row: {
           category: string
@@ -98,10 +133,14 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           created_at: string | null
+          default_rest_timer_seconds: number
           id: string
           level: number | null
           name: string | null
           records_count: number | null
+          timer_notification_enabled: boolean
+          timer_sound_enabled: boolean
+          timer_vibration_enabled: boolean
           title: string | null
           updated_at: string | null
           workouts_count: number | null
@@ -112,10 +151,14 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
+          default_rest_timer_seconds?: number
           id: string
           level?: number | null
           name?: string | null
           records_count?: number | null
+          timer_notification_enabled?: boolean
+          timer_sound_enabled?: boolean
+          timer_vibration_enabled?: boolean
           title?: string | null
           updated_at?: string | null
           workouts_count?: number | null
@@ -126,10 +169,14 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
+          default_rest_timer_seconds?: number
           id?: string
           level?: number | null
           name?: string | null
           records_count?: number | null
+          timer_notification_enabled?: boolean
+          timer_sound_enabled?: boolean
+          timer_vibration_enabled?: boolean
           title?: string | null
           updated_at?: string | null
           workouts_count?: number | null

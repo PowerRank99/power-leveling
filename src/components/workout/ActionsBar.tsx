@@ -1,31 +1,42 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { Plus, ClipboardList, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-const ActionsBar: React.FC = () => {
-  const navigate = useNavigate();
-  
+const ActionsBar = () => {
   return (
-    <div className="flex gap-4">
-      <button 
-        onClick={() => navigate('/criar-rotina')}
-        className="flex-1 bg-fitblue text-white rounded-lg py-4 font-bold flex items-center justify-center"
-      >
-        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-        </svg>
-        Criar Rotina
-      </button>
+    <div className="flex gap-2 justify-between">
+      <Link to="/treino/criar" className="flex-1">
+        <Button 
+          variant="default" 
+          className="w-full bg-blue-600 hover:bg-blue-700"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Nova Rotina
+        </Button>
+      </Link>
       
-      <button 
-        onClick={() => navigate('/biblioteca-exercicios')}
-        className="flex-1 bg-white border border-gray-300 rounded-lg py-4 font-bold flex items-center justify-center"
-      >
-        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        Explorar
-      </button>
+      <Link to="/exercicios" className="flex-1">
+        <Button 
+          variant="outline"
+          className="w-full border-blue-600 text-blue-600 hover:bg-blue-50"
+        >
+          <ClipboardList className="h-4 w-4 mr-2" />
+          Exercícios
+        </Button>
+      </Link>
+      
+      <Link to="/configuracoes/timer" className="flex-shrink-0">
+        <Button
+          variant="outline"
+          size="icon"
+          className="border-blue-600 text-blue-600 hover:bg-blue-50 h-full"
+          title="Configurações do Timer"
+        >
+          <Clock className="h-4 w-4" />
+        </Button>
+      </Link>
     </div>
   );
 };

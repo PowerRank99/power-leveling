@@ -1,12 +1,14 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { Card } from '@/components/ui/card';
+import { useAuth } from '@/hooks/useAuth';
 
 // Import our new WorkoutManager hook
 import { useWorkoutManager } from '@/hooks/useWorkoutManager';
+import { useExerciseRestTimer } from '@/hooks/useExerciseRestTimer';
 
 // Imported Components
 import WorkoutHeader from '@/components/workout/WorkoutHeader';
@@ -16,10 +18,13 @@ import WorkoutError from '@/components/workout/WorkoutError';
 import EmptyExerciseState from '@/components/workout/EmptyExerciseState';
 import ActiveWorkout from '@/components/workout/ActiveWorkout';
 import FinishWorkoutButton from '@/components/workout/FinishWorkoutButton';
+import FloatingTimer from '@/components/workout/timer/FloatingTimer';
+import TimerSelectionModal from '@/components/workout/timer/TimerSelectionModal';
 
 const ActiveWorkoutPage = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
   
   // Use our comprehensive workout manager
   const {
@@ -40,6 +45,62 @@ const ActiveWorkoutPage = () => {
     isSubmitting,
     notes
   } = useWorkoutManager(id || '');
+  
+  // Use our timer hook
+  const {
+    timerState,
+    timerSettings,
+    showDurationSelector,
+    setShowDurationSelector,
+    startTimer,
+    pauseTimer,
+    resumeTimer,
+    stopTimer,
+    addTime,
+    formatTime: formatTimerTime,
+    loadExerciseTimerDuration,
+    updateTimerDuration
+  } = useExerciseRestTimer();
+  
+  // State for timer modal
+  const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
+  const [selectedExerciseName, setSelectedExerciseName] = useState<string | null>(null);
+  const [exerciseTimers, setExerciseTimers] = useState<Record<string, number>>({});
+  
+  // Handle timer click for an exercise
+  const handleTimerClick = (exerciseId: string, exerciseName: string) => {
+    setSelectedExerciseId(exerciseId);
+    setSelectedExerciseName(exerciseName);
+    setShowDurationSelector(true);
+  };
+  
+  // Handle timer duration selection
+  const handleTimerDurationSelect = (duration: number) => {
+    if (selectedExerciseId) {
+      // Update the duration in our local state
+      setExerciseTimers(prev => ({
+        ...prev,
+        [selectedExerciseId]: duration
+      }));
+      
+      // Update in the timer state if it's the current timer
+      updateTimerDuration(selectedExerciseId, duration);
+    }
+  };
+  
+  // Load exercise timer duration
+  const handleLoadExerciseTimer = (exerciseId: string) => {
+    if (!user) return;
+    
+    loadExerciseTimerDuration(exerciseId).then(duration => {
+      if (duration) {
+        setExerciseTimers(prev => ({
+          ...prev,
+          [exerciseId]: duration
+        }));
+      }
+    });
+  };
   
   // Validate route parameters
   useEffect(() => {
@@ -95,6 +156,10 @@ const ActiveWorkoutPage = () => {
                 exerciseId={exercise.id}
                 notes={notes[exercise.id] || ''}
                 onNotesChange={(value) => handleNotesChange(exercise.id, value)}
+                onTimerClick={handleTimerClick}
+                onStartTimer={startTimer}
+                timerDuration={exerciseTimers[exercise.id] || 90}
+                loadExerciseTimer={handleLoadExerciseTimer}
               />
             </Card>
           ))}
@@ -107,6 +172,29 @@ const ActiveWorkoutPage = () => {
           isFinishing={isSubmitting}
         />
       </div>
+      
+      {/* Timer Selection Modal */}
+      <TimerSelectionModal
+        isOpen={showDurationSelector}
+        onClose={() => setShowDurationSelector(false)}
+        onSelectDuration={handleTimerDurationSelect}
+        currentDuration={
+          selectedExerciseId && exerciseTimers[selectedExerciseId] 
+          ? exerciseTimers[selectedExerciseId] 
+          : 90
+        }
+        exerciseName={selectedExerciseName || undefined}
+      />
+      
+      {/* Floating Timer */}
+      <FloatingTimer
+        timerState={timerState}
+        formatTime={formatTimerTime}
+        onPause={pauseTimer}
+        onResume={resumeTimer}
+        onStop={stopTimer}
+        onAddTime={addTime}
+      />
     </div>
   );
 };

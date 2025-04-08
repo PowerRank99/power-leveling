@@ -1,91 +1,47 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
-import AuthRequiredRoute from "@/components/AuthRequiredRoute";
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from '@/hooks/useAuth';
+import { Toaster } from 'sonner';
 
-import Index from "./pages/Index";
-import WorkoutPage from "./pages/WorkoutPage";
-import RankingPage from "./pages/RankingPage";
-import ProfilePage from "./pages/ProfilePage";
-import RankingDetailPage from "./pages/RankingDetailPage";
-import ActiveWorkoutPage from "./pages/ActiveWorkoutPage";
-import ExerciseLibraryPage from "./pages/ExerciseLibraryPage";
-import AuthPage from "./pages/AuthPage";
-import EditProfilePage from "./pages/EditProfilePage";
-import CreateRoutinePage from "./pages/CreateRoutinePage";
-import AdminPage from "./pages/AdminPage";
-import NotFound from "./pages/NotFound";
+// Pages
+import Index from './pages/Index';
+import NotFound from './pages/NotFound';
+import ProfilePage from './pages/ProfilePage';
+import AuthPage from './pages/AuthPage';
+import EditProfilePage from './pages/EditProfilePage';
+import WorkoutPage from './pages/WorkoutPage';
+import ExerciseLibraryPage from './pages/ExerciseLibraryPage';
+import CreateRoutinePage from './pages/CreateRoutinePage';
+import ActiveWorkoutPage from './pages/ActiveWorkoutPage';
+import RankingPage from './pages/RankingPage';
+import RankingDetailPage from './pages/RankingDetailPage';
+import AdminPage from './pages/AdminPage';
+import TimerSettingsPage from './pages/TimerSettingsPage';
 
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
+function App() {
+  return (
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<AuthPage />} />
-            
-            {/* Protected Routes */}
-            <Route path="/treino" element={
-              <AuthRequiredRoute>
-                <WorkoutPage />
-              </AuthRequiredRoute>
-            } />
-            <Route path="/ranking" element={
-              <AuthRequiredRoute>
-                <RankingPage />
-              </AuthRequiredRoute>
-            } />
-            <Route path="/perfil" element={
-              <AuthRequiredRoute>
-                <ProfilePage />
-              </AuthRequiredRoute>
-            } />
-            <Route path="/perfil/editar" element={
-              <AuthRequiredRoute>
-                <EditProfilePage />
-              </AuthRequiredRoute>
-            } />
-            <Route path="/ranking/:id" element={
-              <AuthRequiredRoute>
-                <RankingDetailPage />
-              </AuthRequiredRoute>
-            } />
-            <Route path="/treino-atual/:id" element={
-              <AuthRequiredRoute>
-                <ActiveWorkoutPage />
-              </AuthRequiredRoute>
-            } />
-            <Route path="/biblioteca-exercicios" element={
-              <AuthRequiredRoute>
-                <ExerciseLibraryPage />
-              </AuthRequiredRoute>
-            } />
-            <Route path="/criar-rotina" element={
-              <AuthRequiredRoute>
-                <CreateRoutinePage />
-              </AuthRequiredRoute>
-            } />
-            <Route path="/admin" element={
-              <AuthRequiredRoute>
-                <AdminPage />
-              </AuthRequiredRoute>
-            } />
-            
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Navigate to="/treino" replace />} />
+          <Route path="/index" element={<Index />} />
+          <Route path="/perfil" element={<ProfilePage />} />
+          <Route path="/perfil/editar" element={<EditProfilePage />} />
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/treino" element={<WorkoutPage />} />
+          <Route path="/treino/ativo/:id" element={<ActiveWorkoutPage />} />
+          <Route path="/treino/criar" element={<CreateRoutinePage />} />
+          <Route path="/exercicios" element={<ExerciseLibraryPage />} />
+          <Route path="/ranking" element={<RankingPage />} />
+          <Route path="/ranking/:id" element={<RankingDetailPage />} />
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/configuracoes/timer" element={<TimerSettingsPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Router>
+      <Toaster position="top-center" richColors />
     </AuthProvider>
-  </QueryClientProvider>
-);
+  );
+}
 
 export default App;

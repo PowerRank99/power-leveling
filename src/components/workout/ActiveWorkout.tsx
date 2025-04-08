@@ -1,9 +1,11 @@
-import React from 'react';
+
+import React, { useEffect } from 'react';
 import ExerciseHeader from '@/components/workout/ExerciseHeader';
 import ExerciseNotes from '@/components/workout/ExerciseNotes';
 import SetHeader from '@/components/workout/set/SetHeader';
 import SetRow from '@/components/workout/set/SetRow';
 import AddSetButton from '@/components/workout/AddSetButton';
+import RestTimerDisplay from '@/components/workout/timer/RestTimerDisplay';
 import { SetData } from '@/types/workoutTypes';
 
 interface ActiveWorkoutProps {
@@ -17,6 +19,10 @@ interface ActiveWorkoutProps {
   exerciseId: string;
   notes: string;
   onNotesChange: (value: string) => void;
+  onTimerClick?: (exerciseId: string, exerciseName: string) => void;
+  onStartTimer?: (exerciseId: string, exerciseName: string) => void;
+  timerDuration?: number;
+  loadExerciseTimer?: (exerciseId: string) => void;
 }
 
 const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({ 
@@ -29,10 +35,21 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
   onUpdateSet,
   notes,
   onNotesChange,
-  exerciseId
+  exerciseId,
+  onTimerClick,
+  onStartTimer,
+  timerDuration = 90,
+  loadExerciseTimer
 }) => {
   console.log(`ActiveWorkout render: ${exerciseName} with ${sets.length} sets`);
   console.log(`Exercise ID: ${exerciseId}, Exercise Index: ${exerciseIndex}`);
+  
+  // Load exercise timer when mounted
+  useEffect(() => {
+    if (loadExerciseTimer && exerciseId) {
+      loadExerciseTimer(exerciseId);
+    }
+  }, [exerciseId, loadExerciseTimer]);
   
   const handleWeightChange = (index: number, value: string) => {
     console.log(`Weight change for ${exerciseName}, set ${index}: ${value}`);
@@ -46,6 +63,12 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
 
   const handleSetCompletion = (index: number) => {
     console.log(`Set completion toggle for ${exerciseName}, set ${index}`);
+    
+    // Start rest timer when a set is completed
+    if (!sets[index].completed && onStartTimer && exerciseId) {
+      onStartTimer(exerciseId, exerciseName);
+    }
+    
     onCompleteSet(index);
   };
   
@@ -53,10 +76,29 @@ const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
     console.log(`Adding new set to ${exerciseName} (exerciseIndex: ${exerciseIndex})`);
     onAddSet();
   };
+  
+  const handleTimerClick = () => {
+    if (onTimerClick && exerciseId) {
+      onTimerClick(exerciseId, exerciseName);
+    }
+  };
 
   return (
     <div className="px-4 pt-4 pb-6">
-      <ExerciseHeader exerciseName={exerciseName} />
+      <div className="flex justify-between items-center">
+        <ExerciseHeader exerciseName={exerciseName} />
+        
+        {onTimerClick && (
+          <RestTimerDisplay
+            durationSeconds={timerDuration}
+            exerciseId={exerciseId}
+            exerciseName={exerciseName}
+            onTimerClick={handleTimerClick}
+            onStartTimer={onStartTimer || (() => {})}
+          />
+        )}
+      </div>
+      
       <ExerciseNotes notes={notes} onChange={onNotesChange} />
 
       <div className="mb-6">
