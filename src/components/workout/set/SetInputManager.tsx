@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef } from 'react';
-import { SetData } from '@/types/workoutTypes';
+import { SetData } from './types';
 
 interface SetInputManagerProps {
   set: SetData;
@@ -8,32 +8,18 @@ interface SetInputManagerProps {
   onRepsChange: (value: string) => void;
 }
 
-interface SetInputManagerResult {
-  weightValue: string;
-  repsValue: string;
-  handleWeightChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleRepsChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}
-
 /**
- * Custom hook to manage the state and synchronization of input fields
+ * Custom hook to manage set input values and handle synchronization
  */
-const SetInputManager = ({
-  set,
-  onWeightChange,
-  onRepsChange
-}: SetInputManagerProps): SetInputManagerResult => {
-  // Input field state
+const SetInputManager = ({ set, onWeightChange, onRepsChange }: SetInputManagerProps) => {
   const [weightValue, setWeightValue] = useState(set.weight || '0');
   const [repsValue, setRepsValue] = useState(set.reps || '0');
-  
-  // Reference tracking
   const isInitializedRef = useRef(false);
   const setIdRef = useRef(set.id);
-  const previousValuesRef = useRef({weight: set.weight, reps: set.reps});
+  const previousValuesRef = useRef({ weight: set.weight, reps: set.reps });
   const lastUserEditRef = useRef<number | null>(null);
   
-  // Reset state when set ID changes (different set)
+  // Initialize values on first render or when set ID changes
   useEffect(() => {
     if (set.id !== setIdRef.current) {
       console.log(`[SetInputManager] Set ID changed from ${setIdRef.current} to ${set.id}, reinitializing values`);
@@ -43,12 +29,6 @@ const SetInputManager = ({
     }
     
     if (!isInitializedRef.current) {
-      console.log(`[SetInputManager] Initializing values - ID: ${set.id}`);
-      console.log(`[SetInputManager] Input values - weight: "${set.weight}", reps: "${set.reps}"`);
-      if (set.previous) {
-        console.log(`[SetInputManager] Previous values - weight: "${set.previous.weight}", reps: "${set.previous.reps}"`);
-      }
-      
       let newWeightValue = set.weight;
       let newRepsValue = set.reps;
       
@@ -62,16 +42,14 @@ const SetInputManager = ({
           set.previous.reps : '12';
       }
       
-      console.log(`[SetInputManager] Setting initial values - weight: "${newWeightValue}", reps: "${newRepsValue}"`);
-      
       setWeightValue(newWeightValue);
       setRepsValue(newRepsValue);
-      previousValuesRef.current = {weight: newWeightValue, reps: newRepsValue};
+      previousValuesRef.current = { weight: newWeightValue, reps: newRepsValue };
       isInitializedRef.current = true;
     }
   }, [set.id, set.weight, set.reps, set.previous]);
   
-  // Sync with external data changes
+  // Update local state if props change and no recent user edits
   useEffect(() => {
     if (set.weight === previousValuesRef.current.weight && 
         set.reps === previousValuesRef.current.reps) {
@@ -84,32 +62,27 @@ const SetInputManager = ({
       return;
     }
     
-    console.log(`[SetInputManager] Received updated values - weight: "${set.weight}", reps: "${set.reps}"`);
-    
     if (set.weight && set.weight !== '0' && set.weight !== weightValue) {
-      console.log(`[SetInputManager] Updating weight from "${weightValue}" to "${set.weight}"`);
       setWeightValue(set.weight);
       previousValuesRef.current.weight = set.weight;
     }
     
     if (set.reps && set.reps !== '0' && set.reps !== repsValue) {
-      console.log(`[SetInputManager] Updating reps from "${repsValue}" to "${set.reps}"`);
       setRepsValue(set.reps);
       previousValuesRef.current.reps = set.reps;
     }
   }, [set.weight, set.reps, weightValue, repsValue]);
   
-  // Input handlers
-  const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+  // Handle weight change from UI
+  const handleWeightChange = (value: string) => {
     console.log(`[SetInputManager] handleWeightChange - from "${weightValue}" to "${value}"`);
     setWeightValue(value);
     lastUserEditRef.current = Date.now();
     onWeightChange(value);
   };
   
-  const handleRepsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+  // Handle reps change from UI
+  const handleRepsChange = (value: string) => {
     console.log(`[SetInputManager] handleRepsChange - from "${repsValue}" to "${value}"`);
     setRepsValue(value);
     lastUserEditRef.current = Date.now();
