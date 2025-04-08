@@ -99,9 +99,10 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
             groupedSets[set.exercise_id] = [];
           }
           
+          // Ensure all values are properly stored as strings
           groupedSets[set.exercise_id].push({
-            weight: set.weight?.toString() || '0',
-            reps: set.reps?.toString() || '0',
+            weight: set.weight !== null && set.weight !== undefined ? set.weight.toString() : '0',
+            reps: set.reps !== null && set.reps !== undefined ? set.reps.toString() : '0',
             set_order: set.set_order // Store the set order to preserve position
           });
         });
