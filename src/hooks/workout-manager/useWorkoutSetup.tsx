@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workoutTypes';
@@ -115,7 +114,7 @@ export const useWorkoutSetup = (routineId: string, navigate: NavigateFunction) =
         throw new Error("Não foi possível encontrar exercícios para esta rotina");
       }
       
-      // Fetch all workout data with proper set information
+      // Fetch all workout data with proper set information - now awaiting the Promise
       const workoutExercises = await fetchWorkoutExercises(currentWorkoutId, routineExercises);
       
       // Set state with fetched data

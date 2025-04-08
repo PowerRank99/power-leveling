@@ -9,19 +9,19 @@ export class WorkoutDataFormatter {
   /**
    * Formats workout exercises with appropriate sets
    */
-  static formatWorkoutExercises(
+  static async formatWorkoutExercises(
     routineExercises: any[],
     workoutSets: any[] | null,
     previousWorkoutData: Record<string, any[]>
-  ): WorkoutExercise[] {
+  ): Promise<WorkoutExercise[]> {
     // Extract all exercise IDs for bulk fetching
     const exerciseIds = routineExercises.map(re => re.exercises.id);
     
-    // Get exercise history data synchronously (we'll await this later)
-    const exerciseHistoryPromise = ExerciseHistoryService.getMultipleExerciseHistory(exerciseIds);
+    // Get exercise history data
+    const exerciseHistoryData = await ExerciseHistoryService.getMultipleExerciseHistory(exerciseIds);
     
     // Build exercise data with sets
-    return routineExercises.map(async (routineExercise) => {
+    const workoutExercisesPromises = routineExercises.map(routineExercise => {
       const exercise = routineExercise.exercises;
       
       // Filter sets for this exercise and sort them
@@ -31,8 +31,7 @@ export class WorkoutDataFormatter {
       
       console.log(`[WorkoutDataFormatter] Exercise ${exercise.name} has ${exerciseSets.length} sets in database`);
       
-      // Wait for exercise history data
-      const exerciseHistoryData = await exerciseHistoryPromise;
+      // Get history data for this exercise
       const historyData = exerciseHistoryData[exercise.id];
       
       // Get previous workout data for this exercise
@@ -111,5 +110,8 @@ export class WorkoutDataFormatter {
         sets
       };
     });
+    
+    // Wait for all exercise promises to resolve
+    return Promise.all(workoutExercisesPromises);
   }
 }

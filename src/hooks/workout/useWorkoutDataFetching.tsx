@@ -32,7 +32,7 @@ export function useWorkoutDataFetching() {
       // Fetch all workout sets for this workout
       const workoutSets = await WorkoutSetDataService.fetchWorkoutSets(workoutId);
       
-      // Build exercise data with sets
+      // Build exercise data with sets - now properly awaiting the Promise
       const workoutExercises = await WorkoutDataFormatter.formatWorkoutExercises(
         routineExercises,
         workoutSets,

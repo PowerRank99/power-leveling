@@ -39,8 +39,8 @@ export const useFetchWorkoutSets = () => {
     const previousWorkoutData = routineId ? 
       await PreviousWorkoutService.fetchPreviousWorkoutData(routineId, workoutId) : {};
     
-    // Format workout exercises with appropriate sets
-    const workoutExercises = WorkoutDataFormatter.formatWorkoutExercises(
+    // Format workout exercises with appropriate sets - now properly awaiting the Promise
+    const workoutExercises = await WorkoutDataFormatter.formatWorkoutExercises(
       routineExercises,
       workoutSets,
       previousWorkoutData
