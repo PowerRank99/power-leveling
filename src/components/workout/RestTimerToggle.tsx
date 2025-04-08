@@ -21,7 +21,7 @@ const RestTimerToggle: React.FC<RestTimerToggleProps> = ({
     >
       <div className="flex items-center">
         <Clock className="mr-2 h-5 w-5" />
-        Rest Timer: {minutes}min {seconds}s
+        <span className="font-medium">Descanso:</span> <span className="ml-1">{minutes}min {seconds}s</span>
       </div>
       <div className="bg-blue-100 rounded-full p-1">
         <Clock className="h-4 w-4" />

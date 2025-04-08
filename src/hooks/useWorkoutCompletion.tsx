@@ -5,10 +5,10 @@ import { toast } from 'sonner';
 const TIMEOUT_MS = 10000; // 10 seconds timeout for operations
 
 // Custom timeout promise
-const withTimeout = (promise: Promise<any>, ms: number) => {
+const withTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T> => {
   return Promise.race([
     promise,
-    new Promise((_, reject) => 
+    new Promise<T>((_, reject) => 
       setTimeout(() => reject(new Error('Request timed out')), ms)
     )
   ]);
@@ -29,14 +29,14 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
       // Check if the workout is already completed with timeout
       let workoutData;
       try {
-        const response = await withTimeout(
-          supabase
-            .from('workouts')
-            .select('completed_at')
-            .eq('id', workoutId)
-            .single(),
-          TIMEOUT_MS
-        );
+        // Create the query and THEN wrap the promise with timeout
+        const query = supabase
+          .from('workouts')
+          .select('completed_at')
+          .eq('id', workoutId)
+          .single();
+        
+        const response = await withTimeout(query, TIMEOUT_MS);
         
         workoutData = response.data;
         
@@ -55,16 +55,16 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
       
       // Update workout with completion status with timeout
       try {
-        const response = await withTimeout(
-          supabase
-            .from('workouts')
-            .update({
-              completed_at: new Date().toISOString(),
-              duration_seconds: elapsedTime
-            })
-            .eq('id', workoutId),
-          TIMEOUT_MS
-        );
+        // Create the query and THEN wrap the promise with timeout
+        const query = supabase
+          .from('workouts')
+          .update({
+            completed_at: new Date().toISOString(),
+            duration_seconds: elapsedTime
+          })
+          .eq('id', workoutId);
+        
+        const response = await withTimeout(query, TIMEOUT_MS);
         
         if (response.error) {
           throw new Error("Não foi possível salvar o treino finalizado");
