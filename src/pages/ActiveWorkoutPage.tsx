@@ -1,14 +1,11 @@
 
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React from 'react';
+import { useParams } from 'react-router-dom';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { toast } from 'sonner';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
-
-// Import our new WorkoutManager hook
 import { useWorkoutManager } from '@/hooks/useWorkoutManager';
-import { useExerciseRestTimer } from '@/hooks/useExerciseRestTimer';
+import { useWorkoutTimerController } from '@/hooks/useWorkoutTimerController';
 
 // Imported Components
 import WorkoutHeader from '@/components/workout/WorkoutHeader';
@@ -22,7 +19,6 @@ import FloatingTimer from '@/components/workout/timer/FloatingTimer';
 import TimerSelectionModal from '@/components/workout/timer/TimerSelectionModal';
 
 const ActiveWorkoutPage = () => {
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   
@@ -46,10 +42,9 @@ const ActiveWorkoutPage = () => {
     notes
   } = useWorkoutManager(id || '');
   
-  // Use our timer hook
+  // Use our timer controller
   const {
     timerState,
-    timerSettings,
     showDurationSelector,
     setShowDurationSelector,
     startTimer,
@@ -58,64 +53,14 @@ const ActiveWorkoutPage = () => {
     stopTimer,
     addTime,
     formatTime: formatTimerTime,
-    loadExerciseTimerDuration,
-    updateTimerDuration
-  } = useExerciseRestTimer();
-  
-  // State for timer modal
-  const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
-  const [selectedExerciseName, setSelectedExerciseName] = useState<string | null>(null);
-  const [exerciseTimers, setExerciseTimers] = useState<Record<string, number>>({});
-  
-  // Handle timer click for an exercise
-  const handleTimerClick = (exerciseId: string, exerciseName: string) => {
-    setSelectedExerciseId(exerciseId);
-    setSelectedExerciseName(exerciseName);
-    setShowDurationSelector(true);
-  };
-  
-  // Handle timer duration selection
-  const handleTimerDurationSelect = (duration: number) => {
-    if (selectedExerciseId) {
-      // Update the duration in our local state
-      setExerciseTimers(prev => ({
-        ...prev,
-        [selectedExerciseId]: duration
-      }));
-      
-      // Update in the timer state if it's the current timer
-      updateTimerDuration(selectedExerciseId, duration);
-    }
-  };
-  
-  // Load exercise timer duration
-  const handleLoadExerciseTimer = (exerciseId: string) => {
-    if (!user) return;
-    
-    // Fixed: Don't check the return value for truthiness
-    loadExerciseTimerDuration(exerciseId)
-      .then(duration => {
-        if (typeof duration === 'number') {
-          setExerciseTimers(prev => ({
-            ...prev,
-            [exerciseId]: duration
-          }));
-        }
-      })
-      .catch(error => {
-        console.error(`Error loading timer for ${exerciseId}:`, error);
-      });
-  };
-  
-  // Validate route parameters
-  useEffect(() => {
-    if (!id) {
-      toast.error("Erro na rota", {
-        description: "ID da rotina não encontrado na URL."
-      });
-      navigate('/treino');
-    }
-  }, [id, navigate]);
+    selectedExerciseId,
+    selectedExerciseName,
+    exerciseTimers,
+    handleTimerClick,
+    handleTimerDurationSelect,
+    handleLoadExerciseTimer,
+    getExerciseTimerDuration
+  } = useWorkoutTimerController(exercises);
   
   // Loading state
   if (isLoading) {
@@ -161,9 +106,9 @@ const ActiveWorkoutPage = () => {
                 exerciseId={exercise.id}
                 notes={notes[exercise.id] || ''}
                 onNotesChange={(value) => handleNotesChange(exercise.id, value)}
-                onTimerClick={handleTimerClick}
+                onTimerClick={(exerciseId, exerciseName) => handleTimerClick(exerciseId, exerciseName)}
                 onStartTimer={startTimer}
-                timerDuration={exerciseTimers[exercise.id] || 90}
+                timerDuration={getExerciseTimerDuration(exercise.id)}
                 loadExerciseTimer={handleLoadExerciseTimer}
               />
             </Card>
