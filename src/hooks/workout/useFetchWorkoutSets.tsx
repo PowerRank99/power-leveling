@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workout';
 
@@ -115,8 +116,17 @@ export const useFetchWorkoutSets = () => {
                            { weight: '0', reps: '12' };
         
         // If this is a new workout (no saved weight/reps yet), use previous workout values
-        const weight = (set.weight !== null && set.weight !== undefined) ? set.weight.toString() : previousSet.weight;
-        const reps = (set.reps !== null && set.reps !== undefined) ? set.reps.toString() : previousSet.reps;
+        let weight = set.weight?.toString();
+        let reps = set.reps?.toString();
+        
+        // If weight or reps are null/undefined/empty, use values from previous workout
+        if (weight === null || weight === undefined || weight === '') {
+          weight = previousSet.weight;
+        }
+        
+        if (reps === null || reps === undefined || reps === '') {
+          reps = previousSet.reps;
+        }
         
         return {
           id: set.id,
@@ -145,8 +155,8 @@ export const useFetchWorkoutSets = () => {
           
           return {
             id: `default-${exercise.id}-${idx}`,
-            weight: prevSet.weight || '0',
-            reps: prevSet.reps || '12',
+            weight: prevSet.weight,
+            reps: prevSet.reps,
             completed: false,
             previous: { 
               weight: prevSet.weight || '0', 
