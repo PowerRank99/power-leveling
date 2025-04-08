@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Clock } from 'lucide-react';
+import { Clock, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface RestTimerDisplayProps {
@@ -9,6 +9,7 @@ interface RestTimerDisplayProps {
   exerciseName: string;
   onTimerClick: () => void;
   onStartTimer: (exerciseId: string, exerciseName: string) => void;
+  isSaving?: boolean;
 }
 
 const RestTimerDisplay: React.FC<RestTimerDisplayProps> = ({
@@ -16,7 +17,8 @@ const RestTimerDisplay: React.FC<RestTimerDisplayProps> = ({
   exerciseId,
   exerciseName,
   onTimerClick,
-  onStartTimer
+  onStartTimer,
+  isSaving = false
 }) => {
   const formatDuration = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -31,8 +33,13 @@ const RestTimerDisplay: React.FC<RestTimerDisplayProps> = ({
       className="flex items-center gap-1 text-gray-600 hover:text-blue-600"
       onClick={onTimerClick}
       title="Alterar tempo de descanso"
+      disabled={isSaving}
     >
-      <Clock className="w-4 h-4" />
+      {isSaving ? (
+        <Loader2 className="w-4 h-4 animate-spin" />
+      ) : (
+        <Clock className="w-4 h-4" />
+      )}
       <span className="text-xs">
         {formatDuration(durationSeconds)}
       </span>
