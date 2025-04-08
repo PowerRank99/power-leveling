@@ -9,8 +9,3 @@ export interface SetData {
     reps: string;
   };
 }
-
-export interface PreviousSetData {
-  weight: string;
-  reps: string;
-}
