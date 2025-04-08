@@ -39,13 +39,15 @@ export const usePreviousWorkoutData = (routineId: string | null) => {
           .limit(1)
           .single();
           
-        if (workoutError) {
+        if (workoutError || !previousWorkout) {
           console.log("No previous workout found for routine:", routineId);
           return;
         }
         
         // Set previous rest timer settings if available
-        if (previousWorkout && previousWorkout.rest_timer_minutes !== null && previousWorkout.rest_timer_seconds !== null) {
+        if (previousWorkout && 
+            previousWorkout.rest_timer_minutes !== null && 
+            previousWorkout.rest_timer_seconds !== null) {
           setRestTimerSettings({
             minutes: previousWorkout.rest_timer_minutes || 1,
             seconds: previousWorkout.rest_timer_seconds || 30
