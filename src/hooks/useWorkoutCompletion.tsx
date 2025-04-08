@@ -4,13 +4,20 @@ import { toast } from 'sonner';
 
 const TIMEOUT_MS = 10000; // 10 seconds timeout for operations
 
-// Custom timeout promise
-const withTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T> => {
+// Custom timeout promise that works with both regular promises and Supabase queries
+const withTimeout = <T,>(promiseFactory: () => Promise<T>, ms: number): Promise<T> => {
+  let timeoutId: NodeJS.Timeout;
+  
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error('Request timed out')), ms);
+  });
+  
   return Promise.race([
-    promise,
-    new Promise<T>((_, reject) => 
-      setTimeout(() => reject(new Error('Request timed out')), ms)
-    )
+    promiseFactory().then(result => {
+      clearTimeout(timeoutId);
+      return result;
+    }),
+    timeoutPromise
   ]);
 };
 
@@ -29,20 +36,19 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
       // Check if the workout is already completed with timeout
       let workoutData;
       try {
-        // Create the query and THEN wrap the promise with timeout
-        const query = supabase
-          .from('workouts')
-          .select('completed_at')
-          .eq('id', workoutId)
-          .single();
-        
-        const response = await withTimeout(query, TIMEOUT_MS);
-        
-        workoutData = response.data;
-        
-        if (response.error) {
-          throw new Error("Não foi possível verificar o estado do treino");
-        }
+        workoutData = await withTimeout(
+          async () => {
+            const { data, error } = await supabase
+              .from('workouts')
+              .select('completed_at')
+              .eq('id', workoutId)
+              .single();
+              
+            if (error) throw error;
+            return data;
+          },
+          TIMEOUT_MS
+        );
       } catch (checkError) {
         console.error("Error or timeout checking workout status:", checkError);
         throw new Error("Não foi possível verificar o estado do treino");
@@ -55,20 +61,21 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
       
       // Update workout with completion status with timeout
       try {
-        // Create the query and THEN wrap the promise with timeout
-        const query = supabase
-          .from('workouts')
-          .update({
-            completed_at: new Date().toISOString(),
-            duration_seconds: elapsedTime
-          })
-          .eq('id', workoutId);
-        
-        const response = await withTimeout(query, TIMEOUT_MS);
-        
-        if (response.error) {
-          throw new Error("Não foi possível salvar o treino finalizado");
-        }
+        await withTimeout(
+          async () => {
+            const { error } = await supabase
+              .from('workouts')
+              .update({
+                completed_at: new Date().toISOString(),
+                duration_seconds: elapsedTime
+              })
+              .eq('id', workoutId);
+              
+            if (error) throw error;
+            return true;
+          },
+          TIMEOUT_MS
+        );
       } catch (updateError) {
         console.error("Error or timeout finishing workout:", updateError);
         throw new Error("Não foi possível salvar o treino finalizado");

@@ -6,13 +6,20 @@ import { useState } from 'react';
 
 const TIMEOUT_MS = 10000; // 10 seconds timeout for operations
 
-// Custom timeout promise
-const withTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T> => {
+// Custom timeout promise that works with both regular promises and Supabase queries
+const withTimeout = <T,>(promiseFactory: () => Promise<T>, ms: number): Promise<T> => {
+  let timeoutId: NodeJS.Timeout;
+  
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error('Request timed out')), ms);
+  });
+  
   return Promise.race([
-    promise,
-    new Promise<T>((_, reject) => 
-      setTimeout(() => reject(new Error('Request timed out')), ms)
-    )
+    promiseFactory().then(result => {
+      clearTimeout(timeoutId);
+      return result;
+    }),
+    timeoutPromise
   ]);
 };
 
@@ -38,16 +45,21 @@ export const useWorkoutActions = (workoutId: string | null) => {
       
       // Save timer settings first with timeout
       try {
-        // Create the query and THEN wrap the promise with timeout
-        const query = supabase
-          .from('workouts')
-          .update({
-            rest_timer_minutes: restTimerSettings.minutes,
-            rest_timer_seconds: restTimerSettings.seconds
-          } as any)
-          .eq('id', workoutId);
-          
-        await withTimeout(query, TIMEOUT_MS);
+        await withTimeout(
+          async () => {
+            const { error } = await supabase
+              .from('workouts')
+              .update({
+                rest_timer_minutes: restTimerSettings.minutes,
+                rest_timer_seconds: restTimerSettings.seconds
+              } as any)
+              .eq('id', workoutId);
+              
+            if (error) throw error;
+            return true;
+          },
+          TIMEOUT_MS
+        );
       } catch (timerError) {
         console.error("Error or timeout saving timer settings:", timerError);
         // Continue even if timer settings fail - this is non-critical
@@ -93,13 +105,18 @@ export const useWorkoutActions = (workoutId: string | null) => {
       
       // Delete sets with timeout
       try {
-        // Create the query and THEN wrap the promise with timeout
-        const query = supabase
-          .from('workout_sets')
-          .delete()
-          .eq('workout_id', workoutId);
-          
-        await withTimeout(query, TIMEOUT_MS);
+        await withTimeout(
+          async () => {
+            const { error } = await supabase
+              .from('workout_sets')
+              .delete()
+              .eq('workout_id', workoutId);
+              
+            if (error) throw error;
+            return true;
+          },
+          TIMEOUT_MS
+        );
       } catch (setsError) {
         console.error("Error or timeout deleting workout sets:", setsError);
         throw new Error("Erro ao excluir séries do treino");
@@ -107,13 +124,18 @@ export const useWorkoutActions = (workoutId: string | null) => {
       
       // Delete workout with timeout
       try {
-        // Create the query and THEN wrap the promise with timeout
-        const query = supabase
-          .from('workouts')
-          .delete()
-          .eq('id', workoutId);
-          
-        await withTimeout(query, TIMEOUT_MS);
+        await withTimeout(
+          async () => {
+            const { error } = await supabase
+              .from('workouts')
+              .delete()
+              .eq('id', workoutId);
+              
+            if (error) throw error;
+            return true;
+          },
+          TIMEOUT_MS
+        );
       } catch (workoutError) {
         console.error("Error or timeout deleting workout:", workoutError);
         throw new Error("Erro ao excluir treino");
