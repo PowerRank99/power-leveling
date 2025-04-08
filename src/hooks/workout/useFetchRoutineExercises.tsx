@@ -8,7 +8,7 @@ export const useFetchRoutineExercises = () => {
    */
   const fetchRoutineExerciseData = async (routineId: string) => {
     if (!routineId) {
-      throw new Error("Routine ID is required");
+      throw new Error("ID da rotina não fornecido");
     }
 
     console.log("Fetching routine exercises for routine ID:", routineId);
@@ -30,13 +30,16 @@ export const useFetchRoutineExercises = () => {
     
     if (exercisesError) {
       console.error("Error fetching routine exercises:", exercisesError);
-      throw exercisesError;
+      throw new Error(`Erro ao buscar exercícios: ${exercisesError.message}`);
     }
     
+    // Check if we have valid exercises data
     if (!routineExercises || routineExercises.length === 0) {
       const errorMessage = "Esta rotina não possui exercícios";
       console.error(errorMessage);
-      throw new Error(errorMessage);
+      
+      // Return empty array instead of throwing error to allow better UI handling
+      return [];
     }
     
     return routineExercises;

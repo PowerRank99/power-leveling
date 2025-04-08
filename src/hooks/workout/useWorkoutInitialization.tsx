@@ -35,7 +35,12 @@ export const useWorkoutInitialization = (routineId: string) => {
       console.log("Setting up workout for routine:", routineId);
       const { workoutExercises, workoutId: newWorkoutId } = await fetchRoutineExercises(routineId);
       
-      if (workoutExercises && workoutExercises.length > 0 && newWorkoutId) {
+      // Check if we have valid exercises
+      if (!workoutExercises || workoutExercises.length === 0) {
+        throw new Error("Esta rotina não possui exercícios. Adicione exercícios à rotina antes de iniciar o treino.");
+      }
+      
+      if (newWorkoutId) {
         console.log("Workout setup successful with", workoutExercises.length, "exercises");
         setExercises(workoutExercises);
         setWorkoutId(newWorkoutId);
@@ -47,10 +52,9 @@ export const useWorkoutInitialization = (routineId: string) => {
       console.error("Error in setupWorkout:", error);
       setLoadError(error.message || "Erro ao iniciar treino");
       
-      // Only show one toast message
+      // Only show one toast message with a unique ID to prevent duplicates
       toast.error("Erro ao carregar treino", {
         description: error.message || "Não foi possível iniciar seu treino. Tente novamente.",
-        // Prevent duplicate toasts
         id: `workout-error-${routineId}`
       });
       
