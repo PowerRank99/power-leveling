@@ -1,10 +1,11 @@
+
 import React from 'react';
 import ExerciseHeader from '@/components/workout/ExerciseHeader';
 import ExerciseNotes from '@/components/workout/ExerciseNotes';
 import SetHeader from '@/components/workout/SetHeader';
 import SetRow from '@/components/workout/set/SetRow';
 import AddSetButton from '@/components/workout/AddSetButton';
-import { SetData } from '@/components/workout/set/types';
+import { SetData } from '@/types/workoutTypes';
 
 interface ActiveWorkoutProps {
   exerciseName: string;

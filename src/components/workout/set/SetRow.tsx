@@ -1,20 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { SetData } from '@/components/workout/set/types';
-import SetRowContainer from './SetRowContainer';
+import { SetData } from '@/types/workoutTypes';
+import { Check, Trash } from 'lucide-react';
 
 interface SetRowProps {
   index: number;
-  set: {
-    id: string;
-    weight: string;
-    reps: string;
-    completed: boolean;
-    previous?: {
-      weight: string;
-      reps: string;
-    };
-  };
+  set: SetData;
   onComplete: () => void;
   onRemove: () => void;
   onWeightChange: (value: string) => void;
@@ -31,125 +22,181 @@ const SetRow: React.FC<SetRowProps> = ({
   onRepsChange,
   showRemoveButton
 }) => {
-  // Track if values have been manually edited by the user
-  const [weightValue, setWeightValue] = useState(set.weight || '0');
-  const [repsValue, setRepsValue] = useState(set.reps || '0');
-  const isInitializedRef = useRef(false);
-  const setIdRef = useRef(set.id);
-  const previousValuesRef = useRef({weight: set.weight, reps: set.reps});
-  // Increase the protection time to avoid overrides from state changes
+  // State for UI interaction
+  const [swiping, setSwiping] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [offsetX, setOffsetX] = useState(0);
+  
+  // State for input fields
+  const [weightValue, setWeightValue] = useState(set.weight);
+  const [repsValue, setRepsValue] = useState(set.reps);
+  
+  // Refs to track state
   const lastUserEditRef = useRef<number | null>(null);
+  const isInitializedRef = useRef(false);
   
-  // Debug log for tracking prop updates
+  // Update local state when props change
   useEffect(() => {
-    console.log(`[SetRow ${index}] Received props update - ID: ${set.id}, Weight: "${set.weight}", Reps: "${set.reps}"`);
-    if (set.previous) {
-      console.log(`[SetRow ${index}] Previous values - Weight: "${set.previous.weight}", Reps: "${set.previous.reps}"`);
-    }
-  }, [set, index]);
-  
-  // Handle set ID changes and initialization
-  useEffect(() => {
-    // Reset on ID change (new set)
-    if (set.id !== setIdRef.current) {
-      console.log(`[SetRow] Set ID changed from ${setIdRef.current} to ${set.id}, reinitializing values`);
-      setIdRef.current = set.id;
-      isInitializedRef.current = false;
-      lastUserEditRef.current = null;
+    // Skip if user recently edited (within 10 seconds)
+    const now = Date.now();
+    if (lastUserEditRef.current && now - lastUserEditRef.current < 10000) {
+      return;
     }
     
-    // Initialize values on first render or ID change
+    // Only set values if they're meaningful
+    if (set.weight && set.weight !== '0' && weightValue !== set.weight) {
+      setWeightValue(set.weight);
+    }
+    
+    if (set.reps && set.reps !== '0' && repsValue !== set.reps) {
+      setRepsValue(set.reps);
+    }
+    
+    // Mark as initialized
+    isInitializedRef.current = true;
+  }, [set.weight, set.reps, weightValue, repsValue]);
+  
+  // Initialize with proper values on first render
+  useEffect(() => {
     if (!isInitializedRef.current) {
-      console.log(`[SetRow ${index}] Initializing values - ID: ${set.id}`);
-      console.log(`[SetRow ${index}] Input values - weight: "${set.weight}", reps: "${set.reps}"`);
+      // Set reasonable defaults using previous values as fallback
+      const initialWeight = set.weight && set.weight !== '0' ? 
+        set.weight : (set.previous?.weight || '0');
       
-      // Set initial values with a more robust fallback strategy
-      let newWeightValue = set.weight;
-      let newRepsValue = set.reps;
+      const initialReps = set.reps && set.reps !== '0' ? 
+        set.reps : (set.previous?.reps || '12');
       
-      // Only use previous values as fallback if current values are empty
-      if (!newWeightValue || newWeightValue === '0') {
-        newWeightValue = set.previous?.weight && set.previous.weight !== '0' ? 
-          set.previous.weight : '0';
-      }
-      
-      if (!newRepsValue || newRepsValue === '0') {
-        newRepsValue = set.previous?.reps && set.previous.reps !== '0' ? 
-          set.previous.reps : '12';
-      }
-      
-      console.log(`[SetRow ${index}] Setting initial values - weight: "${newWeightValue}", reps: "${newRepsValue}"`);
-      
-      setWeightValue(newWeightValue);
-      setRepsValue(newRepsValue);
-      previousValuesRef.current = {weight: newWeightValue, reps: newRepsValue};
+      setWeightValue(initialWeight);
+      setRepsValue(initialReps);
       isInitializedRef.current = true;
     }
-  }, [set.id, index, set.weight, set.reps, set.previous]);
+  }, [set]);
   
-  // Handle prop updates without overriding user input
-  useEffect(() => {
-    // Skip if values haven't changed
-    if (set.weight === previousValuesRef.current.weight && 
-        set.reps === previousValuesRef.current.reps) {
-      return;
-    }
-    
-    // Important: Extended protection time after user edit to prevent overrides
-    const now = Date.now();
-    if (lastUserEditRef.current && now - lastUserEditRef.current < 60000) { // 60 seconds protection
-      console.log(`[SetRow ${index}] Ignoring props update as user recently edited values (${Math.round((now - lastUserEditRef.current)/1000)}s ago)`);
-      return;
-    }
-    
-    console.log(`[SetRow ${index}] Received updated values - weight: "${set.weight}", reps: "${set.reps}"`);
-    
-    // Only update if we have meaningful values (ignore zeros and empty strings)
-    if (set.weight && set.weight !== '0' && set.weight !== weightValue) {
-      console.log(`[SetRow ${index}] Updating weight from "${weightValue}" to "${set.weight}"`);
-      setWeightValue(set.weight);
-      previousValuesRef.current.weight = set.weight;
-    }
-    
-    if (set.reps && set.reps !== '0' && set.reps !== repsValue) {
-      console.log(`[SetRow ${index}] Updating reps from "${repsValue}" to "${set.reps}"`);
-      setRepsValue(set.reps);
-      previousValuesRef.current.reps = set.reps;
-    }
-  }, [set.weight, set.reps, weightValue, repsValue, index]);
-  
-  // Handle local state changes with user edits
-  const handleWeightChange = (value: string) => {
-    console.log(`[SetRow ${index}] handleWeightChange - from "${weightValue}" to "${value}"`);
+  // Handle weight input change
+  const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
     setWeightValue(value);
     lastUserEditRef.current = Date.now();
     onWeightChange(value);
   };
   
-  const handleRepsChange = (value: string) => {
-    console.log(`[SetRow ${index}] handleRepsChange - from "${repsValue}" to "${value}"`);
+  // Handle reps input change
+  const handleRepsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
     setRepsValue(value);
     lastUserEditRef.current = Date.now();
     onRepsChange(value);
   };
   
-  // Use our local state for the current data
-  const currentSetData: SetData = {
-    ...set,
-    weight: weightValue,
-    reps: repsValue
+  // Touch gesture handlers for swipe-to-delete
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setStartX(e.touches[0].clientX);
+    setSwiping(true);
   };
-
+  
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!swiping || !showRemoveButton) return;
+    
+    const currentX = e.touches[0].clientX;
+    const diff = startX - currentX;
+    
+    if (diff > 0) {
+      setOffsetX(Math.min(80, diff));
+    } else {
+      setOffsetX(0);
+    }
+  };
+  
+  const handleTouchEnd = () => {
+    setSwiping(false);
+    
+    if (offsetX > 40) {
+      setOffsetX(80);
+    } else {
+      setOffsetX(0);
+    }
+  };
+  
+  const resetSwipe = () => {
+    setOffsetX(0);
+  };
+  
+  const handleDeleteClick = () => {
+    onRemove();
+    resetSwipe();
+  };
+  
+  // Row styling based on completion status
+  const isCompleted = set.completed;
+  const rowClass = isCompleted ? "bg-gray-50" : "bg-white";
+  
   return (
-    <SetRowContainer
-      index={index}
-      set={currentSetData}
-      onComplete={onComplete}
-      onRemove={onRemove}
-      onWeightChange={handleWeightChange}
-      onRepsChange={handleRepsChange}
-      showRemoveButton={showRemoveButton}
-    />
+    <div className="relative overflow-hidden">
+      <div 
+        className={`grid grid-cols-12 gap-2 items-center py-4 ${rowClass} border-b border-gray-100`}
+        style={{ 
+          transform: `translateX(-${offsetX}px)`,
+          transition: swiping ? 'none' : 'transform 0.3s ease'
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div className="col-span-1 font-bold text-gray-800">{index + 1}</div>
+        <div className="col-span-3 text-gray-500 text-sm">
+          {set.previous ? `${set.previous.weight}kg × ${set.previous.reps}` : '-'}
+        </div>
+        
+        <div className="col-span-3">
+          <input
+            type="text"
+            inputMode="decimal"
+            className="w-full border border-gray-200 rounded p-2 text-center"
+            value={weightValue}
+            onChange={handleWeightChange}
+          />
+        </div>
+        
+        <div className="col-span-3">
+          <input
+            type="text"
+            inputMode="numeric"
+            className="w-full border border-gray-200 rounded p-2 text-center"
+            value={repsValue}
+            onChange={handleRepsChange}
+          />
+        </div>
+        
+        <div className="col-span-2 flex justify-center gap-2">
+          <button
+            onClick={onComplete}
+            className={`w-8 h-8 rounded-md flex items-center justify-center ${
+              isCompleted
+                ? 'bg-green-100 text-green-500'
+                : 'border border-gray-300 bg-white'
+            }`}
+          >
+            {isCompleted && <Check className="w-4 h-4" />}
+          </button>
+        </div>
+      </div>
+      
+      {showRemoveButton && (
+        <div 
+          className="absolute top-0 right-0 h-full flex items-center bg-red-500 text-white"
+          style={{ 
+            width: '80px', 
+            transform: offsetX > 0 ? 'translateX(0)' : 'translateX(80px)',
+            transition: swiping ? 'none' : 'transform 0.3s ease'
+          }}
+          onClick={handleDeleteClick}
+        >
+          <div className="flex items-center justify-center w-full">
+            <Trash className="w-5 h-5" />
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
