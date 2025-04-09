@@ -18,7 +18,7 @@ const ExerciseLibraryPage = () => {
   const { toast } = useToast();
   
   const categories = [
-    'Todos', 'Peito', 'Costas', 'Pernas', 'Ombros', 'Braços', 'Abdômen'
+    'Todos', 'Peito', 'Costas', 'Pernas', 'Ombros', 'Bíceps', 'Tríceps', 'Abdômen'
   ];
   
   // Normalize text for comparison by removing accents and converting to lowercase
