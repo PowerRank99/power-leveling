@@ -1,6 +1,5 @@
 
 import React, { ReactNode } from 'react';
-import { LucideIcon } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
 interface EmptyStateProps {
@@ -19,7 +18,10 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   action 
 }) => {
   // Render the icon dynamically if provided
-  const IconComponent = icon ? (LucideIcons as Record<string, LucideIcon>)[icon] : null;
+  const IconComponent = icon ? 
+    // Cast to unknown first, then to the desired type to avoid TypeScript error
+    (LucideIcons as unknown as Record<string, React.ComponentType<any>>)[icon] 
+    : null;
   
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 mb-4 border border-gray-200 text-center">
