@@ -116,16 +116,15 @@ export class XPBonusService {
       const { data: bonuses } = await supabase
         .from('class_bonuses')
         .select('bonus_type, bonus_value, description')
-        .eq('class_name', userClass);
+        .eq('class_name', userClass)
+        .eq('bonus_type', 'workout_completion');
         
       if (bonuses && bonuses.length > 0) {
-        // Apply class-specific bonuses
-        const completionBonus = bonuses.find(b => b.bonus_type === 'workout_completion');
-        if (completionBonus) {
-          const bonusXP = Math.floor(baseXP * completionBonus.bonus_value);
-          xpBreakdown.classBonus = bonusXP;
-          console.log(`Applied class bonus (${completionBonus.description}): +${bonusXP} XP`);
-        }
+        // Apply completion bonus (general class bonus)
+        const completionBonus = bonuses[0];
+        const bonusXP = Math.floor(baseXP * completionBonus.bonus_value);
+        xpBreakdown.classBonus = bonusXP;
+        console.log(`Applied class bonus (${completionBonus.description}): +${bonusXP} XP`);
       }
     } catch (error) {
       console.error('Error applying class bonuses:', error);

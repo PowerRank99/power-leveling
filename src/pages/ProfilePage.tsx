@@ -1,10 +1,14 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Edit3, LogOut, Dumbbell, Shield, Flame, Award } from 'lucide-react';
+import { 
+  Edit3, LogOut, Dumbbell, Shield,
+  Flame, Award, Sword, Wind, Sparkles
+} from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
 import BottomNavBar from '@/components/navigation/BottomNavBar';
 import { useAuth } from '@/hooks/useAuth';
+import { useClass } from '@/contexts/ClassContext';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import ProfileHeader from '@/components/profile/ProfileHeader';
@@ -12,11 +16,39 @@ import ProfileProgressSection from '@/components/profile/ProfileProgressSection'
 import StreakAchievementsSection from '@/components/profile/StreakAchievementsSection';
 import ClassSection from '@/components/profile/ClassSection';
 import RecentAchievementsList from '@/components/profile/RecentAchievementsList';
+import { ClassService } from '@/services/rpg/ClassService';
+import { supabase } from '@/integrations/supabase/client';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
+  const { userClass } = useClass();
   const { toast } = useToast();
+  const [classBonuses, setClassBonuses] = useState<{description: string; value: string}[]>([]);
+  
+  useEffect(() => {
+    const fetchClassBonuses = async () => {
+      if (userClass) {
+        try {
+          const { data } = await supabase
+            .from('class_bonuses')
+            .select('description, bonus_value')
+            .eq('class_name', userClass);
+            
+          if (data) {
+            setClassBonuses(data.map(bonus => ({
+              description: bonus.description,
+              value: `+${Math.round(bonus.bonus_value * 100)}%`
+            })));
+          }
+        } catch (error) {
+          console.error('Error fetching class bonuses:', error);
+        }
+      }
+    };
+    
+    fetchClassBonuses();
+  }, [userClass]);
   
   const handleSignOut = async () => {
     try {
@@ -39,32 +71,36 @@ const ProfilePage = () => {
     navigate('/perfil/editar');
   };
   
-  // Mock RPG data (would come from profile/state in real app)
+  // Get class icon based on selected class
+  const getClassIcon = () => {
+    if (!userClass) return <Shield className="w-5 h-5 text-white" />;
+    
+    switch (userClass) {
+      case 'Guerreiro': return <Sword className="w-5 h-5 text-white" />;
+      case 'Monge': return <Dumbbell className="w-5 h-5 text-white" />;
+      case 'Ninja': return <Wind className="w-5 h-5 text-white" />;
+      case 'Bruxo': return <Sparkles className="w-5 h-5 text-white" />;
+      case 'Paladino': return <Shield className="w-5 h-5 text-white" />;
+      default: return <Shield className="w-5 h-5 text-white" />;
+    }
+  };
+  
+  // RPG data 
   const rpgData = {
-    level: profile?.level || 26,
-    currentXP: 2450,
-    nextLevelXP: 3000,
-    dailyXP: 150,
+    level: profile?.level || 1,
+    currentXP: profile?.xp || 0,
+    nextLevelXP: (profile?.level || 1) * 100,
+    dailyXP: 150, // Mock data - could be calculated based on today's workouts
     dailyXPCap: 300,
-    streak: 15,
+    streak: profile?.streak || 0,
     achievements: {
-      unlocked: 24,
-      total: 50
+      unlocked: profile?.achievements_count || 0,
+      total: 50 // Mock total achievements
     },
-    className: 'Guerreiro',
-    classDescription: 'Especialista em Força',
-    lastActivity: '8h 45min',
+    className: userClass || 'Sem Classe',
+    classDescription: ClassService.getClassDescription(userClass),
+    lastActivity: profile?.last_workout_at ? '8h 45min' : 'Nunca',
     xpGain: '+25 EXP',
-    bonuses: [
-      {
-        description: 'EXP em exercícios compostos agachamento, levantamento terra, supino',
-        value: '+20%'
-      },
-      {
-        description: 'EXP em todos os exercícios de força',
-        value: '+10%'
-      }
-    ]
   };
   
   // Mock recent achievements
@@ -126,7 +162,7 @@ const ProfilePage = () => {
           username={userName2}
           level={rpgData.level}
           className={rpgData.className}
-          workoutsCount={profile?.workouts_count || 247}
+          workoutsCount={profile?.workouts_count || 0}
           ranking={42}
           currentXP={rpgData.currentXP}
           nextLevelXP={rpgData.nextLevelXP}
@@ -148,8 +184,8 @@ const ProfilePage = () => {
         <ClassSection 
           className={rpgData.className}
           classDescription={rpgData.classDescription}
-          icon={<Shield className="w-5 h-5 text-white" />}
-          bonuses={rpgData.bonuses}
+          icon={getClassIcon()}
+          bonuses={classBonuses}
         />
         
         <div className="mb-5">

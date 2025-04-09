@@ -1,6 +1,7 @@
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/hooks/useAuth';
+import { ClassProvider } from '@/contexts/ClassContext';
 import { Toaster } from 'sonner';
 
 // Pages
@@ -21,33 +22,37 @@ import TimerSettingsPage from './pages/TimerSettingsPage';
 import GuildQuestsPage from './pages/GuildQuestsPage';
 import CreateQuestPage from './pages/CreateQuestPage';
 import AchievementPopup from './components/profile/AchievementPopup';
+import ClassSelectionPage from './pages/ClassSelectionPage';
 
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/index" element={<Index />} />
-          <Route path="/perfil" element={<ProfilePage />} />
-          <Route path="/perfil/editar" element={<EditProfilePage />} />
-          <Route path="/auth" element={<AuthPage />} />
-          <Route path="/treino" element={<WorkoutPage />} />
-          <Route path="/treino/ativo/:id" element={<ActiveWorkoutPage />} />
-          <Route path="/treino/criar" element={<CreateRoutinePage />} />
-          <Route path="/exercicios" element={<ExerciseLibraryPage />} />
-          <Route path="/guilds" element={<GuildsListPage />} />
-          <Route path="/guilds/:id/leaderboard" element={<GuildLeaderboardPage />} />
-          <Route path="/guilds/:id/quests" element={<GuildQuestsPage />} />
-          <Route path="/guilds/:id/quests/criar" element={<CreateQuestPage />} />
-          <Route path="/admin" element={<AdminPage />} />
-          <Route path="/configuracoes/timer" element={<TimerSettingsPage />} />
-          <Route path="/conquistas" element={<AchievementsPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Router>
-      <Toaster position="top-center" richColors />
-      <AchievementPopup />
+      <ClassProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/index" element={<Index />} />
+            <Route path="/perfil" element={<ProfilePage />} />
+            <Route path="/perfil/editar" element={<EditProfilePage />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/treino" element={<WorkoutPage />} />
+            <Route path="/treino/ativo/:id" element={<ActiveWorkoutPage />} />
+            <Route path="/treino/criar" element={<CreateRoutinePage />} />
+            <Route path="/exercicios" element={<ExerciseLibraryPage />} />
+            <Route path="/guilds" element={<GuildsListPage />} />
+            <Route path="/guilds/:id/leaderboard" element={<GuildLeaderboardPage />} />
+            <Route path="/guilds/:id/quests" element={<GuildQuestsPage />} />
+            <Route path="/guilds/:id/quests/criar" element={<CreateQuestPage />} />
+            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/configuracoes/timer" element={<TimerSettingsPage />} />
+            <Route path="/conquistas" element={<AchievementsPage />} />
+            <Route path="/classes" element={<ClassSelectionPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Router>
+        <Toaster position="top-center" richColors />
+        <AchievementPopup />
+      </ClassProvider>
     </AuthProvider>
   );
 }
