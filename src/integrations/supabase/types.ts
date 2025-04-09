@@ -746,6 +746,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      insert_personal_record: {
+        Args: {
+          p_user_id: string
+          p_exercise_id: string
+          p_weight: number
+          p_previous_weight: number
+        }
+        Returns: undefined
+      }
       migrate_exercise_history: {
         Args: Record<PropertyKey, never>
         Returns: number

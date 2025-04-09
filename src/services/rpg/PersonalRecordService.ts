@@ -22,7 +22,7 @@ export class PersonalRecordService {
     previousWeight: number
   ): Promise<void> {
     try {
-      // Insert the personal record using raw SQL to avoid type issues
+      // Insert the personal record using the RPC function
       const { error } = await supabase.rpc('insert_personal_record', {
         p_user_id: userId,
         p_exercise_id: exerciseId,
