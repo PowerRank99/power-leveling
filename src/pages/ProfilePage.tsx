@@ -1,16 +1,16 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Edit3, LogOut, Dumbbell, Award, Shield, Clock, Flame, ChevronRight } from 'lucide-react';
+import { Edit3, LogOut, Dumbbell, Shield, Flame, Award } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
 import BottomNavBar from '@/components/navigation/BottomNavBar';
-import Trophy from '@/components/icons/Trophy';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import XPProgressBar from '@/components/profile/XPProgressBar';
-import StatCard from '@/components/profile/StatCard';
-import ClassCard from '@/components/profile/ClassCard';
+import ProfileHeader from '@/components/profile/ProfileHeader';
+import ProfileProgressSection from '@/components/profile/ProfileProgressSection';
+import StreakAchievementsSection from '@/components/profile/StreakAchievementsSection';
+import ClassSection from '@/components/profile/ClassSection';
 import RecentAchievementsList from '@/components/profile/RecentAchievementsList';
 
 const ProfilePage = () => {
@@ -89,6 +89,9 @@ const ProfilePage = () => {
   
   // Default avatar if user doesn't have one
   const userAvatar = profile?.avatar_url || "/lovable-uploads/c6066df0-70c1-48cf-b017-126e8f7e850a.png";
+  const userName = profile?.name || user?.email || 'User';
+  const userName1 = userName.split('@')[0] || 'user';
+  const userName2 = userName1.toLowerCase().replace(/\s/g, '');
   
   return (
     <div className="pb-20 min-h-screen bg-gray-50">
@@ -116,125 +119,39 @@ const ProfilePage = () => {
         }
       />
       
-      {/* User Profile Header */}
-      <div className="bg-white p-6 relative">
-        <div className="flex items-center">
-          <div className="relative">
-            <div className="w-24 h-24 rounded-lg overflow-hidden">
-              <img src={userAvatar} alt="User Avatar" className="w-full h-full object-cover" />
-            </div>
-            
-            {/* Level Badge */}
-            <div className="absolute -bottom-2 -right-2 bg-fitblue text-white text-xs font-bold px-2 py-1 rounded-full flex items-center">
-              <Award className="w-3 h-3 mr-1" /> {rpgData.level}
-            </div>
-          </div>
-          
-          <div className="ml-4 flex-1">
-            <div className="flex justify-between items-start">
-              <div>
-                <h2 className="text-xl font-bold">{profile?.name || user?.email}</h2>
-                <p className="text-gray-600">@{profile?.name?.toLowerCase().replace(/\s/g, '') || 'user'}</p>
-              </div>
-            </div>
-            
-            {/* Class Button */}
-            <div className="mt-2">
-              <Button 
-                className="bg-fitblue text-white rounded-full text-sm flex items-center gap-1 px-3 py-1 h-auto"
-              >
-                <Trophy className="w-4 h-4" /> {rpgData.className}
-              </Button>
-            </div>
-          </div>
-        </div>
-        
-        {/* Stats */}
-        <div className="flex justify-between mt-6 px-4 py-3 bg-gray-50 rounded-lg">
-          <StatCard 
-            icon={<Dumbbell className="w-5 h-5 text-fitblue" />}
-            value={profile?.workouts_count || 247}
-            label="Treinos"
-          />
-          
-          <div className="h-10 w-px bg-gray-200 my-auto"></div>
-          
-          <StatCard 
-            icon={<Trophy className="w-5 h-5 text-fitpurple" />}
-            value={`#${42}`}
-            label="Ranking"
-          />
-        </div>
-      </div>
+      <ProfileHeader 
+        avatar={userAvatar}
+        name={userName}
+        username={userName2}
+        level={rpgData.level}
+        className={rpgData.className}
+        workoutsCount={profile?.workouts_count || 247}
+        ranking={42}
+      />
       
-      {/* XP Progress Section */}
-      <div className="bg-white p-4 mt-2">
-        <XPProgressBar
-          current={rpgData.currentXP}
-          total={rpgData.nextLevelXP}
-          label={`Nível ${rpgData.level}`}
-        />
-        
-        <XPProgressBar
-          current={rpgData.dailyXP}
-          total={rpgData.dailyXPCap}
-          label="XP do Dia"
-          className="bg-fitgreen"
-        />
-        
-        <div className="flex justify-between text-sm mt-2">
-          <div className="flex items-center text-gray-500">
-            <Clock className="w-4 h-4 mr-1" /> 
-            {rpgData.lastActivity}
-          </div>
-          
-          <div className="text-fitgreen font-medium">
-            {rpgData.xpGain}
-          </div>
-        </div>
-      </div>
+      <ProfileProgressSection 
+        level={rpgData.level}
+        currentXP={rpgData.currentXP}
+        nextLevelXP={rpgData.nextLevelXP}
+        dailyXP={rpgData.dailyXP}
+        dailyXPCap={rpgData.dailyXPCap}
+        lastActivity={rpgData.lastActivity}
+        xpGain={rpgData.xpGain}
+      />
       
-      {/* Streak & Achievements Summary */}
-      <div className="bg-white p-4 mt-2 flex">
-        <div className="flex-1 flex items-center justify-center p-3 border-r border-gray-100">
-          <div className="bg-orange-100 p-2 rounded-full mr-3">
-            <Flame className="text-orange-500 w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-xs text-gray-500">Streak</p>
-            <p className="font-bold text-lg">{rpgData.streak} dias</p>
-          </div>
-        </div>
-        
-        <div className="flex-1 flex items-center justify-center p-3">
-          <div className="bg-fitpurple-100 p-2 rounded-full mr-3">
-            <Award className="text-fitpurple w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-xs text-gray-500">Conquistas</p>
-            <p className="font-bold text-lg">{rpgData.achievements.unlocked}/{rpgData.achievements.total}</p>
-          </div>
-        </div>
-      </div>
+      <StreakAchievementsSection 
+        streak={rpgData.streak}
+        achievementsUnlocked={rpgData.achievements.unlocked}
+        achievementsTotal={rpgData.achievements.total}
+      />
       
-      {/* Class Section */}
-      <div className="bg-white p-4 mt-2">
-        <div className="flex justify-between items-center mb-2">
-          <h3 className="font-bold text-lg">Classe</h3>
-          <Button variant="ghost" className="text-fitblue flex items-center text-sm h-auto p-0" onClick={() => navigate('/classes')}>
-            Trocar Classe <ChevronRight className="w-4 h-4" />
-          </Button>
-        </div>
-        
-        <ClassCard 
-          className={rpgData.className}
-          description={rpgData.classDescription}
-          icon={<Shield className="w-5 h-5 text-white" />}
-          bonuses={rpgData.bonuses}
-        />
-      </div>
+      <ClassSection 
+        className={rpgData.className}
+        classDescription={rpgData.classDescription}
+        icon={<Shield className="w-5 h-5 text-white" />}
+        bonuses={rpgData.bonuses}
+      />
       
-      {/* Recent Achievements */}
       <div className="bg-white p-4 mt-2">
         <RecentAchievementsList achievements={recentAchievements} />
       </div>
