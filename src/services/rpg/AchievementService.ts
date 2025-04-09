@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { achievementPopupStore } from '@/stores/achievementPopupStore';
 
 export class AchievementService {
   /**
@@ -50,18 +51,23 @@ export class AchievementService {
           ? JSON.parse(achievement.requirements) 
           : achievement.requirements;
         
+        let achievementUnlocked = false;
+        
         // Check workout count achievements
         if (requirements && 
             'workouts_count' in requirements && 
             profile.workouts_count >= requirements.workouts_count) {
-          await this.awardAchievement(userId, achievement.id, achievement.name, achievement.xp_reward);
+          await this.awardAchievement(userId, achievement.id, achievement.name, achievement.description, achievement.xp_reward);
+          achievementUnlocked = true;
         }
         
         // Check streak achievements
-        if (requirements && 
+        if (!achievementUnlocked && 
+            requirements && 
             'streak_days' in requirements && 
             profile.streak >= requirements.streak_days) {
-          await this.awardAchievement(userId, achievement.id, achievement.name, achievement.xp_reward);
+          await this.awardAchievement(userId, achievement.id, achievement.name, achievement.description, achievement.xp_reward);
+          achievementUnlocked = true;
         }
         
         // Additional achievement types can be added here
@@ -75,6 +81,7 @@ export class AchievementService {
     userId: string, 
     achievementId: string, 
     achievementName: string,
+    achievementDescription: string,
     xpReward: number
   ): Promise<void> {
     try {
@@ -104,8 +111,16 @@ export class AchievementService {
           xp_amount: xpReward
         }
       );
+      
+      // Show achievement popup
+      achievementPopupStore.showAchievement({
+        title: achievementName,
+        description: achievementDescription,
+        xpReward: xpReward,
+        bonusText: "Excede o limite diário"
+      });
         
-      // Notify user
+      // Also show toast notification
       toast.success(`🏆 Conquista Desbloqueada!`, {
         description: `${achievementName} (+${xpReward} XP)`
       });

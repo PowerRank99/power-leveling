@@ -20,6 +20,7 @@ import AdminPage from './pages/AdminPage';
 import TimerSettingsPage from './pages/TimerSettingsPage';
 import GuildQuestsPage from './pages/GuildQuestsPage';
 import CreateQuestPage from './pages/CreateQuestPage';
+import AchievementPopup from './components/profile/AchievementPopup';
 
 function App() {
   return (
@@ -46,6 +47,7 @@ function App() {
         </Routes>
       </Router>
       <Toaster position="top-center" richColors />
+      <AchievementPopup />
     </AuthProvider>
   );
 }
