@@ -25,9 +25,9 @@ export const useCategoryManagement = () => {
       // Extract unique values and count occurrences
       const valueCounts: Record<string, number> = {};
       
-      // Fixed: Explicitly casting data to any[] to avoid excessive type instantiation
-      const typedData = data as any[];
-      typedData.forEach((item) => {
+      // Using type assertion with a simple array type to avoid deep type instantiation
+      const items = (data || []) as Array<Record<string, any>>;
+      items.forEach((item) => {
         const value = item[columnName] || 'Não especificado';
         valueCounts[value] = (valueCounts[value] || 0) + 1;
       });
