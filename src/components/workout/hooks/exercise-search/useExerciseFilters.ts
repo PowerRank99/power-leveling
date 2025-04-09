@@ -1,6 +1,6 @@
 
 import { Exercise } from '../../types/Exercise';
-import { MUSCLE_GROUP_ALIASES, EQUIPMENT_TYPE_ALIASES } from '../../constants/exerciseFilters';
+import { MUSCLE_GROUP_ALIASES, EQUIPMENT_TYPE_ALIASES, EXERCISE_CATEGORY_MAP } from '../../constants/exerciseFilters';
 
 // Normalize text for comparison by removing accents and converting to lowercase
 export const normalizeText = (text: string | null | undefined): string => {
@@ -26,8 +26,21 @@ export const matchesFilter = (exercise: Exercise, filterType: 'muscle_group' | '
     return true;
   }
   
-  // Check aliases for muscle groups
+  // Check aliases based on filter type
   if (filterType === 'muscle_group') {
+    // Check exercise name for category-specific keywords (especially for Cardio and Esportes)
+    if (filterValue === 'Cardio' || filterValue === 'Esportes') {
+      const normalizedName = normalizeText(exercise.name);
+      
+      // Look for keywords in exercise name that match the category
+      for (const [keyword, category] of Object.entries(EXERCISE_CATEGORY_MAP)) {
+        if (normalizedName.includes(normalizeText(keyword)) && 
+            normalizeText(category) === normalizedFilterValue) {
+          return true;
+        }
+      }
+    }
+    
     // Check if exercise value matches any key in the aliases map that maps to our filter value
     const matchingAliasKey = Object.keys(MUSCLE_GROUP_ALIASES).find(key => 
       normalizedExerciseValue.includes(key) && 

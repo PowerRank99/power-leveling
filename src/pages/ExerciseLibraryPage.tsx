@@ -18,7 +18,7 @@ const ExerciseLibraryPage = () => {
   const { toast } = useToast();
   
   const categories = [
-    'Todos', 'Peito', 'Costas', 'Pernas', 'Ombros', 'Bíceps', 'Tríceps', 'Abdômen'
+    'Todos', 'Peito', 'Costas', 'Pernas', 'Ombros', 'Bíceps', 'Tríceps', 'Abdômen', 'Cardio', 'Esportes'
   ];
   
   // Normalize text for comparison by removing accents and converting to lowercase
@@ -84,6 +84,20 @@ const ExerciseLibraryPage = () => {
         
         // Log info for debugging
         console.log(`Fetched ${filteredData.length} exercises for category ${activeCategory}`);
+        
+        // Log distribution by category
+        const categoryCount: Record<string, number> = {};
+        filteredData.forEach(ex => {
+          const category = ex.muscle_group || ex.category || 'Não especificado';
+          if (categoryCount[category]) {
+            categoryCount[category]++;
+          } else {
+            categoryCount[category] = 1;
+          }
+        });
+        
+        console.log('Exercise distribution by category:', categoryCount);
+        
       } catch (error) {
         console.error('Error fetching exercises:', error);
         toast({

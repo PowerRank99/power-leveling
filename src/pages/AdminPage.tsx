@@ -5,6 +5,7 @@ import BottomNavBar from '@/components/navigation/BottomNavBar';
 import AuthRequiredRoute from '@/components/AuthRequiredRoute';
 import ExerciseImporter from '@/components/admin/ExerciseImporter';
 import ExerciseManager from '@/components/admin/ExerciseManager';
+import ExerciseCategorizer from '@/components/admin/ExerciseCategorizer';
 
 const AdminPage = () => {
   return (
@@ -17,6 +18,10 @@ const AdminPage = () => {
           
           <div className="mb-6">
             <ExerciseImporter />
+          </div>
+          
+          <div className="mb-6">
+            <ExerciseCategorizer />
           </div>
           
           <ExerciseManager />
