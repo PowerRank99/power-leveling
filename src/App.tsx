@@ -14,8 +14,6 @@ import WorkoutPage from './pages/WorkoutPage';
 import ExerciseLibraryPage from './pages/ExerciseLibraryPage';
 import CreateRoutinePage from './pages/CreateRoutinePage';
 import ActiveWorkoutPage from './pages/ActiveWorkoutPage';
-import RankingPage from './pages/RankingPage';
-import RankingDetailPage from './pages/RankingDetailPage';
 import GuildLeaderboardPage from './pages/GuildLeaderboardPage';
 import GuildsListPage from './pages/GuildsListPage';
 import AdminPage from './pages/AdminPage';
@@ -37,8 +35,6 @@ function App() {
           <Route path="/treino/ativo/:id" element={<ActiveWorkoutPage />} />
           <Route path="/treino/criar" element={<CreateRoutinePage />} />
           <Route path="/exercicios" element={<ExerciseLibraryPage />} />
-          <Route path="/ranking" element={<RankingPage />} />
-          <Route path="/ranking/:id" element={<RankingDetailPage />} />
           <Route path="/guilds" element={<GuildsListPage />} />
           <Route path="/guilds/:id/leaderboard" element={<GuildLeaderboardPage />} />
           <Route path="/guilds/:id/quests" element={<GuildQuestsPage />} />
