@@ -6,13 +6,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
+import { normalizeText } from '@/components/workout/hooks/exercise-search/useExerciseFilters';
 
 interface ExerciseData {
-  nome: string;
-  grupo_muscular: string;
-  equipamento: string[];
-  dificuldade: string;
-  descricao: string;
+  name: string;
+  category?: string;
+  level?: string;
+  type?: string;
+  description?: string;
+  equipment?: string;
+  equipment_type?: string;
+  muscle_group?: string;
 }
 
 const ExerciseImporter = () => {
@@ -41,9 +45,21 @@ const ExerciseImporter = () => {
       'Bíceps': 'Braços',
       'Tríceps': 'Braços',
       'Abdômen': 'Abdômen',
+      'Cardio': 'Cardio',
+      'Esportes': 'Esportes',
       // Add more mappings as needed
     };
-    return muscleMap[grupoMuscular] || grupoMuscular;
+    
+    if (!grupoMuscular) return 'Não especificado';
+    
+    const normalizedGroup = normalizeText(grupoMuscular);
+    for (const [key, value] of Object.entries(muscleMap)) {
+      if (normalizeText(key) === normalizedGroup) {
+        return value;
+      }
+    }
+    
+    return grupoMuscular;
   };
 
   const handleImport = async () => {
@@ -101,15 +117,23 @@ const ExerciseImporter = () => {
     errors: string[]
   ) => {
     try {
-      // Map the JSON structure to the database schema
+      if (!exercise.name) {
+        throw new Error('Nome do exercício é obrigatório');
+      }
+
+      // Prepare exercise data for insertion
       const mappedExercise = {
-        name: exercise.nome,
-        category: mapMuscleGroup(exercise.grupo_muscular),
-        level: mapDifficulty(exercise.dificuldade),
-        type: 'Composto', // Default value - adjust if needed
-        description: exercise.descricao,
-        equipment: exercise.equipamento.join(', ')
+        name: exercise.name,
+        category: exercise.category || 'Não especificado',
+        level: exercise.level ? mapDifficulty(exercise.level) : 'Iniciante',
+        type: exercise.type || 'Composto',
+        description: exercise.description || '',
+        equipment: exercise.equipment || '',
+        equipment_type: exercise.equipment_type || '',
+        muscle_group: exercise.muscle_group || exercise.category || 'Não especificado'
       };
+
+      console.log('Importing exercise:', mappedExercise);
       
       // Insert into database
       const { error } = await supabase
@@ -117,7 +141,7 @@ const ExerciseImporter = () => {
         .insert(mappedExercise);
         
       if (error) {
-        throw new Error(`Error with ${exercise.nome}: ${error.message}`);
+        throw new Error(`Error with ${exercise.name}: ${error.message}`);
       }
       
       importedCount.count++;
@@ -125,7 +149,7 @@ const ExerciseImporter = () => {
       if (error instanceof Error) {
         errors.push(error.message);
       } else {
-        errors.push(`Erro desconhecido com ${exercise.nome}`);
+        errors.push(`Erro desconhecido com ${exercise.name}`);
       }
     }
   };
@@ -143,9 +167,18 @@ const ExerciseImporter = () => {
           <Textarea
             value={jsonData}
             onChange={(e) => setJsonData(e.target.value)}
-            placeholder='{"nome": "Flexão Diamante", "grupo_muscular": "Peito", "equipamento": ["Nenhum"], "dificuldade": "Intermediário", "descricao": "Flexão com as mãos juntas..."}'
+            placeholder='{
+  "name": "Exercício 1 de Ombros com Elástico",
+  "category": "Ombros",
+  "level": "Iniciante",
+  "type": "Composto",
+  "description": "Exercício de ombros utilizando elástico.",
+  "equipment": "Elástico",
+  "equipment_type": "Resistance band exercises",
+  "muscle_group": "Ombros"
+}'
             rows={10}
-            className="mb-4"
+            className="mb-4 font-mono text-sm"
           />
           
           <Button 
