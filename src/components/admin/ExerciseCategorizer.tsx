@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import {
   MUSCLE_GROUPS, 
   EQUIPMENT_TYPES, 
   categorizeExercise 
-} from '@/components/workout/constants/exerciseFilters';
+} from '@/components/workout/constants/filters';
 
 type CategoryStats = Record<string, number>;
 
@@ -60,23 +59,19 @@ const ExerciseCategorizer = () => {
     const categoryCount: CategoryStats = {};
     const equipmentCount: CategoryStats = {};
     
-    // Initialize with all possible categories
     MUSCLE_GROUPS.forEach(group => {
       if (group !== 'Todos') {
         categoryCount[group] = 0;
       }
     });
     
-    // Initialize with all possible equipment types
     EQUIPMENT_TYPES.forEach(type => {
       if (type !== 'Todos') {
         equipmentCount[type] = 0;
       }
     });
     
-    // Count current distribution
     exerciseData.forEach(exercise => {
-      // For muscle groups
       const muscleGroup = exercise.muscle_group || exercise.category || 'Não especificado';
       if (categoryCount[muscleGroup] !== undefined) {
         categoryCount[muscleGroup]++;
@@ -84,7 +79,6 @@ const ExerciseCategorizer = () => {
         categoryCount[muscleGroup] = 1;
       }
       
-      // For equipment types
       const equipmentType = exercise.equipment_type || exercise.equipment || 'Não especificado';
       if (equipmentCount[equipmentType] !== undefined) {
         equipmentCount[equipmentType]++;
@@ -102,7 +96,6 @@ const ExerciseCategorizer = () => {
     const updates: Array<Exercise> = [];
     const categoryUpdates: CategoryStats = {};
     
-    // Categorize all exercises
     exercises.forEach(exercise => {
       const newCategory = categorizeExercise(
         exercise.name, 
@@ -110,14 +103,12 @@ const ExerciseCategorizer = () => {
         exercise.muscle_group
       );
       
-      // Only update if category is different
       if (newCategory !== (exercise.muscle_group || exercise.category)) {
         updates.push({
           ...exercise,
           muscle_group: newCategory
         });
         
-        // Count updates by category
         if (categoryUpdates[newCategory]) {
           categoryUpdates[newCategory]++;
         } else {
@@ -127,14 +118,12 @@ const ExerciseCategorizer = () => {
     });
     
     try {
-      // Batch updates in chunks of 50
       const BATCH_SIZE = 50;
       let updatedCount = 0;
       
       for (let i = 0; i < updates.length; i += BATCH_SIZE) {
         const batch = updates.slice(i, i + BATCH_SIZE);
         
-        // Update each exercise in the batch
         for (const exercise of batch) {
           const { error } = await supabase
             .from('exercises')
@@ -148,22 +137,18 @@ const ExerciseCategorizer = () => {
           }
         }
         
-        // Update progress toast
         toast({
           title: 'Atualizando categorias',
           description: `Progresso: ${updatedCount}/${updates.length} exercícios`,
         });
       }
       
-      // Show final results
       toast({
         title: 'Categorização completa',
         description: `${updatedCount} exercícios foram categorizados com sucesso.`,
       });
       
-      // Refresh exercises
       fetchExercises();
-      
     } catch (error) {
       console.error('Error updating exercise categories:', error);
       toast({

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { SearchIcon, FilterIcon } from '@/components/icons/NavIcons';
 import PageHeader from '@/components/ui/PageHeader';
@@ -9,8 +8,11 @@ import { useToast } from '@/components/ui/use-toast';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
 import { Exercise } from '@/components/workout/types/Exercise';
-import { MUSCLE_GROUP_ALIASES, EXERCISE_CATEGORY_MAP } from '@/components/workout/constants/exerciseFilters';
-import { normalizeText } from '@/components/workout/hooks/exercise-search/useExerciseFilters';
+import { 
+  MUSCLE_GROUP_ALIASES, 
+  EXERCISE_CATEGORY_MAP, 
+  normalizeText 
+} from '@/components/workout/constants/filters';
 
 const ExerciseLibraryPage = () => {
   const [activeCategory, setActiveCategory] = useState<string>('Todos');
