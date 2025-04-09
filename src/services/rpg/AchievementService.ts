@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Achievement, UserAchievement } from '@/types/rpgTypes';
+import { Achievement, UserAchievement, AchievementCategory } from '@/types/rpgTypes';
 import { updateUserXP } from './XPService';
 import { toast } from 'sonner';
 
@@ -84,7 +84,7 @@ export const checkAchievements = async (
           id: achievement.id,
           name: achievement.name,
           description: achievement.description,
-          category: achievement.category,
+          category: achievement.category as AchievementCategory,
           xpReward: achievement.xp_reward,
           iconName: achievement.icon_name,
           requirements: achievement.requirements
@@ -220,7 +220,7 @@ export const getUserAchievements = async (userId: string): Promise<UserAchieveme
         id: item.achievement.id,
         name: item.achievement.name,
         description: item.achievement.description,
-        category: item.achievement.category,
+        category: item.achievement.category as AchievementCategory,
         xpReward: item.achievement.xp_reward,
         iconName: item.achievement.icon_name,
         requirements: item.achievement.requirements

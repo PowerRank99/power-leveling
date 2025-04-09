@@ -16,11 +16,13 @@ export interface RPGClass {
 }
 
 // Achievement related types
+export type AchievementCategory = 'workout' | 'strength' | 'endurance' | 'consistency' | 'social';
+
 export interface Achievement {
   id: string;
   name: string;
   description: string;
-  category: 'workout' | 'strength' | 'endurance' | 'consistency' | 'social';
+  category: AchievementCategory;
   xpReward: number;
   iconName: string;
   requirements: Record<string, any>;

@@ -192,7 +192,12 @@ export type CustomDatabase = Database & {
       };
     } & Database['public']['Tables'];
     Views: Database['public']['Views'];
-    Functions: Database['public']['Functions'];
+    Functions: {
+      increment: {
+        Args: { i: number };
+        Returns: number;
+      };
+    } & Database['public']['Functions'];
     Enums: Database['public']['Enums'];
     CompositeTypes: Database['public']['CompositeTypes'];
   };
