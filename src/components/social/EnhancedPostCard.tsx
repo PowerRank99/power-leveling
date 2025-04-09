@@ -111,7 +111,7 @@ const EnhancedPostCard: React.FC<EnhancedPostCardProps> = ({ post }) => {
         })}
       </div>
       
-      <div className="flex border-t border-gray-100 pt-3 text-gray-500 justify-between">
+      <div className="flex border-t border-gray-100 pt-3 justify-center gap-12">
         <button 
           className={`flex items-center ${liked ? 'text-red-500' : 'text-gray-500'} transition-colors`}
           onClick={handleLike}
