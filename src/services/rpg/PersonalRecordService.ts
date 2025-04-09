@@ -22,7 +22,7 @@ export class PersonalRecordService {
     previousWeight: number
   ): Promise<void> {
     try {
-      // Insert the personal record
+      // Insert the personal record using raw insert to avoid type issues
       const { error } = await supabase
         .from('personal_records')
         .insert({
@@ -37,7 +37,7 @@ export class PersonalRecordService {
         return;
       }
       
-      // Update the records count in profile
+      // Update the records count in profile using RPC
       await supabase
         .rpc('increment_profile_counter', {
           user_id_param: userId,
@@ -59,33 +59,20 @@ export class PersonalRecordService {
     exerciseId: string
   ): Promise<boolean> {
     try {
-      // Query for the most recent PR for this exercise in the last 7 days
+      // Use RPC function to check cooldown
       const { data, error } = await supabase
-        .from('personal_records')
-        .select('recorded_at')
-        .eq('user_id', userId)
-        .eq('exercise_id', exerciseId)
-        .order('recorded_at', { ascending: false })
-        .limit(1);
+        .rpc('check_personal_record_cooldown', {
+          p_user_id: userId,
+          p_exercise_id: exerciseId,
+          p_days: 7
+        });
       
       if (error) {
         console.error('Error checking PR cooldown:', error);
         return false;
       }
       
-      // If no records found, not on cooldown
-      if (!data || data.length === 0) {
-        return true;
-      }
-      
-      // Check if the most recent record is older than 7 days
-      const lastRecord = data[0];
-      const lastRecordDate = new Date(lastRecord.recorded_at);
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
-      // Return true if the record is older than 7 days (not on cooldown)
-      return lastRecordDate < sevenDaysAgo;
+      return data as boolean;
     } catch (error) {
       console.error('Error checking personal record cooldown:', error);
       return false; // Default to not allowing PR bonus on error

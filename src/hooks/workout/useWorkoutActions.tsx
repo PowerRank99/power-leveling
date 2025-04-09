@@ -1,14 +1,13 @@
 
 import { useState } from 'react';
-import { useWorkoutCompletion } from './useWorkoutCompletion';
 import { NavigateFunction } from 'react-router-dom';
-import { toast } from 'sonner';
+import { useWorkoutCompletion } from './useWorkoutCompletion';
 
 /**
- * Hook for workout completion and discard actions
+ * Hook for managing workout actions (finish/discard)
  */
 export const useWorkoutActions = (
-  workoutId: string | null, 
+  workoutId: string | null,
   elapsedTime: number,
   navigate: NavigateFunction
 ) => {
@@ -23,12 +22,9 @@ export const useWorkoutActions = (
       console.log("Finishing workout with ID:", workoutId);
       
       const success = await finishWorkoutAction();
+      
       if (success) {
-        toast.success("Treino finalizado com sucesso!", {
-          description: "Os dados do seu treino foram salvos."
-        });
-        
-        // Navigate to workout summary page
+        // Redirect to workout summary page
         setTimeout(() => {
           navigate('/treino');
         }, 1500);
@@ -39,9 +35,6 @@ export const useWorkoutActions = (
       }
     } catch (error: any) {
       console.error("Error finishing workout:", error);
-      toast.error("Erro ao finalizar treino", {
-        description: error.message || "Ocorreu um erro ao salvar seu treino"
-      });
       return false;
     } finally {
       setIsSubmitting(false);
@@ -51,9 +44,6 @@ export const useWorkoutActions = (
   const discardWorkout = async () => {
     try {
       console.log("Discarding workout with ID:", workoutId);
-      toast.success("Treino descartado", {
-        description: "Você foi redirecionado para a página inicial."
-      });
       
       navigate('/treino');
       return true;

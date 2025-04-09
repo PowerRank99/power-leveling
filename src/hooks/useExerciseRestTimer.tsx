@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { TimerService } from '@/services/timer/TimerService';
@@ -40,7 +41,10 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
   const [lastSavedDurations, setLastSavedDurations] = useState<Record<string, number>>({});
   
   const timerInterval = useRef<number | null>(null);
-  const { isSubmitting } = useWorkoutCompletion(null, 0, () => {});
+  // Fix: Get only the finishWorkout function from useWorkoutCompletion
+  const { finishWorkout } = useWorkoutCompletion(null, 0);
+  // Use local state to track form submission instead
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const loadTimerSettings = async () => {
@@ -351,6 +355,8 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
     updateTimerDuration,
     saveTimerSettings,
     saveDefaultTimerDuration,
-    saveExerciseTimerDuration
+    saveExerciseTimerDuration,
+    isSubmitting,
+    setIsSubmitting
   };
 };
