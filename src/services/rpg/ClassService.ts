@@ -70,7 +70,11 @@ export class ClassService {
       const classInfos: ClassInfo[] = [];
       
       for (const className of classes) {
-        const { data, error } = await supabase.rpc('get_class_bonuses', {
+        // Correctly type the response from RPC call
+        const { data, error } = await supabase.rpc<{
+          class_name: string;
+          bonuses: ClassBonus[];
+        }>('get_class_bonuses', {
           p_class_name: className
         });
         
@@ -82,7 +86,7 @@ export class ClassService {
         // Combine database bonuses with UI metadata
         classInfos.push({
           ...this.CLASS_INFO[className],
-          bonuses: data.bonuses || []
+          bonuses: data?.bonuses || []
         });
       }
       
@@ -103,7 +107,12 @@ export class ClassService {
         return false;
       }
       
-      const { data, error } = await supabase.rpc('select_class', {
+      // Correctly type the response from RPC call
+      const { data, error } = await supabase.rpc<{
+        success: boolean;
+        message: string;
+        cooldown_ends_at?: string;
+      }>('select_class', {
         p_user_id: userId,
         p_class_name: className
       });
@@ -116,9 +125,9 @@ export class ClassService {
         return false;
       }
       
-      if (!data.success) {
-        if (data.message === 'Class change on cooldown') {
-          const cooldownEnds = new Date(data.cooldown_ends_at);
+      if (!data?.success) {
+        if (data?.message === 'Class change on cooldown') {
+          const cooldownEnds = new Date(data.cooldown_ends_at || '');
           const daysLeft = Math.ceil((cooldownEnds.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
           
           toast.error('Mudança de classe em cooldown', { 
@@ -126,7 +135,7 @@ export class ClassService {
           });
         } else {
           toast.error('Erro ao selecionar classe', { 
-            description: data.message 
+            description: data?.message || 'Erro desconhecido'
           });
         }
         return false;
@@ -153,7 +162,8 @@ export class ClassService {
     try {
       if (!userId) return null;
       
-      const { data, error } = await supabase.rpc('get_class_cooldown', {
+      // Correctly type the response from RPC call
+      const { data, error } = await supabase.rpc<CooldownInfo>('get_class_cooldown', {
         p_user_id: userId
       });
       
@@ -162,7 +172,7 @@ export class ClassService {
         return null;
       }
       
-      return data as CooldownInfo;
+      return data || null;
     } catch (error) {
       console.error('Error checking class cooldown:', error);
       return null;

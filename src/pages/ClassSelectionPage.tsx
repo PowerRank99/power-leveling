@@ -39,8 +39,9 @@ const ClassSelectionPage = () => {
   return (
     <div className="pb-20 min-h-screen bg-gray-50">
       <PageHeader 
-        title="Seleção de Classe" 
-        leftContent={
+        title="Seleção de Classe"
+        showBackButton={true}
+        rightContent={
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
