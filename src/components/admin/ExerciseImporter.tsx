@@ -7,6 +7,7 @@ import { useToast } from '@/components/ui/use-toast';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
 import { normalizeText } from '@/components/workout/hooks/exercise-search/useExerciseFilters';
+import { AlertTriangle } from 'lucide-react';
 
 interface ExerciseData {
   name: string;
@@ -23,6 +24,7 @@ const ExerciseImporter = () => {
   const { toast } = useToast();
   const [jsonData, setJsonData] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [jsonError, setJsonError] = useState<string | null>(null);
   const [results, setResults] = useState<{imported: number; errors: string[]}>({ imported: 0, errors: [] });
   const [isComplete, setIsComplete] = useState(false);
 
@@ -60,6 +62,77 @@ const ExerciseImporter = () => {
     }
     
     return grupoMuscular;
+  };
+  
+  // Validate JSON format without actual parsing
+  const validateJsonFormat = (text: string): boolean => {
+    try {
+      // Look for common JSON syntax errors
+      const trimmed = text.trim();
+      
+      // Check for balanced braces
+      let braceCount = 0;
+      let inQuote = false;
+      let escaped = false;
+      
+      for (let i = 0; i < trimmed.length; i++) {
+        const char = trimmed[i];
+        
+        if (escaped) {
+          escaped = false;
+          continue;
+        }
+        
+        if (char === '\\') {
+          escaped = true;
+          continue;
+        }
+        
+        if (char === '"' && !escaped) {
+          inQuote = !inQuote;
+          continue;
+        }
+        
+        if (!inQuote) {
+          if (char === '{') braceCount++;
+          if (char === '}') braceCount--;
+        }
+      }
+      
+      if (braceCount !== 0) {
+        setJsonError("Erro de sintaxe JSON: chaves desbalanceadas { }");
+        return false;
+      }
+      
+      if (inQuote) {
+        setJsonError("Erro de sintaxe JSON: aspas não fechadas");
+        return false;
+      }
+      
+      // Try actual parsing
+      JSON.parse(text);
+      setJsonError(null);
+      return true;
+    } catch (e) {
+      if (e instanceof Error) {
+        setJsonError(`Erro de sintaxe JSON: ${e.message}`);
+      } else {
+        setJsonError("Erro de sintaxe JSON desconhecido");
+      }
+      return false;
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setJsonData(value);
+    
+    // Only validate if there's content
+    if (value.trim()) {
+      validateJsonFormat(value);
+    } else {
+      setJsonError(null);
+    }
   };
 
   const handleImport = async () => {
@@ -154,6 +227,27 @@ const ExerciseImporter = () => {
     }
   };
 
+  // Provide example JSON for both single object and array formats
+  const getSampleJson = () => {
+    return `[
+  {
+    "name": "Exercício 1 de Ombros com Elástico",
+    "category": "Ombros",
+    "level": "Iniciante",
+    "type": "Composto",
+    "description": "Exercício de ombros utilizando elástico.",
+    "equipment": "Elástico",
+    "equipment_type": "Resistance band exercises",
+    "muscle_group": "Ombros"
+  }
+]`;
+  };
+
+  const handleSetExample = () => {
+    setJsonData(getSampleJson());
+    setJsonError(null);
+  };
+
   return (
     <div className="p-4 bg-white rounded-lg shadow-sm border border-gray-200">
       <h2 className="text-xl font-bold mb-4">Importador de Exercícios</h2>
@@ -164,26 +258,35 @@ const ExerciseImporter = () => {
             Cole o JSON dos exercícios abaixo. É possível importar um único exercício ou um array de exercícios.
           </p>
           
+          <div className="mb-2 flex justify-end">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleSetExample}
+              className="text-xs"
+            >
+              Inserir exemplo
+            </Button>
+          </div>
+          
           <Textarea
             value={jsonData}
-            onChange={(e) => setJsonData(e.target.value)}
-            placeholder='{
-  "name": "Exercício 1 de Ombros com Elástico",
-  "category": "Ombros",
-  "level": "Iniciante",
-  "type": "Composto",
-  "description": "Exercício de ombros utilizando elástico.",
-  "equipment": "Elástico",
-  "equipment_type": "Resistance band exercises",
-  "muscle_group": "Ombros"
-}'
+            onChange={handleInputChange}
+            placeholder={getSampleJson()}
             rows={10}
-            className="mb-4 font-mono text-sm"
+            className={`mb-2 font-mono text-sm ${jsonError ? 'border-red-400' : ''}`}
           />
+          
+          {jsonError && (
+            <div className="mb-4 p-2 bg-red-50 border border-red-200 rounded flex items-start gap-2 text-sm text-red-700">
+              <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <p>{jsonError}</p>
+            </div>
+          )}
           
           <Button 
             onClick={handleImport} 
-            disabled={isLoading || !jsonData.trim()}
+            disabled={isLoading || !jsonData.trim() || !!jsonError}
             className="w-full"
           >
             {isLoading ? 'Importando...' : 'Importar Exercícios'}
@@ -213,6 +316,7 @@ const ExerciseImporter = () => {
           <Button onClick={() => {
             setJsonData('');
             setIsComplete(false);
+            setJsonError(null);
           }} className="mt-4">
             Importar mais exercícios
           </Button>
