@@ -59,6 +59,7 @@ const ClassSection: React.FC<ClassSectionProps> = ({
           description={actualDescription}
           icon={icon}
           bonuses={displayBonuses}
+          showAvatar={true}
         />
       </CardContent>
     </Card>

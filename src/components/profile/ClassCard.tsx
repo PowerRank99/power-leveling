@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Shield, Sword, Dumbbell, Wind, Sparkles } from 'lucide-react';
+import { ClassService } from '@/services/rpg/ClassService';
 
 interface ClassBonus {
   description: string;
@@ -12,27 +13,20 @@ interface ClassCardProps {
   description: string;
   icon?: React.ReactNode;
   bonuses: ClassBonus[];
+  showAvatar?: boolean;
 }
 
 const ClassCard: React.FC<ClassCardProps> = ({
   className,
   description,
   icon,
-  bonuses
+  bonuses,
+  showAvatar = false
 }) => {
-  // Get appropriate gradient color based on class
-  const getClassGradient = (className: string) => {
-    switch (className.toLowerCase()) {
-      case 'guerreiro': return 'from-red-600 to-red-800';
-      case 'monge': return 'from-amber-600 to-amber-800';
-      case 'ninja': return 'from-green-600 to-green-800';
-      case 'bruxo': return 'from-purple-600 to-purple-800';
-      case 'paladino': return 'from-blue-600 to-blue-800';
-      default: return 'from-gray-600 to-gray-800';
-    }
-  };
+  // Use ClassService for gradient colors
+  const gradientColors = ClassService.getClassColor(className);
   
-  // Get default icon if none provided
+  // Get appropriate icon based on class
   const getDefaultIcon = () => {
     switch (className.toLowerCase()) {
       case 'guerreiro': return <Sword className="h-6 w-6 text-white" />;
@@ -44,14 +38,42 @@ const ClassCard: React.FC<ClassCardProps> = ({
     }
   };
   
+  // Get class avatar image
+  const getClassAvatarImage = () => {
+    // Default images for each class
+    const avatarMap: Record<string, string> = {
+      'guerreiro': '/lovable-uploads/71073810-f05a-4adc-a860-636599324c62.png',
+      'monge': '/lovable-uploads/38b244e2-15ad-44b7-8d2d-48eb9e4227a8.png',
+      'ninja': '/lovable-uploads/f018410c-9031-4726-b654-ec51c1bbd72b.png',
+      'bruxo': '/lovable-uploads/174ea5f4-db2b-4392-a948-5ec67969f043.png',
+      'paladino': '/lovable-uploads/7164b50e-55bc-43ae-9127-1c693ab31e70.png'
+    };
+    
+    return avatarMap[className.toLowerCase()] || '/lovable-uploads/d84a92f5-828a-4ff9-a21b-3233e15d4276.png';
+  };
+  
   const cardIcon = icon || getDefaultIcon();
-  const gradientColors = getClassGradient(className);
   
   return (
     <div className={`rounded-xl bg-gradient-to-br ${gradientColors} text-white p-4 shadow-md`}>
       <div className="flex items-center mb-3">
-        <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center mr-3 shadow-inner animate-pulse">
-          {cardIcon}
+        <div className="relative">
+          <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center mr-3 shadow-inner overflow-hidden">
+            {showAvatar ? (
+              <img 
+                src={getClassAvatarImage()} 
+                alt={className}
+                className="w-full h-full object-cover object-center"
+              />
+            ) : (
+              <div className="animate-pulse">{cardIcon}</div>
+            )}
+          </div>
+          {showAvatar && (
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center shadow-inner">
+              {cardIcon}
+            </div>
+          )}
         </div>
         <div>
           <h3 className="font-bold text-xl">{className}</h3>
