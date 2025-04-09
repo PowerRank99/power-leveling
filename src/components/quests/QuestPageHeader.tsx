@@ -9,7 +9,7 @@ interface QuestPageHeaderProps {
   guildName?: string;
 }
 
-const QuestPageHeader: React.FC<QuestPageHeaderProps> = ({ guildId, guildName = "Guild" }) => {
+const QuestPageHeader: React.FC<QuestPageHeaderProps> = ({ guildId, guildName = "Guilda" }) => {
   const navigate = useNavigate();
 
   const handleBackClick = () => {
@@ -17,7 +17,7 @@ const QuestPageHeader: React.FC<QuestPageHeaderProps> = ({ guildId, guildName = 
   };
 
   return (
-    <div className="p-4 flex items-center gap-2 bg-gradient-to-r from-fitblue to-blue-500 text-white shadow-md">
+    <div className="p-4 flex items-center gap-2 bg-gradient-to-r from-fitblue to-blue-500 text-white shadow-md sticky top-0 z-10">
       <Button variant="ghost" size="icon" onClick={handleBackClick} className="text-white hover:bg-white/20">
         <ArrowLeft className="h-5 w-5" />
       </Button>

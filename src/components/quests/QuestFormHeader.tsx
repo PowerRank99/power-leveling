@@ -14,7 +14,7 @@ const QuestFormHeader: React.FC<QuestFormHeaderProps> = ({
   onBackClick 
 }) => {
   return (
-    <div className="p-4 flex items-center gap-2 border-b">
+    <div className="p-4 flex items-center gap-2 border-b bg-white sticky top-0 z-10">
       <Button variant="ghost" size="icon" onClick={onBackClick} className="text-black">
         <ArrowLeft className="h-6 w-6" />
       </Button>
