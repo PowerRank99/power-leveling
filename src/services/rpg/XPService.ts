@@ -18,7 +18,7 @@ export class XPService {
       // Get user profile and class bonuses (if any)
       const { data: profile } = await supabase
         .from('profiles')
-        .select('xp, level, class')
+        .select('xp, level, class, workouts_count')
         .eq('id', userId)
         .single();
       

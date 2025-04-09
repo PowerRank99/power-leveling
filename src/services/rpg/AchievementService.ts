@@ -45,15 +45,22 @@ export class AchievementService {
       
       // Check each achievement
       for (const achievement of achievements) {
-        const requirements = achievement.requirements;
+        // Parse the requirements JSON to access its properties safely
+        const requirements = typeof achievement.requirements === 'string' 
+          ? JSON.parse(achievement.requirements) 
+          : achievement.requirements;
         
         // Check workout count achievements
-        if (requirements.workouts_count && profile.workouts_count >= requirements.workouts_count) {
+        if (requirements && 
+            'workouts_count' in requirements && 
+            profile.workouts_count >= requirements.workouts_count) {
           await this.awardAchievement(userId, achievement.id, achievement.name, achievement.xp_reward);
         }
         
         // Check streak achievements
-        if (requirements.streak_days && profile.streak >= requirements.streak_days) {
+        if (requirements && 
+            'streak_days' in requirements && 
+            profile.streak >= requirements.streak_days) {
           await this.awardAchievement(userId, achievement.id, achievement.name, achievement.xp_reward);
         }
         
@@ -87,14 +94,12 @@ export class AchievementService {
         return;
       }
       
-      // Update the achievements count
-      await supabase
-        .from('profiles')
-        .update({ 
-          achievements_count: supabase.rpc('increment', { x: 1 }),
-          xp: supabase.rpc('increment', { x: xpReward })
-        })
-        .eq('id', userId);
+      // Update the achievements count and XP
+      // Using a transaction to ensure both updates succeed or fail together
+      await supabase.rpc('increment_achievement_and_xp', {
+        user_id: userId,
+        xp_amount: xpReward
+      });
         
       // Notify user
       toast.success(`🏆 Conquista Desbloqueada!`, {
