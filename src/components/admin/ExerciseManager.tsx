@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -320,8 +319,8 @@ const ExerciseManager = () => {
                   image={exercise.image_url || '/placeholder.svg'}
                   description={exercise.description}
                   equipment={exercise.equipment}
-                  muscle_group={exercise.muscle_group}
-                  equipment_type={exercise.equipment_type}
+                  muscleGroup={exercise.muscle_group}
+                  equipmentType={exercise.equipment_type}
                 />
               </div>
               

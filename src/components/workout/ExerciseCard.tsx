@@ -7,7 +7,7 @@ interface ExerciseCardProps {
   name: string;
   category: string;
   level: 'Iniciante' | 'Intermediário' | 'Avançado';
-  type?: 'Composto' | 'Isolado'; // Kept for backward compatibility but not displayed
+  type?: 'Composto' | 'Isolado'; // Kept for backward compatibility
   image: string;
   description?: string;
   equipment?: string;
