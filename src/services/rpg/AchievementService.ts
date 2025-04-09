@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Achievement, UserAchievement, AchievementCategory } from '@/types/rpgTypes';
 import { updateUserXP } from './XPService';
@@ -69,7 +70,7 @@ export const checkAchievements = async (
     
     for (const achievement of eligibleAchievements) {
       const isUnlocked = checkAchievementRequirements(
-        achievement,
+        achievement.requirements,
         workout,
         userWorkouts?.length || 0
       );
@@ -102,11 +103,11 @@ export const checkAchievements = async (
  * Check if an achievement's requirements are met by the workout
  */
 const checkAchievementRequirements = (
-  achievement: any, 
+  requirements: any, 
   workout: any, 
   totalWorkouts: number
 ): boolean => {
-  const requirements = achievement.requirements || {};
+  if (!requirements) return false;
   
   // Example requirement checks
   if (requirements.total_workouts && totalWorkouts < requirements.total_workouts) {
