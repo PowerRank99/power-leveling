@@ -119,41 +119,43 @@ const ProfilePage = () => {
         }
       />
       
-      <ProfileHeader 
-        avatar={userAvatar}
-        name={userName}
-        username={userName2}
-        level={rpgData.level}
-        className={rpgData.className}
-        workoutsCount={profile?.workouts_count || 247}
-        ranking={42}
-      />
-      
-      <ProfileProgressSection 
-        level={rpgData.level}
-        currentXP={rpgData.currentXP}
-        nextLevelXP={rpgData.nextLevelXP}
-        dailyXP={rpgData.dailyXP}
-        dailyXPCap={rpgData.dailyXPCap}
-        lastActivity={rpgData.lastActivity}
-        xpGain={rpgData.xpGain}
-      />
-      
-      <StreakAchievementsSection 
-        streak={rpgData.streak}
-        achievementsUnlocked={rpgData.achievements.unlocked}
-        achievementsTotal={rpgData.achievements.total}
-      />
-      
-      <ClassSection 
-        className={rpgData.className}
-        classDescription={rpgData.classDescription}
-        icon={<Shield className="w-5 h-5 text-white" />}
-        bonuses={rpgData.bonuses}
-      />
-      
-      <div className="bg-white p-4 mt-2">
-        <RecentAchievementsList achievements={recentAchievements} />
+      <div className="px-4">
+        <ProfileHeader 
+          avatar={userAvatar}
+          name={userName}
+          username={userName2}
+          level={rpgData.level}
+          className={rpgData.className}
+          workoutsCount={profile?.workouts_count || 247}
+          ranking={42}
+        />
+        
+        <ProfileProgressSection 
+          level={rpgData.level}
+          currentXP={rpgData.currentXP}
+          nextLevelXP={rpgData.nextLevelXP}
+          dailyXP={rpgData.dailyXP}
+          dailyXPCap={rpgData.dailyXPCap}
+          lastActivity={rpgData.lastActivity}
+          xpGain={rpgData.xpGain}
+        />
+        
+        <StreakAchievementsSection 
+          streak={rpgData.streak}
+          achievementsUnlocked={rpgData.achievements.unlocked}
+          achievementsTotal={rpgData.achievements.total}
+        />
+        
+        <ClassSection 
+          className={rpgData.className}
+          classDescription={rpgData.classDescription}
+          icon={<Shield className="w-5 h-5 text-white" />}
+          bonuses={rpgData.bonuses}
+        />
+        
+        <div className="bg-white p-5 mt-3 mb-5 rounded-xl shadow-sm">
+          <RecentAchievementsList achievements={recentAchievements} />
+        </div>
       </div>
       
       <BottomNavBar />

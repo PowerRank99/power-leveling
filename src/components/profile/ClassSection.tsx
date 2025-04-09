@@ -26,9 +26,9 @@ const ClassSection: React.FC<ClassSectionProps> = ({
   const navigate = useNavigate();
   
   return (
-    <div className="bg-white p-4 mt-2">
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="font-bold text-lg">Classe</h3>
+    <div className="bg-white p-5 mt-3 rounded-xl shadow-sm">
+      <div className="flex justify-between items-center mb-3">
+        <h3 className="font-bold text-lg text-gray-800">Classe</h3>
         <Button 
           variant="ghost" 
           className="text-fitblue flex items-center text-sm h-auto p-0" 

@@ -22,22 +22,38 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
   lastActivity,
   xpGain
 }) => {
+  const levelProgress = Math.min(Math.round((currentXP / nextLevelXP) * 100), 100);
+  const dailyProgress = Math.min(Math.round((dailyXP / dailyXPCap) * 100), 100);
+  
   return (
-    <div className="bg-white p-4 mt-2">
-      <XPProgressBar
-        current={currentXP}
-        total={nextLevelXP}
-        label={`Nível ${level}`}
-      />
+    <div className="bg-white p-5 mt-3 rounded-xl shadow-sm">
+      <div className="mb-5">
+        <div className="flex justify-between mb-1">
+          <span className="text-sm font-medium text-gray-700">Nível {level}</span>
+          <span className="text-sm font-medium">{currentXP}/{nextLevelXP} XP</span>
+        </div>
+        <div className="w-full bg-gray-100 rounded-full h-2.5">
+          <div 
+            className="bg-fitblue h-2.5 rounded-full transition-all duration-500" 
+            style={{ width: `${levelProgress}%` }}
+          ></div>
+        </div>
+      </div>
       
-      <XPProgressBar
-        current={dailyXP}
-        total={dailyXPCap}
-        label="XP do Dia"
-        className="bg-fitgreen"
-      />
+      <div className="mb-3">
+        <div className="flex justify-between mb-1">
+          <span className="text-sm font-medium text-gray-700">XP do Dia</span>
+          <span className="text-sm font-medium">{dailyXP}/{dailyXPCap}</span>
+        </div>
+        <div className="w-full bg-gray-100 rounded-full h-2.5">
+          <div 
+            className="bg-fitgreen h-2.5 rounded-full transition-all duration-500" 
+            style={{ width: `${dailyProgress}%` }}
+          ></div>
+        </div>
+      </div>
       
-      <div className="flex justify-between text-sm mt-2">
+      <div className="flex justify-between text-sm mt-3">
         <div className="flex items-center text-gray-500">
           <Clock className="w-4 h-4 mr-1" /> 
           {lastActivity}
