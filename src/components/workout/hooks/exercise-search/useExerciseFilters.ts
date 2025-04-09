@@ -11,3 +11,4 @@ import {
 
 // Re-export the filter utilities
 export { normalizeText, matchesFilter, applyFilters };
+

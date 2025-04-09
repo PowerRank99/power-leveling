@@ -5,3 +5,5 @@ export * from './equipment-types';
 export * from './aliases';
 export * from './category-mapping';
 export * from './categorization';
+export * from './utils';
+
