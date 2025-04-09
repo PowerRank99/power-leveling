@@ -1,29 +1,25 @@
 
 import React from 'react';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { CalendarDays, Clock, Trophy, Users } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface QuestReward {
-  type: 'xp' | 'item' | 'badge';
-  amount?: number;
-  name?: string;
-  description?: string;
+  type: 'xp';
+  amount: number;
 }
 
 export interface Quest {
   id: string;
   title: string;
-  description: string;
+  guildName: string;
   startDate: string;
   endDate: string;
-  status: 'active' | 'completed' | 'expired';
-  participantsCount: number;
-  completionRate: number;
+  status: 'active' | 'completed' | 'failed';
+  daysCompleted: number;
+  daysRequired: number;
   rewards: QuestReward[];
-  difficulty: 'easy' | 'medium' | 'hard';
-  type: 'workout' | 'attendance' | 'challenge';
 }
 
 interface QuestCardProps {
@@ -32,120 +28,102 @@ interface QuestCardProps {
 }
 
 const QuestCard: React.FC<QuestCardProps> = ({ quest, onClick }) => {
-  // Format dates for display
+  // Format date to PT-BR
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('pt-BR', { 
-      day: '2-digit', 
-      month: '2-digit' 
-    }).format(date);
+    return format(date, "d MMM", { locale: ptBR });
   };
   
-  // Calculate days remaining
-  const getDaysRemaining = () => {
-    const today = new Date();
-    const endDate = new Date(quest.endDate);
-    const diffTime = endDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays > 0 ? diffDays : 0;
-  };
-  
-  // Get color based on quest status
-  const getStatusColor = () => {
+  // Get status badge
+  const getStatusBadge = () => {
     switch(quest.status) {
-      case 'active': return 'bg-green-100 text-green-800 border-green-200';
-      case 'completed': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'expired': return 'bg-gray-100 text-gray-800 border-gray-200';
-      default: return 'bg-green-100 text-green-800 border-green-200';
+      case 'active':
+        return <div className="px-4 py-1 rounded-full bg-blue-100 text-blue-700">Em Andamento</div>;
+      case 'completed':
+        return <div className="px-4 py-1 rounded-full bg-green-100 text-green-700">Concluída</div>;
+      case 'failed':
+        return <div className="px-4 py-1 rounded-full bg-red-100 text-red-700">Falhou</div>;
+      default:
+        return null;
     }
   };
   
-  // Get difficulty badge color
-  const getDifficultyColor = () => {
-    switch(quest.difficulty) {
-      case 'easy': return 'bg-green-100 text-green-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'hard': return 'bg-red-100 text-red-800';
-      default: return 'bg-blue-100 text-blue-800';
-    }
-  };
-  
-  // Translate status to Portuguese
-  const getStatusText = () => {
+  // Get progress indicator color
+  const getProgressColor = () => {
     switch(quest.status) {
-      case 'active': return 'Ativa';
-      case 'completed': return 'Concluída';
-      case 'expired': return 'Expirada';
-      default: return 'Ativa';
+      case 'active':
+        return "bg-blue-500";
+      case 'completed':
+        return "bg-green-500";
+      case 'failed':
+        return "bg-red-500";
+      default:
+        return "bg-blue-500";
     }
   };
   
-  // Translate difficulty to Portuguese
-  const getDifficultyText = () => {
-    switch(quest.difficulty) {
-      case 'easy': return 'Fácil';
-      case 'medium': return 'Média';
-      case 'hard': return 'Difícil';
-      default: return 'Média';
-    }
-  };
-
+  // Calculate progress percentage
+  const progressPercentage = (quest.daysCompleted / quest.daysRequired) * 100;
+  
   return (
     <Card 
-      className="overflow-hidden border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+      className="p-6 mb-4 hover:shadow-md transition-shadow"
       onClick={onClick}
     >
-      <div className="p-4">
-        <div className="flex justify-between items-start">
-          <h3 className="font-bold text-lg">{quest.title}</h3>
-          <Badge className={getStatusColor()}>
-            {getStatusText()}
-          </Badge>
+      <div className="flex justify-between items-start mb-2">
+        <div>
+          <h3 className="text-xl font-bold">{quest.title}</h3>
+          <p className="text-gray-500">{quest.guildName}</p>
+        </div>
+        {getStatusBadge()}
+      </div>
+      
+      <div className="mt-5">
+        <div className="flex justify-between mb-1">
+          <span className="text-gray-600">Progresso</span>
+          <span className="font-medium">{quest.daysCompleted}/{quest.daysRequired} dias</span>
         </div>
         
-        <p className="text-sm text-gray-600 mt-1 line-clamp-2">{quest.description}</p>
-        
-        <div className="flex flex-wrap gap-2 mt-3">
-          <Badge variant="outline" className="flex items-center gap-1">
-            <CalendarDays className="h-3 w-3" />
-            <span>{formatDate(quest.startDate)} - {formatDate(quest.endDate)}</span>
-          </Badge>
-          
-          <Badge variant="outline" className="flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            <span>{getDaysRemaining()} dias restantes</span>
-          </Badge>
-          
-          <Badge variant="outline" className="flex items-center gap-1">
-            <Users className="h-3 w-3" />
-            <span>{quest.participantsCount} participantes</span>
-          </Badge>
-          
-          <Badge className={getDifficultyColor()}>
-            {getDifficultyText()}
-          </Badge>
-        </div>
-        
-        <div className="mt-4">
-          <div className="flex justify-between text-xs text-gray-500 mb-1">
-            <span>Progresso</span>
-            <span>{quest.completionRate}%</span>
+        <Progress 
+          value={progressPercentage} 
+          className="h-3" 
+          indicatorColor={getProgressColor()}
+        />
+      </div>
+      
+      <div className="mt-5">
+        {quest.status === 'active' && (
+          <div className="flex justify-between">
+            <div className="text-gray-500">
+              Início: {formatDate(quest.startDate)}
+            </div>
+            <div className="text-gray-500">
+              Término: {formatDate(quest.endDate)}
+            </div>
           </div>
-          <Progress value={quest.completionRate} className="h-2 bg-gray-100" />
-        </div>
+        )}
         
-        <div className="mt-4">
-          <p className="text-xs text-gray-500 mb-1">Recompensas:</p>
-          <div className="flex flex-wrap gap-2">
-            {quest.rewards.map((reward, index) => (
-              <Badge key={index} variant="secondary" className="flex items-center gap-1 bg-blue-50 text-blue-700">
-                <Trophy className="h-3 w-3" />
-                {reward.type === 'xp' && <span>{reward.amount} XP</span>}
-                {reward.type !== 'xp' && <span>{reward.name}</span>}
-              </Badge>
-            ))}
+        {quest.status === 'completed' && (
+          <div className="flex justify-between items-center">
+            <div className="text-gray-500">
+              Finalizada em {formatDate(quest.endDate)}
+            </div>
+            <div className="text-green-600 font-medium">
+              +{quest.rewards[0].amount} XP
+            </div>
           </div>
-        </div>
+        )}
+        
+        {quest.status === 'failed' && (
+          <div className="flex justify-between items-center">
+            <div className="text-gray-500">
+              Término: {formatDate(quest.endDate)}
+            </div>
+            <div className="text-red-600">
+              Quest Encerrada
+            </div>
+          </div>
+        )}
       </div>
     </Card>
   );

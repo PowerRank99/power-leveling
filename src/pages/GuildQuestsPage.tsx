@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { TabsList, TabsTrigger, Tabs, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { PlusIcon, SearchIcon } from 'lucide-react';
+import { PlusIcon, SearchIcon, ArrowLeft } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
 import BottomNavBar from '@/components/navigation/BottomNavBar';
 import QuestCard, { Quest } from '@/components/guilds/QuestCard';
@@ -19,55 +19,48 @@ const GuildQuestsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('active');
   const [searchQuery, setSearchQuery] = useState('');
   const [isGuildMaster, setIsGuildMaster] = useState(true); // Mocked for now
+  const [guildName, setGuildName] = useState("Guilda dos Guerreiros"); // Mock guild name
   
   // Mock data for quests
   const mockQuests: Quest[] = [
     {
       id: '1',
-      title: 'Desafio de 30 dias',
-      description: 'Complete um treino todos os dias por 30 dias consecutivos',
-      startDate: '2025-04-01',
-      endDate: '2025-04-30',
+      title: 'Treino Intenso',
+      guildName: 'Guilda dos Guerreiros',
+      startDate: '2025-01-20',
+      endDate: '2025-01-24',
       status: 'active',
-      participantsCount: 12,
-      completionRate: 45,
+      daysCompleted: 3,
+      daysRequired: 5,
       rewards: [
-        { type: 'xp', amount: 500 },
-        { type: 'badge', name: 'Desafiante' }
-      ],
-      difficulty: 'medium',
-      type: 'attendance'
+        { type: 'xp', amount: 200 }
+      ]
     },
     {
       id: '2',
-      title: 'Meta de força',
-      description: 'Aumente seu peso no supino em 10kg até o final do mês',
-      startDate: '2025-04-05',
-      endDate: '2025-05-05',
-      status: 'active',
-      participantsCount: 8,
-      completionRate: 30,
+      title: 'Desafio Semanal',
+      guildName: 'Guilda dos Monges',
+      startDate: '2025-01-13',
+      endDate: '2025-01-19',
+      status: 'completed',
+      daysCompleted: 7,
+      daysRequired: 7,
       rewards: [
-        { type: 'xp', amount: 300 },
-        { type: 'item', name: 'Poção de recuperação' }
-      ],
-      difficulty: 'hard',
-      type: 'challenge'
+        { type: 'xp', amount: 200 }
+      ]
     },
     {
       id: '3',
-      title: 'Maratona de treinos',
-      description: 'Complete 15 treinos neste mês',
-      startDate: '2025-03-15',
-      endDate: '2025-04-15',
-      status: 'completed',
-      participantsCount: 20,
-      completionRate: 100,
+      title: 'Maratona Ninja',
+      guildName: 'Guilda dos Ninjas',
+      startDate: '2025-01-13',
+      endDate: '2025-01-18',
+      status: 'failed',
+      daysCompleted: 2,
+      daysRequired: 5,
       rewards: [
-        { type: 'xp', amount: 400 }
-      ],
-      difficulty: 'easy',
-      type: 'workout'
+        { type: 'xp', amount: 150 }
+      ]
     }
   ];
   
@@ -76,11 +69,12 @@ const GuildQuestsPage: React.FC = () => {
     const matchesStatus = 
       (activeTab === 'active' && quest.status === 'active') ||
       (activeTab === 'completed' && quest.status === 'completed') ||
+      (activeTab === 'failed' && quest.status === 'failed') ||
       (activeTab === 'all');
     
     const matchesSearch = 
       quest.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      quest.description.toLowerCase().includes(searchQuery.toLowerCase());
+      quest.guildName.toLowerCase().includes(searchQuery.toLowerCase());
     
     return matchesStatus && matchesSearch;
   });
@@ -94,9 +88,18 @@ const GuildQuestsPage: React.FC = () => {
     console.log(`Quest clicked: ${questId}`);
   };
 
+  const handleBackClick = () => {
+    navigate(`/guilds/${id}/leaderboard`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-16">
-      <PageHeader title="Missões da Guilda" />
+      <div className="p-4 flex items-center gap-2">
+        <Button variant="ghost" size="icon" onClick={handleBackClick}>
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <h1 className="text-2xl font-bold">Quests Ativas</h1>
+      </div>
       
       <div className="p-4 space-y-4">
         {/* Search and Create */}
@@ -112,7 +115,7 @@ const GuildQuestsPage: React.FC = () => {
           </div>
           
           {isGuildMaster && (
-            <Button onClick={handleCreateQuest} className="bg-fitblue">
+            <Button onClick={handleCreateQuest} className="bg-blue-500 hover:bg-blue-600">
               <PlusIcon className="h-5 w-5 mr-1" />
               <span className="hidden sm:inline">Criar Missão</span>
             </Button>
@@ -121,9 +124,10 @@ const GuildQuestsPage: React.FC = () => {
         
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-3 w-full">
+          <TabsList className="grid grid-cols-4 w-full">
             <TabsTrigger value="active">Ativas</TabsTrigger>
             <TabsTrigger value="completed">Concluídas</TabsTrigger>
+            <TabsTrigger value="failed">Falhadas</TabsTrigger>
             <TabsTrigger value="all">Todas</TabsTrigger>
           </TabsList>
           
@@ -147,7 +151,7 @@ const GuildQuestsPage: React.FC = () => {
                 description="Esta guilda não possui missões ativas no momento."
                 action={
                   isGuildMaster ? (
-                    <Button onClick={handleCreateQuest} className="bg-fitblue mt-4">
+                    <Button onClick={handleCreateQuest} className="bg-blue-500 mt-4">
                       Criar uma missão
                     </Button>
                   ) : undefined
@@ -174,6 +178,28 @@ const GuildQuestsPage: React.FC = () => {
                 icon="Trophy" 
                 title="Nenhuma missão concluída" 
                 description="Esta guilda ainda não completou nenhuma missão."
+              />
+            )}
+          </TabsContent>
+          
+          <TabsContent value="failed" className="mt-4 space-y-4">
+            {filteredQuests.length > 0 ? (
+              <ScrollArea className="h-[calc(100vh-250px)]">
+                <div className="space-y-4">
+                  {filteredQuests.map(quest => (
+                    <QuestCard 
+                      key={quest.id} 
+                      quest={quest} 
+                      onClick={() => handleQuestClick(quest.id)}
+                    />
+                  ))}
+                </div>
+              </ScrollArea>
+            ) : (
+              <EmptyState 
+                icon="X" 
+                title="Nenhuma missão falhou" 
+                description="Esta guilda não tem missões que tenham falhado."
               />
             )}
           </TabsContent>
