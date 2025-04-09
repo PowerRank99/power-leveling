@@ -29,7 +29,7 @@ const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({ members }) => {
   const podiumOrder = [1, 0, 2]; // Middle (1st), Left (2nd), Right (3rd)
   
   useEffect(() => {
-    // Add staggered animation to podium elements
+    // Add staggered animation to podium elements - fixed to make positions visible
     const positions = document.querySelectorAll('.podium-position');
     positions.forEach((pos, index) => {
       setTimeout(() => {
@@ -64,7 +64,7 @@ const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({ members }) => {
           const textSize = isFirst ? 'text-lg' : 'text-sm';
           
           return (
-            <div key={member.id} className="podium-position opacity-0 flex flex-col items-center">
+            <div key={member.id} className="podium-position flex flex-col items-center">
               <div className="relative mb-2">
                 <div className="absolute -top-6 left-1/2 transform -translate-x-1/2">
                   {getMedalIcon(member.position)}

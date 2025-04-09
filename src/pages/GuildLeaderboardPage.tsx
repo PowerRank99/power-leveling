@@ -94,11 +94,12 @@ const GuildLeaderboardPage: React.FC = () => {
   };
   
   useEffect(() => {
-    // Animation effect when component mounts
+    // Animation effect when component mounts - simplified to make podium visible immediately
     const timer = setTimeout(() => {
       const podium = document.querySelector('.podium-container');
       if (podium) {
         podium.classList.add('animate-fade-in');
+        podium.classList.remove('opacity-0'); // Explicitly remove opacity-0 class
       }
     }, 100);
     
@@ -250,8 +251,8 @@ const GuildLeaderboardPage: React.FC = () => {
         </Tabs>
       </div>
       
-      {/* Podium for top 3 with animation */}
-      <div className="podium-container opacity-0 transition-opacity duration-700">
+      {/* Podium for top 3 with animation - Fixed to be visible */}
+      <div className="podium-container animate-fade-in">
         <LeaderboardPodium members={topMembers} />
       </div>
       
