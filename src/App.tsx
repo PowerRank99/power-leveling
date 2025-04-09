@@ -7,6 +7,7 @@ import { Toaster } from 'sonner';
 import Index from './pages/Index';
 import NotFound from './pages/NotFound';
 import ProfilePage from './pages/ProfilePage';
+import AchievementsPage from './pages/AchievementsPage';
 import AuthPage from './pages/AuthPage';
 import EditProfilePage from './pages/EditProfilePage';
 import WorkoutPage from './pages/WorkoutPage';
@@ -36,6 +37,7 @@ function App() {
           <Route path="/ranking/:id" element={<RankingDetailPage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/configuracoes/timer" element={<TimerSettingsPage />} />
+          <Route path="/conquistas" element={<AchievementsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>

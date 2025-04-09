@@ -1,66 +1,23 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Medal, Dumbbell, Award, LogOut, Edit3 } from 'lucide-react';
+import { Edit3, LogOut, Dumbbell, Award, Shield, Clock, Flame, ChevronRight } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
-import Achievement from '@/components/profile/Achievement';
-import ProgressBar from '@/components/profile/ProgressBar';
 import BottomNavBar from '@/components/navigation/BottomNavBar';
 import Trophy from '@/components/icons/Trophy';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import XPProgressBar from '@/components/profile/XPProgressBar';
+import StatCard from '@/components/profile/StatCard';
+import ClassCard from '@/components/profile/ClassCard';
+import RecentAchievementsList from '@/components/profile/RecentAchievementsList';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
   const { toast } = useToast();
   
-  // Mock data for achievements and goals
-  const achievements = [
-    {
-      id: "1",
-      title: "Mestre do Supino",
-      description: "Superou 100kg no supino reto",
-      icon: <Medal className="w-6 h-6 text-yellow-600" />,
-      date: "Hoje",
-      color: "yellow"
-    },
-    {
-      id: "2",
-      title: "Dedicação Total",
-      description: "30 dias consecutivos de treino",
-      icon: <Award className="w-6 h-6 text-purple-600" />,
-      date: "3d",
-      color: "purple"
-    },
-    {
-      id: "3",
-      title: "Peso Pesado",
-      description: "Levantou 1000kg em um único treino",
-      icon: <Dumbbell className="w-6 h-6 text-green-600" />,
-      date: "1s",
-      color: "green"
-    }
-  ];
-  
-  const goals = [
-    {
-      id: "1",
-      label: "Meta de Agachamento",
-      current: 120,
-      target: 150,
-      colorClass: "bg-fitblue"
-    },
-    {
-      id: "2",
-      label: "Treinos Semanais",
-      current: 3,
-      target: 5,
-      colorClass: "bg-fitgreen"
-    }
-  ];
-
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -81,6 +38,54 @@ const ProfilePage = () => {
   const handleEditProfile = () => {
     navigate('/perfil/editar');
   };
+  
+  // Mock RPG data (would come from profile/state in real app)
+  const rpgData = {
+    level: profile?.level || 26,
+    currentXP: 2450,
+    nextLevelXP: 3000,
+    dailyXP: 150,
+    dailyXPCap: 300,
+    streak: 15,
+    achievements: {
+      unlocked: 24,
+      total: 50
+    },
+    className: 'Guerreiro',
+    classDescription: 'Especialista em Força',
+    lastActivity: '8h 45min',
+    xpGain: '+25 XP',
+    bonuses: [
+      {
+        description: 'XP em exercícios compostos agachamento, levantamento terra, supino',
+        value: '+20%'
+      },
+      {
+        description: 'XP em todos os exercícios de força',
+        value: '+10%'
+      }
+    ]
+  };
+  
+  // Mock recent achievements
+  const recentAchievements = [
+    {
+      id: 'streak',
+      icon: <Flame className="w-5 h-5 text-orange-500" />,
+      name: '7 Dias Seguidos'
+    },
+    {
+      id: 'workouts',
+      icon: <Dumbbell className="w-5 h-5 text-fitblue" />,
+      name: '50 Treinos'
+    },
+    {
+      id: 'locked',
+      icon: <Award className="w-5 h-5 text-gray-400" />,
+      name: 'Bloqueada',
+      isLocked: true
+    }
+  ];
   
   // Default avatar if user doesn't have one
   const userAvatar = profile?.avatar_url || "/lovable-uploads/c6066df0-70c1-48cf-b017-126e8f7e850a.png";
@@ -112,93 +117,126 @@ const ProfilePage = () => {
       />
       
       {/* User Profile Header */}
-      <div className="bg-white p-6 flex flex-col items-center">
-        <div className="w-24 h-24 rounded-lg overflow-hidden mb-2">
-          <img src={userAvatar} alt="User Avatar" className="w-full h-full object-cover" />
-        </div>
-        
-        <h2 className="text-xl font-bold">{profile?.name || user?.email}</h2>
-        <p className="text-gray-600">Nível {profile?.level || 1} - {profile?.title || "Novato"}</p>
-        
-        {/* XP Progress */}
-        <div className="w-full mt-4">
-          <div className="h-2 bg-gray-200 rounded-full w-full overflow-hidden">
-            <div className="h-full bg-fitblue w-3/4"></div>
+      <div className="bg-white p-6 relative">
+        <div className="flex items-center">
+          <div className="relative">
+            <div className="w-24 h-24 rounded-lg overflow-hidden">
+              <img src={userAvatar} alt="User Avatar" className="w-full h-full object-cover" />
+            </div>
+            
+            {/* Level Badge */}
+            <div className="absolute -bottom-2 -right-2 bg-fitblue text-white text-xs font-bold px-2 py-1 rounded-full flex items-center">
+              <Award className="w-3 h-3 mr-1" /> {rpgData.level}
+            </div>
           </div>
-          <div className="flex justify-between text-sm text-gray-500 mt-1">
-            <span>{profile?.xp || 0}/1000 XP para o próximo nível</span>
+          
+          <div className="ml-4 flex-1">
+            <div className="flex justify-between items-start">
+              <div>
+                <h2 className="text-xl font-bold">{profile?.name || user?.email}</h2>
+                <p className="text-gray-600">@{profile?.name?.toLowerCase().replace(/\s/g, '') || 'user'}</p>
+              </div>
+            </div>
+            
+            {/* Class Button */}
+            <div className="mt-2">
+              <Button 
+                className="bg-fitblue text-white rounded-full text-sm flex items-center gap-1 px-3 py-1 h-auto"
+              >
+                <Trophy className="w-4 h-4" /> {rpgData.className}
+              </Button>
+            </div>
           </div>
         </div>
         
         {/* Stats */}
-        <div className="flex w-full justify-between mt-6">
-          <div className="text-center">
-            <div className="flex flex-col items-center">
-              <Dumbbell className="w-6 h-6 text-fitblue mb-1" />
-              <span className="text-2xl font-bold">{profile?.workouts_count || 0}</span>
-              <span className="text-xs text-gray-500">Treinos</span>
-            </div>
+        <div className="flex justify-between mt-6 px-4 py-3 bg-gray-50 rounded-lg">
+          <StatCard 
+            icon={<Dumbbell className="w-5 h-5 text-fitblue" />}
+            value={profile?.workouts_count || 247}
+            label="Treinos"
+          />
+          
+          <div className="h-10 w-px bg-gray-200 my-auto"></div>
+          
+          <StatCard 
+            icon={<Trophy className="w-5 h-5 text-fitpurple" />}
+            value={`#${42}`}
+            label="Ranking"
+          />
+        </div>
+      </div>
+      
+      {/* XP Progress Section */}
+      <div className="bg-white p-4 mt-2">
+        <XPProgressBar
+          current={rpgData.currentXP}
+          total={rpgData.nextLevelXP}
+          label={`Nível ${rpgData.level}`}
+        />
+        
+        <XPProgressBar
+          current={rpgData.dailyXP}
+          total={rpgData.dailyXPCap}
+          label="XP do Dia"
+          className="bg-fitgreen"
+        />
+        
+        <div className="flex justify-between text-sm mt-2">
+          <div className="flex items-center text-gray-500">
+            <Clock className="w-4 h-4 mr-1" /> 
+            {rpgData.lastActivity}
           </div>
           
-          <div className="text-center border-x border-gray-200 px-8">
-            <div className="flex flex-col items-center">
-              <Trophy className="w-6 h-6 text-fitgreen mb-1" />
-              <span className="text-2xl font-bold">{profile?.achievements_count || 0}</span>
-              <span className="text-xs text-gray-500">Conquistas</span>
-            </div>
-          </div>
-          
-          <div className="text-center">
-            <div className="flex flex-col items-center">
-              <Award className="w-6 h-6 text-fitpurple mb-1" />
-              <span className="text-2xl font-bold">{profile?.records_count || 0}</span>
-              <span className="text-xs text-gray-500">Recordes</span>
-            </div>
+          <div className="text-fitgreen font-medium">
+            {rpgData.xpGain}
           </div>
         </div>
       </div>
       
-      {/* Achievements */}
-      <div className="mt-4 bg-white p-4">
-        <h3 className="text-lg font-bold mb-3">Conquistas Recentes</h3>
-        
-        {achievements.length > 0 ? (
-          achievements.map(achievement => (
-            <Achievement 
-              key={achievement.id}
-              icon={achievement.icon}
-              title={achievement.title}
-              description={achievement.description}
-              date={achievement.date}
-              color={achievement.color as 'blue' | 'green' | 'purple' | 'yellow'}
-            />
-          ))
-        ) : (
-          <div className="text-center py-4 text-gray-500">
-            Você ainda não tem conquistas
+      {/* Streak & Achievements Summary */}
+      <div className="bg-white p-4 mt-2 flex">
+        <div className="flex-1 flex items-center justify-center p-3 border-r border-gray-100">
+          <div className="bg-orange-100 p-2 rounded-full mr-3">
+            <Flame className="text-orange-500 w-5 h-5" />
           </div>
-        )}
+          <div>
+            <p className="text-xs text-gray-500">Streak</p>
+            <p className="font-bold text-lg">{rpgData.streak} dias</p>
+          </div>
+        </div>
+        
+        <div className="flex-1 flex items-center justify-center p-3">
+          <div className="bg-fitpurple-100 p-2 rounded-full mr-3">
+            <Award className="text-fitpurple w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">Conquistas</p>
+            <p className="font-bold text-lg">{rpgData.achievements.unlocked}/{rpgData.achievements.total}</p>
+          </div>
+        </div>
       </div>
       
-      {/* Goals */}
-      <div className="mt-4 bg-white p-4">
-        <h3 className="text-lg font-bold mb-3">Metas em Andamento</h3>
+      {/* Class Section */}
+      <div className="bg-white p-4 mt-2">
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="font-bold text-lg">Classe</h3>
+          <Button variant="ghost" className="text-fitblue flex items-center text-sm h-auto p-0" onClick={() => navigate('/classes')}>
+            Trocar Classe <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
         
-        {goals.length > 0 ? (
-          goals.map(goal => (
-            <ProgressBar 
-              key={goal.id}
-              label={goal.label}
-              current={goal.current}
-              target={goal.target}
-              colorClass={goal.colorClass}
-            />
-          ))
-        ) : (
-          <div className="text-center py-4 text-gray-500">
-            Você ainda não tem metas definidas
-          </div>
-        )}
+        <ClassCard 
+          className={rpgData.className}
+          description={rpgData.classDescription}
+          icon={<Shield className="w-5 h-5 text-white" />}
+          bonuses={rpgData.bonuses}
+        />
+      </div>
+      
+      {/* Recent Achievements */}
+      <div className="bg-white p-4 mt-2">
+        <RecentAchievementsList achievements={recentAchievements} />
       </div>
       
       <BottomNavBar />
