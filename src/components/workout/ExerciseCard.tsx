@@ -3,11 +3,11 @@ import React from 'react';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export interface ExerciseCardProps {
+interface ExerciseCardProps {
   name: string;
   category: string;
   level: 'Iniciante' | 'Intermediário' | 'Avançado';
-  type?: 'Composto' | 'Isolado'; // Kept for backward compatibility
+  type?: 'Composto' | 'Isolado'; // Kept for backward compatibility but not displayed
   image: string;
   description?: string;
   equipment?: string;
