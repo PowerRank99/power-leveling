@@ -69,10 +69,15 @@ export const checkAchievements = async (
     const triggeredAchievements: Achievement[] = [];
     
     for (const achievement of eligibleAchievements) {
+      // Prepare workout with additional data needed for requirements check
+      const workoutWithData = {
+        ...workout,
+        user_workouts_count: userWorkouts?.length || 0
+      };
+      
       const isUnlocked = checkAchievementRequirements(
         achievement.requirements,
-        workout,
-        userWorkouts?.length || 0
+        workoutWithData
       );
       
       if (isUnlocked) {
@@ -104,14 +109,16 @@ export const checkAchievements = async (
  */
 const checkAchievementRequirements = (
   requirements: any, 
-  workout: any, 
-  totalWorkouts: number
+  workout: any
 ): boolean => {
   if (!requirements) return false;
   
   // Example requirement checks
-  if (requirements.total_workouts && totalWorkouts < requirements.total_workouts) {
-    return false;
+  if (requirements.total_workouts) {
+    const totalWorkouts = workout.user_workouts_count || 0;
+    if (totalWorkouts < requirements.total_workouts) {
+      return false;
+    }
   }
   
   if (requirements.sets_completed) {
@@ -167,7 +174,9 @@ export const awardAchievement = async (userId: string, achievementId: string): P
     
     // Update achievements count
     const { error: updateProfileError } = await supabase
-      .rpc('increment', { i: 1 })
+      .rpc('increment', { 
+        i: 1
+      })
       .eq('id', userId);
       
     if (updateProfileError) {
