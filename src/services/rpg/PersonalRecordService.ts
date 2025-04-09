@@ -22,13 +22,17 @@ export class PersonalRecordService {
     previousWeight: number
   ): Promise<void> {
     try {
-      // Insert the personal record using the RPC function
-      const { error } = await supabase.rpc('insert_personal_record', {
-        p_user_id: userId,
-        p_exercise_id: exerciseId,
-        p_weight: weight,
-        p_previous_weight: previousWeight
-      });
+      // Insert the personal record using the RPC function with a type assertion
+      // to work around the TypeScript type limitation
+      const { error } = await supabase.rpc(
+        'insert_personal_record' as any, 
+        {
+          p_user_id: userId,
+          p_exercise_id: exerciseId,
+          p_weight: weight,
+          p_previous_weight: previousWeight
+        }
+      );
         
       if (error) {
         console.error('Error recording personal record:', error);
