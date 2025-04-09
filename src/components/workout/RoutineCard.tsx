@@ -1,70 +1,91 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Play } from 'lucide-react';
-import { getTimeAgo } from '@/utils/formatters';
+import { Clock, Dumbbell, MoreVertical } from 'lucide-react';
 import SwipeableRow from './set/SwipeableRow';
 import DeleteButton from './set/DeleteButton';
+import { cn } from '@/lib/utils';
 
 interface RoutineCardProps {
   id: string;
   name: string;
-  exercisesCount: number;
-  lastUsedAt?: string | null;
-  onDelete?: (id: string) => void;
+  exercisesCount?: number;
+  lastUsed?: string | null;
   isDeleting?: boolean;
+  onDelete?: (id: string) => void;
+  onClick?: () => void;
 }
 
-const RoutineCard: React.FC<RoutineCardProps> = ({ 
-  id, 
-  name, 
-  exercisesCount, 
-  lastUsedAt,
+const RoutineCard: React.FC<RoutineCardProps> = ({
+  id,
+  name,
+  exercisesCount = 0,
+  lastUsed,
+  isDeleting = false,
   onDelete,
-  isDeleting = false
+  onClick
 }) => {
-  const navigate = useNavigate();
-  
   const handleDelete = () => {
     if (onDelete) {
       onDelete(id);
     }
   };
   
+  const formatLastUsed = (dateString: string | null | undefined) => {
+    if (!dateString) return 'Nunca usado';
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Hoje';
+    if (diffDays === 1) return 'Ontem';
+    return `${diffDays} dias atrás`;
+  };
+  
   return (
     <SwipeableRow
       swipeEnabled={Boolean(onDelete) && !isDeleting}
       onSwipeTrigger={handleDelete}
-      renderSwipeAction={({ offsetX, swiping, onClick }) => (
+      renderSwipeAction={({ offsetX, swiping, onClick: onDeleteClick }) => (
         <DeleteButton 
           offsetX={offsetX} 
           swiping={swiping} 
-          onClick={onClick} 
+          onClick={onDeleteClick} 
         />
       )}
     >
-      <div className={`bg-white rounded-lg shadow-sm p-4 mb-4 border border-gray-200 ${isDeleting ? 'opacity-50' : ''}`}>
-        <h3 className="font-bold text-lg">{name}</h3>
-        <div className="flex text-gray-500 text-sm mt-1 mb-2">
-          <span>{exercisesCount} exercícios</span>
-          <span className="mx-2">•</span>
-          <span>Última vez: {getTimeAgo(lastUsedAt)}</span>
-        </div>
-        
-        <div className="flex items-center justify-between">
-          <span className="bg-fitblue-50 text-fitblue-600 font-medium px-3 py-1 rounded-full text-sm">
-            {exercisesCount} exercícios
-          </span>
+      <div 
+        className={cn(
+          "bg-white rounded-lg shadow-sm p-4 mb-4 border border-gray-200 transition-all duration-200 relative",
+          isDeleting ? "opacity-50" : "hover:shadow-md",
+          onClick ? "cursor-pointer" : ""
+        )}
+        onClick={onClick}
+      >
+        <div className="flex justify-between">
+          <div>
+            <h3 className="font-bold text-lg">{name}</h3>
+            <div className="flex items-center text-gray-500 text-sm mt-1">
+              <Clock className="w-3.5 h-3.5 mr-1" />
+              <p>{formatLastUsed(lastUsed)}</p>
+            </div>
+          </div>
           
-          <button 
-            onClick={() => navigate(`/treino/ativo/${id}`)}
-            className="bg-fitblue text-white rounded-lg px-4 py-2 font-medium flex items-center"
-            disabled={isDeleting}
-          >
-            <Play className="w-4 h-4 mr-1" />
-            Iniciar Rotina
+          <button className="p-2 rounded-full hover:bg-gray-100">
+            <MoreVertical className="w-5 h-5 text-gray-400" />
           </button>
         </div>
+        
+        <div className="mt-3">
+          <div className="flex items-center bg-blue-50 text-blue-600 rounded-full px-3 py-1 text-xs w-fit">
+            <Dumbbell className="w-3.5 h-3.5 mr-1" />
+            <span className="font-medium">{exercisesCount}</span>
+            <span className="ml-1">exercícios</span>
+          </div>
+        </div>
+        
+        <div className="absolute top-0 left-0 w-1 h-full bg-blue-500 rounded-l-lg"></div>
       </div>
     </SwipeableRow>
   );
