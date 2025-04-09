@@ -152,21 +152,29 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
         // Step 1: Update user streak
         await StreakService.updateStreak(userId);
         
-        // Step 2: Get workout difficulty (defaulting to intermediate)
-        let difficulty: 'iniciante' | 'intermediario' | 'avancado' = 'intermediario';
+        // Step 2: Get workout level (defaulting to intermediate)
+        let difficultyLevel: 'iniciante' | 'intermediario' | 'avancado' = 'intermediario';
         if (workoutData.routine_id) {
           try {
             const { data: routineData } = await supabase
               .from('routines')
-              .select('difficulty')
+              .select('level')
               .eq('id', workoutData.routine_id)
               .single();
               
-            if (routineData?.difficulty) {
-              difficulty = routineData.difficulty as 'iniciante' | 'intermediario' | 'avancado';
+            if (routineData?.level) {
+              // Map the exercise level to our difficulty levels
+              const level = routineData.level.toLowerCase();
+              if (level === 'beginner' || level === 'iniciante') {
+                difficultyLevel = 'iniciante';
+              } else if (level === 'advanced' || level === 'avancado') {
+                difficultyLevel = 'avancado';
+              } else {
+                difficultyLevel = 'intermediario';
+              }
             }
           } catch (routineError) {
-            console.error("Error fetching routine difficulty:", routineError);
+            console.error("Error fetching routine level:", routineError);
           }
         }
         
@@ -175,7 +183,7 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
           id: workoutId,
           exercises,
           durationSeconds: elapsedTime,
-          difficulty
+          difficulty: difficultyLevel
         });
         
         // Log personal records if any
@@ -189,10 +197,10 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
         // Step 4: Calculate and award XP
         // Calculate base XP
         const baseXP = XPService.calculateWorkoutXP(
-          { id: workoutId, exercises, durationSeconds: elapsedTime, difficulty },
+          { id: workoutId, exercises, durationSeconds: elapsedTime, difficulty: difficultyLevel },
           userProfile?.class,
           userProfile?.streak || 0,
-          difficulty
+          difficultyLevel
         );
         
         // Award XP with PR bonuses

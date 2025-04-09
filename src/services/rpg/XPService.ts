@@ -180,22 +180,24 @@ export class XPService {
     previousWeight: number
   ): Promise<void> {
     try {
-      // Record personal record event with timestamp for cooldown tracking
-      await supabase
-        .from('personal_records')
-        .insert({
-          user_id: userId,
-          exercise_id: exerciseId,
-          weight: weight,
-          previous_weight: previousWeight,
-          recorded_at: new Date().toISOString()
-        });
+      // Using a raw SQL insert for personal_records since it's not in the TypeScript types yet
+      const { error } = await supabase.rpc('insert_personal_record', {
+        p_user_id: userId,
+        p_exercise_id: exerciseId,
+        p_weight: weight,
+        p_previous_weight: previousWeight
+      });
         
+      if (error) {
+        console.error('Error recording personal record:', error);
+        return;
+      }
+      
       // Update the records count in profile
       await supabase
         .from('profiles')
         .update({
-          records_count: supabase.rpc('increment', { x: 1 })
+          records_count: profile => profile.records_count + 1
         })
         .eq('id', userId);
         
@@ -316,21 +318,20 @@ export class XPService {
     exerciseId: string
   ): Promise<boolean> {
     try {
-      // Get the most recent PR for this exercise
-      const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      // Get the most recent PR for this exercise using RPC
+      const { data, error } = await supabase.rpc('check_personal_record_cooldown', {
+        p_user_id: userId,
+        p_exercise_id: exerciseId,
+        p_days: 7
+      });
       
-      const { data: recentPRs } = await supabase
-        .from('personal_records')
-        .select('recorded_at')
-        .eq('user_id', userId)
-        .eq('exercise_id', exerciseId)
-        .gte('recorded_at', oneWeekAgo.toISOString())
-        .order('recorded_at', { ascending: false })
-        .limit(1);
-        
-      // If no recent PRs found, the exercise is not on cooldown
-      return !recentPRs || recentPRs.length === 0;
+      if (error) {
+        console.error('Error checking PR cooldown:', error);
+        return false;
+      }
+      
+      // Return the result (true = not on cooldown, false = on cooldown)
+      return data === true;
     } catch (error) {
       console.error('Error checking personal record cooldown:', error);
       return false; // Default to not allowing PR bonus on error
