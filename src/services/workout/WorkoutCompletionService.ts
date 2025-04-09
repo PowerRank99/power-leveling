@@ -90,21 +90,25 @@ export class WorkoutCompletionService {
       // Step 1: Update user streak
       await StreakService.updateStreak(userId);
       
-      // Step 2: Get workout difficulty level (defaulting to intermediate)
+      // Step 2: Get workout difficulty level
       let difficultyLevel: 'iniciante' | 'intermediario' | 'avancado' = 'intermediario';
       
       if (routineId) {
         try {
           const { data: routineData, error } = await supabase
             .from('routines')
-            .select('name')
+            .select('level')
             .eq('id', routineId)
             .single();
             
           if (!error && routineData) {
-            // For now we'll use a default difficulty since the level column doesn't exist
-            // This will be updated if a level column is added to routines table
-            difficultyLevel = 'intermediario';
+            // Map the exercise level to our difficulty levels
+            const level = routineData.level?.toLowerCase() || '';
+            if (level === 'beginner' || level === 'iniciante') {
+              difficultyLevel = 'iniciante';
+            } else if (level === 'advanced' || level === 'avancado') {
+              difficultyLevel = 'avancado';
+            }
           }
         } catch (routineError) {
           console.error("Error fetching routine data:", routineError);
