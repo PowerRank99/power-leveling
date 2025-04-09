@@ -16,6 +16,7 @@ import CreateRoutinePage from './pages/CreateRoutinePage';
 import ActiveWorkoutPage from './pages/ActiveWorkoutPage';
 import RankingPage from './pages/RankingPage';
 import RankingDetailPage from './pages/RankingDetailPage';
+import GuildLeaderboardPage from './pages/GuildLeaderboardPage';
 import AdminPage from './pages/AdminPage';
 import TimerSettingsPage from './pages/TimerSettingsPage';
 
@@ -35,6 +36,7 @@ function App() {
           <Route path="/exercicios" element={<ExerciseLibraryPage />} />
           <Route path="/ranking" element={<RankingPage />} />
           <Route path="/ranking/:id" element={<RankingDetailPage />} />
+          <Route path="/guilds/:id/leaderboard" element={<GuildLeaderboardPage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/configuracoes/timer" element={<TimerSettingsPage />} />
           <Route path="/conquistas" element={<AchievementsPage />} />
