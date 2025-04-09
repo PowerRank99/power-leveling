@@ -60,5 +60,5 @@ export class ClassService {
   }
 }
 
-// Re-export the types for better imports
-export { ClassBonus, ClassInfo, CooldownInfo };
+// Re-export the types using 'export type' syntax for TypeScript's isolatedModules mode
+export type { ClassBonus, ClassInfo, CooldownInfo };
