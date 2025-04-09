@@ -9,14 +9,20 @@ interface ProfileProgressSectionProps {
   dailyXPCap: number;
   lastActivity: string;
   xpGain: string;
+  streak?: number;
 }
 
 const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
   dailyXP,
   dailyXPCap,
   lastActivity,
-  xpGain
+  xpGain,
+  streak = 0
 }) => {
+  // Calculate streak bonus (will be displayed if streak is 2 or more days)
+  const hasStreakBonus = streak >= 2;
+  const streakBonusPercent = Math.min(streak * 5, 35); // 5% per day up to 35%
+  
   return (
     <Card className="mt-3 shadow-sm overflow-hidden border-none">
       <CardContent className="p-4">
@@ -29,6 +35,13 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
             label="EXP do Dia"
             className="bg-fitgreen"
           />
+          
+          {hasStreakBonus && (
+            <div className="mt-2 mb-2 text-xs flex justify-between items-center">
+              <span className="text-gray-600">Bônus de Sequência ({streak} dias)</span>
+              <span className="text-fitgreen font-medium">+{streakBonusPercent}% EXP</span>
+            </div>
+          )}
         </div>
         
         <div className="flex justify-between text-sm mt-4">

@@ -17,7 +17,7 @@ export class AchievementService {
       // Get user profile data
       const { data: profile } = await supabase
         .from('profiles')
-        .select('workouts_count, streak')
+        .select('workouts_count, streak, records_count')
         .eq('id', userId)
         .single();
         
@@ -66,6 +66,15 @@ export class AchievementService {
             requirements && 
             'streak_days' in requirements && 
             profile.streak >= requirements.streak_days) {
+          await this.awardAchievement(userId, achievement.id, achievement.name, achievement.description, achievement.xp_reward);
+          achievementUnlocked = true;
+        }
+        
+        // Check personal records achievements
+        if (!achievementUnlocked && 
+            requirements && 
+            'records_count' in requirements && 
+            profile.records_count >= requirements.records_count) {
           await this.awardAchievement(userId, achievement.id, achievement.name, achievement.description, achievement.xp_reward);
           achievementUnlocked = true;
         }
