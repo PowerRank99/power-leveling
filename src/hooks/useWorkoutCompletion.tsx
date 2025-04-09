@@ -22,10 +22,10 @@ const withTimeout = async <T,>(promiseFactory: () => Promise<T>, ms: number): Pr
   try {
     const resultPromise = promiseFactory();
     const result = await Promise.race([resultPromise, timeoutPromise]);
-    clearTimeout(timeoutId);
+    clearTimeout(timeoutId!);
     return result;
   } catch (error) {
-    clearTimeout(timeoutId);
+    clearTimeout(timeoutId!);
     throw error;
   }
 };

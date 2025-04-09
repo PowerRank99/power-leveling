@@ -32,7 +32,7 @@ export const checkAchievements = async (
       .from('workouts')
       .select('id')
       .eq('user_id', userId)
-      .eq('completed_at', 'IS NOT', null);
+      .eq('completed_at', 'is not', null);
       
     if (userWorkoutsError) {
       throw new Error('Failed to fetch user workout history');
