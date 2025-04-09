@@ -17,7 +17,6 @@ import RankingPage from './pages/RankingPage';
 import RankingDetailPage from './pages/RankingDetailPage';
 import AdminPage from './pages/AdminPage';
 import TimerSettingsPage from './pages/TimerSettingsPage';
-import ClassSelectionPage from './pages/ClassSelectionPage';
 
 function App() {
   return (
@@ -28,7 +27,6 @@ function App() {
           <Route path="/index" element={<Index />} />
           <Route path="/perfil" element={<ProfilePage />} />
           <Route path="/perfil/editar" element={<EditProfilePage />} />
-          <Route path="/perfil/classe" element={<ClassSelectionPage />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/treino" element={<WorkoutPage />} />
           <Route path="/treino/ativo/:id" element={<ActiveWorkoutPage />} />

@@ -9,149 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      achievements: {
-        Row: {
-          category: string
-          description: string
-          icon_name: string
-          id: string
-          name: string
-          requirements: Json
-          xp_reward: number
-        }
-        Insert: {
-          category: string
-          description: string
-          icon_name: string
-          id?: string
-          name: string
-          requirements: Json
-          xp_reward: number
-        }
-        Update: {
-          category?: string
-          description?: string
-          icon_name?: string
-          id?: string
-          name?: string
-          requirements?: Json
-          xp_reward?: number
-        }
-        Relationships: []
-      }
-      class_bonuses: {
-        Row: {
-          bonus_type: string
-          bonus_value: number
-          class_name: string
-          description: string
-          id: string
-        }
-        Insert: {
-          bonus_type: string
-          bonus_value: number
-          class_name: string
-          description: string
-          id?: string
-        }
-        Update: {
-          bonus_type?: string
-          bonus_value?: number
-          class_name?: string
-          description?: string
-          id?: string
-        }
-        Relationships: []
-      }
-      competition_participants: {
-        Row: {
-          competition_id: string | null
-          id: string
-          joined_at: string | null
-          participant_id: string | null
-          participant_type: string
-          score: number | null
-        }
-        Insert: {
-          competition_id?: string | null
-          id?: string
-          joined_at?: string | null
-          participant_id?: string | null
-          participant_type: string
-          score?: number | null
-        }
-        Update: {
-          competition_id?: string | null
-          id?: string
-          joined_at?: string | null
-          participant_id?: string | null
-          participant_type?: string
-          score?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "competition_participants_competition_id_fkey"
-            columns: ["competition_id"]
-            isOneToOne: false
-            referencedRelation: "competitions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "competition_participants_participant_id_fkey"
-            columns: ["participant_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      competitions: {
-        Row: {
-          created_at: string | null
-          created_by: string | null
-          description: string | null
-          end_date: string
-          id: string
-          name: string
-          rules: Json | null
-          start_date: string
-          status: string | null
-          type: string
-        }
-        Insert: {
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          end_date: string
-          id?: string
-          name: string
-          rules?: Json | null
-          start_date: string
-          status?: string | null
-          type: string
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          end_date?: string
-          id?: string
-          name?: string
-          rules?: Json | null
-          start_date?: string
-          status?: string | null
-          type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "competitions_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       exercise_history: {
         Row: {
           created_at: string
@@ -270,96 +127,17 @@ export type Database = {
         }
         Relationships: []
       }
-      guild_members: {
-        Row: {
-          guild_id: string | null
-          id: string
-          joined_at: string | null
-          role: string | null
-          user_id: string | null
-        }
-        Insert: {
-          guild_id?: string | null
-          id?: string
-          joined_at?: string | null
-          role?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          guild_id?: string | null
-          id?: string
-          joined_at?: string | null
-          role?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "guild_members_guild_id_fkey"
-            columns: ["guild_id"]
-            isOneToOne: false
-            referencedRelation: "guilds"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "guild_members_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      guilds: {
-        Row: {
-          avatar_url: string | null
-          created_at: string | null
-          creator_id: string | null
-          description: string | null
-          id: string
-          name: string
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string | null
-          creator_id?: string | null
-          description?: string | null
-          id?: string
-          name: string
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string | null
-          creator_id?: string | null
-          description?: string | null
-          id?: string
-          name?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "guilds_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           achievements_count: number | null
           avatar_url: string | null
           bio: string | null
-          class: string | null
-          class_selected_at: string | null
           created_at: string | null
           default_rest_timer_seconds: number
-          equipped_items: Json | null
           id: string
-          last_workout_at: string | null
           level: number | null
           name: string | null
           records_count: number | null
-          streak: number | null
           timer_notification_enabled: boolean
           timer_sound_enabled: boolean
           timer_vibration_enabled: boolean
@@ -372,17 +150,12 @@ export type Database = {
           achievements_count?: number | null
           avatar_url?: string | null
           bio?: string | null
-          class?: string | null
-          class_selected_at?: string | null
           created_at?: string | null
           default_rest_timer_seconds?: number
-          equipped_items?: Json | null
           id: string
-          last_workout_at?: string | null
           level?: number | null
           name?: string | null
           records_count?: number | null
-          streak?: number | null
           timer_notification_enabled?: boolean
           timer_sound_enabled?: boolean
           timer_vibration_enabled?: boolean
@@ -395,17 +168,12 @@ export type Database = {
           achievements_count?: number | null
           avatar_url?: string | null
           bio?: string | null
-          class?: string | null
-          class_selected_at?: string | null
           created_at?: string | null
           default_rest_timer_seconds?: number
-          equipped_items?: Json | null
           id?: string
-          last_workout_at?: string | null
           level?: number | null
           name?: string | null
           records_count?: number | null
-          streak?: number | null
           timer_notification_enabled?: boolean
           timer_sound_enabled?: boolean
           timer_vibration_enabled?: boolean
@@ -481,42 +249,6 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
-      }
-      user_achievements: {
-        Row: {
-          achieved_at: string | null
-          achievement_id: string | null
-          id: string
-          user_id: string | null
-        }
-        Insert: {
-          achieved_at?: string | null
-          achievement_id?: string | null
-          id?: string
-          user_id?: string | null
-        }
-        Update: {
-          achieved_at?: string | null
-          achievement_id?: string | null
-          id?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_achievements_achievement_id_fkey"
-            columns: ["achievement_id"]
-            isOneToOne: false
-            referencedRelation: "achievements"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_achievements_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       workout_sets: {
         Row: {

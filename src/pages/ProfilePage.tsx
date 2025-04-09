@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Medal, Dumbbell, Award, LogOut, Edit3, Swords, TrendingUp } from 'lucide-react';
+import { Medal, Dumbbell, Award, LogOut, Edit3 } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
 import Achievement from '@/components/profile/Achievement';
 import ProgressBar from '@/components/profile/ProgressBar';
@@ -10,53 +10,57 @@ import Trophy from '@/components/icons/Trophy';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { getUserAchievements } from '@/services/rpg/AchievementService';
-import { getXPForNextLevel } from '@/services/rpg/XPService';
-import { getFormattedLastWorkout } from '@/services/rpg/StreakService';
-import { UserAchievement } from '@/types/rpgTypes';
-import { formatDistance } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
   const { toast } = useToast();
-  const [userAchievements, setUserAchievements] = useState<UserAchievement[]>([]);
-  const [isLoadingAchievements, setIsLoadingAchievements] = useState(false);
   
-  // Load user achievements
-  useEffect(() => {
-    const loadAchievements = async () => {
-      if (!user) return;
-      
-      setIsLoadingAchievements(true);
-      try {
-        const achievements = await getUserAchievements(user.id);
-        setUserAchievements(achievements);
-      } catch (error) {
-        console.error("Error loading achievements:", error);
-      } finally {
-        setIsLoadingAchievements(false);
-      }
-    };
-    
-    loadAchievements();
-  }, [user]);
+  // Mock data for achievements and goals
+  const achievements = [
+    {
+      id: "1",
+      title: "Mestre do Supino",
+      description: "Superou 100kg no supino reto",
+      icon: <Medal className="w-6 h-6 text-yellow-600" />,
+      date: "Hoje",
+      color: "yellow"
+    },
+    {
+      id: "2",
+      title: "Dedicação Total",
+      description: "30 dias consecutivos de treino",
+      icon: <Award className="w-6 h-6 text-purple-600" />,
+      date: "3d",
+      color: "purple"
+    },
+    {
+      id: "3",
+      title: "Peso Pesado",
+      description: "Levantou 1000kg em um único treino",
+      icon: <Dumbbell className="w-6 h-6 text-green-600" />,
+      date: "1s",
+      color: "green"
+    }
+  ];
   
-  // Calculate XP progress for next level
-  const currentXP = profile?.xp || 0;
-  const currentLevel = profile?.level || 1;
-  const nextLevelXP = getXPForNextLevel(currentXP);
-  const xpForCurrentLevel = getXPForNextLevel(currentXP - 1);
-  const xpProgress = nextLevelXP > xpForCurrentLevel 
-    ? Math.round(((currentXP - xpForCurrentLevel) / (nextLevelXP - xpForCurrentLevel)) * 100) 
-    : 100;
-  
-  // Format streak and last workout time
-  const formattedLastWorkout = profile?.last_workout_at 
-    ? getFormattedLastWorkout(profile.last_workout_at)
-    : 'Nenhum treino recente';
-  
+  const goals = [
+    {
+      id: "1",
+      label: "Meta de Agachamento",
+      current: 120,
+      target: 150,
+      colorClass: "bg-fitblue"
+    },
+    {
+      id: "2",
+      label: "Treinos Semanais",
+      current: 3,
+      target: 5,
+      colorClass: "bg-fitgreen"
+    }
+  ];
+
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -81,34 +85,6 @@ const ProfilePage = () => {
   // Default avatar if user doesn't have one
   const userAvatar = profile?.avatar_url || "/lovable-uploads/c6066df0-70c1-48cf-b017-126e8f7e850a.png";
   
-  // Format achievement dates
-  const formatAchievementDate = (dateStr: string) => {
-    try {
-      const date = new Date(dateStr);
-      return formatDistance(date, new Date(), { addSuffix: true, locale: ptBR });
-    } catch (error) {
-      return 'Data desconhecida';
-    }
-  };
-  
-  // Goals data
-  const goals = [
-    {
-      id: "1",
-      label: "Meta de Agachamento",
-      current: 120,
-      target: 150,
-      colorClass: "bg-fitblue"
-    },
-    {
-      id: "2",
-      label: "Treinos Semanais",
-      current: 3,
-      target: 5,
-      colorClass: "bg-fitgreen"
-    }
-  ];
-
   return (
     <div className="pb-20 min-h-screen bg-gray-50">
       <PageHeader 
@@ -135,7 +111,7 @@ const ProfilePage = () => {
         }
       />
       
-      {/* User Profile Header with RPG information */}
+      {/* User Profile Header */}
       <div className="bg-white p-6 flex flex-col items-center">
         <div className="w-24 h-24 rounded-lg overflow-hidden mb-2">
           <img src={userAvatar} alt="User Avatar" className="w-full h-full object-cover" />
@@ -144,23 +120,13 @@ const ProfilePage = () => {
         <h2 className="text-xl font-bold">{profile?.name || user?.email}</h2>
         <p className="text-gray-600">Nível {profile?.level || 1} - {profile?.title || "Novato"}</p>
         
-        {/* Class badge if selected */}
-        {profile?.class && (
-          <div className="mt-1 py-1 px-3 bg-fitblue/10 text-fitblue rounded-full text-sm font-medium">
-            {profile.class.charAt(0).toUpperCase() + profile.class.slice(1)}
-          </div>
-        )}
-        
         {/* XP Progress */}
         <div className="w-full mt-4">
           <div className="h-2 bg-gray-200 rounded-full w-full overflow-hidden">
-            <div 
-              className="h-full bg-fitblue" 
-              style={{ width: `${xpProgress}%` }}
-            ></div>
+            <div className="h-full bg-fitblue w-3/4"></div>
           </div>
           <div className="flex justify-between text-sm text-gray-500 mt-1">
-            <span>{currentXP}/{nextLevelXP} XP para o próximo nível</span>
+            <span>{profile?.xp || 0}/1000 XP para o próximo nível</span>
           </div>
         </div>
         
@@ -184,16 +150,11 @@ const ProfilePage = () => {
           
           <div className="text-center">
             <div className="flex flex-col items-center">
-              <TrendingUp className="w-6 h-6 text-fitpurple mb-1" />
-              <span className="text-2xl font-bold">{profile?.streak || 0}</span>
-              <span className="text-xs text-gray-500">Sequência</span>
+              <Award className="w-6 h-6 text-fitpurple mb-1" />
+              <span className="text-2xl font-bold">{profile?.records_count || 0}</span>
+              <span className="text-xs text-gray-500">Recordes</span>
             </div>
           </div>
-        </div>
-        
-        {/* Last workout */}
-        <div className="mt-4 w-full text-center text-sm text-gray-500">
-          <span>Último treino: {formattedLastWorkout}</span>
         </div>
       </div>
       
@@ -201,24 +162,20 @@ const ProfilePage = () => {
       <div className="mt-4 bg-white p-4">
         <h3 className="text-lg font-bold mb-3">Conquistas Recentes</h3>
         
-        {isLoadingAchievements ? (
-          <div className="text-center py-4 text-gray-500">
-            Carregando conquistas...
-          </div>
-        ) : userAchievements.length > 0 ? (
-          userAchievements.slice(0, 3).map(achievement => (
+        {achievements.length > 0 ? (
+          achievements.map(achievement => (
             <Achievement 
               key={achievement.id}
-              icon={<Award className="w-6 h-6 text-yellow-600" />}
-              title={achievement.achievement?.name || "Conquista"}
-              description={achievement.achievement?.description || ""}
-              date={formatAchievementDate(achievement.achievedAt)}
-              color="yellow"
+              icon={achievement.icon}
+              title={achievement.title}
+              description={achievement.description}
+              date={achievement.date}
+              color={achievement.color as 'blue' | 'green' | 'purple' | 'yellow'}
             />
           ))
         ) : (
           <div className="text-center py-4 text-gray-500">
-            Complete treinos para desbloquear conquistas
+            Você ainda não tem conquistas
           </div>
         )}
       </div>
