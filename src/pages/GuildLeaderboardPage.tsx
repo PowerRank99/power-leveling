@@ -120,10 +120,8 @@ const GuildLeaderboardPage: React.FC = () => {
         onMetricFilterChange={setMetricFilter}
       />
       
-      {/* Podium Component - now with proper spacing */}
-      <div className="podium-container mt-4">
-        <LeaderboardPodium members={topMembers} />
-      </div>
+      {/* Podium Component with improved spacing */}
+      <LeaderboardPodium members={topMembers} />
       
       {/* Members List Component */}
       <MembersList members={allMembers} />

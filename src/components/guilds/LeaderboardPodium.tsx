@@ -49,7 +49,7 @@ const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({ members }) => {
   
   return (
     <div className="bg-gradient-to-b from-blue-50 to-white p-4 border-b border-gray-200">
-      <div className="flex justify-around items-end h-48 relative">
+      <div className="flex justify-around items-end h-56 relative pt-10 mt-8">
         {podiumOrder.map((index) => {
           const member = top3[index];
           if (!member) return null;
