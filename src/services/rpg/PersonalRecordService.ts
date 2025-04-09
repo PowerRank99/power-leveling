@@ -22,7 +22,7 @@ export class PersonalRecordService {
     previousWeight: number
   ): Promise<void> {
     try {
-      // Insert the personal record directly since the stored procedure doesn't exist
+      // Insert the personal record
       const { error } = await supabase
         .from('personal_records')
         .insert({
@@ -39,11 +39,11 @@ export class PersonalRecordService {
       
       // Update the records count in profile
       await supabase
-        .from('profiles')
-        .update({
-          records_count: supabase.sql`records_count + 1`
-        })
-        .eq('id', userId);
+        .rpc('increment_profile_counter', {
+          user_id_param: userId,
+          counter_name: 'records_count',
+          increment_amount: 1
+        });
         
     } catch (error) {
       console.error('Error recording personal record:', error);
@@ -62,10 +62,10 @@ export class PersonalRecordService {
       // Query for the most recent PR for this exercise in the last 7 days
       const { data, error } = await supabase
         .from('personal_records')
-        .select('created_at')
+        .select('recorded_at')
         .eq('user_id', userId)
         .eq('exercise_id', exerciseId)
-        .order('created_at', { ascending: false })
+        .order('recorded_at', { ascending: false })
         .limit(1);
       
       if (error) {
@@ -80,7 +80,7 @@ export class PersonalRecordService {
       
       // Check if the most recent record is older than 7 days
       const lastRecord = data[0];
-      const lastRecordDate = new Date(lastRecord.created_at);
+      const lastRecordDate = new Date(lastRecord.recorded_at);
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       

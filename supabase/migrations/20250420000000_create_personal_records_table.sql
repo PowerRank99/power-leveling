@@ -1,6 +1,6 @@
 
 -- Create table to track personal records for XP bonuses
-CREATE TABLE public.personal_records (
+CREATE TABLE IF NOT EXISTS public.personal_records (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users NOT NULL,
   exercise_id UUID REFERENCES public.exercises NOT NULL,
