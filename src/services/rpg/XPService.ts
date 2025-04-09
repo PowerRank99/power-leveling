@@ -180,7 +180,7 @@ export class XPService {
     previousWeight: number
   ): Promise<void> {
     try {
-      // Using a raw SQL insert for personal_records since it's not in the TypeScript types yet
+      // Using a stored procedure for personal_records since it's not in the TypeScript types yet
       const { error } = await supabase.rpc('insert_personal_record', {
         p_user_id: userId,
         p_exercise_id: exerciseId,
@@ -197,7 +197,9 @@ export class XPService {
       await supabase
         .from('profiles')
         .update({
-          records_count: profile => profile.records_count + 1
+          records_count: (profile) => {
+            return (profile.records_count || 0) + 1;
+          }
         })
         .eq('id', userId);
         
@@ -330,7 +332,7 @@ export class XPService {
         return false;
       }
       
-      // Return the result (true = not on cooldown, false = on cooldown)
+      // Return the result (data is already a boolean)
       return data === true;
     } catch (error) {
       console.error('Error checking personal record cooldown:', error);

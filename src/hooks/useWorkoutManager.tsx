@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useWorkoutTimer } from './useWorkoutTimer';
 import { useWorkoutInitialization } from './workout/useWorkoutInitialization';
 import { useWorkoutSetManagement } from './workout/useWorkoutSetManagement';
-import { useWorkoutActions } from './workout/useWorkoutActions';
+import { useWorkoutActions } from './workout-manager/useWorkoutActions';
 import { useWorkoutNotesManager } from './workout/useWorkoutNotesManager';
 
 /**
