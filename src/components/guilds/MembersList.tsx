@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import MemberRankingList from '@/components/guilds/MemberRankingList';
+import { Button } from '@/components/ui/button';
 
 interface Member {
   id: string;
@@ -105,3 +106,4 @@ const MembersList: React.FC<MembersListProps> = ({ members }) => {
 };
 
 export default MembersList;
+
