@@ -5,7 +5,7 @@ import RoutineCard from '@/components/workout/RoutineCard';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/button';
-import { Routine } from '@/hooks/useWorkoutData';
+import { Routine } from '@/hooks/types/workoutDataTypes';
 import { RefreshCw } from 'lucide-react';
 import RoutineContextMenu from '@/components/workout/RoutineContextMenu';
 
@@ -80,7 +80,7 @@ const RoutinesList: React.FC<RoutinesListProps> = ({
             id={routine.id}
             name={routine.name}
             exercisesCount={routine.exercises_count || 0}
-            lastUsedAt={routine.last_used_at}
+            lastUsed={routine.last_used_at}
             isDeleting={isDeletingItem(routine.id)}
             onDelete={onDeleteRoutine}
           />
