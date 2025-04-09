@@ -76,7 +76,7 @@ export const checkAchievements = async (
       };
       
       const isUnlocked = checkAchievementRequirements(
-        achievement.requirements,
+        achievement,  // Pass the entire achievement object
         workoutWithData
       );
       
@@ -108,17 +108,16 @@ export const checkAchievements = async (
  * Check if an achievement's requirements are met by the workout
  */
 const checkAchievementRequirements = (
-  requirements: any, 
+  achievement: any, 
   workout: any
 ): boolean => {
+  const requirements = achievement.requirements || {};
+  const totalWorkouts = workout.user_workouts_count || 0;
+
   if (!requirements) return false;
   
-  // Example requirement checks
-  if (requirements.total_workouts) {
-    const totalWorkouts = workout.user_workouts_count || 0;
-    if (totalWorkouts < requirements.total_workouts) {
-      return false;
-    }
+  if (requirements.total_workouts && totalWorkouts < requirements.total_workouts) {
+    return false;
   }
   
   if (requirements.sets_completed) {
