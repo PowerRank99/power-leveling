@@ -1,10 +1,9 @@
-
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { TimerService } from '@/services/timer/TimerService';
 import { TimerNotificationService, TimerSettings } from '@/services/timer/TimerNotificationService';
 import { toast } from 'sonner';
-import { useWorkoutCompletion } from '@/hooks/workout-manager/useWorkoutCompletion';
+import { useWorkoutCompletion } from '@/hooks/workout/useWorkoutCompletion';
 
 export interface TimerState {
   exerciseId: string | null;
@@ -43,7 +42,6 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
   const timerInterval = useRef<number | null>(null);
   const { isSubmitting } = useWorkoutCompletion(null, 0, () => {});
 
-  // Load timer settings on mount
   useEffect(() => {
     const loadTimerSettings = async () => {
       if (!user) return;
@@ -57,7 +55,6 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
             notificationEnabled: result.data.timer_notification_enabled
           });
           
-          // Update default timer duration
           setTimerState(prev => ({
             ...prev,
             totalSeconds: result.data.default_rest_timer_seconds || 90
@@ -73,7 +70,6 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
     loadTimerSettings();
   }, [user]);
 
-  // Timer tick handler
   useEffect(() => {
     const handleTimerTick = () => {
       setTimerState(prev => {
@@ -84,22 +80,18 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
         const newRemaining = prev.remainingSeconds - 1;
         const newProgress = 1 - (newRemaining / prev.totalSeconds);
         
-        // Check if timer completed
         if (newRemaining <= 0) {
-          // Clear interval
           if (timerInterval.current) {
             clearInterval(timerInterval.current);
             timerInterval.current = null;
           }
           
-          // Trigger completion actions
           TimerNotificationService.notifyTimerComplete(prev.exerciseName || 'exercício', timerSettings);
           
           if (props?.onFinish) {
             props.onFinish();
           }
           
-          // Return completed state
           return {
             ...prev,
             isActive: false,
@@ -108,7 +100,6 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
           };
         }
         
-        // Return updated state
         return {
           ...prev,
           remainingSeconds: newRemaining,
@@ -117,7 +108,6 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
       });
     };
     
-    // Set up interval if timer is active
     if (timerState.isActive && !timerState.isPaused && timerState.remainingSeconds > 0) {
       if (timerInterval.current) {
         clearInterval(timerInterval.current);
@@ -125,7 +115,6 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
       timerInterval.current = window.setInterval(handleTimerTick, 1000);
     }
     
-    // Cleanup on unmount or when timer stops
     return () => {
       if (timerInterval.current) {
         clearInterval(timerInterval.current);
@@ -140,7 +129,6 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
     props
   ]);
 
-  // Save timer duration to backend when workout is being submitted
   useEffect(() => {
     const saveAllExerciseTimers = async () => {
       if (!user || !isSubmitting || Object.keys(lastSavedDurations).length === 0) return;
@@ -148,7 +136,6 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
       try {
         console.log("[useExerciseRestTimer] Saving exercise timer durations", lastSavedDurations);
         
-        // Save each exercise timer duration
         const savePromises = Object.entries(lastSavedDurations).map(([exerciseId, duration]) => 
           TimerService.saveExerciseTimerDuration(user.id, exerciseId, duration)
         );
@@ -164,7 +151,6 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
     saveAllExerciseTimers();
   }, [isSubmitting, lastSavedDurations, user]);
 
-  // Load timer duration for specific exercise
   const loadExerciseTimerDuration = useCallback(async (exerciseId: string) => {
     if (!user || !exerciseId || loadingExercises[exerciseId]) return;
     
@@ -174,12 +160,10 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
       const result = await TimerService.getExerciseTimerDuration(user.id, exerciseId);
       
       if (result.success && typeof result.data === 'number') {
-        // Store the duration for this exercise
         setLastSavedDurations(prev => ({ ...prev, [exerciseId]: result.data as number }));
         
         console.log(`[useExerciseRestTimer] Loaded timer for exercise ${exerciseId}: ${result.data}s`);
         
-        // Return the data for immediate use if needed
         return result.data;
       }
     } catch (error) {
@@ -191,7 +175,6 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
     return null;
   }, [user, loadingExercises]);
 
-  // New function to save exercise timer duration immediately
   const saveExerciseTimerDuration = useCallback(async (exerciseId: string, duration: number) => {
     if (!user || !exerciseId) {
       console.error("[useExerciseRestTimer] Cannot save timer: missing user or exerciseId");
@@ -204,7 +187,6 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
       const result = await TimerService.saveExerciseTimerDuration(user.id, exerciseId, duration);
       
       if (result.success) {
-        // Update local state
         setLastSavedDurations(prev => ({ ...prev, [exerciseId]: duration }));
         console.log(`[useExerciseRestTimer] Timer duration saved successfully: ${duration}s`);
         return true;
@@ -218,21 +200,18 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
     }
   }, [user]);
 
-  // Format timer display
   const formatTime = useCallback((seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }, []);
 
-  // Start a rest timer for an exercise
   const startTimer = useCallback((exerciseId: string, exerciseName: string) => {
     if (!user) {
       toast.error("Usuário não autenticado");
       return;
     }
     
-    // Get the duration for this exercise (or default)
     const duration = lastSavedDurations[exerciseId] || timerState.totalSeconds;
     
     console.log(`[useExerciseRestTimer] Starting timer for ${exerciseName} (${exerciseId}): ${duration}s`);
@@ -248,7 +227,6 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
     });
   }, [user, lastSavedDurations, timerState.totalSeconds]);
 
-  // Pause the current timer
   const pauseTimer = useCallback(() => {
     setTimerState(prev => {
       if (!prev.isActive) return prev;
@@ -257,7 +235,6 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
     });
   }, []);
 
-  // Resume the current timer
   const resumeTimer = useCallback(() => {
     setTimerState(prev => {
       if (!prev.isActive) return prev;
@@ -266,7 +243,6 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
     });
   }, []);
 
-  // Stop the current timer
   const stopTimer = useCallback(() => {
     console.log(`[useExerciseRestTimer] Stopping timer`);
     setTimerState(prev => ({
@@ -283,7 +259,6 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
     }
   }, []);
 
-  // Add time to the current timer
   const addTime = useCallback((seconds: number) => {
     setTimerState(prev => {
       if (!prev.isActive) return prev;
@@ -301,16 +276,13 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
     });
   }, []);
 
-  // Update timer duration for an exercise
   const updateTimerDuration = useCallback((exerciseId: string, duration: number) => {
     if (!exerciseId || duration <= 0) return;
     
     console.log(`[useExerciseRestTimer] Updating timer for ${exerciseId} to ${duration}s`);
     
-    // Store the updated duration
     setLastSavedDurations(prev => ({ ...prev, [exerciseId]: duration }));
     
-    // If this is the currently active timer, update its total and remaining time
     setTimerState(prev => {
       if (prev.exerciseId !== exerciseId) return prev;
       
@@ -323,15 +295,12 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
     });
   }, []);
 
-  // Save timer settings
   const saveTimerSettings = useCallback(async (settings: Partial<TimerSettings>) => {
     if (!user) return;
     
     try {
-      // Update local state
       setTimerSettings(prev => ({ ...prev, ...settings }));
       
-      // Save to backend
       const dbSettings: Record<string, any> = {};
       if (settings.soundEnabled !== undefined) dbSettings.timer_sound_enabled = settings.soundEnabled;
       if (settings.vibrationEnabled !== undefined) dbSettings.timer_vibration_enabled = settings.vibrationEnabled;
@@ -346,15 +315,12 @@ export const useExerciseRestTimer = (props?: UseExerciseRestTimerProps) => {
     }
   }, [user]);
 
-  // Save default timer duration
   const saveDefaultTimerDuration = useCallback(async (duration: number) => {
     if (!user) return;
     
     try {
-      // Update local state
       setTimerState(prev => ({ ...prev, totalSeconds: duration }));
       
-      // Save to backend
       await TimerService.saveUserTimerSettings(user.id, {
         default_rest_timer_seconds: duration
       });

@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { useWorkoutCompletion } from '../useWorkoutCompletion';
+import { useWorkoutCompletion } from './useWorkoutCompletion';
 import { NavigateFunction } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -13,7 +13,7 @@ export const useWorkoutActions = (
   navigate: NavigateFunction
 ) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { finishWorkout: finishWorkoutAction } = useWorkoutCompletion(workoutId);
+  const { finishWorkout: finishWorkoutAction } = useWorkoutCompletion(workoutId, elapsedTime);
   
   const finishWorkout = async () => {
     if (isSubmitting) return false;
@@ -22,7 +22,7 @@ export const useWorkoutActions = (
       setIsSubmitting(true);
       console.log("Finishing workout with ID:", workoutId);
       
-      const success = await finishWorkoutAction(elapsedTime);
+      const success = await finishWorkoutAction();
       if (success) {
         toast.success("Treino finalizado com sucesso!", {
           description: "Os dados do seu treino foram salvos."

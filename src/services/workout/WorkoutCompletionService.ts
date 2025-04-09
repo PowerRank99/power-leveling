@@ -1,10 +1,10 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { WorkoutExercise } from '@/types/workoutTypes';
 import { XPService } from '@/services/rpg/XPService';
 import { StreakService } from '@/services/rpg/StreakService';
 import { AchievementService } from '@/services/rpg/AchievementService';
+import { WorkoutDataService } from './WorkoutDataService';
 
 export class WorkoutCompletionService {
   /**
@@ -82,38 +82,16 @@ export class WorkoutCompletionService {
   ): Promise<void> {
     try {
       // Get workout exercises and details for XP calculation
-      const exercises = await this.fetchWorkoutExercises(workoutId);
+      const exercises = await WorkoutDataService.fetchWorkoutExercises(workoutId);
       
       // Get user profile data to determine class and streak
-      const userProfile = await this.fetchUserProfile(userId);
+      const userProfile = await WorkoutDataService.fetchUserProfile(userId);
       
       // Step 1: Update user streak
       await StreakService.updateStreak(userId);
       
       // Step 2: Get workout difficulty level
-      let difficultyLevel: 'iniciante' | 'intermediario' | 'avancado' = 'intermediario';
-      
-      if (routineId) {
-        try {
-          const { data: routineData, error } = await supabase
-            .from('routines')
-            .select('level')
-            .eq('id', routineId)
-            .single();
-            
-          if (!error && routineData) {
-            // Map the exercise level to our difficulty levels
-            const level = routineData.level?.toLowerCase() || '';
-            if (level === 'beginner' || level === 'iniciante') {
-              difficultyLevel = 'iniciante';
-            } else if (level === 'advanced' || level === 'avancado') {
-              difficultyLevel = 'avancado';
-            }
-          }
-        } catch (routineError) {
-          console.error("Error fetching routine data:", routineError);
-        }
-      }
+      const difficultyLevel = await WorkoutDataService.getWorkoutDifficultyLevel(routineId);
       
       // Step 3: Check for personal records
       const personalRecords = await XPService.checkForPersonalRecords(userId, {
@@ -147,68 +125,6 @@ export class WorkoutCompletionService {
     } catch (rpgError) {
       // Log but don't fail the workout completion
       console.error("Error processing RPG rewards:", rpgError);
-    }
-  }
-  
-  /**
-   * Fetch workout exercises for XP calculation
-   */
-  private static async fetchWorkoutExercises(workoutId: string): Promise<WorkoutExercise[]> {
-    try {
-      const { data: exerciseSets, error: setsError } = await supabase
-        .from('workout_sets')
-        .select('id, exercise_id, weight, reps, completed, set_order, exercises(id, name)')
-        .eq('workout_id', workoutId)
-        .order('set_order', { ascending: true });
-      
-      if (setsError) throw setsError;
-      
-      // Group sets by exercise
-      const exerciseMap: Record<string, WorkoutExercise> = {};
-      exerciseSets.forEach(set => {
-        const exerciseId = set.exercise_id;
-        if (!exerciseId) return;
-        
-        if (!exerciseMap[exerciseId]) {
-          exerciseMap[exerciseId] = {
-            id: exerciseId,
-            name: set.exercises?.name || 'Unknown Exercise',
-            sets: []
-          };
-        }
-        
-        exerciseMap[exerciseId].sets.push({
-          id: set.id,
-          weight: set.weight?.toString() || '0',
-          reps: set.reps?.toString() || '0',
-          completed: set.completed || false,
-          set_order: set.set_order
-        });
-      });
-      
-      return Object.values(exerciseMap);
-    } catch (error) {
-      console.error("Error fetching workout exercises:", error);
-      return [];
-    }
-  }
-  
-  /**
-   * Fetch user profile data
-   */
-  private static async fetchUserProfile(userId: string) {
-    try {
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('class, streak')
-        .eq('id', userId)
-        .single();
-        
-      if (profileError) throw profileError;
-      return profile;
-    } catch (profileError) {
-      console.error("Error fetching user profile:", profileError);
-      return null;
     }
   }
   

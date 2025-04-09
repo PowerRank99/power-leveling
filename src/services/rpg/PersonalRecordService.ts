@@ -22,13 +22,15 @@ export class PersonalRecordService {
     previousWeight: number
   ): Promise<void> {
     try {
-      // Using a stored procedure for personal_records
-      const { error } = await supabase.rpc('insert_personal_record', {
-        p_user_id: userId,
-        p_exercise_id: exerciseId,
-        p_weight: weight,
-        p_previous_weight: previousWeight
-      });
+      // Insert the personal record directly since the stored procedure doesn't exist
+      const { error } = await supabase
+        .from('personal_records')
+        .insert({
+          user_id: userId,
+          exercise_id: exerciseId,
+          weight: weight,
+          previous_weight: previousWeight
+        });
         
       if (error) {
         console.error('Error recording personal record:', error);
@@ -39,9 +41,7 @@ export class PersonalRecordService {
       await supabase
         .from('profiles')
         .update({
-          records_count: (profile) => {
-            return profile.records_count + 1;  
-          }
+          records_count: supabase.sql`records_count + 1`
         })
         .eq('id', userId);
         
@@ -59,20 +59,33 @@ export class PersonalRecordService {
     exerciseId: string
   ): Promise<boolean> {
     try {
-      // Get the most recent PR for this exercise using RPC
-      const { data, error } = await supabase.rpc('check_personal_record_cooldown', {
-        p_user_id: userId,
-        p_exercise_id: exerciseId,
-        p_days: 7
-      });
+      // Query for the most recent PR for this exercise in the last 7 days
+      const { data, error } = await supabase
+        .from('personal_records')
+        .select('created_at')
+        .eq('user_id', userId)
+        .eq('exercise_id', exerciseId)
+        .order('created_at', { ascending: false })
+        .limit(1);
       
       if (error) {
         console.error('Error checking PR cooldown:', error);
         return false;
       }
       
-      // Return true if not on cooldown
-      return data === true;
+      // If no records found, not on cooldown
+      if (!data || data.length === 0) {
+        return true;
+      }
+      
+      // Check if the most recent record is older than 7 days
+      const lastRecord = data[0];
+      const lastRecordDate = new Date(lastRecord.created_at);
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      // Return true if the record is older than 7 days (not on cooldown)
+      return lastRecordDate < sevenDaysAgo;
     } catch (error) {
       console.error('Error checking personal record cooldown:', error);
       return false; // Default to not allowing PR bonus on error
