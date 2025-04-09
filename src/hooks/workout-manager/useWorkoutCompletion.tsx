@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { XPService } from '@/services/rpg/XPService';
+import { AchievementService } from '@/services/rpg/AchievementService';
 
 export const useWorkoutCompletion = (
   workoutId: string | null,
@@ -23,6 +25,24 @@ export const useWorkoutCompletion = (
       setIsSubmitting(true);
       console.log("Finishing workout:", workoutId, "with duration:", elapsedTime);
       
+      // Get workout data to check user_id
+      const { data: workoutData, error: fetchError } = await supabase
+        .from('workouts')
+        .select('user_id')
+        .eq('id', workoutId)
+        .single();
+        
+      if (fetchError || !workoutData) {
+        console.error("Error fetching workout data:", fetchError);
+        throw new Error("Não foi possível localizar os dados do treino");
+      }
+      
+      const userId = workoutData.user_id;
+      if (!userId) {
+        console.error("No user ID associated with workout");
+        throw new Error("Treino sem usuário associado");
+      }
+      
       // Update workout with completion status
       const { error } = await supabase
         .from('workouts')
@@ -35,6 +55,15 @@ export const useWorkoutCompletion = (
       if (error) {
         throw error;
       }
+      
+      // Add RPG system integration - award XP and check achievements
+      const baseXP = 50; // Base XP for completing a workout
+      
+      // Award XP
+      await XPService.awardXP(userId, baseXP);
+      
+      // Check for achievements
+      await AchievementService.checkAchievements(userId);
       
       // Toast notification
       toast.success("Treino finalizado", {

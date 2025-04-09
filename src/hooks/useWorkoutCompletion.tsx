@@ -1,6 +1,8 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { XPService } from '@/services/rpg/XPService';
+import { AchievementService } from '@/services/rpg/AchievementService';
 
 const TIMEOUT_MS = 10000; // 10 seconds timeout for operations
 
@@ -42,7 +44,7 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
           async () => {
             const { data, error } = await supabase
               .from('workouts')
-              .select('completed_at')
+              .select('completed_at, user_id')
               .eq('id', workoutId)
               .single();
               
@@ -59,6 +61,12 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
       if (workoutData?.completed_at) {
         console.log("Workout already completed, skipping update");
         return true; // Workout already completed, return success
+      }
+      
+      const userId = workoutData?.user_id;
+      if (!userId) {
+        console.error("No user ID associated with workout");
+        throw new Error("Treino sem usuário associado");
       }
       
       // Update workout with completion status
@@ -82,6 +90,16 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
         console.error("Error or timeout finishing workout:", updateError);
         throw new Error("Não foi possível salvar o treino finalizado");
       }
+
+      // Add RPG system integration - award XP and check achievements
+      // Calculate base XP (can be improved with more sophisticated rules)
+      const baseXP = 50; // Base XP for completing a workout
+      
+      // Award XP
+      await XPService.awardXP(userId, baseXP);
+      
+      // Check for achievements
+      await AchievementService.checkAchievements(userId);
       
       return true;
     } catch (error: any) {
