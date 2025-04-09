@@ -70,23 +70,30 @@ export class ClassService {
       const classInfos: ClassInfo[] = [];
       
       for (const className of classes) {
-        // Note: Using any to work around TypeScript limitations with custom RPC functions
-        const { data, error } = await supabase.rpc('get_class_bonuses', {
-          p_class_name: className
-        });
+        // Use the proper any type to work around TypeScript limitations
+        const { data, error } = await supabase.rpc(
+          'get_class_bonuses' as any,
+          { p_class_name: className }
+        );
         
         if (error) {
           console.error('Error fetching class bonuses:', error);
           continue;
         }
         
-        // Type assertion - we know the structure returned by our RPC
-        const classData = data as { class_name: string, bonuses: ClassBonus[] } | null;
+        // Safe type conversion with proper checks
+        const classData = data as unknown;
+        let bonuses: ClassBonus[] = [];
+        
+        // Check if data has the expected structure
+        if (classData && typeof classData === 'object' && 'bonuses' in classData) {
+          bonuses = (classData as any).bonuses || [];
+        }
         
         // Combine database bonuses with UI metadata
         classInfos.push({
           ...this.CLASS_INFO[className],
-          bonuses: classData?.bonuses || []
+          bonuses
         });
       }
       
@@ -107,11 +114,14 @@ export class ClassService {
         return false;
       }
       
-      // Note: Using any to work around TypeScript limitations with custom RPC functions
-      const { data, error } = await supabase.rpc('select_class', {
-        p_user_id: userId,
-        p_class_name: className
-      });
+      // Use proper typing for RPC function
+      const { data, error } = await supabase.rpc(
+        'select_class' as any,
+        {
+          p_user_id: userId,
+          p_class_name: className
+        }
+      );
       
       if (error) {
         console.error('Error selecting class:', error);
@@ -121,16 +131,30 @@ export class ClassService {
         return false;
       }
       
-      // Type assertion - we know the structure returned by our RPC
-      const result = data as { 
-        success: boolean; 
-        message: string; 
-        cooldown_ends_at?: string 
-      } | null;
+      // Safely handle the response data
+      const rawResult = data as unknown;
       
-      if (!result?.success) {
-        if (result?.message === 'Class change on cooldown') {
-          const cooldownEnds = new Date(result.cooldown_ends_at || '');
+      // Check if the result has the expected structure
+      if (!rawResult || typeof rawResult !== 'object') {
+        toast.error('Erro ao selecionar classe', { 
+          description: 'Resposta inválida do servidor' 
+        });
+        return false;
+      }
+      
+      // Extract success flag and other fields with safe type checking
+      const success = 'success' in rawResult ? (rawResult as any).success : false;
+      
+      if (!success) {
+        // Extract message and cooldown info safely
+        const message = 'message' in rawResult ? (rawResult as any).message : 'Erro desconhecido';
+        
+        if (message === 'Class change on cooldown') {
+          // Extract cooldown date safely
+          const cooldownEnds = 'cooldown_ends_at' in rawResult ? 
+            new Date((rawResult as any).cooldown_ends_at || '') : 
+            new Date();
+            
           const daysLeft = Math.ceil((cooldownEnds.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
           
           toast.error('Mudança de classe em cooldown', { 
@@ -138,7 +162,7 @@ export class ClassService {
           });
         } else {
           toast.error('Erro ao selecionar classe', { 
-            description: result?.message || 'Erro desconhecido'
+            description: message || 'Erro desconhecido'
           });
         }
         return false;
@@ -165,18 +189,33 @@ export class ClassService {
     try {
       if (!userId) return null;
       
-      // Note: Using any to work around TypeScript limitations with custom RPC functions
-      const { data, error } = await supabase.rpc('get_class_cooldown', {
-        p_user_id: userId
-      });
+      // Use proper typing for RPC function
+      const { data, error } = await supabase.rpc(
+        'get_class_cooldown' as any,
+        { p_user_id: userId }
+      );
       
       if (error) {
         console.error('Error checking class cooldown:', error);
         return null;
       }
       
-      // Type assertion - we know the structure returned by our RPC
-      return data as CooldownInfo;
+      // Safe conversion with default values
+      const cooldownInfo: CooldownInfo = {
+        on_cooldown: false,
+        current_class: null,
+        cooldown_ends_at: null
+      };
+      
+      // Check if data has the expected structure and extract values safely
+      if (data && typeof data === 'object') {
+        const rawData = data as any;
+        cooldownInfo.on_cooldown = 'on_cooldown' in rawData ? !!rawData.on_cooldown : false;
+        cooldownInfo.current_class = 'current_class' in rawData ? rawData.current_class : null;
+        cooldownInfo.cooldown_ends_at = 'cooldown_ends_at' in rawData ? rawData.cooldown_ends_at : null;
+      }
+      
+      return cooldownInfo;
     } catch (error) {
       console.error('Error checking class cooldown:', error);
       return null;
