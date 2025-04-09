@@ -37,10 +37,11 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
   
   return (
     <div 
-      className={`h-full rounded-xl overflow-hidden shadow-md transition-all duration-300 transform 
+      className={`h-full rounded-xl overflow-hidden shadow-md transition-all duration-300 transform cursor-pointer
         ${isSelected ? 'ring-4 ring-fitblue ring-offset-2' : ''}
         ${isFocused ? 'scale-100 opacity-100 z-10' : 'scale-90 opacity-70'}
         ${isOnCooldown && !isCurrentClass ? 'opacity-60' : ''}
+        ${isFocused ? 'shadow-lg' : 'shadow-md'}
       `}
       onClick={onClick}
     >
