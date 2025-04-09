@@ -9,20 +9,10 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { UseFormReturn } from 'react-hook-form';
-import { z } from 'zod';
-
-// We need to define the form schema shape here to match what's used in CreateQuestPage
-interface FormData {
-  title: string;
-  daysRequired: number;
-  totalDays: number;
-  startDate: Date;
-  endDate: Date;
-  xpReward: number;
-}
+import { QuestFormData } from './QuestForm';
 
 interface QuestNameFieldProps {
-  form: UseFormReturn<FormData>;
+  form: UseFormReturn<QuestFormData>;
 }
 
 const QuestNameField: React.FC<QuestNameFieldProps> = ({ form }) => {

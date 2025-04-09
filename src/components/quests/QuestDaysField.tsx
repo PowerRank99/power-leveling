@@ -9,18 +9,10 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { UseFormReturn } from 'react-hook-form';
-
-interface FormData {
-  title: string;
-  daysRequired: number;
-  totalDays: number;
-  startDate: Date;
-  endDate: Date;
-  xpReward: number;
-}
+import { QuestFormData } from './QuestForm';
 
 interface QuestDaysFieldProps {
-  form: UseFormReturn<FormData>;
+  form: UseFormReturn<QuestFormData>;
 }
 
 const QuestDaysField: React.FC<QuestDaysFieldProps> = ({ form }) => {

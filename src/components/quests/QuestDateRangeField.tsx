@@ -18,18 +18,10 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { UseFormReturn } from 'react-hook-form';
-
-interface FormData {
-  title: string;
-  daysRequired: number;
-  totalDays: number;
-  startDate: Date;
-  endDate: Date;
-  xpReward: number;
-}
+import { QuestFormData } from './QuestForm';
 
 interface QuestDateRangeFieldProps {
-  form: UseFormReturn<FormData>;
+  form: UseFormReturn<QuestFormData>;
 }
 
 const QuestDateRangeField: React.FC<QuestDateRangeFieldProps> = ({ form }) => {
