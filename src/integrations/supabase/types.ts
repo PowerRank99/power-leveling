@@ -431,6 +431,41 @@ export type Database = {
           },
         ]
       }
+      personal_records: {
+        Row: {
+          exercise_id: string
+          id: string
+          previous_weight: number
+          recorded_at: string
+          user_id: string
+          weight: number
+        }
+        Insert: {
+          exercise_id: string
+          id?: string
+          previous_weight?: number
+          recorded_at?: string
+          user_id: string
+          weight?: number
+        }
+        Update: {
+          exercise_id?: string
+          id?: string
+          previous_weight?: number
+          recorded_at?: string
+          user_id?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "personal_records_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           achievements_count: number | null
@@ -699,6 +734,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_personal_record_cooldown: {
+        Args: { p_user_id: string; p_exercise_id: string; p_days?: number }
+        Returns: boolean
+      }
+      increment_profile_counter: {
+        Args: {
+          user_id_param: string
+          counter_name: string
+          increment_amount: number
+        }
+        Returns: undefined
+      }
       migrate_exercise_history: {
         Args: Record<PropertyKey, never>
         Returns: number
