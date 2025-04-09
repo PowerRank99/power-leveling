@@ -42,6 +42,7 @@ interface QuestFormProps {
   guildId: string;
 }
 
+// Note: This component is kept for backward compatibility but is no longer used in the main flow
 const QuestForm: React.FC<QuestFormProps> = ({ guildId }) => {
   const navigate = useNavigate();
   
