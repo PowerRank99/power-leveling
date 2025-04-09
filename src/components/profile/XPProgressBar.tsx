@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Progress } from '@/components/ui/progress';
 
 interface XPProgressBarProps {
   current: number;
@@ -17,18 +18,13 @@ const XPProgressBar: React.FC<XPProgressBarProps> = ({
   const percentage = Math.min(Math.round((current / total) * 100), 100);
   
   return (
-    <div className="w-full mb-4">
+    <div className="w-full mb-3">
       <div className="flex justify-between mb-1">
         <span className="text-sm text-gray-600 font-medium">{label}</span>
         <span className="text-sm font-medium">{current}/{total}</span>
       </div>
       
-      <div className="w-full bg-gray-100 rounded-full h-2.5">
-        <div 
-          className={`${className} h-2.5 rounded-full transition-all duration-500`} 
-          style={{ width: `${percentage}%` }}
-        ></div>
-      </div>
+      <Progress value={percentage} className="h-2.5" indicatorColor={className} />
     </div>
   );
 };

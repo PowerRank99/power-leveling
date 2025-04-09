@@ -4,6 +4,7 @@ import { ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import ClassCard from '@/components/profile/ClassCard';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 interface ClassBonus {
   description: string;
@@ -26,8 +27,8 @@ const ClassSection: React.FC<ClassSectionProps> = ({
   const navigate = useNavigate();
   
   return (
-    <div className="bg-white p-5 mt-3 rounded-xl shadow-sm">
-      <div className="flex justify-between items-center mb-3">
+    <Card className="mt-3 shadow-sm border-none">
+      <CardHeader className="px-4 py-3 flex flex-row justify-between items-center">
         <h3 className="font-bold text-lg text-gray-800">Classe</h3>
         <Button 
           variant="ghost" 
@@ -36,15 +37,17 @@ const ClassSection: React.FC<ClassSectionProps> = ({
         >
           Trocar Classe <ChevronRight className="w-4 h-4" />
         </Button>
-      </div>
+      </CardHeader>
       
-      <ClassCard 
-        className={className}
-        description={classDescription}
-        icon={icon}
-        bonuses={bonuses}
-      />
-    </div>
+      <CardContent className="p-4 pt-0">
+        <ClassCard 
+          className={className}
+          description={classDescription}
+          icon={icon}
+          bonuses={bonuses}
+        />
+      </CardContent>
+    </Card>
   );
 };
 
