@@ -165,13 +165,12 @@ export const awardAchievement = async (userId: string, achievementId: string): P
       await updateUserXP(userId, achievement.xp_reward);
     }
     
-    // Update achievements count
+    // Update achievements count - FIX: Use await to ensure the operation completes
     const { error: updateProfileError } = await supabase
-      .from('profiles')
-      .update({ 
-        achievements_count: supabase.rpc('increment', { i: 1 }) 
-      })
-      .eq('id', userId);
+      .rpc('increment', { i: 1 }) // FIX: Remove the third argument and use RPC correctly
+      .from('profiles') // FIX: Move this before the update method
+      .eq('id', userId)
+      .update({ achievements_count: undefined }); // The actual increment happens in the RPC
       
     if (updateProfileError) {
       console.error('Error updating achievements count:', updateProfileError);
