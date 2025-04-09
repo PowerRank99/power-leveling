@@ -1,40 +1,67 @@
 
 import React from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Users, Globe, UserCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface FeedTabsProps {
   activeTab: 'todos' | 'guildas' | 'amigos';
   onTabChange: (tab: 'todos' | 'guildas' | 'amigos') => void;
 }
 
+const MotionTabsList = motion(TabsList);
+
 const FeedTabs: React.FC<FeedTabsProps> = ({ activeTab, onTabChange }) => {
   return (
-    <div className="bg-white border-b border-gray-200">
+    <div className="bg-white border-b border-gray-200 shadow-sm sticky top-12 z-10">
       <Tabs 
         value={activeTab} 
         onValueChange={(value) => onTabChange(value as 'todos' | 'guildas' | 'amigos')}
         className="w-full"
       >
-        <TabsList className="grid grid-cols-3 w-full bg-transparent h-12">
+        <MotionTabsList 
+          className="grid grid-cols-3 w-full bg-transparent h-14 px-2"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
           <TabsTrigger 
             value="todos" 
-            className={`data-[state=active]:border-b-2 data-[state=active]:border-fitblue data-[state=active]:text-fitblue data-[state=active]:shadow-none text-base ${activeTab === 'todos' ? 'text-fitblue' : 'text-gray-500'}`}
+            className={`
+              flex items-center justify-center gap-2
+              data-[state=active]:border-b-2 data-[state=active]:border-fitblue-500 
+              data-[state=active]:text-fitblue-500 data-[state=active]:shadow-none 
+              text-base rounded-none
+            `}
           >
-            Todos
+            <Globe className="h-4 w-4" />
+            <span>Todos</span>
           </TabsTrigger>
           <TabsTrigger 
             value="guildas" 
-            className={`data-[state=active]:border-b-2 data-[state=active]:border-fitblue data-[state=active]:text-fitblue data-[state=active]:shadow-none text-base ${activeTab === 'guildas' ? 'text-fitblue' : 'text-gray-500'}`}
+            className={`
+              flex items-center justify-center gap-2
+              data-[state=active]:border-b-2 data-[state=active]:border-fitblue-500 
+              data-[state=active]:text-fitblue-500 data-[state=active]:shadow-none 
+              text-base rounded-none
+            `}
           >
-            Guildas
+            <Users className="h-4 w-4" />
+            <span>Guildas</span>
           </TabsTrigger>
           <TabsTrigger 
             value="amigos" 
-            className={`data-[state=active]:border-b-2 data-[state=active]:border-fitblue data-[state=active]:text-fitblue data-[state=active]:shadow-none text-base ${activeTab === 'amigos' ? 'text-fitblue' : 'text-gray-500'}`}
+            className={`
+              flex items-center justify-center gap-2
+              data-[state=active]:border-b-2 data-[state=active]:border-fitblue-500 
+              data-[state=active]:text-fitblue-500 data-[state=active]:shadow-none 
+              text-base rounded-none
+            `}
           >
-            Amigos
+            <UserCircle className="h-4 w-4" />
+            <span>Amigos</span>
           </TabsTrigger>
-        </TabsList>
+        </MotionTabsList>
       </Tabs>
     </div>
   );

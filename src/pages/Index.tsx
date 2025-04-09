@@ -4,8 +4,8 @@ import BottomNavBar from '@/components/navigation/BottomNavBar';
 import FeedHeader from '@/components/social/FeedHeader';
 import FeedTabs from '@/components/social/FeedTabs';
 import PostList, { Post } from '@/components/social/PostList';
-import { Bell } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import WelcomeHeader from '@/components/social/WelcomeHeader';
+import FeaturedContentCarousel from '@/components/social/FeaturedContentCarousel';
 
 const IndexPage = () => {
   const [activeTab, setActiveTab] = useState<'todos' | 'guildas' | 'amigos'>('todos');
@@ -67,11 +67,19 @@ const IndexPage = () => {
       {/* Header */}
       <FeedHeader />
       
+      <div className="px-4 py-3">
+        {/* Welcome Section */}
+        <WelcomeHeader />
+        
+        {/* Featured Content */}
+        <FeaturedContentCarousel />
+      </div>
+      
       {/* Tabs */}
       <FeedTabs activeTab={activeTab} onTabChange={setActiveTab} />
       
       {/* Post List */}
-      <PostList posts={posts} />
+      <PostList posts={activeTab === 'todos' ? posts : []} />
       
       {/* Bottom Navigation */}
       <BottomNavBar />
