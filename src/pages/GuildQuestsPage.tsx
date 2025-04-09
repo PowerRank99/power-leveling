@@ -7,14 +7,26 @@ import QuestPageHeader from '@/components/quests/QuestPageHeader';
 import QuestSearch from '@/components/quests/QuestSearch';
 import QuestTabs from '@/components/quests/QuestTabs';
 import { Quest } from '@/components/guilds/QuestCard';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import { Shield, Users, Crown } from 'lucide-react';
 
 const GuildQuestsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('active');
   const [searchQuery, setSearchQuery] = useState('');
   const [isGuildMaster, setIsGuildMaster] = useState(true); // Mocked for now
   const [guildName, setGuildName] = useState("Guilda dos Guerreiros"); // Mock guild name
+  
+  // Mock guild info
+  const guildInfo = {
+    name: "Guilda dos Guerreiros",
+    avatar: "/lovable-uploads/71073810-f05a-4adc-a860-636599324c62.png",
+    memberCount: 32,
+    level: 5
+  };
   
   // Mock data for quests
   const mockQuests: Quest[] = [
@@ -78,10 +90,48 @@ const GuildQuestsPage: React.FC = () => {
     // For now, just log the click. Later, could navigate to quest detail
     console.log(`Quest clicked: ${questId}`);
   };
+  
+  const handleLeaderboardClick = () => {
+    navigate(`/guilds/${id}/leaderboard`);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-16">
       <QuestPageHeader guildId={id || ''} />
+      
+      {/* Guild Info Banner */}
+      <div className="bg-white p-4 mb-4 border-b border-gray-200 flex items-center justify-between">
+        <div className="flex items-center">
+          <img 
+            src={guildInfo.avatar} 
+            alt={guildInfo.name} 
+            className="h-10 w-10 object-cover rounded-lg mr-3"
+          />
+          <div>
+            <h2 className="font-bold text-lg">{guildInfo.name}</h2>
+            <div className="flex gap-3 text-sm text-gray-500">
+              <span className="flex items-center">
+                <Users className="h-3.5 w-3.5 mr-1" />
+                {guildInfo.memberCount}
+              </span>
+              <span className="flex items-center">
+                <Crown className="h-3.5 w-3.5 mr-1 text-yellow-500" />
+                Nível {guildInfo.level}
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="border-fitblue text-fitblue"
+          onClick={handleLeaderboardClick}
+        >
+          <Shield className="h-4 w-4 mr-1" />
+          Leaderboard
+        </Button>
+      </div>
       
       <div className="p-4 space-y-4">
         <QuestSearch 

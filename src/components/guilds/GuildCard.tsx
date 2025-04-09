@@ -3,7 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { UsersIcon, Crown, BarChart2, Compass } from 'lucide-react';
+import { UsersIcon, Crown, BarChart2, Compass, Shield } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface Guild {
@@ -42,11 +42,14 @@ const GuildCard: React.FC<GuildCardProps> = ({ guild, isUserMember }) => {
   
   return (
     <Card 
-      className={`overflow-hidden ${isUserMember ? 'border-gray-200' : 'border-gray-100'} hover:shadow-md transition-shadow cursor-pointer`}
+      className={`overflow-hidden ${isUserMember ? 'border-fitblue border-opacity-30' : 'border-gray-100'} 
+        hover:shadow-md transition-all duration-200 cursor-pointer bg-gradient-to-br 
+        ${isUserMember ? 'from-blue-50 to-white' : 'from-gray-50 to-white'}`}
       onClick={handleCardClick}
     >
       <div className="flex p-4">
-        <div className="h-16 w-16 rounded-lg overflow-hidden mr-4 flex-shrink-0">
+        <div className={`h-16 w-16 rounded-lg overflow-hidden mr-4 flex-shrink-0 
+          ${isUserMember ? 'ring-2 ring-fitblue ring-opacity-30' : ''}`}>
           <img 
             src={guild.avatar} 
             alt={guild.name} 
@@ -57,17 +60,26 @@ const GuildCard: React.FC<GuildCardProps> = ({ guild, isUserMember }) => {
         <div className="flex-grow">
           <div className="flex justify-between items-start">
             <div>
-              <h3 className="font-bold text-lg">{guild.name}</h3>
+              <div className="flex items-center">
+                <h3 className="font-bold text-lg">{guild.name}</h3>
+                {guild.isUserGuildMaster && (
+                  <Badge className="ml-2 bg-purple-100 text-purple-700 border-purple-200">
+                    <Crown className="h-3 w-3 mr-1" />
+                    <span className="text-xs">Mestre</span>
+                  </Badge>
+                )}
+              </div>
               <p className="text-sm text-gray-500 line-clamp-1">{guild.description}</p>
             </div>
             
             {!isUserMember && (
               <Button 
                 size="sm" 
-                className="bg-fitblue text-white rounded-full px-4"
+                className="bg-fitblue text-white rounded-full px-4 transition-all hover:bg-fitblue-600"
                 onClick={handleJoinGuild}
               >
-                Entrar
+                <Shield className="h-3.5 w-3.5 mr-1" />
+                <span>Entrar</span>
               </Button>
             )}
             
@@ -99,12 +111,6 @@ const GuildCard: React.FC<GuildCardProps> = ({ guild, isUserMember }) => {
               <Badge variant="secondary" className="flex items-center px-2 py-1 bg-blue-50 text-fitblue">
                 <BarChart2 className="h-3 w-3 mr-1" />
                 <span>{guild.questCount} {guild.questCount === 1 ? 'missão ativa' : 'missões ativas'}</span>
-              </Badge>
-            )}
-            
-            {guild.isUserGuildMaster && (
-              <Badge className="bg-purple-100 text-purple-700 border-purple-200">
-                Mestre da Guilda
               </Badge>
             )}
           </div>

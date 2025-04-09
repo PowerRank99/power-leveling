@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Crown } from 'lucide-react';
+import { Crown, Trophy, Medal } from 'lucide-react';
 
 interface Member {
   id: string;
@@ -26,8 +26,17 @@ const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({ members }) => {
   // Position the members on the podium
   const podiumOrder = [1, 0, 2]; // Middle (1st), Left (2nd), Right (3rd)
   
+  const getMedalIcon = (position: number) => {
+    switch(position) {
+      case 1: return <Crown className="w-6 h-6 text-yellow-500 fill-yellow-500" />;
+      case 2: return <Trophy className="w-6 h-6 text-gray-400" />;
+      case 3: return <Medal className="w-6 h-6 text-orange-400" />;
+      default: return null;
+    }
+  };
+  
   return (
-    <div className="bg-white p-4 border-b border-gray-200">
+    <div className="bg-gradient-to-b from-blue-50 to-white p-4 border-b border-gray-200">
       <div className="flex justify-around items-end h-44 pt-6 relative">
         {podiumOrder.map((index) => {
           const member = top3[index];
@@ -45,12 +54,14 @@ const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({ members }) => {
             <div key={member.id} className="flex flex-col items-center">
               <div className="relative mb-2">
                 {isFirst && (
-                  <div className="absolute -top-5 left-1/2 transform -translate-x-1/2">
-                    <Crown className="w-6 h-6 text-yellow-500 fill-yellow-500" />
+                  <div className="absolute -top-6 left-1/2 transform -translate-x-1/2">
+                    {getMedalIcon(member.position)}
                   </div>
                 )}
                 
-                <Avatar className={`${avatarSize} border-4 ${member.isCurrentUser ? 'border-fitblue' : 'border-white'} shadow-md`}>
+                <Avatar className={`${avatarSize} border-4 ${
+                  member.isCurrentUser ? 'border-fitblue' : 'border-white'
+                } shadow-lg`}>
                   <AvatarImage src={member.avatar} alt={member.name} />
                   <AvatarFallback>{member.name.substring(0, 2)}</AvatarFallback>
                 </Avatar>
@@ -66,7 +77,7 @@ const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({ members }) => {
               <p className={`font-bold ${textSize} ${member.isCurrentUser ? 'text-fitblue' : ''}`}>{member.name}</p>
               <p className="text-xs font-medium">{member.points} pts</p>
               
-              <div className={`${podiumHeight} w-16 mt-2 rounded-t-md bg-gradient-to-t 
+              <div className={`${podiumHeight} w-20 mt-2 rounded-t-md bg-gradient-to-t shadow-inner
                 ${isFirst ? 'from-yellow-500 to-yellow-400' : 
                   isSecond ? 'from-gray-400 to-gray-300' : 
                     'from-orange-500 to-orange-400'}`}>

@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Compass, Calendar, CheckCircle, XCircle } from 'lucide-react';
 
 interface QuestReward {
   type: 'xp';
@@ -38,11 +39,11 @@ const QuestCard: React.FC<QuestCardProps> = ({ quest, onClick }) => {
   const getStatusBadge = () => {
     switch(quest.status) {
       case 'active':
-        return <div className="px-4 py-1 rounded-full bg-blue-100 text-blue-700">Em Andamento</div>;
+        return <div className="px-4 py-1 rounded-full bg-blue-100 text-blue-700 flex items-center"><Compass className="h-3 w-3 mr-1" />Em Andamento</div>;
       case 'completed':
-        return <div className="px-4 py-1 rounded-full bg-green-100 text-green-700">Concluída</div>;
+        return <div className="px-4 py-1 rounded-full bg-green-100 text-green-700 flex items-center"><CheckCircle className="h-3 w-3 mr-1" />Concluída</div>;
       case 'failed':
-        return <div className="px-4 py-1 rounded-full bg-red-100 text-red-700">Falhou</div>;
+        return <div className="px-4 py-1 rounded-full bg-red-100 text-red-700 flex items-center"><XCircle className="h-3 w-3 mr-1" />Falhou</div>;
       default:
         return null;
     }
@@ -67,13 +68,16 @@ const QuestCard: React.FC<QuestCardProps> = ({ quest, onClick }) => {
   
   return (
     <Card 
-      className="p-6 mb-4 hover:shadow-md transition-shadow"
+      className="p-6 mb-4 hover:shadow-md transition-shadow border border-gray-200 hover:border-fitblue-100"
       onClick={onClick}
     >
       <div className="flex justify-between items-start mb-2">
         <div>
-          <h3 className="text-xl font-bold">{quest.title}</h3>
-          <p className="text-gray-500">{quest.guildName}</p>
+          <h3 className="text-xl font-bold text-gray-800">{quest.title}</h3>
+          <p className="text-gray-500 flex items-center text-sm">
+            <Shield className="h-4 w-4 mr-1 text-gray-400" />
+            {quest.guildName}
+          </p>
         </div>
         {getStatusBadge()}
       </div>
@@ -94,10 +98,12 @@ const QuestCard: React.FC<QuestCardProps> = ({ quest, onClick }) => {
       <div className="mt-5">
         {quest.status === 'active' && (
           <div className="flex justify-between">
-            <div className="text-gray-500">
+            <div className="text-gray-500 flex items-center text-sm">
+              <Calendar className="h-4 w-4 mr-1" />
               Início: {formatDate(quest.startDate)}
             </div>
-            <div className="text-gray-500">
+            <div className="text-gray-500 flex items-center text-sm">
+              <Calendar className="h-4 w-4 mr-1" />
               Término: {formatDate(quest.endDate)}
             </div>
           </div>
@@ -105,18 +111,20 @@ const QuestCard: React.FC<QuestCardProps> = ({ quest, onClick }) => {
         
         {quest.status === 'completed' && (
           <div className="flex justify-between items-center">
-            <div className="text-gray-500">
+            <div className="text-gray-500 flex items-center text-sm">
+              <Calendar className="h-4 w-4 mr-1" />
               Finalizada em {formatDate(quest.endDate)}
             </div>
             <div className="text-green-600 font-medium">
-              +{quest.rewards[0].amount} XP
+              +{quest.rewards[0].amount} EXP
             </div>
           </div>
         )}
         
         {quest.status === 'failed' && (
           <div className="flex justify-between items-center">
-            <div className="text-gray-500">
+            <div className="text-gray-500 flex items-center text-sm">
+              <Calendar className="h-4 w-4 mr-1" />
               Término: {formatDate(quest.endDate)}
             </div>
             <div className="text-red-600">

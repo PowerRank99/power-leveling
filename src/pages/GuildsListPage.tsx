@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { SearchIcon, PlusIcon } from 'lucide-react';
+import { SearchIcon, PlusIcon, Shield, Trophy, Compass } from 'lucide-react';
 import GuildCard from '@/components/guilds/GuildCard';
 import { useAuth } from '@/hooks/useAuth';
 import EmptyState from '@/components/ui/EmptyState';
@@ -89,6 +89,29 @@ const GuildsListPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50 pb-16">
       <PageHeader title="Guildas" />
       
+      {/* Introduction Banner */}
+      <div className="bg-gradient-to-r from-fitblue to-blue-500 text-white p-4 border-b border-blue-200">
+        <h2 className="text-xl font-bold mb-1">Participe de uma Guilda</h2>
+        <p className="text-sm text-blue-100 mb-3">
+          Junte-se a outros atletas, complete missões e ganhe recompensas juntos.
+        </p>
+        
+        <div className="flex gap-3 flex-wrap">
+          <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2 flex items-center text-sm">
+            <Shield className="h-4 w-4 mr-1.5" />
+            <span>Comunidade</span>
+          </div>
+          <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2 flex items-center text-sm">
+            <Compass className="h-4 w-4 mr-1.5" />
+            <span>Missões</span>
+          </div>
+          <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2 flex items-center text-sm">
+            <Trophy className="h-4 w-4 mr-1.5" />
+            <span>Conquistas</span>
+          </div>
+        </div>
+      </div>
+      
       <div className="p-4 space-y-4">
         {/* Search and Create */}
         <div className="flex gap-2">
@@ -101,7 +124,7 @@ const GuildsListPage: React.FC = () => {
               onChange={handleSearch}
             />
           </div>
-          <Button onClick={handleCreateGuild} className="bg-fitblue">
+          <Button onClick={handleCreateGuild} className="bg-fitblue hover:bg-fitblue-600">
             <PlusIcon className="h-5 w-5 mr-1" />
             <span className="hidden sm:inline">Criar Guilda</span>
           </Button>
@@ -143,7 +166,7 @@ const GuildsListPage: React.FC = () => {
           
           <TabsContent value="suggested" className="mt-4 space-y-4">
             {filteredSuggestedGuilds.length > 0 ? (
-              <ScrollArea className="h-[calc(100vh-250px)]">
+              <ScrollArea className="h-[calc(100vh-300px)]">
                 <div className="space-y-4">
                   {filteredSuggestedGuilds.map(guild => (
                     <GuildCard 
