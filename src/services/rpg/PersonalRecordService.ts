@@ -22,28 +22,29 @@ export class PersonalRecordService {
     previousWeight: number
   ): Promise<void> {
     try {
-      // Insert the personal record using raw insert to avoid type issues
-      const { error } = await supabase
-        .from('personal_records')
-        .insert({
-          user_id: userId,
-          exercise_id: exerciseId,
-          weight: weight,
-          previous_weight: previousWeight
-        });
+      // Insert the personal record using a raw PostgreSQL insert to avoid type issues
+      const { error } = await supabase.from('personal_records').insert({
+        user_id: userId,
+        exercise_id: exerciseId,
+        weight: weight,
+        previous_weight: previousWeight
+      });
         
       if (error) {
         console.error('Error recording personal record:', error);
         return;
       }
       
-      // Update the records count in profile using RPC
-      await supabase
-        .rpc('increment_profile_counter', {
-          user_id_param: userId,
-          counter_name: 'records_count',
-          increment_amount: 1
-        });
+      // Update the records count in profile using the RPC function
+      const { error: rpcError } = await supabase.rpc('increment_profile_counter', {
+        user_id_param: userId,
+        counter_name: 'records_count',
+        increment_amount: 1
+      });
+      
+      if (rpcError) {
+        console.error('Error incrementing profile counter:', rpcError);
+      }
         
     } catch (error) {
       console.error('Error recording personal record:', error);
@@ -60,19 +61,19 @@ export class PersonalRecordService {
   ): Promise<boolean> {
     try {
       // Use RPC function to check cooldown
-      const { data, error } = await supabase
-        .rpc('check_personal_record_cooldown', {
-          p_user_id: userId,
-          p_exercise_id: exerciseId,
-          p_days: 7
-        });
+      const { data, error } = await supabase.rpc('check_personal_record_cooldown', {
+        p_user_id: userId,
+        p_exercise_id: exerciseId,
+        p_days: 7
+      });
       
       if (error) {
         console.error('Error checking PR cooldown:', error);
         return false;
       }
       
-      return data as boolean;
+      // The function returns a boolean value
+      return !!data;
     } catch (error) {
       console.error('Error checking personal record cooldown:', error);
       return false; // Default to not allowing PR bonus on error
