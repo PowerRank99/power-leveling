@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Compass, Calendar, CheckCircle, XCircle } from 'lucide-react';
+import { Compass, Calendar, CheckCircle, XCircle, Shield } from 'lucide-react';
 
 interface QuestReward {
   type: 'xp';
