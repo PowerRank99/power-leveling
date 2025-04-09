@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { XPService } from '@/services/rpg/XPService';
 import { AchievementService } from '@/services/rpg/AchievementService';
+import { StreakService } from '@/services/rpg/StreakService';
 
 export const useWorkoutCompletion = (
   workoutId: string | null,
@@ -56,14 +57,21 @@ export const useWorkoutCompletion = (
         throw error;
       }
       
-      // Add RPG system integration - award XP and check achievements
-      const baseXP = 50; // Base XP for completing a workout
-      
-      // Award XP
-      await XPService.awardXP(userId, baseXP);
-      
-      // Check for achievements
-      await AchievementService.checkAchievements(userId);
+      // RPG System integration
+      try {
+        // Step 1: Update user streak
+        await StreakService.updateStreak(userId);
+        
+        // Step 2: Calculate and award XP
+        const baseXP = 50; // Base XP for completing a workout
+        await XPService.awardXP(userId, baseXP);
+        
+        // Step 3: Check for achievements
+        await AchievementService.checkAchievements(userId);
+      } catch (rpgError) {
+        // Log but don't fail the workout completion
+        console.error("Error processing RPG rewards:", rpgError);
+      }
       
       // Toast notification
       toast.success("Treino finalizado", {

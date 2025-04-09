@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { XPService } from '@/services/rpg/XPService';
 import { AchievementService } from '@/services/rpg/AchievementService';
+import { StreakService } from '@/services/rpg/StreakService';
 
 const TIMEOUT_MS = 10000; // 10 seconds timeout for operations
 
@@ -91,15 +92,21 @@ export const useWorkoutCompletion = (workoutId: string | null) => {
         throw new Error("Não foi possível salvar o treino finalizado");
       }
 
-      // Add RPG system integration - award XP and check achievements
-      // Calculate base XP (can be improved with more sophisticated rules)
-      const baseXP = 50; // Base XP for completing a workout
-      
-      // Award XP
-      await XPService.awardXP(userId, baseXP);
-      
-      // Check for achievements
-      await AchievementService.checkAchievements(userId);
+      // RPG System integration
+      try {
+        // Step 1: Update user streak
+        await StreakService.updateStreak(userId);
+        
+        // Step 2: Calculate and award XP
+        const baseXP = 50; // Base XP for completing a workout
+        await XPService.awardXP(userId, baseXP);
+        
+        // Step 3: Check for achievements
+        await AchievementService.checkAchievements(userId);
+      } catch (rpgError) {
+        // Log but don't fail the workout completion
+        console.error("Error processing RPG rewards:", rpgError);
+      }
       
       return true;
     } catch (error: any) {

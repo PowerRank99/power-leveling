@@ -96,11 +96,13 @@ export class AchievementService {
       
       // Update the achievements count and XP
       // Using a transaction to ensure both updates succeed or fail together
-      // Use a complete type assertion to avoid TypeScript errors with custom RPC functions
-      await (supabase.rpc('increment_achievement_and_xp', {
+      const rpcFunction = supabase.rpc('increment_achievement_and_xp', {
         user_id: userId,
         xp_amount: xpReward
-      }) as unknown as Promise<void>);
+      });
+      
+      // Use type assertion to make TypeScript happy
+      await (rpcFunction as any);
         
       // Notify user
       toast.success(`🏆 Conquista Desbloqueada!`, {
