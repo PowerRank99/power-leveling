@@ -1,5 +1,7 @@
 
 import React, { useEffect } from 'react';
+import PageHeader from '@/components/ui/PageHeader';
+import BottomNavBar from '@/components/navigation/BottomNavBar';
 import AuthRequiredRoute from '@/components/AuthRequiredRoute';
 import { useWorkoutData } from '@/hooks/useWorkoutData';
 import ActionsBar from '@/components/workout/ActionsBar';
@@ -9,10 +11,6 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
-import BottomNavBar from '@/components/navigation/BottomNavBar';
-import WorkoutPageHeader from '@/components/workout/WorkoutPageHeader';
-import EmptyState from '@/components/workout/EmptyState';
-import { motion } from 'framer-motion';
 
 const WorkoutPage = () => {
   const { 
@@ -45,43 +43,12 @@ const WorkoutPage = () => {
     refreshData();
   };
 
-  // Calculate last workout days
-  const getLastWorkoutDays = () => {
-    if (!recentWorkouts.length) return null;
-    
-    const lastWorkoutDate = new Date(recentWorkouts[0].date);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - lastWorkoutDate.getTime());
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
-    return diffDays;
-  };
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { 
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
-  };
-
   return (
     <AuthRequiredRoute>
-      <div className="pb-20 min-h-screen bg-gray-50">
-        <WorkoutPageHeader 
-          recentWorkoutCount={recentWorkouts.length}
-          routineCount={savedRoutines.length}
-          lastWorkoutDays={getLastWorkoutDays()}
-        />
+      <div className="pb-20">
+        <PageHeader title="Treino" showBackButton={false} />
         
-        <div className="p-4">
+        <div className="p-4 bg-gray-50 min-h-[80vh]">
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
@@ -104,27 +71,8 @@ const WorkoutPage = () => {
           
           <ActionsBar />
           
-          <motion.div 
-            className="mt-6"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <motion.div variants={itemVariants}>
-              <h2 className="text-xl font-bold mb-4 flex items-center">
-                Rotinas Salvas
-                {savedRoutines.length > 0 && (
-                  <span className="ml-2 text-sm bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                    {savedRoutines.length}
-                  </span>
-                )}
-              </h2>
-            </motion.div>
-            
-            {!isLoading && !error && hasAttemptedLoad && savedRoutines.length === 0 && (
-              <EmptyState type="routines" />
-            )}
-            
+          <div className="mt-6">
+            <h2 className="text-xl font-bold mb-4">Rotinas Salvas</h2>
             <RoutinesList 
               routines={savedRoutines} 
               isLoading={isLoading} 
@@ -134,29 +82,10 @@ const WorkoutPage = () => {
               onDeleteRoutine={deleteRoutine}
               isDeletingItem={isDeletingItem}
             />
-          </motion.div>
+          </div>
           
-          <motion.div 
-            className="mt-8"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <motion.div variants={itemVariants}>
-              <h2 className="text-xl font-bold mb-4 flex items-center">
-                Treinos Recentes
-                {recentWorkouts.length > 0 && (
-                  <span className="ml-2 text-sm bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                    {recentWorkouts.length}
-                  </span>
-                )}
-              </h2>
-            </motion.div>
-            
-            {!isLoading && !error && hasAttemptedLoad && recentWorkouts.length === 0 && (
-              <EmptyState type="workouts" />
-            )}
-            
+          <div className="mt-8">
+            <h2 className="text-xl font-bold mb-4">Treinos Recentes</h2>
             <WorkoutsList 
               workouts={recentWorkouts} 
               isLoading={isLoading}
@@ -169,7 +98,7 @@ const WorkoutPage = () => {
               isLoadingMore={isLoadingMore}
               onLoadMore={loadMoreWorkouts}
             />
-          </motion.div>
+          </div>
         </div>
         
         <BottomNavBar />
