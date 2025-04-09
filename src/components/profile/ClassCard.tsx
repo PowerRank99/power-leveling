@@ -40,9 +40,9 @@ const ClassCard: React.FC<ClassCardProps> = ({
         
         {bonuses.map((bonus, index) => (
           <div key={index} className="mb-3 bg-white/10 backdrop-blur-sm rounded-lg p-3 shadow-inner hover:bg-white/15 transition-colors">
-            <div className="flex items-start">
-              <span className="text-lg font-bold mr-2">{bonus.value}</span>
-              <p className="text-sm flex-1">{bonus.description}</p>
+            <div className="flex items-center">
+              <span className="text-lg font-bold mr-2 whitespace-nowrap">{bonus.value}</span>
+              <p className="text-sm">{bonus.description}</p>
             </div>
           </div>
         ))}

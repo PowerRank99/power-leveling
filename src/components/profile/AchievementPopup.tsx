@@ -39,7 +39,7 @@ const AchievementPopup: React.FC<AchievementPopupProps> = ({
           {/* XP Reward */}
           <div className="bg-fitpurple-100 w-full py-3 px-4 rounded-lg mb-6">
             <div className="flex justify-center items-center">
-              <span className="text-xl font-bold text-fitpurple">+{xpReward} XP Bônus!</span>
+              <span className="text-xl font-bold text-fitpurple">+{xpReward} EXP Bônus!</span>
             </div>
             <div className="text-center text-sm text-fitpurple-600">{bonusText}</div>
           </div>

@@ -54,14 +54,14 @@ const ProfilePage = () => {
     className: 'Guerreiro',
     classDescription: 'Especialista em Força',
     lastActivity: '8h 45min',
-    xpGain: '+25 XP',
+    xpGain: '+25 EXP',
     bonuses: [
       {
-        description: 'XP em exercícios compostos agachamento, levantamento terra, supino',
+        description: 'EXP em exercícios compostos agachamento, levantamento terra, supino',
         value: '+20%'
       },
       {
-        description: 'XP em todos os exercícios de força',
+        description: 'EXP em todos os exercícios de força',
         value: '+10%'
       }
     ]

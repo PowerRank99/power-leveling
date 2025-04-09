@@ -26,7 +26,7 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
           <XPProgressBar 
             current={dailyXP}
             total={dailyXPCap}
-            label="XP do Dia"
+            label="EXP do Dia"
             className="bg-fitgreen"
           />
         </div>
@@ -38,7 +38,7 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
           </div>
           
           <div className="text-fitgreen font-medium">
-            {xpGain}
+            {xpGain.replace('XP', 'EXP')}
           </div>
         </div>
       </CardContent>
