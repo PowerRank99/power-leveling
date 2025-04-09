@@ -9,8 +9,7 @@ import { useToast } from '@/components/ui/use-toast';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
 import { Exercise } from '@/components/workout/types/Exercise';
-import { MUSCLE_GROUP_ALIASES, EXERCISE_CATEGORY_MAP } from '@/components/workout/constants/exerciseFilters';
-import { normalizeText } from '@/components/workout/hooks/exercise-search/useExerciseFilters';
+import { MUSCLE_GROUP_ALIASES } from '@/components/workout/constants/exerciseFilters';
 
 const ExerciseLibraryPage = () => {
   const [activeCategory, setActiveCategory] = useState<string>('Todos');
@@ -22,6 +21,14 @@ const ExerciseLibraryPage = () => {
     'Todos', 'Peito', 'Costas', 'Pernas', 'Ombros', 'Bíceps', 'Tríceps', 'Abdômen', 'Cardio', 'Esportes'
   ];
   
+  // Normalize text for comparison by removing accents and converting to lowercase
+  const normalizeText = (text: string | null | undefined): string => {
+    if (!text) return '';
+    return text.toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  };
+  
   // Check if an exercise belongs to a category
   const exerciseMatchesCategory = (exercise: Exercise, category: string): boolean => {
     if (category === 'Todos') return true;
@@ -29,9 +36,8 @@ const ExerciseLibraryPage = () => {
     const muscleGroup = exercise.muscle_group || exercise.category || '';
     const normalizedMuscleGroup = normalizeText(muscleGroup);
     const normalizedCategory = normalizeText(category);
-    const normalizedName = normalizeText(exercise.name);
     
-    // Direct match on muscle_group or category
+    // Direct match
     if (normalizedMuscleGroup === normalizedCategory) {
       return true;
     }
@@ -39,17 +45,6 @@ const ExerciseLibraryPage = () => {
     // Check category match
     if (normalizeText(exercise.category) === normalizedCategory) {
       return true;
-    }
-    
-    // Special case for Bíceps and Tríceps - check exercise name for keywords
-    if (category === 'Bíceps' || category === 'Tríceps' || category === 'Cardio' || category === 'Esportes') {
-      // Look for keywords in exercise name that match the category
-      for (const [keyword, mappedCategory] of Object.entries(EXERCISE_CATEGORY_MAP)) {
-        if (normalizedName.includes(normalizeText(keyword)) && 
-            normalizeText(mappedCategory) === normalizedCategory) {
-          return true;
-        }
-      }
     }
     
     // Check aliases

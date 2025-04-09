@@ -6,7 +6,6 @@ import AuthRequiredRoute from '@/components/AuthRequiredRoute';
 import ExerciseImporter from '@/components/admin/ExerciseImporter';
 import ExerciseManager from '@/components/admin/ExerciseManager';
 import ExerciseCategorizer from '@/components/admin/ExerciseCategorizer';
-import MuscleGroupDiagnostic from '@/components/admin/MuscleGroupDiagnostic';
 
 const AdminPage = () => {
   return (
@@ -19,10 +18,6 @@ const AdminPage = () => {
           
           <div className="mb-6">
             <ExerciseImporter />
-          </div>
-          
-          <div className="mb-6">
-            <MuscleGroupDiagnostic />
           </div>
           
           <div className="mb-6">
