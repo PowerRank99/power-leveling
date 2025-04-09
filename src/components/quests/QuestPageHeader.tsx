@@ -23,7 +23,7 @@ const QuestPageHeader: React.FC<QuestPageHeaderProps> = ({ guildId, guildName = 
       </Button>
       <div className="flex items-center">
         <Shield className="h-5 w-5 mr-2" />
-        <h1 className="text-2xl font-bold">{guildName} - Missões</h1>
+        <h1 className="text-2xl font-bold">{guildName} - Quests</h1>
       </div>
     </div>
   );

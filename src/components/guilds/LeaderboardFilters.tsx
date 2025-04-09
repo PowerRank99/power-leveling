@@ -39,7 +39,7 @@ const LeaderboardFilters: React.FC<LeaderboardFiltersProps> = ({
         <TabsList className="grid grid-cols-3 w-full">
           <TabsTrigger value="weekly">Semanal</TabsTrigger>
           <TabsTrigger value="monthly">Mensal</TabsTrigger>
-          <TabsTrigger value="alltime">Todos</TabsTrigger>
+          <TabsTrigger value="alltime">Anual</TabsTrigger>
         </TabsList>
       </Tabs>
     </div>

@@ -39,7 +39,6 @@ const GuildLeaderboardPage: React.FC = () => {
     avatar: "/lovable-uploads/71073810-f05a-4adc-a860-636599324c62.png",
     memberCount: 32,
     activeMemberCount: 28,
-    level: 5,
     totalExp: 15750,
     weeklyExp: 1250,
     completedQuests: 24,
@@ -121,8 +120,8 @@ const GuildLeaderboardPage: React.FC = () => {
         onMetricFilterChange={setMetricFilter}
       />
       
-      {/* Podium Component */}
-      <div className="podium-container animate-fade-in">
+      {/* Podium Component - now with proper spacing */}
+      <div className="podium-container mt-4">
         <LeaderboardPodium members={topMembers} />
       </div>
       

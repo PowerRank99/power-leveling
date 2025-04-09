@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { UsersIcon, Trophy, Compass, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -10,7 +9,6 @@ interface GuildInfo {
   avatar: string;
   memberCount: number;
   activeMemberCount?: number;
-  level: number;
   completedQuests: number;
   isUserGuildMaster?: boolean;
 }
@@ -36,7 +34,6 @@ const GuildHeader: React.FC<GuildHeaderProps> = ({ guildInfo, guildId }) => {
         <div className="flex-1">
           <h2 className="text-xl font-bold flex items-center">
             {guildInfo.name}
-            <Badge className="ml-2 bg-yellow-500/80 text-white text-xs">Nível {guildInfo.level}</Badge>
           </h2>
           <div className="flex text-sm text-white/80 mt-1 flex-wrap gap-x-4">
             <div className="flex items-center">
@@ -45,7 +42,7 @@ const GuildHeader: React.FC<GuildHeaderProps> = ({ guildInfo, guildId }) => {
             </div>
             <div className="flex items-center">
               <Trophy className="w-4 h-4 mr-1 text-yellow-300" />
-              <span>{guildInfo.completedQuests} missões completadas</span>
+              <span>{guildInfo.completedQuests} quests completadas</span>
             </div>
           </div>
         </div>
@@ -57,7 +54,7 @@ const GuildHeader: React.FC<GuildHeaderProps> = ({ guildInfo, guildId }) => {
           className="flex-1 bg-white/15 hover:bg-white/25 text-white border border-white/30 backdrop-blur-sm rounded-full text-sm h-9"
         >
           <Compass className="w-4 h-4 mr-1" />
-          Ver Missões
+          Ver Quests
         </Button>
         
         {guildInfo.isUserGuildMaster && (

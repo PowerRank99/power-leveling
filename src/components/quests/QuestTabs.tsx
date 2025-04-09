@@ -45,12 +45,12 @@ const QuestTabs: React.FC<QuestTabsProps> = ({
         ) : (
           <EmptyState 
             icon="Compass" 
-            title="Nenhuma missão ativa" 
-            description="Esta guilda não possui missões ativas no momento."
+            title="Nenhuma quest ativa" 
+            description="Esta guilda não possui quests ativas no momento."
             action={
               isGuildMaster ? (
                 <Button onClick={handleCreateQuest} className="bg-blue-500 mt-4">
-                  Criar uma missão
+                  Criar uma quest
                 </Button>
               ) : undefined
             }
@@ -64,8 +64,8 @@ const QuestTabs: React.FC<QuestTabsProps> = ({
         ) : (
           <EmptyState 
             icon="Trophy" 
-            title="Nenhuma missão concluída" 
-            description="Esta guilda ainda não completou nenhuma missão."
+            title="Nenhuma quest concluída" 
+            description="Esta guilda ainda não completou nenhuma quest."
           />
         )}
       </TabsContent>
@@ -76,8 +76,8 @@ const QuestTabs: React.FC<QuestTabsProps> = ({
         ) : (
           <EmptyState 
             icon="X" 
-            title="Nenhuma missão falhou" 
-            description="Esta guilda não tem missões que tenham falhado."
+            title="Nenhuma quest falhou" 
+            description="Esta guilda não tem quests que tenham falhado."
           />
         )}
       </TabsContent>
@@ -88,8 +88,8 @@ const QuestTabs: React.FC<QuestTabsProps> = ({
         ) : (
           <EmptyState 
             icon="Compass" 
-            title="Nenhuma missão encontrada" 
-            description="Não foram encontradas missões com este filtro."
+            title="Nenhuma quest encontrada" 
+            description="Não foram encontradas quests com este filtro."
           />
         )}
       </TabsContent>

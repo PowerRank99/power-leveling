@@ -1,14 +1,12 @@
 
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from '@/components/ui/button';
 import { Filter, Crown, Trophy } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import MemberRankingList from '@/components/guilds/MemberRankingList';
-import { toast } from 'sonner';
 
 interface Member {
   id: string;
@@ -26,12 +24,6 @@ interface MembersListProps {
 }
 
 const MembersList: React.FC<MembersListProps> = ({ members }) => {
-  const handleCongratulate = (memberId: string, memberName: string) => {
-    toast.success('Parabéns enviados!', {
-      description: `Você enviou parabéns para ${memberName} pelo desempenho.`
-    });
-  };
-
   return (
     <div className="p-4">
       <div className="flex justify-between items-center mb-3">
@@ -62,7 +54,6 @@ const MembersList: React.FC<MembersListProps> = ({ members }) => {
               <TableHead className="w-12 text-center">Pos.</TableHead>
               <TableHead>Membro</TableHead>
               <TableHead className="text-right">Pontos</TableHead>
-              <TableHead className="w-16 text-center">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -98,18 +89,6 @@ const MembersList: React.FC<MembersListProps> = ({ members }) => {
                 </TableCell>
                 <TableCell className="text-right font-medium">
                   {member.points} pts
-                </TableCell>
-                <TableCell>
-                  {!member.isCurrentUser && (
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      className="h-7 w-7 p-0 text-gray-500 hover:text-fitblue"
-                      onClick={() => handleCongratulate(member.id, member.name)}
-                    >
-                      👏
-                    </Button>
-                  )}
                 </TableCell>
               </TableRow>
             ))}

@@ -2,9 +2,7 @@
 import React from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Trophy, Medal, Crown, Star, TrendingUp, TrendingDown } from 'lucide-react';
-import { toast } from 'sonner';
 
 interface Member {
   id: string;
@@ -59,12 +57,6 @@ const MemberRankingList: React.FC<MemberRankingListProps> = ({ members }) => {
     }
   };
   
-  const handleCongratulate = (name: string) => {
-    toast.success('Parabéns enviados!', {
-      description: `Você enviou parabéns para ${name} pelo desempenho.`
-    });
-  };
-  
   return (
     <div className="space-y-3">
       {members.map((member) => (
@@ -95,22 +87,11 @@ const MemberRankingList: React.FC<MemberRankingListProps> = ({ members }) => {
               </h4>
               {getBadge(member)}
             </div>
-            <div className="flex justify-between">
+            <div className="flex items-center">
               <p className="text-sm text-gray-500 flex items-center gap-1">
                 {member.points} pontos
                 {getTrendIcon(member.trend)}
               </p>
-              
-              {!member.isCurrentUser && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-6 text-xs text-gray-500 hover:text-fitblue p-0"
-                  onClick={() => handleCongratulate(member.name)}
-                >
-                  👏 Parabenizar
-                </Button>
-              )}
             </div>
           </div>
         </div>

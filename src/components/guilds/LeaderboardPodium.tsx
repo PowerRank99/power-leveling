@@ -29,12 +29,11 @@ const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({ members }) => {
   const podiumOrder = [1, 0, 2]; // Middle (1st), Left (2nd), Right (3rd)
   
   useEffect(() => {
-    // Add staggered animation to podium elements - fixed to make positions visible
+    // Add staggered animation to podium elements
     const positions = document.querySelectorAll('.podium-position');
     positions.forEach((pos, index) => {
       setTimeout(() => {
         pos.classList.add('animate-fade-in');
-        pos.classList.remove('opacity-0');
       }, 300 + (index * 200));
     });
   }, []);
@@ -50,7 +49,7 @@ const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({ members }) => {
   
   return (
     <div className="bg-gradient-to-b from-blue-50 to-white p-4 border-b border-gray-200">
-      <div className="flex justify-around items-end h-48 pt-6 relative">
+      <div className="flex justify-around items-end h-48 relative">
         {podiumOrder.map((index) => {
           const member = top3[index];
           if (!member) return null;
