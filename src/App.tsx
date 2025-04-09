@@ -20,6 +20,8 @@ import GuildLeaderboardPage from './pages/GuildLeaderboardPage';
 import GuildsListPage from './pages/GuildsListPage';
 import AdminPage from './pages/AdminPage';
 import TimerSettingsPage from './pages/TimerSettingsPage';
+import GuildQuestsPage from './pages/GuildQuestsPage';
+import CreateQuestPage from './pages/CreateQuestPage';
 
 function App() {
   return (
@@ -39,6 +41,8 @@ function App() {
           <Route path="/ranking/:id" element={<RankingDetailPage />} />
           <Route path="/guilds" element={<GuildsListPage />} />
           <Route path="/guilds/:id/leaderboard" element={<GuildLeaderboardPage />} />
+          <Route path="/guilds/:id/quests" element={<GuildQuestsPage />} />
+          <Route path="/guilds/:id/quests/criar" element={<CreateQuestPage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/configuracoes/timer" element={<TimerSettingsPage />} />
           <Route path="/conquistas" element={<AchievementsPage />} />

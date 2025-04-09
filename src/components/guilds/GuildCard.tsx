@@ -3,7 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { UsersIcon, Crown, BarChart2 } from 'lucide-react';
+import { UsersIcon, Crown, BarChart2, Compass } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface Guild {
@@ -35,6 +35,11 @@ const GuildCard: React.FC<GuildCardProps> = ({ guild, isUserMember }) => {
     // Add join guild logic here
   };
   
+  const handleQuestsClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    navigate(`/guilds/${guild.id}/quests`);
+  };
+  
   return (
     <Card 
       className={`overflow-hidden ${isUserMember ? 'border-gray-200' : 'border-gray-100'} hover:shadow-md transition-shadow cursor-pointer`}
@@ -63,6 +68,18 @@ const GuildCard: React.FC<GuildCardProps> = ({ guild, isUserMember }) => {
                 onClick={handleJoinGuild}
               >
                 Entrar
+              </Button>
+            )}
+            
+            {isUserMember && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-fitblue border-fitblue rounded-full px-4 flex items-center gap-1"
+                onClick={handleQuestsClick}
+              >
+                <Compass className="h-3 w-3" />
+                <span>Missões</span>
               </Button>
             )}
           </div>
