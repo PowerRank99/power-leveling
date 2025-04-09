@@ -70,7 +70,7 @@ export class ClassService {
       const classInfos: ClassInfo[] = [];
       
       for (const className of classes) {
-        // Use the proper any type to work around TypeScript limitations
+        // Use proper typing with explicit any to handle RPC function call
         const { data, error } = await supabase.rpc(
           'get_class_bonuses' as any,
           { p_class_name: className }
@@ -87,6 +87,7 @@ export class ClassService {
         
         // Check if data has the expected structure
         if (classData && typeof classData === 'object' && 'bonuses' in classData) {
+          // Cast to any first to access bonuses property
           bonuses = (classData as any).bonuses || [];
         }
         
@@ -142,17 +143,18 @@ export class ClassService {
         return false;
       }
       
-      // Extract success flag and other fields with safe type checking
-      const success = 'success' in rawResult ? (rawResult as any).success : false;
+      // Cast to any to access properties
+      const typedResult = rawResult as any;
+      const success = typedResult.success === true;
       
       if (!success) {
         // Extract message and cooldown info safely
-        const message = 'message' in rawResult ? (rawResult as any).message : 'Erro desconhecido';
+        const message = typedResult.message || 'Erro desconhecido';
         
         if (message === 'Class change on cooldown') {
           // Extract cooldown date safely
-          const cooldownEnds = 'cooldown_ends_at' in rawResult ? 
-            new Date((rawResult as any).cooldown_ends_at || '') : 
+          const cooldownEnds = typedResult.cooldown_ends_at ? 
+            new Date(typedResult.cooldown_ends_at) : 
             new Date();
             
           const daysLeft = Math.ceil((cooldownEnds.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
@@ -209,10 +211,10 @@ export class ClassService {
       
       // Check if data has the expected structure and extract values safely
       if (data && typeof data === 'object') {
-        const rawData = data as any;
-        cooldownInfo.on_cooldown = 'on_cooldown' in rawData ? !!rawData.on_cooldown : false;
-        cooldownInfo.current_class = 'current_class' in rawData ? rawData.current_class : null;
-        cooldownInfo.cooldown_ends_at = 'cooldown_ends_at' in rawData ? rawData.cooldown_ends_at : null;
+        const typedData = data as any;
+        cooldownInfo.on_cooldown = typedData.on_cooldown === true;
+        cooldownInfo.current_class = typedData.current_class || null;
+        cooldownInfo.cooldown_ends_at = typedData.cooldown_ends_at || null;
       }
       
       return cooldownInfo;

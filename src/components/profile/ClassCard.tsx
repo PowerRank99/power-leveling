@@ -48,13 +48,13 @@ const ClassCard: React.FC<ClassCardProps> = ({
   const gradientColors = getClassGradient(className);
   
   return (
-    <div className={`rounded-xl bg-gradient-to-r ${gradientColors} text-white p-4 shadow-md`}>
+    <div className={`rounded-xl bg-gradient-to-br ${gradientColors} text-white p-4 shadow-md`}>
       <div className="flex items-center mb-3">
-        <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center mr-3 shadow-inner">
+        <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center mr-3 shadow-inner animate-pulse">
           {cardIcon}
         </div>
         <div>
-          <h3 className="font-bold text-lg">{className}</h3>
+          <h3 className="font-bold text-xl">{className}</h3>
           <p className="text-sm text-blue-100">{description}</p>
         </div>
       </div>

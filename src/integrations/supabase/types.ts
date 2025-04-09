@@ -738,6 +738,14 @@ export type Database = {
         Args: { p_user_id: string; p_exercise_id: string; p_days?: number }
         Returns: boolean
       }
+      get_class_bonuses: {
+        Args: { p_class_name: string }
+        Returns: Json
+      }
+      get_class_cooldown: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
       increment_profile_counter: {
         Args: {
           user_id_param: string
@@ -758,6 +766,10 @@ export type Database = {
       migrate_exercise_history: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      select_class: {
+        Args: { p_user_id: string; p_class_name: string }
+        Returns: Json
       }
     }
     Enums: {

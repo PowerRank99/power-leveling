@@ -71,8 +71,8 @@ const ClassSelectionPage = () => {
     return (
       <div 
         key={classInfo.class_name}
-        className={`h-full rounded-xl overflow-hidden shadow-sm transition-all 
-          ${isSelected ? 'ring-2 ring-fitblue ring-offset-2' : ''}
+        className={`h-full rounded-xl overflow-hidden shadow-md transition-all duration-300 transform 
+          ${isSelected ? 'ring-4 ring-fitblue ring-offset-2 scale-[1.02]' : 'hover:scale-[1.01]'}
           ${isOnCooldown && !isCurrentClass ? 'opacity-60' : ''}
         `}
         onClick={() => {
@@ -81,35 +81,35 @@ const ClassSelectionPage = () => {
           }
         }}
       >
-        <div className={`bg-gradient-to-r ${classInfo.color} text-white p-4 h-full flex flex-col`}>
-          <div className="flex items-start mb-2">
-            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center mr-3 shadow-inner">
+        <div className={`bg-gradient-to-br ${classInfo.color} text-white p-5 h-full flex flex-col`}>
+          <div className="flex items-start mb-3">
+            <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center mr-3 shadow-inner animate-pulse">
               {getClassIcon(classInfo.icon)}
             </div>
             <div className="flex-1">
               <div className="flex items-center">
-                <h3 className="font-bold text-xl">{classInfo.class_name}</h3>
+                <h3 className="font-bold text-2xl">{classInfo.class_name}</h3>
                 {isCurrentClass && (
                   <span className="ml-2 bg-white/30 text-white text-xs px-2 py-0.5 rounded-full flex items-center">
                     <Check className="w-3 h-3 mr-1" /> Atual
                   </span>
                 )}
               </div>
-              <p className="text-blue-100">{classInfo.description}</p>
+              <p className="text-white/90">{classInfo.description}</p>
             </div>
           </div>
           
           <div className="flex-1">
-            <p className="text-sm text-blue-200 mb-2 flex items-center">
+            <p className="text-sm text-white/80 mb-2 flex items-center">
               <span className="bg-white/20 rounded-full p-1 mr-2">🔍</span> 
               Bônus Passivo
             </p>
             
-            <div className="space-y-2 mb-3">
+            <div className="space-y-3 mb-3">
               {classInfo.bonuses.map((bonus, idx) => (
                 <div 
                   key={idx} 
-                  className="bg-white/10 backdrop-blur-sm rounded-lg p-3 shadow-inner"
+                  className="bg-white/10 backdrop-blur-sm rounded-lg p-3 shadow-inner hover:bg-white/15 transition-colors"
                 >
                   <div className="flex items-center">
                     <span className="text-lg font-bold mr-2 whitespace-nowrap">
@@ -148,7 +148,7 @@ const ClassSelectionPage = () => {
         </Card>
         
         {isOnCooldown && (
-          <div className="mb-6 bg-amber-50 p-4 rounded-lg border border-amber-200 flex items-center gap-3">
+          <div className="mb-6 bg-amber-50 p-4 rounded-lg border border-amber-200 flex items-center gap-3 animate-pulse">
             <Timer className="h-5 w-5 text-amber-500 flex-shrink-0" />
             <div>
               <p className="text-amber-800 font-medium">Mudança de classe em cooldown</p>
@@ -158,15 +158,15 @@ const ClassSelectionPage = () => {
         )}
         
         {loading ? (
-          <div className="flex justify-center py-8">
-            <LoadingSpinner size="lg" />
+          <div className="flex justify-center py-12">
+            <LoadingSpinner size="lg" message="Carregando classes..." subMessage="Preparando bônus e habilidades" />
           </div>
         ) : (
           <>
             <h3 className="text-lg font-semibold mb-4 text-gray-800">Classes Disponíveis</h3>
             
             {/* Desktop and Tablet View */}
-            <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {classes.map(classInfo => (
                 <div key={classInfo.class_name} className="h-full">
                   {renderClassCard(classInfo)}
@@ -175,18 +175,18 @@ const ClassSelectionPage = () => {
             </div>
             
             {/* Mobile View - Carousel */}
-            <div className="md:hidden mb-6">
+            <div className="md:hidden mb-8">
               <Carousel className="w-full">
-                <CarouselContent className="-ml-2">
+                <CarouselContent className="-ml-4">
                   {classes.map(classInfo => (
-                    <CarouselItem key={classInfo.class_name} className="pl-2 basis-full">
+                    <CarouselItem key={classInfo.class_name} className="pl-4 basis-full">
                       {renderClassCard(classInfo)}
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                <div className="flex justify-center mt-4">
-                  <CarouselPrevious className="static relative transform-none translate-y-0 mr-2" />
-                  <CarouselNext className="static relative transform-none translate-y-0" />
+                <div className="flex justify-center mt-6">
+                  <CarouselPrevious className="static relative transform-none translate-y-0 mr-4 bg-white/90 hover:bg-white" />
+                  <CarouselNext className="static relative transform-none translate-y-0 bg-white/90 hover:bg-white" />
                 </div>
               </Carousel>
             </div>
@@ -194,7 +194,7 @@ const ClassSelectionPage = () => {
             <Button
               onClick={handleSelectClass}
               disabled={!selectedClass || isSelecting || (isOnCooldown && selectedClass !== userClass)}
-              className="w-full"
+              className="w-full py-6 text-lg"
             >
               {isSelecting ? (
                 <>
