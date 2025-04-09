@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { ClassInfo } from '@/services/rpg/ClassService';
@@ -28,29 +27,23 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
     loop: false,
     align: 'center',
     skipSnaps: false,
-    // Remove the 'draggable' property as it's not recognized
-    speed: 15,
   });
   
-  // When the carousel scrolls, update the focused index
   useEffect(() => {
     if (!emblaApi) return;
     
     const onSelect = () => {
       setFocusedIndex(emblaApi.selectedScrollSnap());
-      // Also update the selected class based on the carousel position
       const currentClass = classes[emblaApi.selectedScrollSnap()];
       if (currentClass) {
         onClassSelect(currentClass.class_name);
       }
       
-      // Update scroll button states
       setCanScrollPrev(emblaApi.canScrollPrev());
       setCanScrollNext(emblaApi.canScrollNext());
     };
     
     emblaApi.on('select', onSelect);
-    // Initial state update
     onSelect();
     
     return () => {
@@ -58,7 +51,6 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
     };
   }, [emblaApi, classes, onClassSelect]);
   
-  // Select specific class and scroll carousel to it
   useEffect(() => {
     if (!emblaApi || !classes.length || !selectedClass) return;
     
@@ -68,7 +60,6 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
     }
   }, [emblaApi, classes, selectedClass, focusedIndex]);
   
-  // Initialize: if user has a class, scroll to it
   useEffect(() => {
     if (!emblaApi || !classes.length || !userClass) return;
     
@@ -78,7 +69,6 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
     }
   }, [emblaApi, classes, userClass]);
   
-  // Navigation handlers
   const scrollPrev = () => emblaApi?.scrollPrev();
   const scrollNext = () => emblaApi?.scrollNext();
   
@@ -109,7 +99,6 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
         </div>
       </div>
       
-      {/* Navigation buttons - visible on all devices but styled for better mobile experience */}
       <div className="absolute inset-y-0 left-0 flex items-center">
         <Button
           onClick={scrollPrev}
@@ -136,7 +125,6 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
         </Button>
       </div>
       
-      {/* Carousel indicator dots */}
       <div className="flex justify-center mt-4">
         <div className="flex gap-2">
           {classes.map((classInfo, index) => (
