@@ -28,7 +28,7 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<Navigate to="/treino" replace />} />
+          <Route path="/" element={<Index />} />
           <Route path="/index" element={<Index />} />
           <Route path="/perfil" element={<ProfilePage />} />
           <Route path="/perfil/editar" element={<EditProfilePage />} />
