@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Progress } from '@/components/ui/progress';
-import { Trophy } from '@/components/icons/Trophy';
+import Trophy from '@/components/icons/Trophy';
 
 interface AchievementStatsProps {
   totalCount: number;
