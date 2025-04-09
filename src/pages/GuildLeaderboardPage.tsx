@@ -17,6 +17,18 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
+// Define a consistent Member interface to avoid type issues
+interface Member {
+  id: string;
+  name: string;
+  avatar: string;
+  points: number;
+  position: number;
+  isCurrentUser?: boolean;
+  badge?: string;
+  trend?: 'up' | 'down' | 'same';
+}
+
 const GuildLeaderboardPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -45,13 +57,13 @@ const GuildLeaderboardPage: React.FC = () => {
   const pixelAvatar4 = "/lovable-uploads/38b244e2-15ad-44b7-8d2d-48eb9e4227a8.png";
   const pixelAvatar5 = "/lovable-uploads/c6066df0-70c1-48cf-b017-126e8f7e850a.png";
   
-  const topMembers = [
+  const topMembers: Member[] = [
     { id: "1", name: "Você", avatar: pixelAvatar1, points: 1250, position: 1, isCurrentUser: true, badge: "Mestre da Guilda" },
     { id: "2", name: "João Silva", avatar: pixelAvatar2, points: 1100, position: 2 },
     { id: "3", name: "Maria Santos", avatar: pixelAvatar3, points: 950, position: 3 }
   ];
   
-  const allMembers = [
+  const allMembers: Member[] = [
     ...topMembers,
     { id: "4", name: "Carlos Oliveira", avatar: pixelAvatar4, points: 820, position: 4 },
     { id: "5", name: "Ana Costa", avatar: pixelAvatar5, points: 790, position: 5 },
