@@ -95,7 +95,10 @@ const WorkoutsList: React.FC<WorkoutsListProps> = ({
           >
             {isLoadingMore ? (
               <>
-                <LoadingSpinner size="sm" className="mr-2" /> Carregando...
+                <div className="flex items-center">
+                  <LoadingSpinner size="sm" className="mr-2" message="" /> 
+                  <span>Carregando...</span>
+                </div>
               </>
             ) : (
               <>

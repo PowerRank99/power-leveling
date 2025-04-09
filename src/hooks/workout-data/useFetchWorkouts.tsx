@@ -5,7 +5,7 @@ import { RecentWorkout } from '../types/workoutDataTypes';
 
 export const useFetchWorkouts = (
   userId: string | undefined,
-  setWorkouts: (workouts: RecentWorkout[]) => void,
+  setWorkouts: (workouts: RecentWorkout[] | ((prev: RecentWorkout[]) => RecentWorkout[])) => void,
   deletedWorkoutIds: string[],
   lastRefresh: number
 ) => {
@@ -188,7 +188,7 @@ export const useFetchWorkouts = (
       const { data: workoutsData, hasMore } = await fetchWorkouts(nextPage);
       const processedWorkouts = await processWorkouts(workoutsData);
       
-      setWorkouts(prev => [...prev, ...processedWorkouts]);
+      setWorkouts((prev: RecentWorkout[]) => [...prev, ...processedWorkouts]);
       setCurrentPage(nextPage);
       setHasMoreWorkouts(hasMore);
       return true;
