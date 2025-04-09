@@ -2,7 +2,9 @@
 import React from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, Medal, Crown, Star } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Trophy, Medal, Crown, Star, TrendingUp, TrendingDown } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Member {
   id: string;
@@ -12,6 +14,7 @@ interface Member {
   position: number;
   isCurrentUser?: boolean;
   badge?: string;
+  trend?: 'up' | 'down' | 'same';
 }
 
 interface MemberRankingListProps {
@@ -47,6 +50,20 @@ const MemberRankingList: React.FC<MemberRankingListProps> = ({ members }) => {
       </Badge>
     );
   };
+
+  const getTrendIcon = (trend?: 'up' | 'down' | 'same') => {
+    switch(trend) {
+      case 'up': return <TrendingUp className="h-3 w-3 text-green-500" />;
+      case 'down': return <TrendingDown className="h-3 w-3 text-red-500" />;
+      default: return null;
+    }
+  };
+  
+  const handleCongratulate = (name: string) => {
+    toast.success('Parabéns enviados!', {
+      description: `Você enviou parabéns para ${name} pelo desempenho.`
+    });
+  };
   
   return (
     <div className="space-y-3">
@@ -74,10 +91,27 @@ const MemberRankingList: React.FC<MemberRankingListProps> = ({ members }) => {
             <div className="flex items-center">
               <h4 className={`font-medium ${member.isCurrentUser ? 'text-fitblue' : ''}`}>
                 {member.name}
+                {member.isCurrentUser && <span className="text-xs text-blue-500 ml-1">(Você)</span>}
               </h4>
               {getBadge(member)}
             </div>
-            <p className="text-sm text-gray-500">{member.points} pontos</p>
+            <div className="flex justify-between">
+              <p className="text-sm text-gray-500 flex items-center gap-1">
+                {member.points} pontos
+                {getTrendIcon(member.trend)}
+              </p>
+              
+              {!member.isCurrentUser && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-6 text-xs text-gray-500 hover:text-fitblue p-0"
+                  onClick={() => handleCongratulate(member.name)}
+                >
+                  👏 Parabenizar
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       ))}

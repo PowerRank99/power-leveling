@@ -2,13 +2,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Shield } from 'lucide-react';
 
 interface QuestPageHeaderProps {
   guildId: string;
+  guildName?: string;
 }
 
-const QuestPageHeader: React.FC<QuestPageHeaderProps> = ({ guildId }) => {
+const QuestPageHeader: React.FC<QuestPageHeaderProps> = ({ guildId, guildName = "Guilda" }) => {
   const navigate = useNavigate();
 
   const handleBackClick = () => {
@@ -16,11 +17,14 @@ const QuestPageHeader: React.FC<QuestPageHeaderProps> = ({ guildId }) => {
   };
 
   return (
-    <div className="p-4 flex items-center gap-2 bg-white border-b border-gray-200">
-      <Button variant="ghost" size="icon" onClick={handleBackClick} className="text-gray-600">
+    <div className="p-4 flex items-center gap-2 bg-gradient-to-r from-fitblue to-blue-500 text-white shadow-md">
+      <Button variant="ghost" size="icon" onClick={handleBackClick} className="text-white hover:bg-white/20">
         <ArrowLeft className="h-5 w-5" />
       </Button>
-      <h1 className="text-2xl font-bold">Missões da Guilda</h1>
+      <div className="flex items-center">
+        <Shield className="h-5 w-5 mr-2" />
+        <h1 className="text-2xl font-bold">{guildName} - Missões</h1>
+      </div>
     </div>
   );
 };
