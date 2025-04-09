@@ -28,7 +28,7 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
     loop: false,
     align: 'center',
     skipSnaps: false,
-    draggable: true,
+    // Remove the 'draggable' property as it's not recognized
     speed: 15,
   });
   
