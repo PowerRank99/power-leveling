@@ -4,8 +4,10 @@ import { Button } from '@/components/ui/button';
 import { achievementPopupStore } from '@/stores/achievementPopupStore';
 
 const AchievementTester: React.FC = () => {
+  const { showAchievement } = achievementPopupStore();
+  
   const testAchievement = () => {
-    achievementPopupStore.showAchievement({
+    showAchievement({
       title: "Guerreiro Dedicado",
       description: "Complete 100 treinos",
       xpReward: 50,

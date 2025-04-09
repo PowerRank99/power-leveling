@@ -112,8 +112,9 @@ export class AchievementService {
         }
       );
       
-      // Show achievement popup
-      achievementPopupStore.showAchievement({
+      // Show achievement popup - fixed to properly use the Zustand store
+      const { showAchievement } = achievementPopupStore.getState();
+      showAchievement({
         title: achievementName,
         description: achievementDescription,
         xpReward: xpReward,
