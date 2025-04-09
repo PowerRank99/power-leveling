@@ -8,7 +8,7 @@ import ExerciseSearchBar from './search/ExerciseSearchBar';
 import ExerciseList from './search/ExerciseList';
 import RecentExercises from './search/RecentExercises';
 import FilterSheet from './filters/FilterSheet';
-import { EQUIPMENT_TYPES, MUSCLE_GROUPS } from './constants/exerciseFilters';
+import { FILTERED_EQUIPMENT_TYPES, MUSCLE_GROUPS } from './hooks/exercise-search/useExerciseSearch';
 import { Exercise } from './types/Exercise';
 import { toast } from '@/components/ui/use-toast';
 
@@ -69,7 +69,7 @@ const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
         <div className="flex gap-2">
           <FilterSheet 
             title="Selecione o equipamento" 
-            options={EQUIPMENT_TYPES} 
+            options={FILTERED_EQUIPMENT_TYPES} 
             selectedOption={equipmentFilter} 
             icon={Dumbbell} 
             label="Equipamento" 
@@ -80,11 +80,11 @@ const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
           />
 
           <FilterSheet 
-            title="Selecione o grupo muscular" 
+            title="Selecione o tipo de exercício" 
             options={MUSCLE_GROUPS} 
             selectedOption={muscleFilter} 
             icon={Filter} 
-            label="Músculos" 
+            label="Exercício" 
             onOptionSelect={(option) => {
               console.log(`Setting muscle filter to: ${option}`);
               setMuscleFilter(option);

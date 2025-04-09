@@ -4,6 +4,12 @@ import { Exercise } from '../../types/Exercise';
 import { UseExerciseSearchProps, ExerciseSearchResult } from './types';
 import { useExerciseFetch } from './useExerciseFetch';
 import { applyFilters } from './useExerciseFilters';
+import { EQUIPMENT_TYPES } from '../../constants/exerciseFilters';
+
+// Filter out specific equipment types for the routine creation page
+export const FILTERED_EQUIPMENT_TYPES = EQUIPMENT_TYPES.filter(type => 
+  !['Barra de Cardio', 'Equipamento de Esportes', 'Barra', 'Banco', 'TRX', 'Cabo'].includes(type)
+);
 
 export const useExerciseSearch = ({ selectedExercises }: UseExerciseSearchProps): ExerciseSearchResult => {
   // Search and filter state
