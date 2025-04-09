@@ -1,4 +1,3 @@
-
 export const EQUIPMENT_TYPES = [
   'Todos',
   'Nenhum',
@@ -37,17 +36,31 @@ export const MUSCLE_GROUP_ALIASES = {
   'abs': 'Abdômen',
   'abdominais': 'Abdômen',
   'core': 'Abdômen',
+  
   'bicep': 'Bíceps',
   'biceps': 'Bíceps',
+  'bícep': 'Bíceps',
+  'bíceps': 'Bíceps',
+  'curl': 'Bíceps',
+  'rosca': 'Bíceps',
+  'antebraço': 'Bíceps',
+  'antebracos': 'Bíceps',
+  'antebraços': 'Bíceps',
+  'braco': 'Bíceps',
+  'braço': 'Bíceps',
+  
   'back': 'Costas',
   'superior': 'Costas',
+  
   'shoulder': 'Ombros',
   'shoulders': 'Ombros',
   'ombro': 'Ombros',
   'ombros': 'Ombros',
   'deltoides': 'Ombros',
+  
   'chest': 'Peito',
   'peitoral': 'Peito',
+  
   'legs': 'Pernas',
   'pernas': 'Pernas',
   'leg': 'Pernas',
@@ -55,9 +68,24 @@ export const MUSCLE_GROUP_ALIASES = {
   'coxas': 'Pernas',
   'quads': 'Pernas',
   'quadríceps': 'Pernas',
+  
   'tricep': 'Tríceps',
   'triceps': 'Tríceps',
-  // New cardio aliases
+  'trícep': 'Tríceps',
+  'tricep': 'Tríceps',
+  'extensão': 'Tríceps',
+  'extensao': 'Tríceps',
+  'pushdown': 'Tríceps',
+  'francês': 'Tríceps',
+  'frances': 'Tríceps',
+  'mergulho': 'Tríceps',
+  'paralela': 'Tríceps',
+  'testa': 'Tríceps',
+  'coice': 'Tríceps',
+  'corda': 'Tríceps',
+  'banco': 'Tríceps',
+  'diamante': 'Tríceps',
+  
   'cardio': 'Cardio',
   'aerobic': 'Cardio',
   'aerobico': 'Cardio',
@@ -82,7 +110,7 @@ export const MUSCLE_GROUP_ALIASES = {
   'spinning': 'Cardio',
   'aerobica': 'Cardio',
   'aeróbica': 'Cardio',
-  // New sports aliases
+  
   'sport': 'Esportes',
   'esporte': 'Esportes',
   'sports': 'Esportes',
@@ -139,7 +167,6 @@ export const EQUIPMENT_TYPE_ALIASES = {
   'cable': 'Cabo',
   'pulley': 'Cabo',
   'other': 'Outro',
-  // New cardio equipment aliases
   'treadmill': 'Barra de Cardio',
   'esteira': 'Barra de Cardio',
   'bike': 'Barra de Cardio',
@@ -156,7 +183,6 @@ export const EQUIPMENT_TYPE_ALIASES = {
   'escada': 'Barra de Cardio',
   'rope': 'Barra de Cardio',
   'corda': 'Barra de Cardio',
-  // New sports equipment aliases
   'ball': 'Equipamento de Esportes',
   'bola': 'Equipamento de Esportes',
   'racket': 'Equipamento de Esportes',
@@ -173,7 +199,6 @@ export const EQUIPMENT_TYPE_ALIASES = {
 
 // Exercise categorization map for precise category mapping
 export const EXERCISE_CATEGORY_MAP: Record<string, string> = {
-  // Cardio exercises 
   'corrida': 'Cardio',
   'correr': 'Cardio',
   'esteira': 'Cardio',
@@ -205,7 +230,6 @@ export const EXERCISE_CATEGORY_MAP: Record<string, string> = {
   'circuito': 'Cardio',
   'tabata': 'Cardio',
   
-  // Sports exercises
   'futebol': 'Esportes',
   'soccer': 'Esportes',
   'football': 'Esportes',
@@ -302,6 +326,23 @@ export const categorizeExercise = (
         existingCategory !== 'Não especificado') {
       return existingCategory;
     }
+  }
+  
+  // Special handling for Bíceps and Tríceps
+  if (normalizedName.includes("curl") || 
+      normalizedName.includes("rosca") || 
+      normalizedName.includes("bicep") || 
+      normalizedName.includes("biceps")) {
+    return 'Bíceps';
+  }
+  
+  if (normalizedName.includes("trice") || 
+      normalizedName.includes("trícep") || 
+      normalizedName.includes("extensão") || 
+      normalizedName.includes("extensao") ||
+      normalizedName.includes("pushdown") || 
+      normalizedName.includes("mergulho")) {
+    return 'Tríceps';
   }
   
   // Fallback to the existing category or a default

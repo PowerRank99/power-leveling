@@ -29,7 +29,7 @@ export const matchesFilter = (exercise: Exercise, filterType: 'muscle_group' | '
   // Check aliases based on filter type
   if (filterType === 'muscle_group') {
     // Check exercise name for category-specific keywords (especially for Cardio and Esportes)
-    if (filterValue === 'Cardio' || filterValue === 'Esportes') {
+    if (filterValue === 'Cardio' || filterValue === 'Esportes' || filterValue === 'Bíceps' || filterValue === 'Tríceps') {
       const normalizedName = normalizeText(exercise.name);
       
       // Look for keywords in exercise name that match the category
