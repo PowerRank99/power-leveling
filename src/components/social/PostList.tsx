@@ -28,11 +28,13 @@ interface PostListProps {
 
 const PostList: React.FC<PostListProps> = ({ posts }) => {
   return (
-    <div className="pb-16">
-      {posts.map((post) => (
-        <EnhancedPostCard key={post.id} post={post} />
-      ))}
-    </div>
+    <ScrollArea className="h-[calc(100vh-160px)]">
+      <div className="pb-16">
+        {posts.map((post) => (
+          <EnhancedPostCard key={post.id} post={post} />
+        ))}
+      </div>
+    </ScrollArea>
   );
 };
 

@@ -3,15 +3,15 @@ import React, { useState } from 'react';
 import BottomNavBar from '@/components/navigation/BottomNavBar';
 import FeedHeader from '@/components/social/FeedHeader';
 import FeedTabs from '@/components/social/FeedTabs';
-import PostList from '@/components/social/PostList';
+import PostList, { Post } from '@/components/social/PostList';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const IndexPage = () => {
   const [activeTab, setActiveTab] = useState<'todos' | 'guildas' | 'amigos'>('todos');
   
-  // Mock data for posts
-  const posts = [
+  // Mock data for posts with correct type literals
+  const posts: Post[] = [
     {
       id: "1",
       user: { 
