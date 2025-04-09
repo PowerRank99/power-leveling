@@ -8,7 +8,8 @@ import ExerciseSearchBar from './search/ExerciseSearchBar';
 import ExerciseList from './search/ExerciseList';
 import RecentExercises from './search/RecentExercises';
 import FilterSheet from './filters/FilterSheet';
-import { FILTERED_EQUIPMENT_TYPES, MUSCLE_GROUPS } from './hooks/exercise-search/useExerciseSearch';
+import { FILTERED_EQUIPMENT_TYPES } from './hooks/exercise-search/useExerciseSearch';
+import { MUSCLE_GROUPS } from './constants/exerciseFilters';
 import { Exercise } from './types/Exercise';
 import { toast } from '@/components/ui/use-toast';
 
