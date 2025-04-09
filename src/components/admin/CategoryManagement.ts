@@ -24,7 +24,10 @@ export const useCategoryManagement = () => {
       
       // Extract unique values and count occurrences
       const valueCounts: Record<string, number> = {};
-      data.forEach((item) => {
+      
+      // Fixed: Explicitly casting data to any[] to avoid excessive type instantiation
+      const typedData = data as any[];
+      typedData.forEach((item) => {
         const value = item[columnName] || 'Não especificado';
         valueCounts[value] = (valueCounts[value] || 0) + 1;
       });
