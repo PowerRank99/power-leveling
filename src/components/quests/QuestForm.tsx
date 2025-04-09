@@ -17,22 +17,22 @@ import QuestRewardField from './QuestRewardField';
 // Define form schema
 const formSchema = z.object({
   title: z.string().min(3, {
-    message: "O nome deve ter pelo menos 3 caracteres",
+    message: "Name must have at least 3 characters",
   }),
   daysRequired: z.number().min(1, {
-    message: "Necessário pelo menos 1 dia",
+    message: "At least 1 day required",
   }).max(30, {
-    message: "Máximo de 30 dias",
+    message: "Maximum of 30 days",
   }),
   totalDays: z.number().min(1, {
-    message: "Necessário pelo menos 1 dia",
+    message: "At least 1 day required",
   }).max(30, {
-    message: "Máximo de 30 dias",
+    message: "Maximum of 30 days",
   }),
   startDate: z.date(),
   endDate: z.date(),
   xpReward: z.number().min(50, {
-    message: "A recompensa mínima é de 50 XP",
+    message: "Minimum reward is 50 XP",
   }),
 });
 
@@ -63,7 +63,7 @@ const QuestForm: React.FC<QuestFormProps> = ({ guildId }) => {
     console.log('Form data:', data);
     
     // Here you would send the data to your API
-    toast.success('Missão criada com sucesso!');
+    toast.success('Quest created successfully!');
     
     // Navigate back to quests page
     navigate(`/guilds/${guildId}/quests`);
@@ -83,7 +83,7 @@ const QuestForm: React.FC<QuestFormProps> = ({ guildId }) => {
           type="submit" 
           className="w-full h-14 text-lg bg-blue-600 hover:bg-blue-700"
         >
-          <Plus className="h-5 w-5 mr-2" /> Criar Quest
+          <Plus className="h-5 w-5 mr-2" /> Create Quest
         </Button>
       </form>
     </Form>

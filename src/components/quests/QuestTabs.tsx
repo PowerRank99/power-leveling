@@ -33,10 +33,10 @@ const QuestTabs: React.FC<QuestTabsProps> = ({
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="grid grid-cols-4 w-full">
-        <TabsTrigger value="active">Ativas</TabsTrigger>
-        <TabsTrigger value="completed">Concluídas</TabsTrigger>
-        <TabsTrigger value="failed">Falhadas</TabsTrigger>
-        <TabsTrigger value="all">Todas</TabsTrigger>
+        <TabsTrigger value="active">Active</TabsTrigger>
+        <TabsTrigger value="completed">Completed</TabsTrigger>
+        <TabsTrigger value="failed">Failed</TabsTrigger>
+        <TabsTrigger value="all">All</TabsTrigger>
       </TabsList>
       
       <TabsContent value="active" className="mt-4 space-y-4">
@@ -45,12 +45,12 @@ const QuestTabs: React.FC<QuestTabsProps> = ({
         ) : (
           <EmptyState 
             icon="Compass" 
-            title="Nenhuma quest ativa" 
-            description="Esta guilda não possui quests ativas no momento."
+            title="No active quests" 
+            description="This guild has no active quests at the moment."
             action={
               isGuildMaster ? (
                 <Button onClick={handleCreateQuest} className="bg-blue-500 mt-4">
-                  Criar uma quest
+                  Create a quest
                 </Button>
               ) : undefined
             }
@@ -64,8 +64,8 @@ const QuestTabs: React.FC<QuestTabsProps> = ({
         ) : (
           <EmptyState 
             icon="Trophy" 
-            title="Nenhuma quest concluída" 
-            description="Esta guilda ainda não completou nenhuma quest."
+            title="No completed quests" 
+            description="This guild hasn't completed any quests yet."
           />
         )}
       </TabsContent>
@@ -76,8 +76,8 @@ const QuestTabs: React.FC<QuestTabsProps> = ({
         ) : (
           <EmptyState 
             icon="X" 
-            title="Nenhuma quest falhou" 
-            description="Esta guilda não tem quests que tenham falhado."
+            title="No failed quests" 
+            description="This guild has no failed quests."
           />
         )}
       </TabsContent>
@@ -88,8 +88,8 @@ const QuestTabs: React.FC<QuestTabsProps> = ({
         ) : (
           <EmptyState 
             icon="Compass" 
-            title="Nenhuma quest encontrada" 
-            description="Não foram encontradas quests com este filtro."
+            title="No quests found" 
+            description="No quests were found with this filter."
           />
         )}
       </TabsContent>

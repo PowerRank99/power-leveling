@@ -29,7 +29,7 @@ const QuestSearch: React.FC<QuestSearchProps> = ({
       <div className="relative flex-1">
         <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
         <Input 
-          placeholder="Pesquisar missões..." 
+          placeholder="Search quests..." 
           className="pl-9"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -39,7 +39,7 @@ const QuestSearch: React.FC<QuestSearchProps> = ({
       {isGuildMaster && (
         <Button onClick={handleCreateQuest} className="bg-blue-500 hover:bg-blue-600">
           <PlusIcon className="h-5 w-5 mr-1" />
-          <span className="hidden sm:inline">Criar Missão</span>
+          <span className="hidden sm:inline">Create Quest</span>
         </Button>
       )}
     </div>

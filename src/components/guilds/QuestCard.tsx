@@ -39,11 +39,11 @@ const QuestCard: React.FC<QuestCardProps> = ({ quest, onClick }) => {
   const getStatusBadge = () => {
     switch(quest.status) {
       case 'active':
-        return <div className="px-4 py-1 rounded-full bg-blue-100 text-blue-700 flex items-center"><Compass className="h-3 w-3 mr-1" />Em Andamento</div>;
+        return <div className="px-4 py-1 rounded-full bg-blue-100 text-blue-700 flex items-center"><Compass className="h-3 w-3 mr-1" />In Progress</div>;
       case 'completed':
-        return <div className="px-4 py-1 rounded-full bg-green-100 text-green-700 flex items-center"><CheckCircle className="h-3 w-3 mr-1" />Concluída</div>;
+        return <div className="px-4 py-1 rounded-full bg-green-100 text-green-700 flex items-center"><CheckCircle className="h-3 w-3 mr-1" />Completed</div>;
       case 'failed':
-        return <div className="px-4 py-1 rounded-full bg-red-100 text-red-700 flex items-center"><XCircle className="h-3 w-3 mr-1" />Falhou</div>;
+        return <div className="px-4 py-1 rounded-full bg-red-100 text-red-700 flex items-center"><XCircle className="h-3 w-3 mr-1" />Failed</div>;
       default:
         return null;
     }
@@ -84,8 +84,8 @@ const QuestCard: React.FC<QuestCardProps> = ({ quest, onClick }) => {
       
       <div className="mt-5">
         <div className="flex justify-between mb-1">
-          <span className="text-gray-600">Progresso</span>
-          <span className="font-medium">{quest.daysCompleted}/{quest.daysRequired} dias</span>
+          <span className="text-gray-600">Progress</span>
+          <span className="font-medium">{quest.daysCompleted}/{quest.daysRequired} days</span>
         </div>
         
         <Progress 
@@ -100,11 +100,11 @@ const QuestCard: React.FC<QuestCardProps> = ({ quest, onClick }) => {
           <div className="flex justify-between">
             <div className="text-gray-500 flex items-center text-sm">
               <Calendar className="h-4 w-4 mr-1" />
-              Início: {formatDate(quest.startDate)}
+              Start: {formatDate(quest.startDate)}
             </div>
             <div className="text-gray-500 flex items-center text-sm">
               <Calendar className="h-4 w-4 mr-1" />
-              Término: {formatDate(quest.endDate)}
+              End: {formatDate(quest.endDate)}
             </div>
           </div>
         )}
@@ -113,7 +113,7 @@ const QuestCard: React.FC<QuestCardProps> = ({ quest, onClick }) => {
           <div className="flex justify-between items-center">
             <div className="text-gray-500 flex items-center text-sm">
               <Calendar className="h-4 w-4 mr-1" />
-              Finalizada em {formatDate(quest.endDate)}
+              Completed on {formatDate(quest.endDate)}
             </div>
             <div className="text-green-600 font-medium">
               +{quest.rewards[0].amount} EXP
@@ -125,10 +125,10 @@ const QuestCard: React.FC<QuestCardProps> = ({ quest, onClick }) => {
           <div className="flex justify-between items-center">
             <div className="text-gray-500 flex items-center text-sm">
               <Calendar className="h-4 w-4 mr-1" />
-              Término: {formatDate(quest.endDate)}
+              End: {formatDate(quest.endDate)}
             </div>
             <div className="text-red-600">
-              Quest Encerrada
+              Quest Ended
             </div>
           </div>
         )}

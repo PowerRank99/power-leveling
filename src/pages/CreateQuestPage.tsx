@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -23,12 +22,11 @@ const CreateQuestPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   
-  // Predefined quest templates
   const questTemplates: QuestTemplateProps[] = [
     {
       id: '1',
-      title: 'Consistência Diária',
-      description: 'Complete treinos 5 dias em uma semana para demonstrar sua consistência.',
+      title: 'Daily Consistency',
+      description: 'Complete workouts 5 days in a week to demonstrate your consistency.',
       daysRequired: 5,
       totalDays: 7,
       xpReward: 500,
@@ -37,8 +35,8 @@ const CreateQuestPage: React.FC = () => {
     },
     {
       id: '2',
-      title: 'Desafio Intenso',
-      description: 'Complete 3 treinos de alta intensidade durante a semana.',
+      title: 'Intense Challenge',
+      description: 'Complete 3 high-intensity workouts during the week.',
       daysRequired: 3,
       totalDays: 7,
       xpReward: 350,
@@ -47,8 +45,8 @@ const CreateQuestPage: React.FC = () => {
     },
     {
       id: '3',
-      title: 'Iniciante',
-      description: 'Complete 3 treinos em uma semana para começar sua jornada fitness.',
+      title: 'Beginner',
+      description: 'Complete 3 workouts in a week to start your fitness journey.',
       daysRequired: 3,
       totalDays: 7,
       xpReward: 250,
@@ -57,8 +55,8 @@ const CreateQuestPage: React.FC = () => {
     },
     {
       id: '4',
-      title: 'Maratona Fitness',
-      description: 'Complete 14 treinos em 21 dias para provar sua resistência.',
+      title: 'Fitness Marathon',
+      description: 'Complete 14 workouts in 21 days to prove your endurance.',
       daysRequired: 14,
       totalDays: 21,
       xpReward: 1000,
@@ -67,8 +65,8 @@ const CreateQuestPage: React.FC = () => {
     },
     {
       id: '5',
-      title: 'Fim de Semana Ativo',
-      description: 'Complete treinos tanto no sábado quanto no domingo.',
+      title: 'Active Weekend',
+      description: 'Complete workouts on both Saturday and Sunday.',
       daysRequired: 2,
       totalDays: 2,
       xpReward: 200,
@@ -77,8 +75,8 @@ const CreateQuestPage: React.FC = () => {
     },
     {
       id: '6',
-      title: 'Semana Completa',
-      description: 'Complete um treino todos os dias da semana.',
+      title: 'Full Week',
+      description: 'Complete a workout every day of the week.',
       daysRequired: 7,
       totalDays: 7,
       xpReward: 700,
@@ -95,10 +93,9 @@ const CreateQuestPage: React.FC = () => {
   const handleConfirmQuest = () => {
     setIsSubmitting(true);
     
-    // Simulate API call
     setTimeout(() => {
       setIsSubmitting(false);
-      toast.success('Missão criada com sucesso!');
+      toast.success('Mission created successfully!');
       navigate(`/guilds/${id}/quests`);
     }, 800);
   };
@@ -107,7 +104,6 @@ const CreateQuestPage: React.FC = () => {
     navigate(`/guilds/${id}/quests`);
   };
   
-  // Filter quests based on search query and category
   const filteredQuests = questTemplates.filter(quest => {
     const matchesSearch = quest.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           quest.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -123,7 +119,7 @@ const CreateQuestPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-16">
       <QuestFormHeader 
-        title="Escolher Quest" 
+        title="Choose Quest" 
         onBackClick={handleBackClick}
       />
       
@@ -132,7 +128,7 @@ const CreateQuestPage: React.FC = () => {
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Buscar quests..."
+              placeholder="Search quests..."
               className="pl-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -141,10 +137,10 @@ const CreateQuestPage: React.FC = () => {
           
           <Tabs defaultValue="all" value={activeCategory} onValueChange={setActiveCategory}>
             <TabsList className="w-full grid grid-cols-4 mb-4">
-              <TabsTrigger value="all">Todas</TabsTrigger>
-              <TabsTrigger value="easy">Fácil</TabsTrigger>
-              <TabsTrigger value="medium">Média</TabsTrigger>
-              <TabsTrigger value="hard">Difícil</TabsTrigger>
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="easy">Easy</TabsTrigger>
+              <TabsTrigger value="medium">Medium</TabsTrigger>
+              <TabsTrigger value="hard">Hard</TabsTrigger>
             </TabsList>
             
             <TabsContent value={activeCategory} className="mt-0">
@@ -161,8 +157,8 @@ const CreateQuestPage: React.FC = () => {
                   
                   {filteredQuests.length === 0 && (
                     <div className="col-span-full flex flex-col items-center justify-center p-8 text-center text-gray-500">
-                      <p>Nenhuma quest encontrada.</p>
-                      <p className="text-sm">Tente uma busca diferente ou mude a categoria.</p>
+                      <p>No quests found.</p>
+                      <p className="text-sm">Try a different search or change the category.</p>
                     </div>
                   )}
                 </div>

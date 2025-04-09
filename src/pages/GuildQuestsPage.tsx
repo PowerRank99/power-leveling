@@ -116,7 +116,7 @@ const GuildQuestsPage: React.FC = () => {
               </span>
               <span className="flex items-center">
                 <Crown className="h-3.5 w-3.5 mr-1 text-yellow-500" />
-                Nível {guildInfo.level}
+                Level {guildInfo.level}
               </span>
             </div>
           </div>

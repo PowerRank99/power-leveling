@@ -65,7 +65,7 @@ const GuildCard: React.FC<GuildCardProps> = ({ guild, isUserMember }) => {
                 {guild.isUserGuildMaster && (
                   <Badge className="ml-2 bg-purple-100 text-purple-700 border-purple-200">
                     <Crown className="h-3 w-3 mr-1" />
-                    <span className="text-xs">Mestre</span>
+                    <span className="text-xs">Master</span>
                   </Badge>
                 )}
               </div>
@@ -79,7 +79,7 @@ const GuildCard: React.FC<GuildCardProps> = ({ guild, isUserMember }) => {
                 onClick={handleJoinGuild}
               >
                 <Shield className="h-3.5 w-3.5 mr-1" />
-                <span>Entrar</span>
+                <span>Join</span>
               </Button>
             )}
             
@@ -91,7 +91,7 @@ const GuildCard: React.FC<GuildCardProps> = ({ guild, isUserMember }) => {
                 onClick={handleQuestsClick}
               >
                 <Compass className="h-3 w-3" />
-                <span>Missões</span>
+                <span>Quests</span>
               </Button>
             )}
           </div>
@@ -104,13 +104,13 @@ const GuildCard: React.FC<GuildCardProps> = ({ guild, isUserMember }) => {
             
             <div className="flex items-center text-sm text-gray-600">
               <Crown className="h-4 w-4 mr-1 text-yellow-500" />
-              <span>Nível {guild.level}</span>
+              <span>Level {guild.level}</span>
             </div>
             
             {guild.questCount > 0 && (
               <Badge variant="secondary" className="flex items-center px-2 py-1 bg-blue-50 text-fitblue">
                 <BarChart2 className="h-3 w-3 mr-1" />
-                <span>{guild.questCount} {guild.questCount === 1 ? 'missão ativa' : 'missões ativas'}</span>
+                <span>{guild.questCount} {guild.questCount === 1 ? 'active quest' : 'active quests'}</span>
               </Badge>
             )}
           </div>

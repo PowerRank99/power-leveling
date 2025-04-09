@@ -9,7 +9,7 @@ interface QuestPageHeaderProps {
   guildName?: string;
 }
 
-const QuestPageHeader: React.FC<QuestPageHeaderProps> = ({ guildId, guildName = "Guilda" }) => {
+const QuestPageHeader: React.FC<QuestPageHeaderProps> = ({ guildId, guildName = "Guild" }) => {
   const navigate = useNavigate();
 
   const handleBackClick = () => {

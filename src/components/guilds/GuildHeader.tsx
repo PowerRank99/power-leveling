@@ -38,11 +38,11 @@ const GuildHeader: React.FC<GuildHeaderProps> = ({ guildInfo, guildId }) => {
           <div className="flex text-sm text-white/80 mt-1 flex-wrap gap-x-4">
             <div className="flex items-center">
               <UsersIcon className="w-4 h-4 mr-1" />
-              <span>{guildInfo.memberCount} membros</span>
+              <span>{guildInfo.memberCount} members</span>
             </div>
             <div className="flex items-center">
               <Trophy className="w-4 h-4 mr-1 text-yellow-300" />
-              <span>{guildInfo.completedQuests} quests completadas</span>
+              <span>{guildInfo.completedQuests} completed quests</span>
             </div>
           </div>
         </div>
@@ -54,7 +54,7 @@ const GuildHeader: React.FC<GuildHeaderProps> = ({ guildInfo, guildId }) => {
           className="flex-1 bg-white/15 hover:bg-white/25 text-white border border-white/30 backdrop-blur-sm rounded-full text-sm h-9"
         >
           <Compass className="w-4 h-4 mr-1" />
-          Ver Quests
+          View Quests
         </Button>
         
         {guildInfo.isUserGuildMaster && (
@@ -63,7 +63,7 @@ const GuildHeader: React.FC<GuildHeaderProps> = ({ guildInfo, guildId }) => {
             className="flex-1 bg-white/15 hover:bg-white/25 text-white border border-white/30 backdrop-blur-sm rounded-full text-sm h-9"
           >
             <Shield className="w-4 h-4 mr-1" />
-            Gerenciar Guilda
+            Manage Guild
           </Button>
         )}
       </div>

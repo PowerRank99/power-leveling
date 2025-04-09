@@ -50,15 +50,15 @@ const QuestTemplate: React.FC<QuestTemplateProps> = ({
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div className="flex items-center">
             <CheckCircle2 className="w-4 h-4 mr-1 text-gray-500" />
-            <span>{daysRequired} dias necessários</span>
+            <span>{daysRequired} days required</span>
           </div>
           <div className="flex items-center">
             <Calendar className="w-4 h-4 mr-1 text-gray-500" />
-            <span>{totalDays} dias totais</span>
+            <span>{totalDays} total days</span>
           </div>
           <div className="flex items-center col-span-2">
             <Award className="w-4 h-4 mr-1 text-yellow-500" />
-            <span className="font-medium">{xpReward} XP de recompensa</span>
+            <span className="font-medium">{xpReward} XP reward</span>
           </div>
         </div>
       </CardContent>
@@ -68,7 +68,7 @@ const QuestTemplate: React.FC<QuestTemplateProps> = ({
           variant={selected ? "default" : "outline"}
           onClick={() => onSelect(id)}
         >
-          {selected ? "Selecionado" : "Selecionar"}
+          {selected ? "Selected" : "Select"}
         </Button>
       </CardFooter>
     </Card>
