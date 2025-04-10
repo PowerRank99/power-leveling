@@ -3,6 +3,7 @@ import React from 'react';
 import { Flame, Award } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import Trophy from '@/components/icons/Trophy';
 
 interface StreakAchievementsSectionProps {
   streak: number;

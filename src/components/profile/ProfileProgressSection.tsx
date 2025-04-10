@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Clock, Trophy, Info } from 'lucide-react';
+import { Clock, Trophy, Info, Flame } from 'lucide-react';
 import XPProgressBar from '@/components/profile/XPProgressBar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
