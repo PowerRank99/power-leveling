@@ -129,6 +129,16 @@
     @apply bg-gradient-to-r from-valor-muted to-xp-gold-muted;
   }
   
+  .from-valor-muted {
+    --tw-gradient-from: hsla(var(--valor-muted)) var(--tw-gradient-from-position);
+    --tw-gradient-to: hsla(var(--valor-muted) / 0) var(--tw-gradient-to-position);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+
+  .to-xp-gold-muted {
+    --tw-gradient-to: hsla(var(--xp-gold-muted)) var(--tw-gradient-to-position);
+  }
+  
   .bg-gradient-midnight-arcane-xpgold {
     @apply bg-gradient-to-r from-midnight-deep via-arcane-muted to-xp-gold-muted;
   }

@@ -29,7 +29,7 @@ const WorkoutProgressBar: React.FC<WorkoutProgressBarProps> = ({
         <Progress 
           value={progressPercentage} 
           className="h-1 rounded-none bg-gray-700/20"
-          indicatorColor={`${isAlmostComplete ? 'bg-gradient-to-r from-valor-muted to-xp-gold-muted' : 'bg-arcane-muted'}`}
+          indicatorColor={`${isAlmostComplete ? 'bg-gradient-valor-xpgold' : 'bg-arcane-muted'}`}
           showAnimation={isAlmostComplete}
         />
         
