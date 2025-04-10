@@ -35,21 +35,22 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     <div className="bg-gradient-to-b from-midnight-deep to-midnight-base text-text-primary p-6 relative rounded-b-xl shadow-elevated">
       <div className="flex items-center">
         <div className="relative">
-          <Avatar className="h-24 w-24 border-2 border-arcane-30 shadow-glow-purple">
+          <Avatar className="h-24 w-24 profile-avatar">
             <AvatarImage src={avatar} alt={name} />
             <AvatarFallback className="bg-midnight-elevated text-arcane font-orbitron">{name.charAt(0)}</AvatarFallback>
           </Avatar>
           
           {/* Level Badge */}
-          <div className="absolute -bottom-2 -right-2 bg-gradient-to-r from-arcane to-arcane-60 text-white text-xs font-space font-bold px-2 py-1 rounded-full flex items-center shadow-subtle animate-pulse-glow">
-            <Award className="w-3 h-3 mr-1" /> {level}
+          <div className="absolute -bottom-2 -right-2 level-badge px-2 py-1 rounded-full flex items-center">
+            <Award className="w-3 h-3 mr-1 text-arcane" /> 
+            <span className="font-space font-bold text-xs text-arcane">{level}</span>
           </div>
         </div>
         
         <div className="ml-4 flex-1">
           <div className="flex justify-between items-start">
             <div>
-              <h2 className="text-xl font-orbitron font-bold text-text-primary">{name}</h2>
+              <h2 className="text-xl font-orbitron font-bold text-text-primary tracking-wide">{name}</h2>
               <p className="text-text-tertiary text-sm">@{username}</p>
             </div>
           </div>
@@ -64,18 +65,19 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           </div>
           
           {/* Level Progress */}
-          <div className="mb-1 flex justify-between text-xs font-space">
-            <span className="text-text-tertiary">Nível {level}</span>
-            <span className="text-arcane-60">{currentXP}/{nextLevelXP} XP</span>
+          <div className="mb-1 flex justify-between text-xs">
+            <span className="text-text-tertiary font-sora">Nível {level}</span>
+            <span className="font-space font-medium text-arcane-60">{currentXP}/{nextLevelXP} XP</span>
           </div>
           <div className="h-1.5 bg-divider rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-arcane-60 to-valor-60 rounded-full transition-all duration-500" style={{ width: `${levelProgress}%` }}></div>
+            <div className="progress-bar-fill h-full bg-gradient-to-r from-arcane-60 to-valor-60 rounded-full transition-all duration-500" 
+                 style={{ width: `${levelProgress}%` }}></div>
           </div>
         </div>
       </div>
       
       {/* Stats */}
-      <div className="flex justify-between mt-6 px-4 py-3 bg-midnight-card rounded-lg backdrop-blur-sm border border-divider shadow-subtle">
+      <div className="flex justify-between mt-6 px-4 py-3 metric-container">
         <StatCard 
           icon={<div className="text-lg font-bold font-space text-text-primary">{workoutsCount}</div>}
           value=""

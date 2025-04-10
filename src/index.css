@@ -103,6 +103,82 @@
   .premium-badge-achievement {
     @apply bg-achievement-15 text-achievement-60 border border-achievement-30;
   }
+
+  /* Profile Avatar */
+  .profile-avatar {
+    @apply border-2 border-arcane-30 shadow-glow-purple;
+  }
+
+  /* Level Badge */
+  .level-badge {
+    @apply bg-gradient-to-r from-arcane to-valor bg-opacity-70 
+           text-white text-xs font-space font-bold
+           border border-arcane-30 shadow-glow-purple 
+           animate-pulse-glow;
+  }
+
+  /* Progress Bar Fill with Glow */
+  .progress-bar-fill {
+    @apply shadow-glow-subtle;
+  }
+
+  /* Metric Container */
+  .metric-container {
+    @apply bg-midnight-card backdrop-blur-sm border border-divider 
+           rounded-lg shadow-subtle hover:shadow-elevated 
+           transition-all duration-300;
+  }
+
+  /* Metric Icon Container */
+  .metric-icon-container {
+    @apply w-10 h-10 rounded-full bg-midnight-elevated
+           border border-divider flex items-center justify-center;
+  }
+
+  /* Class Card */
+  .class-card {
+    @apply bg-gradient-to-br from-arcane-15 to-arcane-30
+           backdrop-blur-sm border border-arcane-30
+           rounded-xl shadow-subtle hover:shadow-glow-purple 
+           transition-all duration-300;
+  }
+
+  /* Achievement Circle */
+  .achievement-circle {
+    @apply shadow-subtle border transition-all duration-300;
+  }
+  
+  .achievement-circle:not(.locked):hover {
+    @apply shadow-glow-purple transform scale-105;
+  }
+}
+
+/* Animation utilities */
+@layer utilities {
+  .animate-pulse-subtle {
+    animation: pulse-subtle 2s infinite;
+  }
+
+  .shadow-glow-subtle {
+    box-shadow: 0 0 8px rgba(124, 58, 237, 0.2);
+  }
+
+  .shadow-glow-purple {
+    box-shadow: 0 0 12px rgba(124, 58, 237, 0.3);
+  }
+
+  .tracking-wide {
+    letter-spacing: 0.025em;
+  }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
 }
 
 /* Import timer animations */

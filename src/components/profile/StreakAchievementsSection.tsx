@@ -19,7 +19,7 @@ const StreakAchievementsSection: React.FC<StreakAchievementsSectionProps> = ({
       <CardContent className="p-4">
         <div className="flex">
           <div className="flex-1 flex items-center justify-center p-3 border-r border-divider">
-            <div className="bg-gradient-to-br from-valor to-valor-60 p-2 rounded-full mr-3 text-white shadow-subtle">
+            <div className="bg-gradient-to-br from-valor to-valor-60 p-2 rounded-full mr-3 text-white shadow-subtle border border-valor-30">
               <Flame className="w-5 h-5" />
             </div>
             <div>
@@ -29,7 +29,7 @@ const StreakAchievementsSection: React.FC<StreakAchievementsSectionProps> = ({
           </div>
           
           <div className="flex-1 flex items-center justify-center p-3">
-            <div className="bg-gradient-to-br from-arcane to-arcane-60 p-2 rounded-full mr-3 text-white shadow-subtle">
+            <div className="bg-gradient-to-br from-arcane to-arcane-60 p-2 rounded-full mr-3 text-white shadow-subtle border border-arcane-30">
               <Award className="w-5 h-5" />
             </div>
             <div>

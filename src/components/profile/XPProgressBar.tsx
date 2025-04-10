@@ -20,13 +20,13 @@ const XPProgressBar: React.FC<XPProgressBarProps> = ({
   return (
     <div className="w-full mb-3">
       <div className="flex justify-between mb-1">
-        <span className="text-sm font-space text-text-secondary">{label}</span>
-        <span className="text-sm font-space font-medium text-text-primary">{current}/{total}</span>
+        <span className="text-sm font-sora text-text-secondary">{label}</span>
+        <span className="text-sm font-space font-medium text-arcane-60">{current}/{total}</span>
       </div>
       
       <div className="h-1.5 bg-divider rounded-full overflow-hidden">
         <div 
-          className={`h-full ${className} rounded-full transition-all duration-500`} 
+          className={`h-full ${className} rounded-full transition-all duration-500 shadow-glow-subtle`} 
           style={{ width: `${percentage}%` }}
         ></div>
       </div>

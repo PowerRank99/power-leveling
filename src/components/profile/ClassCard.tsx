@@ -55,7 +55,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
   const cardIcon = icon || getDefaultIcon();
   
   return (
-    <div className="rounded-xl bg-gradient-to-br from-arcane-15 to-arcane-30 text-text-primary p-4 shadow-subtle border border-arcane-30 mt-4">
+    <div className="class-card p-4 mt-4">
       <div className="flex items-center mb-3">
         <div className="relative">
           <div className="w-12 h-12 bg-midnight-elevated backdrop-blur-sm rounded-lg flex items-center justify-center mr-3 shadow-subtle overflow-hidden border border-arcane-30">
@@ -70,13 +70,13 @@ const ClassCard: React.FC<ClassCardProps> = ({
             )}
           </div>
           {showAvatar && (
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-arcane rounded-full flex items-center justify-center shadow-subtle">
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-arcane rounded-full flex items-center justify-center shadow-glow-purple">
               {cardIcon}
             </div>
           )}
         </div>
         <div>
-          <h3 className="font-orbitron font-bold text-xl text-text-primary">{className}</h3>
+          <h3 className="font-orbitron font-bold text-xl text-text-primary tracking-wide">{className}</h3>
           <p className="text-sm text-text-secondary font-sora">{description}</p>
         </div>
       </div>

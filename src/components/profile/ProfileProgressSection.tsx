@@ -27,7 +27,7 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
     <Card className="mt-3 premium-card hover:premium-card-elevated transition-all duration-300">
       <CardContent className="p-4">
         <div className="mb-1">
-          <h3 className="text-base font-orbitron mb-3 text-text-primary">Progresso Diário</h3>
+          <h3 className="text-base font-orbitron font-bold mb-3 text-text-primary tracking-wide">Progresso Diário</h3>
           
           <XPProgressBar 
             current={dailyXP}
@@ -46,10 +46,10 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
         <div className="flex justify-between text-sm mt-4">
           <div className="flex items-center text-text-tertiary">
             <Clock className="w-4 h-4 mr-1" /> 
-            {lastActivity}
+            <span className="font-sora">{lastActivity}</span>
           </div>
           
-          <div className="text-achievement font-space font-medium">
+          <div className="text-achievement font-space font-medium animate-pulse-subtle">
             {xpGain.replace('XP', 'EXP')}
           </div>
         </div>
