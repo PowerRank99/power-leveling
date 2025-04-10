@@ -1,21 +1,27 @@
 
 import * as React from "react"
-
+import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 const Card = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "bg-midnight-card border border-divider/30 rounded-xl shadow-subtle transition-all duration-300 hover:shadow-elevated",
-      className
-    )}
-    {...props}
-  />
-))
+  React.HTMLAttributes<HTMLDivElement> & { interactive?: boolean }
+>(({ className, interactive = false, ...props }, ref) => {
+  const Component = interactive ? motion.div : "div";
+  
+  return (
+    <Component
+      ref={ref}
+      className={cn(
+        "bg-midnight-card border border-divider/30 rounded-xl shadow-subtle transition-all duration-300",
+        interactive && "hover:shadow-elevated hover:-translate-y-1 hover:border-arcane-30/50",
+        className
+      )}
+      whileHover={interactive ? { y: -4, boxShadow: "0 6px 16px rgba(0, 0, 0, 0.35)" } : undefined}
+      {...props}
+    />
+  )
+})
 Card.displayName = "Card"
 
 const CardHeader = React.forwardRef<
@@ -37,7 +43,7 @@ const CardTitle = React.forwardRef<
   <h3
     ref={ref}
     className={cn(
-      "text-xl orbitron-text font-semibold leading-none text-text-primary",
+      "text-xl orbitron-text font-semibold leading-none text-text-primary tracking-wide",
       className
     )}
     {...props}
@@ -51,7 +57,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-sm font-sora text-text-secondary", className)}
+    className={cn("text-sm font-sora text-text-secondary leading-relaxed", className)}
     {...props}
   />
 ))

@@ -10,17 +10,18 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 hover:-translate-y-1 shadow-subtle hover:shadow-elevated",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90 hover:-translate-y-1 shadow-subtle hover:shadow-elevated active:translate-y-0 active:shadow-subtle",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:-translate-y-1",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:-translate-y-1 active:translate-y-0",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:-translate-y-1",
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground hover:-translate-y-1 active:translate-y-0",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:-translate-y-1",
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:-translate-y-1 active:translate-y-0",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        arcane: "bg-arcane-15 text-arcane border border-arcane-30 hover:bg-arcane-30 hover:-translate-y-1 shadow-glow-subtle hover:shadow-glow-purple",
-        achievement: "bg-achievement-15 text-achievement border border-achievement-30 hover:bg-achievement-30 hover:-translate-y-1 shadow-glow-subtle hover:shadow-glow-gold",
+        arcane: "bg-arcane-15 text-arcane border border-arcane-30 hover:bg-arcane-30 hover:-translate-y-1 shadow-glow-subtle hover:shadow-glow-purple active:translate-y-0 active:shadow-glow-subtle",
+        achievement: "bg-achievement-15 text-achievement border border-achievement-30 hover:bg-achievement-30 hover:-translate-y-1 shadow-glow-subtle hover:shadow-glow-gold active:translate-y-0 active:shadow-glow-subtle",
+        valor: "bg-valor-15 text-valor border border-valor-30 hover:bg-valor-30 hover:-translate-y-1 shadow-glow-subtle hover:shadow-glow-valor active:translate-y-0 active:shadow-glow-subtle",
       },
       size: {
         default: "h-10 px-4 py-2",

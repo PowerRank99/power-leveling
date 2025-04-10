@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { CreateGuildParams, CreateRaidParams, GuildRole } from './types';
@@ -246,42 +247,154 @@ export class GuildService {
   /**
    * Gets guild leaderboard
    * @param guildId Guild ID
+   * @param timeFilter Time period filter ('weekly', 'monthly', 'alltime')
+   * @param metricFilter Metric to rank by ('xp', 'workouts', 'streak')
    * @returns Leaderboard data
    */
-  static async getLeaderboard(guildId: string): Promise<any[]> {
+  static async getLeaderboard(
+    guildId: string, 
+    timeFilter: string = 'weekly',
+    metricFilter: string = 'xp'
+  ): Promise<any[]> {
     try {
+      // Define the date range based on the time filter
+      const now = new Date();
+      let startDate: Date;
+      
+      switch (timeFilter) {
+        case 'weekly':
+          startDate = new Date(now);
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case 'monthly':
+          startDate = new Date(now);
+          startDate.setMonth(now.getMonth() - 1);
+          break;
+        case 'alltime':
+        default:
+          startDate = new Date(0); // Beginning of time
+          break;
+      }
+      
+      // Define the sorting field based on the metric filter
+      let sortField: string;
+      
+      switch (metricFilter) {
+        case 'workouts':
+          sortField = 'profiles(workouts_count)';
+          break;
+        case 'streak':
+          sortField = 'profiles(streak)';
+          break;
+        case 'xp':
+        default:
+          sortField = 'profiles(xp)';
+          break;
+      }
+      
       // Get guild members with their profiles
       const { data, error } = await supabase
         .from('guild_members')
         .select(`
           user_id,
+          role,
           profiles (
             name,
             avatar_url,
             level,
             xp,
-            workouts_count
+            workouts_count,
+            streak
           )
         `)
         .eq('guild_id', guildId)
-        .order('profiles(xp)', { ascending: false });
+        .order(sortField, { ascending: false });
         
       if (error) {
         console.error('Error fetching guild leaderboard:', error);
         throw error;
       }
       
-      return data?.map(member => ({
-        userId: member.user_id,
+      // Format and return the leaderboard data
+      return data?.map((member, index) => ({
+        id: member.user_id,
         name: member.profiles?.name,
-        avatarUrl: member.profiles?.avatar_url,
+        avatar: member.profiles?.avatar_url,
         level: member.profiles?.level || 1,
-        xp: member.profiles?.xp || 0,
-        workoutsCount: member.profiles?.workouts_count || 0
+        points: metricFilter === 'xp' 
+          ? member.profiles?.xp 
+          : metricFilter === 'workouts' 
+            ? member.profiles?.workouts_count 
+            : member.profiles?.streak,
+        position: index + 1,
+        isMaster: member.role === 'guild_master',
+        isModerator: member.role === 'moderator',
+        badge: member.role === 'guild_master' 
+          ? 'Mestre da Guilda' 
+          : member.role === 'moderator' 
+            ? 'Moderador' 
+            : undefined,
+        trend: Math.random() > 0.6 
+          ? Math.random() > 0.5 ? 'up' : 'down' 
+          : 'same' // Mock trend data for now
       })) || [];
     } catch (error) {
       console.error('Failed to fetch guild leaderboard:', error);
       return [];
+    }
+  }
+  
+  /**
+   * Gets guild details including stats
+   * @param guildId Guild ID
+   * @returns Guild details and stats
+   */
+  static async getGuildDetails(guildId: string): Promise<any> {
+    try {
+      // Get guild details
+      const { data: guild, error: guildError } = await supabase
+        .from('guilds')
+        .select('*')
+        .eq('id', guildId)
+        .single();
+        
+      if (guildError) {
+        console.error('Error fetching guild details:', guildError);
+        throw guildError;
+      }
+      
+      // Get member count
+      const { count: memberCount, error: memberError } = await supabase
+        .from('guild_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('guild_id', guildId);
+        
+      if (memberError) {
+        console.error('Error counting guild members:', memberError);
+        throw memberError;
+      }
+      
+      // Get active raids count
+      const { count: activeRaidsCount, error: raidError } = await supabase
+        .from('guild_raids')
+        .select('*', { count: 'exact', head: true })
+        .eq('guild_id', guildId)
+        .gte('end_date', new Date().toISOString());
+        
+      if (raidError) {
+        console.error('Error counting active raids:', raidError);
+        throw raidError;
+      }
+      
+      // Return combined data
+      return {
+        ...guild,
+        memberCount: memberCount || 0,
+        activeRaidsCount: activeRaidsCount || 0
+      };
+    } catch (error) {
+      console.error('Failed to fetch guild details:', error);
+      return null;
     }
   }
 }

@@ -4,10 +4,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/ui/PageHeader';
 import BottomNavBar from '@/components/navigation/BottomNavBar';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { Share2, Shield } from 'lucide-react';
+import { Share2, Shield, Users, Trophy, Calendar, TrendingUp } from 'lucide-react';
 import LeaderboardPodium from '@/components/guilds/LeaderboardPodium';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 
 // Import the components
 import GuildHeader from '@/components/guilds/GuildHeader';
@@ -30,10 +33,39 @@ interface Member {
 
 const GuildLeaderboardPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [timeFilter, setTimeFilter] = useState('weekly');
   const [metricFilter, setMetricFilter] = useState('xp');
   const navigate = useNavigate();
+  
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] }
+    }
+  };
+  
+  // Simulate loading effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, []);
   
   // Mock data for initial UI
   const guildInfo = {
@@ -55,22 +87,24 @@ const GuildLeaderboardPage: React.FC = () => {
   const pixelAvatar5 = "/lovable-uploads/c6066df0-70c1-48cf-b017-126e8f7e850a.png";
   
   const topMembers: Member[] = [
-    { id: "1", name: "Você", avatar: pixelAvatar1, points: 1250, position: 1, isCurrentUser: true, badge: "Mestre da Guilda" },
-    { id: "2", name: "João Silva", avatar: pixelAvatar2, points: 1100, position: 2 },
-    { id: "3", name: "Maria Santos", avatar: pixelAvatar3, points: 950, position: 3 }
+    { id: "1", name: "Você", avatar: pixelAvatar1, points: 1250, position: 1, isCurrentUser: true, badge: "Mestre da Guilda", trend: "up" },
+    { id: "2", name: "João Silva", avatar: pixelAvatar2, points: 1100, position: 2, trend: "down" },
+    { id: "3", name: "Maria Santos", avatar: pixelAvatar3, points: 950, position: 3, trend: "same" }
   ];
   
   const allMembers: Member[] = [
     ...topMembers,
-    { id: "4", name: "Carlos Oliveira", avatar: pixelAvatar4, points: 820, position: 4 },
-    { id: "5", name: "Ana Costa", avatar: pixelAvatar5, points: 790, position: 5 },
-    { id: "6", name: "Pedro Souza", avatar: pixelAvatar4, points: 730, position: 6 },
-    { id: "7", name: "Lúcia Ferreira", avatar: pixelAvatar3, points: 690, position: 7, badge: "Moderadora" },
-    { id: "8", name: "Ricardo Santos", avatar: pixelAvatar2, points: 640, position: 8 },
-    { id: "9", name: "Beatriz Lima", avatar: pixelAvatar5, points: 590, position: 9 }
+    { id: "4", name: "Carlos Oliveira", avatar: pixelAvatar4, points: 820, position: 4, trend: "down" },
+    { id: "5", name: "Ana Costa", avatar: pixelAvatar5, points: 790, position: 5, trend: "up" },
+    { id: "6", name: "Pedro Souza", avatar: pixelAvatar4, points: 730, position: 6, trend: "same" },
+    { id: "7", name: "Lúcia Ferreira", avatar: pixelAvatar3, points: 690, position: 7, badge: "Moderadora", trend: "up" },
+    { id: "8", name: "Ricardo Santos", avatar: pixelAvatar2, points: 640, position: 8, trend: "down" },
+    { id: "9", name: "Beatriz Lima", avatar: pixelAvatar5, points: 590, position: 9, trend: "up" }
   ];
   
   const handleShareRanking = () => {
+    navigator.clipboard.writeText(`Confira a classificação da guilda Guerreiros do Fitness! Junte-se a nós no PowerLeveling!`);
+    
     toast.success('Link copiado!', {
       description: 'Link do ranking copiado para a área de transferência.'
     });
@@ -84,11 +118,25 @@ const GuildLeaderboardPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-midnight-base pb-16">
         <PageHeader title="Classificação da Guilda" />
-        <LoadingSpinner message="Carregando classificação..." />
+        <div className="flex flex-col items-center justify-center h-[70vh]">
+          <LoadingSpinner 
+            message="Carregando classificação..." 
+            subMessage="Buscando dados da guilda e membros" 
+            size="lg"
+          />
+        </div>
         <BottomNavBar />
       </div>
     );
   }
+  
+  // Stat cards data
+  const statCards = [
+    { title: "XP Total", value: guildInfo.totalExp, icon: <Trophy className="text-achievement" /> },
+    { title: "XP Semanal", value: guildInfo.weeklyExp, icon: <TrendingUp className="text-arcane" /> },
+    { title: "Membros Ativos", value: `${guildInfo.activeMemberCount}/${guildInfo.memberCount}`, icon: <Users className="text-text-secondary" /> },
+    { title: "Missões", value: guildInfo.activeQuests, icon: <Calendar className="text-valor" /> },
+  ];
   
   return (
     <div className="min-h-screen bg-midnight-base pb-16">
@@ -100,51 +148,103 @@ const GuildLeaderboardPage: React.FC = () => {
             variant="ghost" 
             size="icon" 
             onClick={handleShareRanking}
-            className="text-text-secondary hover:text-text-primary"
+            className="text-text-secondary hover:text-text-primary transition-colors relative overflow-hidden"
           >
             <Share2 className="h-5 w-5" />
           </Button>
         }
       />
       
-      <div className="space-y-4 p-4">
+      <motion.div 
+        className="space-y-4 p-4"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
         {/* Guild Header Component */}
-        <div className="premium-card p-4 shadow-subtle bg-gradient-to-r from-arcane-15 to-arcane-30 border-arcane-30">
-          <GuildHeader guildInfo={guildInfo} guildId={id || '1'} />
-        </div>
+        <motion.div variants={itemVariants} className="relative">
+          <Card className="bg-gradient-to-r from-arcane-15 to-arcane-30 border-arcane-30 shadow-glow-subtle">
+            <CardContent className="p-4">
+              <GuildHeader guildInfo={guildInfo} guildId={id || '1'} />
+            </CardContent>
+          </Card>
+        </motion.div>
         
-        {/* Guild Stats Component */}
-        <div className="premium-card p-4 shadow-subtle">
-          <GuildStats 
-            weeklyExp={guildInfo.weeklyExp}
-            totalExp={guildInfo.totalExp}
-            activeMemberCount={guildInfo.activeMemberCount}
-            memberCount={guildInfo.memberCount}
-            activeQuests={guildInfo.activeQuests}
-          />
-        </div>
+        {/* Guild Stats Component - Using a grid layout for stat cards */}
+        <motion.div variants={itemVariants}>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {statCards.map((stat, index) => (
+              <Card key={index} interactive className="overflow-hidden">
+                <CardContent className="p-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-midnight-elevated flex items-center justify-center">
+                      {stat.icon}
+                    </div>
+                    <div>
+                      <p className="text-xs text-text-secondary font-sora">{stat.title}</p>
+                      <p className="text-lg font-space font-bold text-text-primary">{stat.value}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </motion.div>
+        
+        {/* Guild Progress Section */}
+        <motion.div variants={itemVariants}>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-sora text-text-secondary">Progresso da Guilda</span>
+                <span className="text-xs font-space text-text-tertiary">Nível 15</span>
+              </div>
+              <Progress value={65} pulsateIndicator className="h-2 mb-1" />
+              <div className="flex justify-between text-xs text-text-tertiary">
+                <span className="font-space">9,750 XP</span>
+                <span className="font-space">15,000 XP</span>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
         
         {/* Leaderboard Filters Component */}
-        <div className="premium-card shadow-subtle overflow-hidden">
-          <LeaderboardFilters 
-            timeFilter={timeFilter}
-            metricFilter={metricFilter}
-            onTimeFilterChange={setTimeFilter}
-            onMetricFilterChange={setMetricFilter}
-          />
-        </div>
+        <motion.div variants={itemVariants}>
+          <Card className="overflow-hidden">
+            <LeaderboardFilters 
+              timeFilter={timeFilter}
+              metricFilter={metricFilter}
+              onTimeFilterChange={setTimeFilter}
+              onMetricFilterChange={setMetricFilter}
+            />
+          </Card>
+        </motion.div>
         
         {/* Podium Component */}
-        <div className="premium-card shadow-subtle overflow-hidden">
-          <LeaderboardPodium members={topMembers} />
-        </div>
+        <motion.div variants={itemVariants}>
+          <Card className="overflow-hidden">
+            <LeaderboardPodium members={topMembers} />
+          </Card>
+        </motion.div>
         
         {/* Members List Component */}
-        <div className="premium-card p-4 shadow-subtle">
-          <h3 className="text-lg font-orbitron font-bold mb-3 text-text-primary">Todos os Membros</h3>
-          <MemberRankingList members={allMembers} />
-        </div>
-      </div>
+        <motion.div variants={itemVariants}>
+          <Card>
+            <MembersList members={allMembers} />
+          </Card>
+        </motion.div>
+        
+        {/* Action Buttons */}
+        <motion.div variants={itemVariants} className="flex justify-center py-2">
+          <Button 
+            variant="arcane" 
+            onClick={handleQuestsClick}
+            className="w-full max-w-sm"
+          >
+            <Trophy className="mr-1" /> Ver Missões da Guilda
+          </Button>
+        </motion.div>
+      </motion.div>
       
       <BottomNavBar />
     </div>

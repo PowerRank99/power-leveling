@@ -26,6 +26,7 @@ const badgeVariants = cva(
         avancado: "border-valor-30 bg-valor-15 text-valor shadow-glow-subtle hover:shadow-glow-valor transition-all duration-300",
         level: "bg-arcane-15 border border-arcane-30 text-text-primary shadow-glow-subtle hover:shadow-glow-purple",
         xp: "bg-gradient-to-r from-achievement-15 to-valor-15 border border-achievement-30 text-achievement shadow-glow-gold transition-all duration-300",
+        trend: "bg-gradient-to-r from-arcane-15 to-arcane-30 border border-arcane-30 text-text-primary shadow-glow-purple transition-all duration-300",
       },
     },
     defaultVariants: {
