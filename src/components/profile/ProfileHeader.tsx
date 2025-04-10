@@ -37,7 +37,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         <div className="relative">
           <Avatar className="h-24 w-24 profile-avatar">
             <AvatarImage src={avatar} alt={name} />
-            <AvatarFallback className="bg-midnight-elevated text-arcane font-oxanium">{name.charAt(0)}</AvatarFallback>
+            <AvatarFallback className="bg-midnight-elevated text-arcane font-orbitron">{name.charAt(0)}</AvatarFallback>
           </Avatar>
           
           {/* Level Badge */}

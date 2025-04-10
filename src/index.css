@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700&family=Sora:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&display=swap');
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Sora:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -168,7 +169,7 @@
   
   /* Name Display */
   .profile-name {
-    @apply font-oxanium font-bold tracking-wider text-text-primary;
+    @apply font-orbitron font-bold tracking-tight text-text-primary;
   }
   
   /* XP Value Display */
@@ -199,8 +200,8 @@
     text-shadow: 0 0 8px rgba(250, 204, 21, 0.4);
   }
 
-  .tracking-wider {
-    letter-spacing: 0.035em;
+  .tracking-wide {
+    letter-spacing: 0.025em;
   }
   
   .tracking-tight {

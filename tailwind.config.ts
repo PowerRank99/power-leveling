@@ -20,7 +20,7 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				oxanium: ['Oxanium', 'sans-serif'],
+				orbitron: ['Orbitron', 'sans-serif'],
 				sora: ['Sora', 'sans-serif'],
 				space: ['Space Grotesk', 'monospace'],
 			},

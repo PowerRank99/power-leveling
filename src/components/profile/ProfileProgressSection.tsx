@@ -27,7 +27,7 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
     <Card className="mt-3 premium-card hover:premium-card-elevated transition-all duration-300">
       <CardContent className="p-4">
         <div className="mb-1">
-          <h3 className="section-header text-base font-oxanium font-bold text-text-primary tracking-wider">
+          <h3 className="section-header text-base font-orbitron font-bold text-text-primary tracking-wide">
             Progresso Diário
           </h3>
           
