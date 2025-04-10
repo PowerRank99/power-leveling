@@ -1,17 +1,15 @@
 
 import React, { useState } from 'react';
-import PageHeader from '@/components/ui/PageHeader';
 import BottomNavBar from '@/components/navigation/BottomNavBar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { SearchIcon, PlusIcon, Shield, Trophy, Compass } from 'lucide-react';
+import { SearchIcon, PlusIcon } from 'lucide-react';
 import GuildCard from '@/components/guilds/GuildCard';
 import { useAuth } from '@/hooks/useAuth';
 import EmptyState from '@/components/ui/EmptyState';
 import { motion } from 'framer-motion';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const GuildsListPage: React.FC = () => {
   const { user } = useAuth();
@@ -103,17 +101,9 @@ const GuildsListPage: React.FC = () => {
     show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] } }
   };
   
-  const categoryPillVariants = {
-    hover: { 
-      y: -2, 
-      boxShadow: "0 0 15px rgba(124, 58, 237, 0.4)",
-      transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] }
-    }
-  };
-  
   return (
     <div className="min-h-screen bg-midnight-base pb-16">
-      <PageHeader title="Guildas" />
+      {/* Removed the PageHeader component */}
       
       {/* Introduction Banner with Enhanced Gradient */}
       <div className="bg-gradient-to-r from-arcane to-valor text-text-primary p-4 border-b border-arcane-30 shadow-glow-subtle">
@@ -122,62 +112,7 @@ const GuildsListPage: React.FC = () => {
           Junte-se a outros atletas, complete missões e ganhe recompensas juntos.
         </p>
         
-        {/* Enhanced Category Pills with hover effects */}
-        <div className="flex gap-3 flex-wrap">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <motion.div 
-                  className="bg-midnight-elevated/30 backdrop-blur-sm rounded-full p-2 px-3 flex items-center text-sm border border-white/10 font-sora transition-all duration-300"
-                  variants={categoryPillVariants}
-                  whileHover="hover"
-                >
-                  <Shield className="h-4 w-4 mr-1.5 text-text-primary" />
-                  <span>Comunidade</span>
-                </motion.div>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="bg-midnight-elevated border border-arcane-30 text-text-primary text-xs">
-                Crie e gerencie guildas
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <motion.div 
-                  className="bg-midnight-elevated/30 backdrop-blur-sm rounded-full p-2 px-3 flex items-center text-sm border border-white/10 font-sora transition-all duration-300"
-                  variants={categoryPillVariants}
-                  whileHover="hover"
-                >
-                  <Compass className="h-4 w-4 mr-1.5 text-text-primary" />
-                  <span>Missões</span>
-                </motion.div>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="bg-midnight-elevated border border-arcane-30 text-text-primary text-xs">
-                Participar de missões coletivas
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <motion.div 
-                  className="bg-midnight-elevated/30 backdrop-blur-sm rounded-full p-2 px-3 flex items-center text-sm border border-white/10 font-sora transition-all duration-300"
-                  variants={categoryPillVariants}
-                  whileHover="hover"
-                >
-                  <Trophy className="h-4 w-4 mr-1.5 text-achievement" />
-                  <span>Conquistas</span>
-                </motion.div>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="bg-midnight-elevated border border-achievement-30 text-text-primary text-xs">
-                Recompensas de guilda
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
+        {/* Removed the category pills section */}
       </div>
       
       <div className="p-4 space-y-4">

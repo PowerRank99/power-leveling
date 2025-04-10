@@ -5,7 +5,6 @@ import FeedHeader from '@/components/social/FeedHeader';
 import FeedTabs from '@/components/social/FeedTabs';
 import PostList, { Post } from '@/components/social/PostList';
 import WelcomeHeader from '@/components/social/WelcomeHeader';
-import FeaturedContentCarousel from '@/components/social/FeaturedContentCarousel';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const staggerContainerVariants = {
@@ -139,10 +138,7 @@ const IndexPage = () => {
               <WelcomeHeader />
             </motion.div>
             
-            {/* Featured Content */}
-            <motion.div variants={itemVariants}>
-              <FeaturedContentCarousel />
-            </motion.div>
+            {/* Featured Content section has been removed */}
           </motion.div>
         )}
       </AnimatePresence>
