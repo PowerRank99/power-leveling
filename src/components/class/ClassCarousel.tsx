@@ -3,8 +3,9 @@ import React, { useState, useEffect } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { ClassInfo } from '@/services/rpg/ClassService';
 import ClassSelectionCard from './ClassSelectionCard';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, SwipeHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ClassCarouselProps {
   classes: ClassInfo[];
@@ -24,6 +25,7 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
+  const [showSwipeHint, setShowSwipeHint] = useState(true);
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
     align: 'center',
@@ -42,13 +44,22 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
       
       setCanScrollPrev(emblaApi.canScrollPrev());
       setCanScrollNext(emblaApi.canScrollNext());
+      
+      // Hide swipe hint after first interaction
+      setShowSwipeHint(false);
     };
     
     emblaApi.on('select', onSelect);
     onSelect();
     
+    // Auto-hide swipe hint after 3 seconds
+    const timer = setTimeout(() => {
+      setShowSwipeHint(false);
+    }, 3000);
+    
     return () => {
       emblaApi.off('select', onSelect);
+      clearTimeout(timer);
     };
   }, [emblaApi, classes, onClassSelect]);
   
@@ -100,13 +111,14 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
         </div>
       </div>
       
+      {/* Navigation buttons */}
       <div className="absolute inset-y-0 left-0 flex items-center">
         <Button
           onClick={scrollPrev}
           disabled={!canScrollPrev}
           size="icon"
           variant="ghost"
-          className="h-10 w-10 rounded-full bg-white/70 shadow-md text-gray-700 hover:bg-white/90 hover:text-black transition-all duration-200"
+          className="h-12 w-12 rounded-full bg-white/70 shadow-md text-gray-700 hover:bg-white/90 hover:text-black transition-all duration-200"
           aria-label="Previous class"
         >
           <ChevronLeft className="h-6 w-6" />
@@ -119,20 +131,37 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
           disabled={!canScrollNext}
           size="icon"
           variant="ghost"
-          className="h-10 w-10 rounded-full bg-white/70 shadow-md text-gray-700 hover:bg-white/90 hover:text-black transition-all duration-200"
+          className="h-12 w-12 rounded-full bg-white/70 shadow-md text-gray-700 hover:bg-white/90 hover:text-black transition-all duration-200"
           aria-label="Next class"
         >
           <ChevronRight className="h-6 w-6" />
         </Button>
       </div>
       
+      {/* Swipe hint animation */}
+      <AnimatePresence>
+        {showSwipeHint && (
+          <motion.div 
+            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/50 text-white px-4 py-2 rounded-full flex items-center gap-2 z-20"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <SwipeHorizontal className="w-5 h-5" />
+            <span className="text-sm font-medium">Deslize para ver mais</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Carousel indicators */}
       <div className="flex justify-center mt-4">
         <div className="flex gap-2">
           {classes.map((classInfo, index) => (
             <button
               key={`dot-${classInfo.class_name}`}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ease-in-out ${
-                index === focusedIndex ? 'bg-fitblue w-6' : 'bg-gray-300'
+              className={`w-3 h-3 rounded-full transition-all duration-300 ease-in-out flex items-center justify-center ${
+                index === focusedIndex ? 'bg-fitblue w-7 shadow-glow-purple' : 'bg-gray-300 hover:bg-gray-400'
               }`}
               onClick={() => {
                 if (emblaApi) emblaApi.scrollTo(index);

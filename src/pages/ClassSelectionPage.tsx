@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/ui/PageHeader';
 import BottomNavBar from '@/components/navigation/BottomNavBar';
@@ -12,14 +12,28 @@ import ClassCarousel from '@/components/class/ClassCarousel';
 import ClassCooldownNotice from '@/components/class/ClassCooldownNotice';
 import ClassInstructionCard from '@/components/class/ClassInstructionCard';
 import ClassSelectButton from '@/components/class/ClassSelectButton';
+import { motion } from 'framer-motion';
+import { Separator } from '@/components/ui/separator';
+import ClassDesktopGrid from '@/components/class/ClassDesktopGrid';
+import { Toaster } from '@/components/ui/toaster';
+import { Trophy } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 const ClassSelectionPage = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { classes, userClass, isOnCooldown, cooldownText, loading, selectClass } = useClass();
   const [selectedClass, setSelectedClass] = useState<string | null>(userClass);
   const [isSelecting, setIsSelecting] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState(0);
+  
+  useEffect(() => {
+    // Set the selected class from context if available
+    if (userClass && !selectedClass) {
+      setSelectedClass(userClass);
+    }
+  }, [userClass]);
   
   const handleSelectClass = async () => {
     if (!user || !selectedClass) return;
@@ -41,13 +55,18 @@ const ClassSelectionPage = () => {
     setIsSelecting(false);
     
     if (success) {
-      toast.success(`Você agora é um ${selectedClass}!`);
+      toast.success(`Você agora é um ${selectedClass}!`, {
+        description: "Os bônus da sua nova classe já estão ativos"
+      });
       navigate('/perfil');
     }
   };
   
-  const handleClassSelect = (className: string) => {
+  const handleClassSelect = (className: string, index?: number) => {
     setSelectedClass(className);
+    if (index !== undefined) {
+      setFocusedIndex(index);
+    }
   };
   
   return (
@@ -55,20 +74,30 @@ const ClassSelectionPage = () => {
       <PageHeader 
         title="Seleção de Classe"
         showBackButton={true}
-        rightContent={null}
+        rightContent={
+          profile?.level ? (
+            <Badge variant="level" className="flex items-center gap-1">
+              <Trophy size={14} className="text-arcane" />
+              <span>Nível {profile.level}</span>
+            </Badge>
+          ) : null
+        }
       />
       
-      <div className="px-4 mb-6">
-        <div className="premium-card p-4 mb-4 shadow-subtle">
-          <ClassInstructionCard />
-        </div>
+      <motion.div 
+        className="px-4 py-2 mb-6"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <ClassInstructionCard />
         
-        <div className="premium-card p-4 mb-4 shadow-subtle">
+        {isOnCooldown && (
           <ClassCooldownNotice 
             isOnCooldown={isOnCooldown} 
             cooldownText={cooldownText} 
           />
-        </div>
+        )}
         
         {loading ? (
           <div className="flex justify-center py-12">
@@ -76,14 +105,30 @@ const ClassSelectionPage = () => {
           </div>
         ) : (
           <>
-            <h3 className="text-lg font-semibold mb-4 text-text-primary font-orbitron">Classes Disponíveis</h3>
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold mb-2 text-text-primary font-orbitron tracking-wide">Classes Disponíveis</h3>
+              <Separator className="bg-divider opacity-30" />
+            </div>
             
-            <div className="premium-card p-4 mb-4 shadow-subtle">
-              <ClassCarousel
+            <div className="premium-card p-4 mb-6 shadow-elevated">
+              {/* Mobile view: Carousel */}
+              <div className="block lg:hidden">
+                <ClassCarousel
+                  classes={classes}
+                  selectedClass={selectedClass}
+                  userClass={userClass}
+                  isOnCooldown={isOnCooldown}
+                  onClassSelect={handleClassSelect}
+                />
+              </div>
+              
+              {/* Desktop view: Grid */}
+              <ClassDesktopGrid
                 classes={classes}
                 selectedClass={selectedClass}
                 userClass={userClass}
                 isOnCooldown={isOnCooldown}
+                focusedIndex={focusedIndex}
                 onClassSelect={handleClassSelect}
               />
             </div>
@@ -97,9 +142,10 @@ const ClassSelectionPage = () => {
             />
           </>
         )}
-      </div>
+      </motion.div>
       
       <BottomNavBar />
+      <Toaster />
     </div>
   );
 };
