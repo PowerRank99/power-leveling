@@ -10,4 +10,5 @@ export interface SetData {
   reps: string;
   completed: boolean;
   previous?: PreviousSetData;
+  set_order?: number; // Added to match the main workoutTypes.ts
 }

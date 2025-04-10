@@ -7,6 +7,7 @@ export type WorkoutExercise = {
     weight: string;
     reps: string;
     completed: boolean;
+    set_order?: number; // Added to match the SetData interface
     previous?: {
       weight: string;
       reps: string;
