@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { ClassInfo } from '@/services/rpg/ClassService';

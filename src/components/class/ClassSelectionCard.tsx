@@ -35,6 +35,9 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
     return avatarMap[className] || '/lovable-uploads/d84a92f5-828a-4ff9-a21b-3233e15d4276.png';
   };
   
+  // Only take the first 2 bonuses to display
+  const displayBonuses = classInfo.bonuses.slice(0, 2);
+  
   return (
     <div 
       className={`h-full rounded-xl overflow-hidden shadow-md transition-all duration-300 transform cursor-pointer
@@ -79,7 +82,7 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
           </p>
           
           <div className="space-y-3 mb-3">
-            {classInfo.bonuses.map((bonus, idx) => (
+            {displayBonuses.map((bonus, idx) => (
               <div 
                 key={idx} 
                 className="bg-white/10 backdrop-blur-sm rounded-lg p-3 shadow-inner hover:bg-white/15 transition-colors"
