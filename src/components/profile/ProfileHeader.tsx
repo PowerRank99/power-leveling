@@ -35,16 +35,16 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const isHighLevel = level >= 10;
   
   return (
-    <div className="relative p-6 rounded-xl shadow-md overflow-hidden card-glass">
+    <div className="relative p-6 rounded-xl shadow-md overflow-hidden card-glass bg-card">
       {/* Refined background with subtle gradients and overlays */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-arcane-muted/20 to-valor-muted/20 opacity-50"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-midnight/50 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-arcane-purple-15 to-valor-crimson-60/10 opacity-50"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-bg-deep/50 to-transparent"></div>
       </div>
       
       {/* Subtle ambient glows */}
       <div className="absolute inset-0 opacity-10 z-0">
-        <div className="absolute w-32 h-32 bg-arcane rounded-full blur-xl -top-10 -left-10"></div>
+        <div className="absolute w-32 h-32 bg-arcane-purple rounded-full blur-xl -top-10 -left-10"></div>
         <div className="absolute w-40 h-40 bg-xp-gold rounded-full blur-xl -bottom-20 -right-10"></div>
       </div>
       
@@ -69,14 +69,14 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       <div className="flex items-center relative z-10">
         <div className="relative">
           <div className={`absolute inset-0 rounded-full ${isHighLevel ? 'opacity-40' : 'opacity-0'}`} 
-               style={{boxShadow: isHighLevel ? '0 0 10px rgba(250, 204, 21, 0.5)' : 'none'}}></div>
-          <Avatar className="h-20 w-20 border-2 border-white/10 shadow-md">
+               style={{boxShadow: isHighLevel ? 'var(--glow-gold)' : 'none'}}></div>
+          <Avatar className="h-20 w-20 border-2 border-arcane-purple-30 shadow-subtle">
             <AvatarImage src={avatar} alt={name} />
             <AvatarFallback className="font-orbitron text-lg bg-arcane-muted">{name.charAt(0)}</AvatarFallback>
           </Avatar>
           
           {/* Refined Level Badge */}
-          <div className="absolute -bottom-1 -right-1 bg-gradient-to-br from-valor-muted/90 to-xp-gold-muted/90 text-ghostwhite/90 text-xs font-ibm-plex font-medium px-1.5 py-0.5 rounded-full flex items-center shadow-md">
+          <div className="absolute -bottom-1 -right-1 bg-gradient-to-br from-valor-crimson-60/90 to-xp-gold-60/90 text-ghost-white-95 text-xs font-ibm-plex font-medium px-1.5 py-0.5 rounded-full flex items-center shadow-md">
             <Award className="w-3 h-3 mr-0.5" /> {level}
           </div>
         </div>
@@ -84,15 +84,15 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         <div className="ml-4 flex-1">
           <div className="flex justify-between items-start">
             <div>
-              <h2 className="text-xl font-orbitron font-bold tracking-wide text-ghostwhite/95">{name}</h2>
-              <p className="text-blue-100/70 text-xs font-sora">@{username}</p>
+              <h2 className="text-xl font-orbitron font-bold tracking-wide text-ghost-white-95">{name}</h2>
+              <p className="text-ghost-white-50 text-xs font-sora">@{username}</p>
             </div>
           </div>
           
           {/* Class Button */}
           <div className="mt-2 mb-4">
             <Button 
-              className="bg-midnight/40 text-ghostwhite/90 rounded-full text-xs flex items-center gap-1 px-3 py-1 h-auto shadow-sm backdrop-blur-sm hover:bg-midnight/60 transition-all border border-arcane/10"
+              className="bg-bg-card-alt/40 text-ghost-white-90 rounded-full text-xs flex items-center gap-1 px-3 py-1 h-auto shadow-subtle backdrop-blur-sm hover:bg-bg-card-elevated/60 transition-premium border border-arcane-purple-30"
             >
               <Trophy className="w-3.5 h-3.5" /> <span className="font-orbitron tracking-wide">{className}</span>
             </Button>
@@ -103,29 +103,29 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <span className="flex items-center">
               <Badge 
                 variant="outline" 
-                className={`bg-midnight-light/20 border-ghostwhite/10 text-ghostwhite/90 mr-2 font-orbitron text-xs ${isHighLevel ? 'opacity-90' : 'opacity-80'}`}
+                className={`bg-card-alt/20 border-arcane-purple-30 text-ghost-white-90 mr-2 font-orbitron text-xs ${isHighLevel ? 'opacity-90' : 'opacity-80'}`}
               >
                 <Shield className="w-3 h-3 mr-1" /> Nível {level}
               </Badge>
               {level % 5 === 0 && (
-                <Badge className="bg-xp-gold-muted/90 text-midnight-dark font-sora text-xs">
+                <Badge className="bg-xp-gold-60/90 text-bg-deep font-sora text-xs">
                   <Sparkles className="w-2.5 h-2.5 mr-1" /> Milestone
                 </Badge>
               )}
             </span>
-            <span className="font-medium tracking-wider text-ghostwhite/90">{currentXP}/{nextLevelXP}</span>
+            <span className="font-medium tracking-wider text-ghost-white-90">{currentXP}/{nextLevelXP}</span>
           </div>
           <Progress 
             value={levelProgress} 
             className="h-1.5 bg-white/10" 
-            indicatorColor="bg-gradient-to-r from-valor-muted/90 to-xp-gold-muted/90"
+            indicatorColor="bg-gradient-to-r from-valor-crimson-60/90 to-xp-gold-60/90"
             showAnimation={levelProgress > 80}
           />
         </div>
       </div>
       
       {/* Stats */}
-      <div className="flex justify-between mt-5 px-4 py-3 bg-midnight/40 dark:bg-midnight/50 rounded-lg backdrop-blur-sm border border-white/5 shadow-sm">
+      <div className="flex justify-between mt-5 px-4 py-3 bg-card-alt/40 rounded-lg backdrop-blur-sm border border-divider shadow-subtle">
         <StatCard 
           icon={<div className="text-base font-ibm-plex font-medium opacity-90">{workoutsCount}</div>}
           value=""

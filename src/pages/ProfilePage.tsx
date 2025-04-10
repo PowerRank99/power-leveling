@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -71,15 +72,15 @@ const ProfilePage = () => {
   };
   
   const getClassIcon = () => {
-    if (!userClass) return <Shield className="w-5 h-5 text-white" />;
+    if (!userClass) return <Shield className="w-5 h-5 text-ghost-white-95" />;
     
     switch (userClass) {
-      case 'Guerreiro': return <Sword className="w-5 h-5 text-white" />;
-      case 'Monge': return <Dumbbell className="w-5 h-5 text-white" />;
-      case 'Ninja': return <Wind className="w-5 h-5 text-white" />;
-      case 'Bruxo': return <Sparkles className="w-5 h-5 text-white" />;
-      case 'Paladino': return <Shield className="w-5 h-5 text-white" />;
-      default: return <Shield className="w-5 h-5 text-white" />;
+      case 'Guerreiro': return <Sword className="w-5 h-5 text-ghost-white-95" />;
+      case 'Monge': return <Dumbbell className="w-5 h-5 text-ghost-white-95" />;
+      case 'Ninja': return <Wind className="w-5 h-5 text-ghost-white-95" />;
+      case 'Bruxo': return <Sparkles className="w-5 h-5 text-ghost-white-95" />;
+      case 'Paladino': return <Shield className="w-5 h-5 text-ghost-white-95" />;
+      default: return <Shield className="w-5 h-5 text-ghost-white-95" />;
     }
   };
   
@@ -125,7 +126,7 @@ const ProfilePage = () => {
   const userName2 = userName1.toLowerCase().replace(/\s/g, '');
   
   return (
-    <div className="pb-20 min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="pb-20 min-h-screen bg-bg-deep">
       <PageHeader 
         title="Perfil" 
         showThemeToggle={true}
@@ -169,6 +170,7 @@ const ProfilePage = () => {
           dailyXPCap={rpgData.dailyXPCap}
           lastActivity={rpgData.lastActivity}
           xpGain={rpgData.xpGain}
+          streak={rpgData.streak}
         />
         
         <StreakAchievementsSection 

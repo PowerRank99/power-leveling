@@ -24,12 +24,12 @@ const XPProgressBar: React.FC<XPProgressBarProps> = ({
   return (
     <div className="w-full mb-3 relative">
       <div className="flex justify-between mb-1 items-center">
-        <span className="text-xs text-gray-400 dark:text-gray-300 font-sora">{label}</span>
+        <span className="text-xs text-ghost-white-50 dark:text-ghost-white-50 font-sora">{label}</span>
         <div className="flex items-center">
           {showSparkle && isHighProgress && (
-            <Sparkles className="w-3 h-3 text-xp-gold opacity-80 mr-1" />
+            <Sparkles className="w-3 h-3 text-xp-gold-60 opacity-80 mr-1" />
           )}
-          <span className="text-sm font-medium font-ibm-plex tracking-wide">
+          <span className="text-sm font-medium font-ibm-plex tracking-wide text-ghost-white-95">
             {current}/{total}
           </span>
         </div>
@@ -39,7 +39,7 @@ const XPProgressBar: React.FC<XPProgressBarProps> = ({
       <div className="relative">
         <Progress 
           value={percentage} 
-          className="h-1.5 dark:bg-midnight-light/20 rounded-full overflow-hidden" 
+          className="h-1.5 dark:bg-bg-card/20 rounded-full overflow-hidden" 
           indicatorColor={className} 
           showAnimation={isHighProgress}
         />
@@ -49,7 +49,7 @@ const XPProgressBar: React.FC<XPProgressBarProps> = ({
           <div 
             className="absolute inset-0 rounded-full opacity-20 pointer-events-none"
             style={{
-              boxShadow: '0 0 4px #FACC15',
+              boxShadow: 'var(--glow-gold)',
               filter: 'blur(1px)',
               animation: 'glow-pulse 2.5s ease-in-out infinite'
             }}
@@ -58,7 +58,7 @@ const XPProgressBar: React.FC<XPProgressBarProps> = ({
       </div>
       
       {showSparkle && percentage >= 75 && (
-        <div className="absolute top-full left-0 mt-1 text-xs text-xp-gold/90 font-ibm-plex flex items-center">
+        <div className="absolute top-full left-0 mt-1 text-xs text-xp-gold-60/90 font-ibm-plex flex items-center">
           <span>{percentage}% complete</span>
           {percentage >= 90 && <Sparkles className="w-2.5 h-2.5 ml-1 opacity-80" />}
         </div>

@@ -2,7 +2,15 @@
 /* Theme variables for PowerLeveling */
 @layer base {
   :root {
-    --background: 240 58% 11%; /* Midnight Void */
+    /* Base background colors - create depth through layering */
+    --bg-deep: 240 67% 5%;             /* Deepest level (app background) */
+    --bg-base: 240 58% 7%;             /* Base level (main content area) */
+    --bg-card: 240 58% 11%;            /* Card backgrounds */
+    --bg-card-alt: 240 52% 15%;        /* Alternate card/element backgrounds for contrast */
+    --bg-card-elevated: 240 52% 16%;   /* Elevated interactive cards */
+    
+    /* Standard color system vars */
+    --background: var(--bg-base);
     --foreground: 214 100% 98%; /* Ghost White */
  
     --muted: 240 25% 16%;
@@ -17,7 +25,7 @@
     --border: 265 30% 20%;
     --input: 265 30% 20%;
  
-    --card: 240 58% 13%;
+    --card: var(--bg-card);
     --card-foreground: 214 100% 98%;
  
     --primary: 265 84% 58%; /* Arcane Purple */
@@ -33,20 +41,41 @@
  
     --radius: 0.5rem;
 
-    /* PowerLeveling Brand Colors - Refined */
+    /* PowerLeveling Brand Colors - Refined with strategic opacity */
     --midnight-void: 240 58% 11%;
     --midnight-deep: 240 65% 8%;
     --arcane-purple: 265 84% 58%;
+    --arcane-purple-90: 265 84% 58% / 0.9;
+    --arcane-purple-60: 265 84% 58% / 0.6;
+    --arcane-purple-30: 265 84% 58% / 0.3;
+    --arcane-purple-15: 265 84% 58% / 0.15;
     --arcane-muted: 265 60% 50%;
     --valor-crimson: 0 85% 60%;
+    --valor-crimson-90: 0 85% 60% / 0.9;
+    --valor-crimson-60: 0 85% 60% / 0.6;
     --valor-muted: 0 65% 55%;
     --xp-gold: 46 94% 53%;
+    --xp-gold-90: 46 94% 53% / 0.9;
+    --xp-gold-60: 46 94% 53% / 0.6;
     --xp-gold-muted: 46 80% 50%;
     --energy-cyan: 188 93% 42%;
     --energy-muted: 188 70% 40%;
     --rest-green: 142 70% 45%;
     --steel-gray: 220 9% 65%;
     --ghost-white: 214 100% 98%;
+    --ghost-white-95: 214 100% 98% / 0.95;
+    --ghost-white-75: 214 100% 98% / 0.75;
+    --ghost-white-50: 214 100% 98% / 0.5;
+    
+    /* Dividers and overlays */
+    --divider: 0 0% 100% / 0.07;
+    --overlay-subtle: 0 0% 0% / 0.3;
+    
+    /* Shadows and effects */
+    --shadow-subtle: 0 4px 10px rgba(0, 0, 0, 0.2);
+    --shadow-elevated: 0 6px 16px rgba(0, 0, 0, 0.35);
+    --glow-purple: 0 0 15px rgba(124, 58, 237, 0.4);
+    --glow-gold: 0 0 15px rgba(250, 204, 21, 0.4);
   }
  
   .light {

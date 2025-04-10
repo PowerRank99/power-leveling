@@ -80,7 +80,7 @@
   
   /* Refined card glass effect */
   .card-glass {
-    @apply backdrop-blur-md bg-midnight-void/60 dark:bg-black/20 border border-white/5 dark:border-white/5 shadow-lg;
+    @apply backdrop-blur-md bg-card/60 dark:bg-black/20 border border-white/5 dark:border-white/5 shadow-md;
   }
 
   /* Refined card with subtle glow */
@@ -105,16 +105,77 @@
 
   /* Refined RPG card */
   .rpg-card {
-    @apply bg-midnight-light/40 backdrop-blur-md border border-arcane/10 rounded-lg shadow-md overflow-hidden;
+    @apply bg-card-alt/40 backdrop-blur-md border border-arcane-purple-30 rounded-lg shadow-md overflow-hidden;
   }
 
   /* Refined RPG stats */
   .rpg-stats {
-    @apply font-space-grotesk font-medium text-ghostwhite;
+    @apply font-space-grotesk font-medium text-ghost-white-95;
   }
 
   /* Refined progress glow */
   .progress-glow {
     filter: drop-shadow(0 0 3px currentColor);
+  }
+
+  /* Strategic shadows and effects */
+  .shadow-subtle {
+    box-shadow: var(--shadow-subtle);
+  }
+  
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+  
+  .glow-purple {
+    box-shadow: var(--glow-purple);
+  }
+  
+  .glow-gold {
+    box-shadow: var(--glow-gold);
+  }
+  
+  /* Strategic text colors */
+  .text-primary-color {
+    color: hsl(var(--ghost-white-95));
+  }
+  
+  .text-secondary-color {
+    color: hsl(var(--ghost-white-75));
+  }
+  
+  .text-tertiary-color {
+    color: hsl(var(--ghost-white-50));
+  }
+  
+  .text-accent-color {
+    color: hsl(var(--arcane-purple-90));
+  }
+  
+  /* Premium transitions */
+  .transition-premium {
+    @apply transition-all duration-200 ease-out;
+  }
+  
+  /* Card layering system */
+  .bg-base {
+    background-color: hsl(var(--bg-base));
+  }
+  
+  .bg-card {
+    background-color: hsl(var(--bg-card));
+  }
+  
+  .bg-card-alt {
+    background-color: hsl(var(--bg-card-alt));
+  }
+  
+  .bg-card-elevated {
+    background-color: hsl(var(--bg-card-elevated));
+  }
+  
+  /* Refined dividers */
+  .border-divider {
+    border-color: hsl(var(--divider));
   }
 }
