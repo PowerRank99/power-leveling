@@ -90,7 +90,7 @@ const QuestCard: React.FC<QuestCardProps> = ({ quest, onClick }) => {
         <Progress 
           value={progressPercentage} 
           className="h-2.5 bg-midnight-card" 
-          indicatorClassName={getProgressColor()}
+          indicatorColor={getProgressColor()}
         />
       </div>
       
