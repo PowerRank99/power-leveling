@@ -49,7 +49,7 @@ const ClassCooldownNotice: React.FC<ClassCooldownNoticeProps> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       variants={cardVariants}
-      animate="pulse"
+      whileInView="pulse"
     >
       <Card className="mb-4 overflow-hidden border border-valor/40 bg-gradient-to-r from-valor/10 to-valor/5 backdrop-blur-sm">
         <CardContent className="p-4">
