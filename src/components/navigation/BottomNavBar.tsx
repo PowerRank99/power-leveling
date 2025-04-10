@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { HomeIcon, TrophyIcon, DumbbellIcon, UserIcon, UsersIcon } from '@/components/icons/NavIcons';
+import { HomeIcon, RankingIcon, WorkoutIcon, ProfileIcon } from '@/components/icons/NavIcons';
+import { Users } from 'lucide-react';
 
 const BottomNavBar: React.FC = () => {
   const location = useLocation();
@@ -25,7 +26,7 @@ const BottomNavBar: React.FC = () => {
           }`}
         >
           <div className={`relative ${isActive('/') ? 'nav-active' : ''}`}>
-            <HomeIcon className="w-6 h-6" />
+            <HomeIcon className="w-6 h-6" active={isActive('/')} />
             {isActive('/') && <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-arcane"></div>}
           </div>
           <span className="text-[10px] mt-1 font-display tracking-wide">Feed</span>
@@ -40,7 +41,7 @@ const BottomNavBar: React.FC = () => {
           }`}
         >
           <div className={`relative ${isActive('/treino') ? 'nav-active' : ''}`}>
-            <DumbbellIcon className="w-6 h-6" />
+            <WorkoutIcon className="w-6 h-6" active={isActive('/treino')} />
             {isActive('/treino') && <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-arcane"></div>}
           </div>
           <span className="text-[10px] mt-1 font-display tracking-wide">Treino</span>
@@ -55,7 +56,7 @@ const BottomNavBar: React.FC = () => {
           }`}
         >
           <div className={`relative ${isActive('/guilds') ? 'nav-active' : ''}`}>
-            <UsersIcon className="w-6 h-6" />
+            <Users className={`w-6 h-6 ${isActive('/guilds') ? "fill-arcane stroke-arcane" : "stroke-gray-500"}`} />
             {isActive('/guilds') && <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-arcane"></div>}
           </div>
           <span className="text-[10px] mt-1 font-display tracking-wide">Guildas</span>
@@ -70,7 +71,7 @@ const BottomNavBar: React.FC = () => {
           }`}
         >
           <div className={`relative ${isActive('/conquistas') ? 'nav-active' : ''}`}>
-            <TrophyIcon className="w-6 h-6" />
+            <RankingIcon className="w-6 h-6" active={isActive('/conquistas')} />
             {isActive('/conquistas') && <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-arcane"></div>}
           </div>
           <span className="text-[10px] mt-1 font-display tracking-wide">Conquistas</span>
@@ -85,7 +86,7 @@ const BottomNavBar: React.FC = () => {
           }`}
         >
           <div className={`relative ${isActive('/perfil') ? 'nav-active' : ''}`}>
-            <UserIcon className="w-6 h-6" />
+            <ProfileIcon className="w-6 h-6" active={isActive('/perfil')} />
             {isActive('/perfil') && <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-arcane"></div>}
           </div>
           <span className="text-[10px] mt-1 font-display tracking-wide">Perfil</span>
