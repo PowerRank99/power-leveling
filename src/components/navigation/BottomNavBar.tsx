@@ -11,40 +11,57 @@ const BottomNavBar = () => {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-midnight-card border-t border-divider px-4 py-2 flex justify-around shadow-elevated backdrop-blur-lg z-10">
-      <Link to="/" className="flex flex-col items-center">
-        <Home 
-          className={path === '/' ? 'fill-arcane stroke-arcane' : 'text-text-tertiary'} 
-          size={24} 
-        />
-        <span className={`text-xs mt-1 font-sora ${path === '/' ? 'text-arcane' : 'text-text-tertiary'}`}>Início</span>
-      </Link>
+      <NavItem 
+        to="/" 
+        icon={<Home size={26} className={path === '/' ? 'fill-arcane stroke-arcane' : 'text-text-tertiary'} />}
+        label="Início"
+        isActive={path === '/'}
+      />
       
-      <Link to="/treino" className="flex flex-col items-center">
-        <Dumbbell 
-          className={path.includes('/treino') ? 'fill-arcane stroke-arcane' : 'text-text-tertiary'} 
-          size={24} 
-        />
-        <span className={`text-xs mt-1 font-sora ${path.includes('/treino') ? 'text-arcane' : 'text-text-tertiary'}`}>Treinos</span>
-      </Link>
+      <NavItem 
+        to="/treino" 
+        icon={<Dumbbell size={26} className={path.includes('/treino') ? 'fill-arcane stroke-arcane' : 'text-text-tertiary'} />}
+        label="Treinos"
+        isActive={path.includes('/treino')}
+      />
       
-      <Link to="/guilds" className="flex flex-col items-center">
-        <Trophy 
-          className={path.includes('/guilds') ? 'fill-arcane stroke-arcane' : 'text-text-tertiary'} 
-          size={24} 
-        />
-        <span className={`text-xs mt-1 font-sora ${path.includes('/guilds') ? 'text-arcane' : 'text-text-tertiary'}`}>Guildas</span>
-      </Link>
+      <NavItem 
+        to="/guilds" 
+        icon={<Trophy size={26} className={path.includes('/guilds') ? 'fill-arcane stroke-arcane' : 'text-text-tertiary'} />}
+        label="Guildas"
+        isActive={path.includes('/guilds')}
+      />
       
-      <Link to={user ? "/perfil" : "/auth"} className="flex flex-col items-center">
-        <UserCircle2 
-          className={path.includes('/perfil') || path.includes('/auth') ? 'fill-arcane stroke-arcane' : 'text-text-tertiary'} 
-          size={24} 
-        />
-        <span className={`text-xs mt-1 font-sora ${path.includes('/perfil') || path.includes('/auth') ? 'text-arcane' : 'text-text-tertiary'}`}>
-          {user ? 'Perfil' : 'Entrar'}
-        </span>
-      </Link>
+      <NavItem 
+        to={user ? "/perfil" : "/auth"} 
+        icon={<UserCircle2 size={26} className={path.includes('/perfil') || path.includes('/auth') ? 'fill-arcane stroke-arcane' : 'text-text-tertiary'} />}
+        label={user ? 'Perfil' : 'Entrar'}
+        isActive={path.includes('/perfil') || path.includes('/auth')}
+      />
     </div>
+  );
+};
+
+interface NavItemProps {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+  isActive: boolean;
+}
+
+const NavItem: React.FC<NavItemProps> = ({ to, icon, label, isActive }) => {
+  return (
+    <Link to={to} className="flex flex-col items-center relative w-1/4">
+      {isActive && (
+        <div className="absolute -top-3 w-10 h-1 bg-arcane rounded-full animate-fade-in" />
+      )}
+      <div className={`${isActive ? 'transform scale-110' : ''} transition-transform`}>
+        {icon}
+      </div>
+      <span className={`text-xs mt-1 font-sora ${isActive ? 'text-arcane font-medium' : 'text-text-tertiary'}`}>
+        {label}
+      </span>
+    </Link>
   );
 };
 
