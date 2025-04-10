@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { Progress } from '@/components/ui/progress';
+import { motion } from 'framer-motion';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Info } from 'lucide-react';
 
 interface XPProgressBarProps {
   current: number;
@@ -12,54 +13,54 @@ interface XPProgressBarProps {
   nextLevel?: number;
 }
 
-const XPProgressBar: React.FC<XPProgressBarProps> = ({ 
-  current, 
-  total, 
+const XPProgressBar: React.FC<XPProgressBarProps> = ({
+  current,
+  total,
   label,
-  className = "bg-gradient-to-r from-arcane-60 to-valor-60",
+  className = '',
   showXpRemaining = false,
   nextLevel
 }) => {
-  const percentage = Math.min(Math.round((current / total) * 100), 100);
-  const xpRemaining = total - current;
+  // Calculate percentage (cap at 100%)
+  const percentage = Math.min((current / total) * 100, 100);
+  
+  // Format numbers for display
+  const formatNumber = (num: number) => {
+    return num >= 1000 ? `${(num / 1000).toFixed(1)}k` : num;
+  };
   
   return (
-    <div className="w-full mb-2">
-      <div className="flex justify-between mb-1">
-        <div className="flex items-center gap-2">
-          {showXpRemaining && nextLevel && (
-            <span className="text-sm font-space px-2 py-0.5 bg-arcane-15 text-arcane rounded-full border border-arcane-30 shadow-glow-subtle">
-              Nível {nextLevel - 1}
-            </span>
-          )}
-          <span className="text-sm font-sora text-text-secondary">{label}</span>
-        </div>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="text-sm font-space font-medium text-arcane-60">{current}/{total}</span>
-            </TooltipTrigger>
-            {showXpRemaining && nextLevel && (
-              <TooltipContent side="top">
-                <p className="text-xs font-sora">{xpRemaining} XP para o Nível {nextLevel}</p>
+    <div className={`w-full ${className}`}>
+      <div className="flex justify-between items-center mb-1">
+        <span className="text-xs font-sora text-text-secondary">{label}</span>
+        
+        {showXpRemaining && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center">
+                  <span className="text-xs font-space text-text-tertiary">
+                    {total - current > 0 ? `${formatNumber(total - current)} XP para o ${nextLevel}` : 'Nível máximo'}
+                  </span>
+                  <Info className="h-3 w-3 ml-1 text-text-tertiary" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="font-sora text-xs">
+                <p>{current} / {total} XP</p>
               </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       </div>
       
-      <div className="h-1.5 bg-divider rounded-full overflow-hidden relative">
-        <div 
-          className={`h-full ${className} rounded-full transition-all duration-500 progress-bar-fill`} 
-          style={{ width: `${percentage}%`, background: 'linear-gradient(90deg, rgba(124, 58, 237, 0.6), rgba(239, 68, 68, 0.6))' }}
-        ></div>
+      <div className="w-full h-2 bg-midnight-elevated rounded-full overflow-hidden">
+        <motion.div 
+          className="h-full rounded-full bg-gradient-to-r from-arcane to-valor"
+          initial={{ width: 0 }}
+          animate={{ width: `${percentage}%` }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        />
       </div>
-
-      {showXpRemaining && nextLevel && (
-        <div className="mt-1 text-xs text-text-tertiary font-sora text-right">
-          {xpRemaining} XP para o Nível {nextLevel}
-        </div>
-      )}
     </div>
   );
 };

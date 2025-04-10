@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Clock, Trophy, Info, Flame } from 'lucide-react';
+import { Clock, Info } from 'lucide-react';
 import XPProgressBar from '@/components/profile/XPProgressBar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -20,10 +20,6 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
   xpGain,
   streak = 0
 }) => {
-  // Calculate streak bonus (will be displayed if streak is 2 or more days)
-  const hasStreakBonus = streak >= 2;
-  const streakBonusPercent = Math.min(streak * 5, 35); // 5% per day up to 35%
-  
   // Define milestone ticks for the XP progress
   const milestones = [
     { value: 100, label: 'Bronze', percent: (100 / dailyXPCap) * 100 },
@@ -115,35 +111,6 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
                   Ouro
                 </span>
               )}
-            </div>
-          )}
-          
-          {hasStreakBonus && (
-            <div className="mt-2 mb-2 text-xs flex justify-between items-center bg-valor-15 rounded-lg p-2 border border-valor-30">
-              <div className="flex items-center">
-                <div className="mr-2 p-1 rounded-full shadow-glow-purple text-white" style={{ 
-                  background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(250, 204, 21, 0.85))'
-                }}>
-                  <Flame className="w-3 h-3" /> 
-                </div>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="text-text-secondary font-sora">
-                        {streak < 7 ? (
-                          <>Bônus de Streak <span className="font-space">({streak} dias)</span></>
-                        ) : (
-                          <span className="font-medium text-valor">🔥 Streak Lendário <span className="font-space">({streak} dias)</span></span>
-                        )}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      <p className="text-xs">+5% EXP extra por dia consecutivo</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <span className="text-valor font-space font-medium">+{streakBonusPercent}% EXP</span>
             </div>
           )}
         </div>

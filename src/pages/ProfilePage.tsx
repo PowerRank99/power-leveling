@@ -6,7 +6,6 @@ import PageHeader from '@/components/ui/PageHeader';
 import BottomNavBar from '@/components/navigation/BottomNavBar';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import ProfileProgressSection from '@/components/profile/ProfileProgressSection';
-import StreakAchievementsSection from '@/components/profile/StreakAchievementsSection';
 import ClassSection from '@/components/profile/ClassSection';
 import RecentAchievementsList from '@/components/profile/RecentAchievementsList';
 import ProfileActions from '@/components/profile/ProfileActions';
@@ -79,12 +78,6 @@ const ProfilePage = () => {
                     lastActivity={profileData.lastActivity}
                     xpGain={profileData.xpGain}
                     streak={profileData.streak}
-                  />
-                  
-                  <StreakAchievementsSection 
-                    streak={profileData.streak}
-                    achievementsUnlocked={profileData.achievements.unlocked}
-                    achievementsTotal={profileData.achievements.total}
                   />
                   
                   <ClassSection 

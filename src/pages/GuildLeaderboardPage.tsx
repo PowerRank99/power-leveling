@@ -1,23 +1,19 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/ui/PageHeader';
 import BottomNavBar from '@/components/navigation/BottomNavBar';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { Share2, Shield, Users, Trophy, Calendar, TrendingUp } from 'lucide-react';
-import LeaderboardPodium from '@/components/guilds/LeaderboardPodium';
+import { Share2, Shield, Users, Trophy, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 
 // Import the components
 import GuildHeader from '@/components/guilds/GuildHeader';
-import GuildStats from '@/components/guilds/GuildStats';
 import LeaderboardFilters from '@/components/guilds/LeaderboardFilters';
 import MembersList from '@/components/guilds/MembersList';
-import MemberRankingList from '@/components/guilds/MemberRankingList';
 
 // Define a consistent Member interface to avoid type issues
 interface Member {
@@ -86,14 +82,10 @@ const GuildLeaderboardPage: React.FC = () => {
   const pixelAvatar4 = "/lovable-uploads/38b244e2-15ad-44b7-8d2d-48eb9e4227a8.png";
   const pixelAvatar5 = "/lovable-uploads/c6066df0-70c1-48cf-b017-126e8f7e850a.png";
   
-  const topMembers: Member[] = [
+  const allMembers: Member[] = [
     { id: "1", name: "Você", avatar: pixelAvatar1, points: 1250, position: 1, isCurrentUser: true, badge: "Mestre da Guilda", trend: "up" },
     { id: "2", name: "João Silva", avatar: pixelAvatar2, points: 1100, position: 2, trend: "down" },
-    { id: "3", name: "Maria Santos", avatar: pixelAvatar3, points: 950, position: 3, trend: "same" }
-  ];
-  
-  const allMembers: Member[] = [
-    ...topMembers,
+    { id: "3", name: "Maria Santos", avatar: pixelAvatar3, points: 950, position: 3, trend: "same" },
     { id: "4", name: "Carlos Oliveira", avatar: pixelAvatar4, points: 820, position: 4, trend: "down" },
     { id: "5", name: "Ana Costa", avatar: pixelAvatar5, points: 790, position: 5, trend: "up" },
     { id: "6", name: "Pedro Souza", avatar: pixelAvatar4, points: 730, position: 6, trend: "same" },
@@ -130,10 +122,8 @@ const GuildLeaderboardPage: React.FC = () => {
     );
   }
   
-  // Stat cards data
+  // Stat cards data for the remaining Membros Ativos and Missões cards
   const statCards = [
-    { title: "XP Total", value: guildInfo.totalExp, icon: <Trophy className="text-achievement" /> },
-    { title: "XP Semanal", value: guildInfo.weeklyExp, icon: <TrendingUp className="text-arcane" /> },
     { title: "Membros Ativos", value: `${guildInfo.activeMemberCount}/${guildInfo.memberCount}`, icon: <Users className="text-text-secondary" /> },
     { title: "Missões", value: guildInfo.activeQuests, icon: <Calendar className="text-valor" /> },
   ];
@@ -170,9 +160,9 @@ const GuildLeaderboardPage: React.FC = () => {
           </Card>
         </motion.div>
         
-        {/* Guild Stats Component - Using a grid layout for stat cards */}
+        {/* Guild Stats Component - Using a grid layout for stat cards (only keeping the two required ones) */}
         <motion.div variants={itemVariants}>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             {statCards.map((stat, index) => (
               <Card key={index} interactive className="overflow-hidden">
                 <CardContent className="p-3">
@@ -220,14 +210,7 @@ const GuildLeaderboardPage: React.FC = () => {
           </Card>
         </motion.div>
         
-        {/* Podium Component */}
-        <motion.div variants={itemVariants}>
-          <Card className="overflow-hidden">
-            <LeaderboardPodium members={topMembers} />
-          </Card>
-        </motion.div>
-        
-        {/* Members List Component */}
+        {/* Members List Component (without the podium) */}
         <motion.div variants={itemVariants}>
           <Card>
             <MembersList members={allMembers} />

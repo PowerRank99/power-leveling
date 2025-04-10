@@ -1,8 +1,7 @@
 
 import React from 'react';
-import { Award, Trophy, Info, Calendar } from 'lucide-react';
+import { Award, Trophy, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import StatCard from '@/components/profile/StatCard';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import XPProgressBar from '@/components/profile/XPProgressBar';
@@ -102,21 +101,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <div>
-                <StatCard 
-                  icon={
-                    <div className={`text-lg font-bold font-space ${isTopRanking ? 'text-achievement shadow-glow-gold' : 'text-arcane-60'}`}>
-                      #{ranking}
-                    </div>
-                  }
-                  value=""
-                  label={
-                    <div className="flex items-center">
-                      Ranking
-                      <Info className="w-3 h-3 ml-1 text-text-tertiary" />
-                    </div>
-                  }
-                  light
-                />
+                <div className="flex flex-col items-center">
+                  <span className="text-xs font-sora text-text-tertiary mb-1">Ranking</span>
+                  <div className={`text-lg font-bold font-space ${isTopRanking ? 'text-achievement shadow-glow-gold' : 'text-arcane-60'}`}>
+                    #{ranking}
+                  </div>
+                  <span className="text-xs text-text-tertiary mt-1 font-sora">Ranking semanal</span>
+                </div>
               </div>
             </TooltipTrigger>
             <TooltipContent side="bottom">

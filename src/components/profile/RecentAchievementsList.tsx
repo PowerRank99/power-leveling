@@ -63,7 +63,7 @@ const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achieve
       <Card className="mt-3 premium-card hover:premium-card-elevated transition-all duration-300">
         <CardHeader className="px-4 py-3 flex flex-row justify-between items-center bg-midnight-card bg-opacity-50 backdrop-blur-sm border-b border-divider/30">
           <h3 className="section-header text-lg orbitron-text font-bold text-text-primary">
-            Conquistas Recentes
+            Conquistas
           </h3>
           <Link to="/conquistas" className="text-arcane flex items-center text-sm font-sora hover:text-arcane-60 transition-colors">
             Ver Todas as Conquistas 🏅 <ChevronRight className="w-4 h-4 ml-1" />
