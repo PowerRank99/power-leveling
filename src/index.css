@@ -152,6 +152,47 @@
     filter: drop-shadow(0 0 6px currentColor);
   }
   
+  /* Background utilities for different opacity levels */
+  .bg-midnight-void {
+    background-color: hsl(var(--midnight-void));
+  }
+  
+  .bg-midnight-void\/10 {
+    background-color: hsla(var(--midnight-void), 0.1);
+  }
+  
+  .bg-midnight-void\/20 {
+    background-color: hsla(var(--midnight-void), 0.2);
+  }
+  
+  .bg-midnight-void\/30 {
+    background-color: hsla(var(--midnight-void), 0.3);
+  }
+  
+  .bg-midnight-void\/40 {
+    background-color: hsla(var(--midnight-void), 0.4);
+  }
+  
+  .bg-midnight-void\/50 {
+    background-color: hsla(var(--midnight-void), 0.5);
+  }
+  
+  .bg-midnight-void\/60 {
+    background-color: hsla(var(--midnight-void), 0.6);
+  }
+  
+  .bg-midnight-void\/70 {
+    background-color: hsla(var(--midnight-void), 0.7);
+  }
+  
+  .bg-midnight-void\/80 {
+    background-color: hsla(var(--midnight-void), 0.8);
+  }
+  
+  .bg-midnight-void\/90 {
+    background-color: hsla(var(--midnight-void), 0.9);
+  }
+  
   /* Refined card glass effect */
   .card-glass {
     @apply backdrop-blur-md bg-midnight-void/60 dark:bg-black/20 border border-white/5 dark:border-white/5 shadow-lg;
