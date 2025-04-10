@@ -45,7 +45,7 @@ const StatCard: React.FC<StatCardProps> = ({
       </div>
       
       {value && (
-        <span className={`text-xl font-space-grotesk font-bold tracking-wider ${light ? "text-ghostwhite" : "text-gray-800 dark:text-ghostwhite"} ${animateValue ? getColorClass() : ''}`}>
+        <span className={`text-xl font-ibm-plex font-bold tracking-wider ${light ? "text-ghostwhite" : "text-gray-800 dark:text-ghostwhite"} ${animateValue ? getColorClass() : ''}`}>
           {value}
         </span>
       )}

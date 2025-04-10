@@ -21,7 +21,7 @@ const AchievementStats: React.FC<AchievementStatsProps> = ({
           <Trophy className="text-fitblue-500 w-5 h-5 mr-2" />
           <h2 className="text-lg font-bold">Progresso das Conquistas</h2>
         </div>
-        <div className="text-lg font-medium">
+        <div className="text-lg font-medium font-ibm-plex">
           <span className="text-fitgreen-600">{unlockedCount}</span>
           <span className="text-gray-400">/{totalCount}</span>
         </div>
@@ -34,8 +34,8 @@ const AchievementStats: React.FC<AchievementStatsProps> = ({
       />
       
       <div className="flex justify-between mt-1 text-sm text-gray-500">
-        <span>{percentage}% completo</span>
-        <span>{totalCount - unlockedCount} restantes</span>
+        <span className="font-ibm-plex">{percentage}% completo</span>
+        <span className="font-ibm-plex">{totalCount - unlockedCount} restantes</span>
       </div>
     </div>
   );

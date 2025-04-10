@@ -17,6 +17,9 @@ const WorkoutProgressBar: React.FC<WorkoutProgressBarProps> = ({
   
   return (
     <div className="bg-white">
+      <div className="text-xs font-ibm-plex text-right pr-2 text-gray-500">
+        {currentExerciseIndex + 1}/{totalExercises}
+      </div>
       <Progress 
         value={progressPercentage} 
         className="h-1 rounded-none bg-gray-200"

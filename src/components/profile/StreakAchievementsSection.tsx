@@ -28,7 +28,7 @@ const StreakAchievementsSection: React.FC<StreakAchievementsSectionProps> = ({
             </div>
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400 font-sora">Streak</p>
-              <p className="font-bold text-lg font-space-grotesk flex items-center">
+              <p className="font-bold text-lg font-ibm-plex flex items-center">
                 {streak} 
                 <span className="font-sora ml-1 text-sm">dias</span>
                 {isHighStreak && <Sparkles className="w-4 h-4 ml-1 text-xpgold" />}
@@ -42,7 +42,7 @@ const StreakAchievementsSection: React.FC<StreakAchievementsSectionProps> = ({
             </div>
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400 font-sora">Conquistas</p>
-              <p className="font-bold text-lg font-space-grotesk flex items-center">
+              <p className="font-bold text-lg font-ibm-plex flex items-center">
                 {achievementsUnlocked}
                 <span className="font-sora text-sm">/{achievementsTotal}</span>
                 {hasUnlockedManyAchievements && <Sparkles className="w-4 h-4 ml-1 text-xpgold" />}

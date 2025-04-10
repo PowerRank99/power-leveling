@@ -49,7 +49,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           </Avatar>
           
           {/* Level Badge */}
-          <div className="absolute -bottom-2 -right-2 bg-gradient-valor-xpgold text-ghostwhite text-xs font-space-grotesk font-bold px-2 py-1 rounded-full flex items-center shadow-lg animate-glow-pulse">
+          <div className="absolute -bottom-2 -right-2 bg-gradient-valor-xpgold text-ghostwhite text-xs font-ibm-plex font-bold px-2 py-1 rounded-full flex items-center shadow-lg animate-glow-pulse">
             <Award className="w-3 h-3 mr-1" /> {level}
           </div>
         </div>
@@ -72,7 +72,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           </div>
           
           {/* Level Progress */}
-          <div className="mb-1 flex justify-between text-xs font-space-grotesk">
+          <div className="mb-1 flex justify-between text-xs font-ibm-plex">
             <span className="flex items-center">
               <Badge variant="outline" className="bg-midnight-light/40 border-ghostwhite/20 text-ghostwhite mr-2 font-orbitron">
                 Nível {level}
@@ -97,7 +97,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       {/* Stats */}
       <div className="flex justify-between mt-6 px-4 py-3 bg-white/5 dark:bg-black/20 rounded-lg backdrop-blur-md card-glass border border-white/10">
         <StatCard 
-          icon={<div className="text-lg font-space-grotesk font-bold">{workoutsCount}</div>}
+          icon={<div className="text-lg font-ibm-plex font-bold">{workoutsCount}</div>}
           value=""
           label="Treinos"
           light
@@ -108,7 +108,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         <div className="h-10 w-px bg-white/20 my-auto"></div>
         
         <StatCard 
-          icon={<div className="text-lg font-space-grotesk font-bold">#{ranking}</div>}
+          icon={<div className="text-lg font-ibm-plex font-bold">#{ranking}</div>}
           value=""
           label="Ranking"
           light

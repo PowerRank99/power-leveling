@@ -28,7 +28,7 @@ const XPProgressBar: React.FC<XPProgressBarProps> = ({
           {showSparkle && percentage >= 80 && (
             <Sparkles className="w-4 h-4 text-xpgold animate-pulse mr-1" />
           )}
-          <span className="text-sm font-medium font-space-grotesk tracking-wider">
+          <span className="text-sm font-medium font-ibm-plex tracking-wider">
             {current}/{total}
           </span>
         </div>
@@ -42,7 +42,7 @@ const XPProgressBar: React.FC<XPProgressBarProps> = ({
       />
       
       {showSparkle && percentage >= 50 && (
-        <div className="absolute top-full left-0 mt-1 text-xs text-xpgold font-space-grotesk">
+        <div className="absolute top-full left-0 mt-1 text-xs text-xpgold font-ibm-plex">
           {percentage}% complete
         </div>
       )}

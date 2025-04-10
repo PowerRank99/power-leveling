@@ -8,7 +8,7 @@ interface PreviousValuesProps {
 
 const PreviousValues: React.FC<PreviousValuesProps> = ({ previous }) => {
   return (
-    <div className="col-span-3 text-gray-500 text-sm">
+    <div className="col-span-3 text-gray-500 text-sm font-ibm-plex">
       {previous ? `${previous.weight}kg × ${previous.reps}` : '-'}
     </div>
   );

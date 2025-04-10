@@ -44,7 +44,7 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
           {hasStreakBonus && (
             <div className="mt-2 mb-2 text-xs flex justify-between items-center">
               <span className="text-gray-400 dark:text-gray-300 font-sora">Bônus de Sequência ({streak} dias)</span>
-              <Badge className="bg-xpgold text-midnight-dark font-space-grotesk shadow-glow-xpgold">
+              <Badge className="bg-xpgold text-midnight-dark font-ibm-plex shadow-glow-xpgold">
                 +{streakBonusPercent}% EXP
               </Badge>
             </div>
@@ -57,7 +57,7 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
             {lastActivity}
           </div>
           
-          <div className="text-xpgold font-medium font-space-grotesk flex items-center animate-pulse">
+          <div className="text-xpgold font-medium font-ibm-plex flex items-center animate-pulse">
             <Sparkles className="w-4 h-4 mr-1" />
             {xpGain.replace('XP', 'EXP')}
           </div>
