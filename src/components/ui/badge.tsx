@@ -16,10 +16,11 @@ const badgeVariants = cva(
         destructive:
           "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         outline: "text-foreground",
-        arcane: "border-arcane-30 bg-arcane-15 text-arcane hover:bg-arcane-30 shadow-glow-subtle",
-        valor: "border-valor-30 bg-valor-15 text-valor hover:bg-valor-30 shadow-glow-subtle",
-        achievement: "border-achievement-30 bg-achievement-15 text-achievement hover:bg-achievement-30 shadow-glow-gold",
+        arcane: "border-arcane-30 bg-arcane-15 text-arcane hover:bg-arcane-30 shadow-glow-subtle animate-pulse-subtle",
+        valor: "border-valor-30 bg-valor-15 text-valor hover:bg-valor-30 shadow-glow-subtle animate-pulse-subtle",
+        achievement: "border-achievement-30 bg-achievement-15 text-achievement hover:bg-achievement-30 shadow-glow-gold animate-pulse-subtle",
         guild: "border-arcane-30 bg-midnight-elevated text-text-secondary hover:bg-arcane-15 shadow-glow-subtle",
+        master: "border-achievement-30 bg-achievement-15 text-achievement border border-achievement-30 shadow-glow-gold animate-pulse-subtle font-space",
       },
     },
     defaultVariants: {
