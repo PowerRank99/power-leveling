@@ -2,7 +2,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { Sparkles } from 'lucide-react';
 
 interface ClassSelectButtonProps {
   selectedClass: string | null;
@@ -23,27 +22,18 @@ const ClassSelectButton: React.FC<ClassSelectButtonProps> = ({
     <Button
       onClick={onClick}
       disabled={!selectedClass || isSelecting || (isOnCooldown && selectedClass !== userClass)}
-      className={`w-full py-6 text-lg font-display tracking-wide relative overflow-hidden
-        ${userClass === selectedClass 
-          ? 'bg-arcane-400 hover:bg-arcane-300' 
-          : 'bg-gradient-arcane-valor hover:shadow-glow'}`}
+      className="w-full py-6 text-lg"
     >
       {isSelecting ? (
         <>
           <LoadingSpinner size="sm" className="mr-2 py-0" /> 
-          <span>Selecionando...</span>
+          Selecionando...
         </>
       ) : userClass === selectedClass ? (
-        <>
-          <span>Manter Classe Atual</span>
-        </>
+        'Manter Classe Atual'
       ) : (
-        <>
-          <Sparkles className="w-5 h-5 mr-2 text-xpgold animate-pulse" />
-          <span>Confirmar Seleção</span>
-        </>
+        'Confirmar Seleção'
       )}
-      <div className="absolute inset-0 bg-shimmer-gold bg-[length:200%_100%] animate-shimmer opacity-20"></div>
     </Button>
   );
 };

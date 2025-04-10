@@ -106,7 +106,7 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
           disabled={!canScrollPrev}
           size="icon"
           variant="ghost"
-          className="h-10 w-10 rounded-full bg-midnight-100/70 shadow-md text-arcane hover:bg-midnight-200/90 hover:text-arcane-400 transition-all duration-200"
+          className="h-10 w-10 rounded-full bg-white/70 shadow-md text-gray-700 hover:bg-white/90 hover:text-black transition-all duration-200"
           aria-label="Previous class"
         >
           <ChevronLeft className="h-6 w-6" />
@@ -119,7 +119,7 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
           disabled={!canScrollNext}
           size="icon"
           variant="ghost"
-          className="h-10 w-10 rounded-full bg-midnight-100/70 shadow-md text-arcane hover:bg-midnight-200/90 hover:text-arcane-400 transition-all duration-200"
+          className="h-10 w-10 rounded-full bg-white/70 shadow-md text-gray-700 hover:bg-white/90 hover:text-black transition-all duration-200"
           aria-label="Next class"
         >
           <ChevronRight className="h-6 w-6" />
@@ -132,7 +132,7 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
             <button
               key={`dot-${classInfo.class_name}`}
               className={`w-2 h-2 rounded-full transition-all duration-300 ease-in-out ${
-                index === focusedIndex ? 'bg-arcane w-6' : 'bg-steel-400'
+                index === focusedIndex ? 'bg-fitblue w-6' : 'bg-gray-300'
               }`}
               onClick={() => {
                 if (emblaApi) emblaApi.scrollTo(index);
