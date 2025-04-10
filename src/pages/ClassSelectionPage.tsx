@@ -12,7 +12,6 @@ import ClassCarousel from '@/components/class/ClassCarousel';
 import ClassCooldownNotice from '@/components/class/ClassCooldownNotice';
 import ClassInstructionCard from '@/components/class/ClassInstructionCard';
 import ClassSelectButton from '@/components/class/ClassSelectButton';
-import ClassDesktopGrid from '@/components/class/ClassDesktopGrid';
 
 const ClassSelectionPage = () => {
   const navigate = useNavigate();
@@ -21,7 +20,6 @@ const ClassSelectionPage = () => {
   const { classes, userClass, isOnCooldown, cooldownText, loading, selectClass } = useClass();
   const [selectedClass, setSelectedClass] = useState<string | null>(userClass);
   const [isSelecting, setIsSelecting] = useState(false);
-  const [focusedIndex, setFocusedIndex] = useState(0);
   
   const handleSelectClass = async () => {
     if (!user || !selectedClass) return;
@@ -48,11 +46,8 @@ const ClassSelectionPage = () => {
     }
   };
   
-  const handleClassSelect = (className: string, index?: number) => {
+  const handleClassSelect = (className: string) => {
     setSelectedClass(className);
-    if (index !== undefined) {
-      setFocusedIndex(index);
-    }
   };
   
   return (
@@ -84,15 +79,6 @@ const ClassSelectionPage = () => {
               selectedClass={selectedClass}
               userClass={userClass}
               isOnCooldown={isOnCooldown}
-              onClassSelect={handleClassSelect}
-            />
-            
-            <ClassDesktopGrid
-              classes={classes}
-              selectedClass={selectedClass}
-              userClass={userClass}
-              isOnCooldown={isOnCooldown}
-              focusedIndex={focusedIndex}
               onClassSelect={handleClassSelect}
             />
             
