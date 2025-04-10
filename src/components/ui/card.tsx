@@ -25,6 +25,9 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
     }
     
     // When interactive, use motion.div with properly typed props
+    // We need to explicitly type the motion props to avoid type errors
+    const motionProps = props as unknown as HTMLMotionProps<"div">;
+    
     return (
       <motion.div
         ref={ref}
@@ -37,7 +40,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
           y: -4, 
           boxShadow: "0 6px 16px rgba(0, 0, 0, 0.35)" 
         }}
-        {...props as HTMLMotionProps<"div">}
+        {...motionProps}
       />
     );
   }
