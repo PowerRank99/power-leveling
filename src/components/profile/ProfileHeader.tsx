@@ -29,8 +29,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   currentXP,
   nextLevelXP
 }) => {
-  const isTopRanking = ranking <= 10;
-  
   return (
     <div className="bg-gradient-to-b from-midnight-deep to-midnight-base text-text-primary p-6 relative rounded-b-xl shadow-elevated">
       <div className="flex items-center">
@@ -102,16 +100,16 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <TooltipTrigger asChild>
               <div>
                 <div className="flex flex-col items-center">
-                  <span className="text-xs font-sora text-text-tertiary mb-1">Ranking</span>
-                  <div className={`text-lg font-bold font-space ${isTopRanking ? 'text-achievement shadow-glow-gold' : 'text-arcane-60'}`}>
-                    #{ranking}
+                  <span className="text-xs font-sora text-text-tertiary mb-1">Conquistas</span>
+                  <div className="text-lg font-bold font-space text-achievement shadow-glow-gold">
+                    0/50
                   </div>
-                  <span className="text-xs text-text-tertiary mt-1 font-sora">Ranking semanal</span>
+                  <span className="text-xs text-text-tertiary mt-1 font-sora">Progresso total</span>
                 </div>
               </div>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              <p className="text-xs font-sora">Ranking semanal baseado em XP total</p>
+              <p className="text-xs font-sora">Conquistas desbloqueadas de um total de 50</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

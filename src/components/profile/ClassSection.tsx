@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ChevronRight, Clock } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import ClassCard from '@/components/profile/ClassCard';
@@ -47,15 +47,6 @@ const ClassSection: React.FC<ClassSectionProps> = ({
     return flavorTextMap[className] || 'Escolha uma classe para iniciar sua jornada.';
   };
   
-  // Get remaining cooldown days
-  const getCooldownDays = () => {
-    if (!cooldownText) return null;
-    const daysMatch = cooldownText.match(/(\d+)/);
-    return daysMatch ? daysMatch[1] : null;
-  };
-  
-  const cooldownDays = getCooldownDays();
-  
   return (
     <Card className="mt-3 premium-card hover:premium-card-elevated transition-all duration-300">
       <CardHeader className="px-4 py-3 flex flex-row justify-between items-center bg-midnight-card bg-opacity-50 backdrop-blur-sm rounded-t-lg border-b border-divider/30">
@@ -98,16 +89,6 @@ const ClassSection: React.FC<ClassSectionProps> = ({
         {actualClassName && (
           <div className="mt-3 text-xs font-sora text-text-tertiary italic border-t border-divider pt-2">
             "{getClassFlavorText(actualClassName)}"
-          </div>
-        )}
-        
-        {/* Cooldown display at bottom */}
-        {isOnCooldown && cooldownDays && (
-          <div className="mt-3 flex justify-end">
-            <div className="flex items-center text-xs font-space text-achievement bg-achievement-15 px-2 py-1 rounded-full border border-achievement-30 shadow-glow-gold">
-              <Clock className="w-3 h-3 mr-1" />
-              {cooldownDays} dias restantes
-            </div>
           </div>
         )}
       </CardContent>

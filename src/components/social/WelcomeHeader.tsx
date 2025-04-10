@@ -1,7 +1,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Flame, Award, Dumbbell, ArrowRight } from 'lucide-react';
+import { Dumbbell, ArrowRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -80,54 +80,6 @@ const WelcomeHeader = () => {
           </motion.div>
         </div>
       </div>
-      
-      <CardContent className="p-4 bg-midnight-card">
-        <div className="flex justify-between">
-          <motion.div 
-            whileHover={{ scale: 1.05 }} 
-            whileTap={{ scale: 0.98 }}
-            className="flex items-center bg-midnight-elevated p-2 rounded-lg border border-valor-30/40 shadow-subtle relative"
-          >
-            <div className="p-2 rounded-full bg-valor-15 mr-2 border border-valor-30">
-              <Flame className="h-5 w-5 text-valor" />
-            </div>
-            <div>
-              <p className="text-xs text-text-tertiary font-sora">Streak</p>
-              <p className="font-space font-semibold text-text-primary text-lg">5 dias</p>
-            </div>
-            <div className="absolute inset-0 border-r border-divider opacity-0 right-0 pointer-events-none"></div>
-          </motion.div>
-          
-          <motion.div 
-            whileHover={{ scale: 1.05 }} 
-            whileTap={{ scale: 0.98 }}
-            className="flex items-center bg-midnight-elevated p-2 rounded-lg border border-arcane-30/40 shadow-subtle relative"
-          >
-            <div className="p-2 rounded-full bg-arcane-15 mr-2 border border-arcane-30">
-              <Award className="h-5 w-5 text-arcane" />
-            </div>
-            <div>
-              <p className="text-xs text-text-tertiary font-sora">XP</p>
-              <p className="font-space font-semibold text-text-primary text-lg">450 pontos</p>
-            </div>
-            <div className="absolute inset-0 border-r border-divider opacity-0 right-0 pointer-events-none"></div>
-          </motion.div>
-          
-          <motion.div 
-            whileHover={{ scale: 1.05 }} 
-            whileTap={{ scale: 0.98 }}
-            className="flex items-center bg-midnight-elevated p-2 rounded-lg border border-achievement-30/40 shadow-subtle"
-          >
-            <div className="p-2 rounded-full bg-achievement-15 mr-2 border border-achievement-30">
-              <Dumbbell className="h-5 w-5 text-achievement" />
-            </div>
-            <div>
-              <p className="text-xs text-text-tertiary font-sora">Treinos</p>
-              <p className="font-space font-semibold text-text-primary text-lg">12 completos</p>
-            </div>
-          </motion.div>
-        </div>
-      </CardContent>
     </Card>
   );
 };
