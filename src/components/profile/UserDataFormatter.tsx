@@ -1,7 +1,10 @@
 
 import React, { ReactNode } from 'react';
 import { User } from '@supabase/supabase-js';
-import { Profile } from '@/integrations/supabase/types';
+import { Database } from '@/integrations/supabase/types';
+
+// Define Profile type based on the database schema
+export type Profile = Database['public']['Tables']['profiles']['Row'];
 
 export interface FormattedUserData {
   avatar: string;

@@ -1,8 +1,8 @@
 
 import React, { ReactNode } from 'react';
 import { User } from '@supabase/supabase-js';
-import { Profile } from '@/integrations/supabase/types';
 import { ClassService } from '@/services/rpg/ClassService';
+import { Profile } from './UserDataFormatter';
 
 export interface ProfileData {
   level: number;
