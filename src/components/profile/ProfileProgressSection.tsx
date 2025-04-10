@@ -24,7 +24,7 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
   const streakBonusPercent = Math.min(streak * 5, 35); // 5% per day up to 35%
   
   return (
-    <Card className="mt-3 premium-card">
+    <Card className="mt-3 premium-card hover:premium-card-elevated transition-all duration-300">
       <CardContent className="p-4">
         <div className="mb-1">
           <h3 className="text-base font-orbitron mb-3 text-text-primary">Progresso Diário</h3>

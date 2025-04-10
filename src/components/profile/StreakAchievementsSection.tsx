@@ -15,7 +15,7 @@ const StreakAchievementsSection: React.FC<StreakAchievementsSectionProps> = ({
   achievementsTotal
 }) => {
   return (
-    <Card className="mt-3 premium-card">
+    <Card className="mt-3 premium-card hover:premium-card-elevated transition-all duration-300">
       <CardContent className="p-4">
         <div className="flex">
           <div className="flex-1 flex items-center justify-center p-3 border-r border-divider">

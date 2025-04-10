@@ -17,10 +17,10 @@ interface RecentAchievementsListProps {
 
 const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achievements }) => {
   return (
-    <Card className="mt-3 premium-card">
+    <Card className="mt-3 premium-card hover:premium-card-elevated transition-all duration-300">
       <CardHeader className="px-4 py-3 flex flex-row justify-between items-center bg-midnight-card bg-opacity-50 backdrop-blur-sm border-b border-divider">
         <h3 className="text-lg font-orbitron font-bold text-text-primary">Conquistas Recentes</h3>
-        <Link to="/conquistas" className="text-arcane flex items-center text-sm font-sora hover:text-arcane-60">
+        <Link to="/conquistas" className="text-arcane flex items-center text-sm font-sora hover:text-arcane-60 transition-colors">
           Ver Todas <ChevronRight className="w-4 h-4" />
         </Link>
       </CardHeader>
@@ -43,7 +43,7 @@ const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achieve
               <div className="flex items-center justify-center">
                 {achievement.icon}
               </div>
-              <span className="text-xs text-center mt-1 font-medium font-sora">{achievement.name}</span>
+              <span className="text-xs text-center mt-1 font-medium font-sora px-1">{achievement.name}</span>
             </div>
           ))}
         </div>

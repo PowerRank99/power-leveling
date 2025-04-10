@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import Trophy from '@/components/icons/Trophy';
 import StatCard from '@/components/profile/StatCard';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
 
 interface ProfileHeaderProps {
   avatar: string;
@@ -69,8 +68,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <span className="text-text-tertiary">Nível {level}</span>
             <span className="text-arcane-60">{currentXP}/{nextLevelXP} XP</span>
           </div>
-          <div className="progress-bar">
-            <div className="progress-bar-fill" style={{ width: `${levelProgress}%` }}></div>
+          <div className="h-1.5 bg-divider rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-arcane-60 to-valor-60 rounded-full transition-all duration-500" style={{ width: `${levelProgress}%` }}></div>
           </div>
         </div>
       </div>

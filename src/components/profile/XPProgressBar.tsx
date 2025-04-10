@@ -24,8 +24,11 @@ const XPProgressBar: React.FC<XPProgressBarProps> = ({
         <span className="text-sm font-space font-medium text-text-primary">{current}/{total}</span>
       </div>
       
-      <div className="progress-bar">
-        <div className="progress-bar-fill" style={{ width: `${percentage}%` }}></div>
+      <div className="h-1.5 bg-divider rounded-full overflow-hidden">
+        <div 
+          className={`h-full ${className} rounded-full transition-all duration-500`} 
+          style={{ width: `${percentage}%` }}
+        ></div>
       </div>
     </div>
   );

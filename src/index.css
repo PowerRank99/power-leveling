@@ -92,14 +92,6 @@
     @apply bg-midnight-elevated border-arcane-30 shadow-elevated;
   }
   
-  .progress-bar {
-    @apply h-1.5 bg-divider rounded-full overflow-hidden;
-  }
-  
-  .progress-bar-fill {
-    @apply h-full bg-gradient-to-r from-arcane-60 to-valor-60 rounded-full transition-all duration-500;
-  }
-  
   .premium-badge {
     @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-space font-medium;
   }

@@ -10,7 +10,7 @@ const BottomNavBar = () => {
   const { user } = useAuth();
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-midnight-card border-t border-divider px-4 py-2 flex justify-around shadow-elevated backdrop-blur-lg">
+    <div className="fixed bottom-0 left-0 right-0 bg-midnight-card border-t border-divider px-4 py-2 flex justify-around shadow-elevated backdrop-blur-lg z-10">
       <Link to="/" className="flex flex-col items-center">
         <Home 
           className={path === '/' ? 'fill-arcane stroke-arcane' : 'text-text-tertiary'} 
