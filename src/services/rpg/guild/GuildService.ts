@@ -69,5 +69,6 @@ export class GuildService {
   }
 }
 
-// Re-export the types
-export { CreateGuildParams, CreateRaidParams, GuildRole };
+// Re-export the types using the correct syntax
+// Use `export type` to fix the isolatedModules error
+export type { CreateGuildParams, CreateRaidParams, GuildRole };
