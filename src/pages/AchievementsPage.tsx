@@ -38,8 +38,8 @@ const AchievementsPage = () => {
       title: 'Primeiro Treino',
       description: 'Complete seu primeiro treino',
       xpReward: 50,
-      icon: <Dumbbell className="h-6 w-6 text-fitgreen-600" />,
-      iconBg: 'bg-fitgreen-100',
+      icon: <Dumbbell className="h-6 w-6 text-arcane" />,
+      iconBg: 'bg-arcane-15',
       status: 'unlocked',
       category: 'treino',
       rarity: 'common'
@@ -49,8 +49,8 @@ const AchievementsPage = () => {
       title: 'Chama do Iniciante',
       description: 'Complete 7 treinos seguidos',
       xpReward: 75,
-      icon: <Flame className="h-6 w-6 text-orange-500" />,
-      iconBg: 'bg-orange-100',
+      icon: <Flame className="h-6 w-6 text-valor" />,
+      iconBg: 'bg-valor-15',
       status: 'unlocked',
       category: 'treino',
       rarity: 'uncommon'
@@ -60,8 +60,8 @@ const AchievementsPage = () => {
       title: 'Mestre do Fogo',
       description: 'Complete 30 treinos seguidos',
       xpReward: 150,
-      icon: <Flame className="h-6 w-6 text-orange-600" />,
-      iconBg: 'bg-orange-100',
+      icon: <Flame className="h-6 w-6 text-valor" />,
+      iconBg: 'bg-valor-15',
       status: 'locked',
       category: 'treino',
       rarity: 'rare'
@@ -71,8 +71,8 @@ const AchievementsPage = () => {
       title: 'Meio Centenário',
       description: 'Complete 50 treinos no total',
       xpReward: 100,
-      icon: <Target className="h-6 w-6 text-fitgreen-600" />,
-      iconBg: 'bg-fitgreen-100',
+      icon: <Target className="h-6 w-6 text-arcane" />,
+      iconBg: 'bg-arcane-15',
       status: 'locked',
       category: 'treino',
       rarity: 'uncommon'
@@ -82,8 +82,8 @@ const AchievementsPage = () => {
       title: 'Centenário',
       description: 'Complete 100 treinos no total',
       xpReward: 200,
-      icon: <Target className="h-6 w-6 text-fitblue-600" />,
-      iconBg: 'bg-fitblue-100',
+      icon: <Target className="h-6 w-6 text-arcane-60" />,
+      iconBg: 'bg-arcane-15',
       status: 'locked',
       category: 'treino',
       rarity: 'epic'
@@ -95,8 +95,8 @@ const AchievementsPage = () => {
       title: 'Primeira Guilda',
       description: 'Entre em sua primeira guilda',
       xpReward: 75,
-      icon: <Users className="h-6 w-6 text-fitpurple-600" />,
-      iconBg: 'bg-fitpurple-100',
+      icon: <Users className="h-6 w-6 text-arcane" />,
+      iconBg: 'bg-arcane-15',
       status: 'unlocked',
       category: 'guildas',
       rarity: 'common'
@@ -106,8 +106,8 @@ const AchievementsPage = () => {
       title: 'Líder Supremo',
       description: 'Crie uma guilda com 50+ membros',
       xpReward: 300,
-      icon: <Trophy className="h-6 w-6 text-yellow-600" />,
-      iconBg: 'bg-yellow-100',
+      icon: <Trophy className="h-6 w-6 text-achievement" />,
+      iconBg: 'bg-achievement-15',
       status: 'locked',
       category: 'guildas',
       rarity: 'legendary'
@@ -117,8 +117,8 @@ const AchievementsPage = () => {
       title: 'Cumpridor de Missões',
       description: 'Complete 10 missões da guilda',
       xpReward: 100,
-      icon: <BookOpen className="h-6 w-6 text-fitblue-600" />,
-      iconBg: 'bg-fitblue-100',
+      icon: <BookOpen className="h-6 w-6 text-arcane" />,
+      iconBg: 'bg-arcane-15',
       status: 'locked',
       category: 'guildas',
       rarity: 'uncommon'
@@ -130,8 +130,8 @@ const AchievementsPage = () => {
       title: 'Socialite',
       description: 'Adicione seu primeiro amigo',
       xpReward: 50,
-      icon: <Users className="h-6 w-6 text-fitblue-600" />,
-      iconBg: 'bg-fitblue-100',
+      icon: <Users className="h-6 w-6 text-arcane" />,
+      iconBg: 'bg-arcane-15',
       status: 'unlocked',
       category: 'social',
       rarity: 'common'
@@ -141,8 +141,8 @@ const AchievementsPage = () => {
       title: 'Popular',
       description: 'Tenha 20 amigos na plataforma',
       xpReward: 150,
-      icon: <Users className="h-6 w-6 text-fitpurple-600" />,
-      iconBg: 'bg-fitpurple-100',
+      icon: <Users className="h-6 w-6 text-arcane" />,
+      iconBg: 'bg-arcane-15',
       status: 'locked',
       category: 'social',
       rarity: 'rare'
@@ -154,8 +154,8 @@ const AchievementsPage = () => {
       title: 'Desafiante',
       description: 'Complete seu primeiro desafio',
       xpReward: 100,
-      icon: <Zap className="h-6 w-6 text-yellow-600" />,
-      iconBg: 'bg-yellow-100',
+      icon: <Zap className="h-6 w-6 text-achievement" />,
+      iconBg: 'bg-achievement-15',
       status: 'unlocked',
       category: 'desafios',
       rarity: 'uncommon'
@@ -165,8 +165,8 @@ const AchievementsPage = () => {
       title: 'Mestre dos Desafios',
       description: 'Complete 50 desafios',
       xpReward: 300,
-      icon: <Medal className="h-6 w-6 text-orange-600" />,
-      iconBg: 'bg-orange-100',
+      icon: <Medal className="h-6 w-6 text-achievement" />,
+      iconBg: 'bg-achievement-15',
       status: 'locked',
       category: 'desafios',
       rarity: 'legendary'
@@ -178,8 +178,8 @@ const AchievementsPage = () => {
       title: 'Um Mês na Jornada',
       description: 'Complete 1 mês usando o aplicativo',
       xpReward: 50,
-      icon: <Clock className="h-6 w-6 text-fitgreen-600" />,
-      iconBg: 'bg-fitgreen-100',
+      icon: <Clock className="h-6 w-6 text-arcane" />,
+      iconBg: 'bg-arcane-15',
       status: 'unlocked',
       category: 'tempo',
       rarity: 'common'
@@ -189,8 +189,8 @@ const AchievementsPage = () => {
       title: 'Um Ano de Evolução',
       description: 'Complete 1 ano usando o aplicativo',
       xpReward: 500,
-      icon: <Award className="h-6 w-6 text-yellow-600" />,
-      iconBg: 'bg-yellow-100',
+      icon: <Award className="h-6 w-6 text-achievement" />,
+      iconBg: 'bg-achievement-15',
       status: 'locked',
       category: 'tempo',
       rarity: 'epic'
@@ -234,7 +234,7 @@ const AchievementsPage = () => {
   const unlockedAchievements = achievements.filter(a => a.status === 'unlocked').length;
   
   return (
-    <div className="pb-20 min-h-screen bg-gray-50">
+    <div className="pb-20 min-h-screen bg-midnight-base">
       <PageHeader 
         title="Conquistas" 
         showBackButton={true}
@@ -254,38 +254,53 @@ const AchievementsPage = () => {
         />
         
         {/* Filter Tabs */}
-        <div className="bg-white rounded-lg shadow-sm p-2 mb-4">
+        <div className="premium-card mb-4">
           <Tabs 
             defaultValue="all" 
             className="w-full"
             onValueChange={(value) => setFilter(value as any)}
           >
-            <TabsList className="grid grid-cols-3 w-full">
-              <TabsTrigger value="all" className="rounded-full">Todas</TabsTrigger>
-              <TabsTrigger value="unlocked" className="rounded-full">Desbloqueadas</TabsTrigger>
-              <TabsTrigger value="locked" className="rounded-full">Bloqueadas</TabsTrigger>
+            <TabsList className="grid grid-cols-3 w-full bg-midnight-elevated border-b border-divider/30">
+              <TabsTrigger 
+                value="all" 
+                className="data-[state=active]:bg-arcane-15 data-[state=active]:text-arcane data-[state=active]:shadow-glow-subtle data-[state=active]:border-arcane-30 rounded-full"
+              >
+                Todas
+              </TabsTrigger>
+              <TabsTrigger 
+                value="unlocked" 
+                className="data-[state=active]:bg-arcane-15 data-[state=active]:text-arcane data-[state=active]:shadow-glow-subtle data-[state=active]:border-arcane-30 rounded-full"
+              >
+                Desbloqueadas
+              </TabsTrigger>
+              <TabsTrigger 
+                value="locked" 
+                className="data-[state=active]:bg-arcane-15 data-[state=active]:text-arcane data-[state=active]:shadow-glow-subtle data-[state=active]:border-arcane-30 rounded-full"
+              >
+                Bloqueadas
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
         
         {/* Category Tabs */}
-        <div className="bg-white rounded-lg shadow-sm mb-4 overflow-x-auto">
-          <div className="flex p-2 min-w-max">
+        <div className="premium-card mb-4 overflow-x-auto p-2">
+          <div className="flex min-w-max">
             <button 
-              className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${
+              className={`px-4 py-2 rounded-full text-sm whitespace-nowrap font-sora ${
                 activeCategory === 'all' 
-                  ? 'bg-fitblue-500 text-white' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-arcane text-text-primary shadow-glow-purple' 
+                  : 'bg-midnight-elevated text-text-secondary hover:bg-midnight-card'
               }`}
               onClick={() => setActiveCategory('all')}
             >
               Todas Categorias
             </button>
             <button 
-              className={`px-4 py-2 rounded-full text-sm ml-2 whitespace-nowrap ${
+              className={`px-4 py-2 rounded-full text-sm ml-2 whitespace-nowrap font-sora ${
                 activeCategory === 'treino' 
-                  ? 'bg-fitgreen-500 text-white' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-arcane text-text-primary shadow-glow-purple' 
+                  : 'bg-midnight-elevated text-text-secondary hover:bg-midnight-card'
               }`}
               onClick={() => setActiveCategory('treino')}
             >
@@ -293,10 +308,10 @@ const AchievementsPage = () => {
               Treino
             </button>
             <button 
-              className={`px-4 py-2 rounded-full text-sm ml-2 whitespace-nowrap ${
+              className={`px-4 py-2 rounded-full text-sm ml-2 whitespace-nowrap font-sora ${
                 activeCategory === 'guildas' 
-                  ? 'bg-fitpurple-500 text-white' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-arcane text-text-primary shadow-glow-purple' 
+                  : 'bg-midnight-elevated text-text-secondary hover:bg-midnight-card'
               }`}
               onClick={() => setActiveCategory('guildas')}
             >
@@ -304,10 +319,10 @@ const AchievementsPage = () => {
               Guildas
             </button>
             <button 
-              className={`px-4 py-2 rounded-full text-sm ml-2 whitespace-nowrap ${
+              className={`px-4 py-2 rounded-full text-sm ml-2 whitespace-nowrap font-sora ${
                 activeCategory === 'social' 
-                  ? 'bg-fitblue-500 text-white' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-arcane text-text-primary shadow-glow-purple' 
+                  : 'bg-midnight-elevated text-text-secondary hover:bg-midnight-card'
               }`}
               onClick={() => setActiveCategory('social')}
             >
@@ -315,10 +330,10 @@ const AchievementsPage = () => {
               Social
             </button>
             <button 
-              className={`px-4 py-2 rounded-full text-sm ml-2 whitespace-nowrap ${
+              className={`px-4 py-2 rounded-full text-sm ml-2 whitespace-nowrap font-sora ${
                 activeCategory === 'desafios' 
-                  ? 'bg-yellow-500 text-white' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-arcane text-text-primary shadow-glow-purple' 
+                  : 'bg-midnight-elevated text-text-secondary hover:bg-midnight-card'
               }`}
               onClick={() => setActiveCategory('desafios')}
             >
@@ -326,10 +341,10 @@ const AchievementsPage = () => {
               Desafios
             </button>
             <button 
-              className={`px-4 py-2 rounded-full text-sm ml-2 whitespace-nowrap ${
+              className={`px-4 py-2 rounded-full text-sm ml-2 whitespace-nowrap font-sora ${
                 activeCategory === 'tempo' 
-                  ? 'bg-orange-500 text-white' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-arcane text-text-primary shadow-glow-purple' 
+                  : 'bg-midnight-elevated text-text-secondary hover:bg-midnight-card'
               }`}
               onClick={() => setActiveCategory('tempo')}
             >
@@ -341,10 +356,10 @@ const AchievementsPage = () => {
         
         {/* Empty state when no achievements match filters */}
         {filteredAchievements.length === 0 && (
-          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-            <Award className="h-12 w-12 text-gray-300 mx-auto mb-2" />
-            <h3 className="text-lg font-semibold text-gray-700">Nenhuma conquista encontrada</h3>
-            <p className="text-gray-500 mt-1">
+          <div className="premium-card p-8 text-center">
+            <Award className="h-12 w-12 text-text-tertiary mx-auto mb-2" />
+            <h3 className="text-lg font-semibold text-text-primary font-orbitron">Nenhuma conquista encontrada</h3>
+            <p className="text-text-secondary mt-1 font-sora">
               Tente ajustar seus filtros ou termos de busca
             </p>
           </div>
