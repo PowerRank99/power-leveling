@@ -34,6 +34,7 @@ const TabsTrigger = React.forwardRef<
       "data-[state=active]:bg-arcane-15 data-[state=active]:text-arcane data-[state=active]:border-b-2 data-[state=active]:border-arcane",
       "data-[state=active]:shadow-glow-subtle data-[state=active]:after:content-[''] data-[state=active]:after:absolute data-[state=active]:after:bottom-0",
       "relative after:transition-all after:duration-300",
+      "hover:bg-arcane-15/50 hover:text-text-primary/90",
       className
     )}
     {...props}
@@ -48,7 +49,7 @@ const TabsContent = React.forwardRef<
   <TabsPrimitive.Content
     ref={ref}
     className={cn(
-      "mt-3 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 animate-fade-in",
+      "mt-3 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 animate-fade-in transition-all duration-300",
       className
     )}
     {...props}
