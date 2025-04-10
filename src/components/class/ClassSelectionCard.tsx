@@ -32,7 +32,7 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
     return classInfo.bonuses.map((bonus, index) => (
       <div key={index} className="flex justify-between text-sm">
         <span className="text-text-secondary">{bonus.description}</span>
-        <span className="font-bold text-arcane">{bonus.value}</span>
+        <span className="font-bold text-arcane">{`+${Math.round(bonus.bonus_value * 100)}%`}</span>
       </div>
     ));
   };
@@ -71,7 +71,7 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-bold orbitron-text tracking-wide text-text-primary">{classInfo.class_name}</h3>
             <Badge variant={getClassBadgeVariant() as any} className="font-space">
-              {classInfo.category}
+              {classInfo.description}
             </Badge>
           </div>
           
@@ -94,7 +94,7 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
               <div className={`w-20 h-20 flex items-center justify-center rounded-full p-1 ${
                 isSelected ? 'bg-arcane-15 border border-arcane-30 shadow-glow-purple' : 'bg-midnight-elevated'
               }`}>
-                <ClassIconSelector className={classInfo.class_name} size="lg" />
+                <ClassIconSelector className={classInfo.class_name} />
               </div>
             </motion.div>
           </div>
