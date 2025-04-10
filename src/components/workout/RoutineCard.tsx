@@ -2,7 +2,7 @@
 import React from 'react';
 import { Calendar, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { formatDate } from '@/utils/formatters';
+import { getTimeAgo } from '@/utils/formatters';
 import SwipeableRow from './set/SwipeableRow';
 import DeleteButton from './set/DeleteButton';
 
@@ -64,7 +64,7 @@ const RoutineCard: React.FC<RoutineCardProps> = ({
               {lastUsedDate && (
                 <span className="flex items-center text-xs">
                   <Calendar className="h-3 w-3 mr-1 text-arcane" /> 
-                  Usado {formatDate(lastUsedDate)}
+                  Usado {getTimeAgo(lastUsedDate)}
                 </span>
               )}
             </div>

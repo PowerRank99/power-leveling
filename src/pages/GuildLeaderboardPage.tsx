@@ -14,6 +14,7 @@ import GuildHeader from '@/components/guilds/GuildHeader';
 import GuildStats from '@/components/guilds/GuildStats';
 import LeaderboardFilters from '@/components/guilds/LeaderboardFilters';
 import MembersList from '@/components/guilds/MembersList';
+import MemberRankingList from '@/components/guilds/MemberRankingList';
 
 // Define a consistent Member interface to avoid type issues
 interface Member {
