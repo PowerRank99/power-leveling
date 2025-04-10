@@ -25,10 +25,11 @@ const FeedTabs: React.FC<FeedTabsProps> = ({ activeTab, onTabChange }) => {
             <motion.div
               whileHover={{ scale: 1.1 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              className={activeTab === 'todos' ? 'text-arcane' : 'text-text-tertiary hover:text-arcane/60'}
             >
               <Globe className="w-4 h-4" />
             </motion.div>
-            <span>Todos</span>
+            <span className={activeTab === 'todos' ? 'text-arcane' : 'text-text-tertiary'}>Todos</span>
           </TabsTrigger>
           
           <TabsTrigger 
@@ -42,10 +43,11 @@ const FeedTabs: React.FC<FeedTabsProps> = ({ activeTab, onTabChange }) => {
             <motion.div
               whileHover={{ scale: 1.1 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              className={activeTab === 'guildas' ? 'text-arcane' : 'text-text-tertiary hover:text-arcane/60'}
             >
               <Users className="w-4 h-4" />
             </motion.div>
-            <span>Guildas</span>
+            <span className={activeTab === 'guildas' ? 'text-arcane' : 'text-text-tertiary'}>Guildas</span>
           </TabsTrigger>
           
           <TabsTrigger 
@@ -59,10 +61,11 @@ const FeedTabs: React.FC<FeedTabsProps> = ({ activeTab, onTabChange }) => {
             <motion.div
               whileHover={{ scale: 1.1 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              className={activeTab === 'amigos' ? 'text-arcane' : 'text-text-tertiary hover:text-arcane/60'}
             >
               <UserCircle className="w-4 h-4" />
             </motion.div>
-            <span>Amigos</span>
+            <span className={activeTab === 'amigos' ? 'text-arcane' : 'text-text-tertiary'}>Amigos</span>
           </TabsTrigger>
         </TabsList>
       </Tabs>

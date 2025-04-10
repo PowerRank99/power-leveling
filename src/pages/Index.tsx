@@ -1,12 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import BottomNavBar from '@/components/navigation/BottomNavBar';
 import FeedHeader from '@/components/social/FeedHeader';
 import FeedTabs from '@/components/social/FeedTabs';
 import PostList, { Post } from '@/components/social/PostList';
 import WelcomeHeader from '@/components/social/WelcomeHeader';
 import FeaturedContentCarousel from '@/components/social/FeaturedContentCarousel';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const staggerContainerVariants = {
   hidden: { opacity: 0 },
@@ -32,6 +32,16 @@ const itemVariants = {
 
 const IndexPage = () => {
   const [activeTab, setActiveTab] = useState<'todos' | 'guildas' | 'amigos'>('todos');
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Simulate loading state
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
   
   // Mock data for posts with correct type literals
   const posts: Post[] = [
@@ -85,33 +95,73 @@ const IndexPage = () => {
     }
   ];
   
+  // Function to get posts based on active tab
+  const getPostsForTab = () => {
+    switch(activeTab) {
+      case 'todos':
+        return posts;
+      case 'guildas':
+        // In a real app, this would filter for guild posts
+        return [];
+      case 'amigos':
+        // In a real app, this would filter for friends' posts
+        return [];
+      default:
+        return posts;
+    }
+  };
+  
   return (
     <div className="pb-20 bg-midnight-base min-h-screen">
       {/* Header */}
       <FeedHeader />
       
-      <motion.div 
-        className="px-4 py-3"
-        variants={staggerContainerVariants}
-        initial="hidden"
-        animate="show"
-      >
-        {/* Welcome Section */}
-        <motion.div variants={itemVariants}>
-          <WelcomeHeader />
-        </motion.div>
-        
-        {/* Featured Content */}
-        <motion.div variants={itemVariants}>
-          <FeaturedContentCarousel />
-        </motion.div>
-      </motion.div>
+      <AnimatePresence>
+        {isLoading ? (
+          <motion.div 
+            className="flex justify-center items-center min-h-[200px]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="w-10 h-10 border-4 border-arcane/30 border-t-arcane rounded-full animate-spin"></div>
+          </motion.div>
+        ) : (
+          <motion.div 
+            className="px-4 py-3"
+            variants={staggerContainerVariants}
+            initial="hidden"
+            animate="show"
+            key="content"
+          >
+            {/* Welcome Section */}
+            <motion.div variants={itemVariants}>
+              <WelcomeHeader />
+            </motion.div>
+            
+            {/* Featured Content */}
+            <motion.div variants={itemVariants}>
+              <FeaturedContentCarousel />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* Tabs */}
       <FeedTabs activeTab={activeTab} onTabChange={setActiveTab} />
       
-      {/* Post List */}
-      <PostList posts={activeTab === 'todos' ? posts : []} />
+      {/* Post List with animation for tab changes */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3 }}
+        >
+          <PostList posts={getPostsForTab()} />
+        </motion.div>
+      </AnimatePresence>
       
       {/* Bottom Navigation */}
       <BottomNavBar />
