@@ -109,32 +109,7 @@ const GuildLeaderboardPage: React.FC = () => {
       <div className="space-y-4 p-4">
         {/* Guild Header Component */}
         <div className="premium-card p-4 shadow-subtle bg-gradient-to-r from-arcane-15 to-arcane-30 border-arcane-30">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center">
-              <img 
-                src={guildInfo.avatar} 
-                alt={guildInfo.name} 
-                className="h-14 w-14 object-cover rounded-lg mr-3 border border-arcane-30 shadow-glow-purple"
-              />
-              <div>
-                <h2 className="font-orbitron text-xl font-bold text-text-primary">{guildInfo.name}</h2>
-                <div className="flex gap-2 text-sm text-text-secondary font-sora">
-                  <span>{guildInfo.memberCount} membros</span>
-                  <span>•</span>
-                  <span>{guildInfo.completedQuests} quests</span>
-                </div>
-              </div>
-            </div>
-            
-            <Button 
-              onClick={handleQuestsClick}
-              className="bg-arcane-15 hover:bg-arcane-30 text-text-primary border border-arcane-30 shadow-glow-subtle"
-              size="sm"
-            >
-              <Shield className="h-4 w-4 mr-2 text-arcane" />
-              Quests
-            </Button>
-          </div>
+          <GuildHeader guildInfo={guildInfo} guildId={id || '1'} />
         </div>
         
         {/* Guild Stats Component */}
@@ -149,8 +124,7 @@ const GuildLeaderboardPage: React.FC = () => {
         </div>
         
         {/* Leaderboard Filters Component */}
-        <div className="premium-card p-4 shadow-subtle">
-          <h3 className="text-lg font-orbitron font-bold mb-3 text-text-primary">Classificação</h3>
+        <div className="premium-card shadow-subtle overflow-hidden">
           <LeaderboardFilters 
             timeFilter={timeFilter}
             metricFilter={metricFilter}
@@ -160,14 +134,14 @@ const GuildLeaderboardPage: React.FC = () => {
         </div>
         
         {/* Podium Component */}
-        <div className="premium-card p-4 shadow-subtle">
+        <div className="premium-card shadow-subtle overflow-hidden">
           <LeaderboardPodium members={topMembers} />
         </div>
         
         {/* Members List Component */}
         <div className="premium-card p-4 shadow-subtle">
           <h3 className="text-lg font-orbitron font-bold mb-3 text-text-primary">Todos os Membros</h3>
-          <MembersList members={allMembers} />
+          <MemberRankingList members={allMembers} />
         </div>
       </div>
       

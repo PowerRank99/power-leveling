@@ -45,29 +45,29 @@ const WorkoutCard: React.FC<WorkoutCardProps> = ({
         />
       )}
     >
-      <div className={`bg-white rounded-lg shadow-sm p-4 mb-4 border border-gray-200 ${isDeleting ? 'opacity-50' : ''}`}>
+      <div className={`bg-midnight-elevated rounded-lg shadow-subtle p-4 mb-4 border border-divider ${isDeleting ? 'opacity-50' : ''}`}>
         <div className="flex justify-between">
           <div>
-            <h3 className="font-bold text-lg">{name}</h3>
-            <p className="text-gray-500 text-sm">{date}</p>
+            <h3 className="font-orbitron font-bold text-lg text-text-primary">{name}</h3>
+            <p className="text-text-secondary text-sm font-sora">{date}</p>
           </div>
-          <div className="text-fitgreen font-bold">+{exercisesCount * 10} XP</div>
+          <div className="text-achievement font-bold font-space">+{exercisesCount * 10} XP</div>
         </div>
         
         <div className="flex mt-3 space-x-2">
-          <div className="bg-gray-100 rounded-lg px-3 py-1 text-sm">
+          <div className="bg-midnight-card rounded-lg px-3 py-1 text-sm text-text-secondary border border-divider/30">
             <span className="font-medium">{exercisesCount}</span> exercícios
           </div>
-          <div className="bg-gray-100 rounded-lg px-3 py-1 text-sm">
+          <div className="bg-midnight-card rounded-lg px-3 py-1 text-sm text-text-secondary border border-divider/30">
             <span className="font-medium">{setsCount}</span> séries
           </div>
           {prs > 0 && (
-            <div className="bg-fitblue-100 text-fitblue-700 rounded-lg px-3 py-1 text-sm">
+            <div className="bg-arcane-15 text-arcane rounded-lg px-3 py-1 text-sm border border-arcane-30">
               <span className="font-medium">{prs}</span> PRs
             </div>
           )}
           {durationSeconds && (
-            <div className="bg-fitblue-50 text-fitblue-700 rounded-lg px-3 py-1 text-sm">
+            <div className="bg-valor-15 text-valor rounded-lg px-3 py-1 text-sm border border-valor-30">
               {formatDuration(durationSeconds)}
             </div>
           )}

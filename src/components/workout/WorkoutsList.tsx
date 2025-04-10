@@ -46,7 +46,7 @@ const WorkoutsList: React.FC<WorkoutsListProps> = ({
           <Button 
             onClick={onRetry}
             variant="outline"
-            className="mt-2"
+            className="mt-2 bg-midnight-elevated hover:bg-arcane-15 text-text-primary border-arcane-30"
           >
             <RefreshCw className="w-4 h-4 mr-2" /> Tentar novamente
           </Button>
@@ -92,18 +92,18 @@ const WorkoutsList: React.FC<WorkoutsListProps> = ({
             onClick={onLoadMore}
             variant="outline"
             disabled={isLoadingMore}
-            className="w-full max-w-sm"
+            className="w-full max-w-sm bg-midnight-elevated hover:bg-arcane-15 text-text-primary border-arcane-30"
           >
             {isLoadingMore ? (
               <>
                 <div className="flex items-center">
                   <LoadingSpinner size="sm" message="" /> 
-                  <span className="ml-2">Carregando...</span>
+                  <span className="ml-2 font-sora">Carregando...</span>
                 </div>
               </>
             ) : (
               <>
-                <ChevronDown className="w-4 h-4 mr-2" /> Carregar mais treinos
+                <ChevronDown className="w-4 h-4 mr-2" /> <span className="font-sora">Carregar mais treinos</span>
               </>
             )}
           </Button>

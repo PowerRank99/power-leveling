@@ -40,15 +40,15 @@ const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({ members }) => {
   
   const getMedalIcon = (position: number) => {
     switch(position) {
-      case 1: return <Crown className="w-6 h-6 text-yellow-500 fill-yellow-500" />;
-      case 2: return <Trophy className="w-6 h-6 text-gray-400" />;
-      case 3: return <Medal className="w-6 h-6 text-orange-400" />;
+      case 1: return <Crown className="w-6 h-6 text-achievement fill-achievement" />;
+      case 2: return <Trophy className="w-6 h-6 text-text-secondary" />;
+      case 3: return <Medal className="w-6 h-6 text-valor" />;
       default: return null;
     }
   };
   
   return (
-    <div className="bg-gradient-to-b from-blue-50 to-white p-4 border-b border-gray-200">
+    <div className="bg-gradient-to-b from-arcane-15 to-midnight-card p-4 border-b border-divider">
       <div className="flex justify-around items-end h-56 relative pt-14 mt-10">
         {podiumOrder.map((index) => {
           const member = top3[index];
@@ -70,34 +70,34 @@ const LeaderboardPodium: React.FC<LeaderboardPodiumProps> = ({ members }) => {
                 </div>
                 
                 <Avatar className={`${avatarSize} border-4 ${
-                  member.isCurrentUser ? 'border-fitblue' : 'border-white'
-                } shadow-lg hover:scale-105 transition-transform`}>
+                  member.isCurrentUser ? 'border-arcane shadow-glow-purple' : 'border-divider'
+                } shadow-elevated hover:scale-105 transition-transform`}>
                   <AvatarImage src={member.avatar} alt={member.name} />
-                  <AvatarFallback>{member.name.substring(0, 2)}</AvatarFallback>
+                  <AvatarFallback className="bg-midnight-card text-text-primary">{member.name.substring(0, 2)}</AvatarFallback>
                 </Avatar>
                 
                 <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full 
                   flex items-center justify-center text-xs font-bold
-                  ${isFirst ? 'bg-yellow-500' : isSecond ? 'bg-gray-400' : 'bg-orange-400'} 
-                  text-white`}>
+                  ${isFirst ? 'bg-achievement' : isSecond ? 'bg-text-secondary' : 'bg-valor'} 
+                  text-midnight-deep`}>
                   {member.position}
                 </div>
               </div>
               
-              <p className={`font-bold ${textSize} ${member.isCurrentUser ? 'text-fitblue' : ''}`}>{member.name}</p>
+              <p className={`font-bold ${textSize} font-orbitron ${member.isCurrentUser ? 'text-arcane' : 'text-text-primary'}`}>{member.name}</p>
               
               <div className="flex flex-col items-center">
-                <p className="text-xs font-medium">{member.points} pts</p>
+                <p className="text-xs font-space text-text-secondary">{member.points} pts</p>
                 
                 {member.badge && (
-                  <Badge className="mt-1 text-xs bg-fitblue/80">{member.badge}</Badge>
+                  <Badge className="mt-1 text-xs bg-arcane/80 text-text-primary shadow-glow-subtle">{member.badge}</Badge>
                 )}
               </div>
               
               <div className={`${podiumHeight} w-24 mt-2 rounded-t-md bg-gradient-to-t shadow-inner
-                ${isFirst ? 'from-yellow-500 to-yellow-400' : 
-                  isSecond ? 'from-gray-400 to-gray-300' : 
-                    'from-orange-500 to-orange-400'}`}>
+                ${isFirst ? 'from-achievement to-achievement/70' : 
+                  isSecond ? 'from-text-secondary to-text-tertiary' : 
+                    'from-valor to-valor/70'}`}>
               </div>
             </div>
           );

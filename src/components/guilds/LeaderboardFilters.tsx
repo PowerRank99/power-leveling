@@ -19,15 +19,15 @@ const LeaderboardFilters: React.FC<LeaderboardFiltersProps> = ({
   onMetricFilterChange
 }) => {
   return (
-    <div className="p-4 bg-white border-b border-gray-200">
+    <div className="p-4 bg-midnight-card border-b border-divider">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-bold">Classificação</h3>
+        <h3 className="text-lg font-bold font-orbitron text-text-primary">Classificação</h3>
         
         <Select value={metricFilter} onValueChange={onMetricFilterChange}>
-          <SelectTrigger className="w-36 h-9">
+          <SelectTrigger className="w-36 h-9 bg-midnight-elevated text-text-secondary border-divider">
             <SelectValue placeholder="Métrica" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-midnight-elevated text-text-primary border-divider">
             <SelectItem value="xp">EXP Ganho</SelectItem>
             <SelectItem value="workouts">Dias de Treino</SelectItem>
             <SelectItem value="streak">Sequência</SelectItem>
@@ -36,10 +36,10 @@ const LeaderboardFilters: React.FC<LeaderboardFiltersProps> = ({
       </div>
       
       <Tabs defaultValue="weekly" className="w-full" value={timeFilter} onValueChange={onTimeFilterChange}>
-        <TabsList className="grid grid-cols-3 w-full">
-          <TabsTrigger value="weekly">Semanal</TabsTrigger>
-          <TabsTrigger value="monthly">Mensal</TabsTrigger>
-          <TabsTrigger value="alltime">Anual</TabsTrigger>
+        <TabsList className="grid grid-cols-3 w-full bg-midnight-elevated">
+          <TabsTrigger value="weekly" className="font-orbitron data-[state=active]:bg-arcane data-[state=active]:text-text-primary">Semanal</TabsTrigger>
+          <TabsTrigger value="monthly" className="font-orbitron data-[state=active]:bg-arcane data-[state=active]:text-text-primary">Mensal</TabsTrigger>
+          <TabsTrigger value="alltime" className="font-orbitron data-[state=active]:bg-arcane data-[state=active]:text-text-primary">Anual</TabsTrigger>
         </TabsList>
       </Tabs>
     </div>

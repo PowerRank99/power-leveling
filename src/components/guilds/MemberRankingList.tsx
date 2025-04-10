@@ -22,18 +22,18 @@ interface MemberRankingListProps {
 const MemberRankingList: React.FC<MemberRankingListProps> = ({ members }) => {
   const getPositionColor = (position: number) => {
     switch(position) {
-      case 1: return 'text-yellow-500';
-      case 2: return 'text-gray-500';
-      case 3: return 'text-orange-500';
-      default: return 'text-gray-700';
+      case 1: return 'text-achievement';
+      case 2: return 'text-text-secondary';
+      case 3: return 'text-valor';
+      default: return 'text-text-tertiary';
     }
   };
   
   const getPositionIcon = (position: number) => {
     switch(position) {
-      case 1: return <Crown className="h-4 w-4 text-yellow-500 fill-yellow-500" />;
-      case 2: return <Medal className="h-4 w-4 text-gray-500" />;
-      case 3: return <Medal className="h-4 w-4 text-orange-500" />;
+      case 1: return <Crown className="h-4 w-4 text-achievement fill-achievement" />;
+      case 2: return <Medal className="h-4 w-4 text-text-secondary" />;
+      case 3: return <Medal className="h-4 w-4 text-valor" />;
       default: return position;
     }
   };
@@ -42,7 +42,7 @@ const MemberRankingList: React.FC<MemberRankingListProps> = ({ members }) => {
     if (!member.badge) return null;
     
     return (
-      <Badge className="ml-2 flex items-center bg-fitblue">
+      <Badge className="ml-2 flex items-center bg-arcane text-text-primary shadow-glow-subtle">
         <Star className="w-3 h-3 mr-1" />
         {member.badge}
       </Badge>
@@ -51,8 +51,8 @@ const MemberRankingList: React.FC<MemberRankingListProps> = ({ members }) => {
 
   const getTrendIcon = (trend?: 'up' | 'down' | 'same') => {
     switch(trend) {
-      case 'up': return <TrendingUp className="h-3 w-3 text-green-500" />;
-      case 'down': return <TrendingDown className="h-3 w-3 text-red-500" />;
+      case 'up': return <TrendingUp className="h-3 w-3 text-arcane" />;
+      case 'down': return <TrendingDown className="h-3 w-3 text-valor" />;
       default: return null;
     }
   };
@@ -64,8 +64,8 @@ const MemberRankingList: React.FC<MemberRankingListProps> = ({ members }) => {
           key={member.id}
           className={`flex items-center p-3 rounded-lg ${
             member.isCurrentUser 
-              ? 'bg-blue-50 border border-blue-100 shadow-sm' 
-              : 'bg-white border border-gray-100 hover:border-blue-100 hover:bg-blue-50/30 transition-colors'
+              ? 'bg-arcane-15 border border-arcane-30 shadow-glow-subtle' 
+              : 'bg-midnight-elevated border border-divider hover:border-arcane-30 hover:bg-arcane-15/30 transition-colors'
           }`}
         >
           <div className="w-8 text-center mr-3 flex justify-center">
@@ -74,21 +74,21 @@ const MemberRankingList: React.FC<MemberRankingListProps> = ({ members }) => {
             </div>
           </div>
           
-          <Avatar className={`h-10 w-10 mr-3 ${member.isCurrentUser ? 'ring-2 ring-fitblue' : ''}`}>
+          <Avatar className={`h-10 w-10 mr-3 ${member.isCurrentUser ? 'ring-2 ring-arcane' : ''}`}>
             <AvatarImage src={member.avatar} alt={member.name} />
-            <AvatarFallback>{member.name.substring(0, 2)}</AvatarFallback>
+            <AvatarFallback className="bg-midnight-card text-text-primary">{member.name.substring(0, 2)}</AvatarFallback>
           </Avatar>
           
           <div className="flex-1">
             <div className="flex items-center">
-              <h4 className={`font-medium ${member.isCurrentUser ? 'text-fitblue' : ''}`}>
+              <h4 className={`font-medium font-orbitron ${member.isCurrentUser ? 'text-arcane' : 'text-text-primary'}`}>
                 {member.name}
-                {member.isCurrentUser && <span className="text-xs text-blue-500 ml-1">(Você)</span>}
+                {member.isCurrentUser && <span className="text-xs text-arcane ml-1 font-sora">(Você)</span>}
               </h4>
               {getBadge(member)}
             </div>
             <div className="flex items-center">
-              <p className="text-sm text-gray-500 flex items-center gap-1">
+              <p className="text-sm text-text-secondary font-space flex items-center gap-1">
                 {member.points} pontos
                 {getTrendIcon(member.trend)}
               </p>
