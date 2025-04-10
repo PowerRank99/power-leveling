@@ -2,7 +2,6 @@
 import React from 'react';
 import { Shield, Sword, Dumbbell, Wind, Sparkles } from 'lucide-react';
 import { ClassService } from '@/services/rpg/ClassService';
-import { Badge } from '@/components/ui/badge';
 
 interface ClassBonus {
   description: string;
@@ -54,109 +53,58 @@ const ClassCard: React.FC<ClassCardProps> = ({
   };
   
   const cardIcon = icon || getDefaultIcon();
-
-  // Better gradient mapping for RPG theme
-  const getRpgGradient = () => {
-    switch (className.toLowerCase()) {
-      case 'guerreiro': return 'from-valor to-xpgold';
-      case 'monge': return 'from-restgreen to-energy';
-      case 'ninja': return 'from-energy to-arcane';
-      case 'bruxo': return 'from-arcane to-valor';
-      case 'paladino': return 'from-xpgold to-restgreen';
-      default: return 'from-arcane-dark to-arcane';
-    }
-  };
-  
-  // Get glow effect class based on class type
-  const getGlowClass = () => {
-    switch (className.toLowerCase()) {
-      case 'guerreiro': return 'shadow-glow-valor';
-      case 'bruxo': return 'shadow-glow-md';
-      case 'ninja': return 'shadow-glow-energy';
-      case 'paladino': return 'shadow-glow-xpgold';
-      case 'monge': return 'shadow-inner-glow';
-      default: return 'shadow-glow-md';
-    }
-  };
   
   return (
-    <div className={`rounded-xl bg-gradient-to-br ${getRpgGradient()} text-white p-4 shadow-md ${getGlowClass()} relative overflow-hidden transform transition-all duration-300 hover:scale-[1.01] hover:shadow-lg`}>
-      {/* Animated background effects */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute w-40 h-40 bg-white/5 rounded-full blur-xl top-5 -left-20 animate-pulse"></div>
-        <div className="absolute w-20 h-20 bg-white/10 rounded-full blur-lg -bottom-5 right-10 animate-pulse"></div>
-        {/* Add magical runes or symbols */}
-        <div className="absolute top-5 right-5 w-16 h-16 opacity-10">
-          {className.toLowerCase() === 'bruxo' && (
-            <svg viewBox="0 0 24 24" className="w-full h-full">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" fill="none" strokeWidth="0.5"/>
-              <path d="M12 2L12 22M2 12L22 12M4 4L20 20M4 20L20 4" stroke="currentColor" strokeWidth="0.5"/>
-            </svg>
+    <div className={`rounded-xl bg-gradient-to-br ${gradientColors} text-white p-4 shadow-md`}>
+      <div className="flex items-center mb-3">
+        <div className="relative">
+          <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center mr-3 shadow-inner overflow-hidden">
+            {showAvatar ? (
+              <img 
+                src={getClassAvatarImage()} 
+                alt={className}
+                className="w-full h-full object-cover object-center"
+              />
+            ) : (
+              <div className="animate-pulse">{cardIcon}</div>
+            )}
+          </div>
+          {showAvatar && (
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center shadow-inner">
+              {cardIcon}
+            </div>
           )}
-          {className.toLowerCase() === 'guerreiro' && (
-            <svg viewBox="0 0 24 24" className="w-full h-full">
-              <path d="M12 2L16 12L22 14L16 16L12 22L8 16L2 14L8 12L12 2Z" stroke="currentColor" fill="none" strokeWidth="0.5"/>
-            </svg>
-          )}
+        </div>
+        <div>
+          <h3 className="font-bold text-xl">{className}</h3>
+          <p className="text-sm text-blue-100">{description}</p>
         </div>
       </div>
       
-      <div className="relative z-10">
-        <div className="flex items-center mb-3">
-          <div className="relative">
-            <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center mr-3 shadow-inner overflow-hidden">
-              {showAvatar ? (
-                <img 
-                  src={getClassAvatarImage()} 
-                  alt={className}
-                  className="w-full h-full object-cover object-center"
-                />
-              ) : (
-                <div className="animate-glow-pulse">{cardIcon}</div>
-              )}
-            </div>
-            {showAvatar && (
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center shadow-inner">
-                {cardIcon}
-              </div>
-            )}
-          </div>
-          <div>
-            <h3 className="font-orbitron font-bold text-xl tracking-wide">{className}</h3>
-            <p className="text-sm text-blue-100 font-sora">{description}</p>
-          </div>
-        </div>
+      <div className="mt-4">
+        <p className="text-sm text-blue-200 mb-2 flex items-center">
+          <span className="bg-white/20 rounded-full p-1 mr-2">🔍</span> 
+          Bônus Passivo
+        </p>
         
-        <div className="mt-4">
-          <div className="flex items-center mb-2">
-            <Badge variant="outline" className="bg-midnight/30 border-white/20 mr-2">
-              <Sparkles className="w-3 h-3 mr-1" />
-            </Badge> 
-            <p className="text-sm text-blue-200 font-sora">Bônus Passivo</p>
-          </div>
-          
-          {bonuses.length > 0 ? (
-            bonuses.map((bonus, index) => (
-              <div 
-                key={index} 
-                className="mb-3 card-glass rounded-lg p-3 shadow-inner hover:bg-white/15 transition-colors transform hover:translate-y-[-2px] duration-200"
-              >
-                <div className="flex items-center">
-                  <span className="text-lg font-bold mr-2 whitespace-nowrap font-space-grotesk tracking-wider animate-pulse">{bonus.value}</span>
-                  <p className="text-sm font-sora">{bonus.description}</p>
-                </div>
+        {bonuses.length > 0 ? (
+          bonuses.map((bonus, index) => (
+            <div key={index} className="mb-3 bg-white/10 backdrop-blur-sm rounded-lg p-3 shadow-inner hover:bg-white/15 transition-colors">
+              <div className="flex items-center">
+                <span className="text-lg font-bold mr-2 whitespace-nowrap">{bonus.value}</span>
+                <p className="text-sm">{bonus.description}</p>
               </div>
-            ))
-          ) : (
-            <div className="mb-3 card-glass rounded-lg p-3 shadow-inner">
-              <p className="text-sm text-center text-white/70 font-sora">
-                {className === 'Sem Classe' 
-                  ? 'Selecione uma classe para obter bônus' 
-                  : 'Carregando bonificações...'}
-              </p>
             </div>
-          )}
-        </div>
+          ))
+        ) : (
+          <div className="mb-3 bg-white/10 backdrop-blur-sm rounded-lg p-3 shadow-inner">
+            <p className="text-sm text-center text-white/70">
+              {className === 'Sem Classe' 
+                ? 'Selecione uma classe para obter bônus' 
+                : 'Carregando bonificações...'}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

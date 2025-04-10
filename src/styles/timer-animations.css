@@ -1,211 +1,46 @@
 
-/* Timer animations - refined for premium look */
-@keyframes countdown {
-  from { stroke-dashoffset: 0; }
-  to { stroke-dashoffset: var(--dash-length); }
-}
-
-@keyframes pulse-ring {
-  0% { transform: scale(0.97); opacity: 0.6; }
-  50% { transform: scale(1.03); opacity: 0.8; }
-  100% { transform: scale(0.97); opacity: 0.6; }
-}
-
-@keyframes pulse-dot {
-  0% { transform: scale(0.95); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(0.95); }
-}
-
-@keyframes timer-fade-in {
-  0% { opacity: 0; transform: scale(0.9); }
-  100% { opacity: 1; transform: scale(1); }
-}
-
-@keyframes timer-countdown-complete {
-  0% { transform: scale(1); }
-  10% { transform: scale(1.05); filter: brightness(1.1); }
-  20% { transform: scale(1); }
-  100% { transform: scale(1); }
-}
-
-/* Magic particles animation - refined for subtlety */
-@keyframes magic-particles {
+@keyframes pulse {
   0% {
-    transform: translateY(0) scale(1);
-    opacity: 0;
+    transform: scale(1);
   }
-  10% {
-    opacity: 0.7;
-  }
-  80% {
-    opacity: 0.3;
+  50% {
+    transform: scale(1.02);
   }
   100% {
-    transform: translateY(-15px) scale(0);
-    opacity: 0;
-  }
-}
-
-/* Achievement unlock animation - refined for sophistication */
-@keyframes achievement-reveal {
-  0% { 
-    opacity: 0;
-    transform: translateY(15px) scale(0.9);
-    filter: blur(3px);
-  }
-  100% { 
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
-  }
-}
-
-@keyframes xp-gain {
-  0% { 
-    opacity: 0;
-    transform: scale(0.85);
-  }
-  50% { 
-    opacity: 1;
-    transform: scale(1.1);
-    filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.5));
-  }
-  100% { 
-    opacity: 1;
     transform: scale(1);
   }
 }
 
-@keyframes level-up-shine {
-  0% {
-    background-position: -300px;
-  }
-  100% {
-    background-position: 300px;
-  }
+.pulse {
+  animation: pulse 0.2s ease-in-out;
 }
 
-/* Progress bar fill animation - refined for smoothness */
-@keyframes progress-fill {
-  0% {
-    width: 0%;
-    opacity: 0.5;
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
-  50% {
-    opacity: 0.8;
-  }
-  100% {
-    width: 100%;
-    opacity: 0.7;
-  }
-}
-
-/* Border glow animation - refined for subtlety */
-@keyframes border-glow {
-  0%, 100% {
-    box-shadow: 0 0 6px rgba(124, 58, 237, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 10px rgba(124, 58, 237, 0.5);
-  }
-}
-
-/* Trophy shine effect - refined for premium look */
-@keyframes trophy-shine {
-  0% {
-    background-position: -100% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-/* Glow animations for elements - refined intensity */
-.glow-arcane {
-  animation: border-glow 2.5s infinite;
-  box-shadow: 0 0 6px rgba(124, 58, 237, 0.3);
-}
-
-.glow-valor {
-  animation: border-glow 2.5s infinite;
-  box-shadow: 0 0 6px rgba(239, 68, 68, 0.3);
-}
-
-.glow-xpgold {
-  animation: border-glow 2.5s infinite;
-  box-shadow: 0 0 6px rgba(250, 204, 21, 0.3);
-}
-
-.trophy-icon {
-  position: relative;
-  overflow: hidden;
-}
-
-.trophy-icon::after {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -100%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(
-    to right,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.2) 50%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  transform: rotate(30deg);
-  animation: trophy-shine 3.5s infinite;
-}
-
-/* Float animation - subtle movement */
-@keyframes float {
-  0%, 100% {
+  to {
+    opacity: 1;
     transform: translateY(0);
   }
-  50% {
-    transform: translateY(-3px);
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+@keyframes scale-in {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
   }
 }
 
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-/* Shimmer effect for gradients - refined */
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.animate-shimmer {
-  animation: shimmer 2.5s linear infinite;
-  background-image: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.1) 50%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  background-size: 200% 100%;
-}
-
-/* Subtle glow pulse for important elements */
-@keyframes glow-pulse {
-  0%, 100% {
-    opacity: 0.7;
-    filter: brightness(1);
-  }
-  50% {
-    opacity: 0.9;
-    filter: brightness(1.1);
-  }
-}
-
-.animate-glow-pulse {
-  animation: glow-pulse 2.5s ease-in-out infinite;
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out;
 }

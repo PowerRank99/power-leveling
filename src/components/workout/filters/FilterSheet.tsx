@@ -45,16 +45,16 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
           />
         </div>
       </SheetTrigger>
-      <SheetContent side="bottom" className="h-[60vh] bg-white dark:bg-gray-800">
+      <SheetContent side="bottom" className="h-[60vh]">
         <SheetHeader>
-          <SheetTitle className="dark:text-white">{title}</SheetTitle>
+          <SheetTitle>{title}</SheetTitle>
         </SheetHeader>
         <div className="grid grid-cols-2 gap-2 mt-4">
           {allOptions.map(option => (
             <SheetClose key={option} asChild>
               <Button 
                 variant={selectedOption === option ? "default" : "outline"}
-                className="justify-start dark:text-white dark:border-gray-700 dark:hover:bg-gray-700"
+                className="justify-start"
                 onClick={() => handleOptionSelect(option)}
               >
                 {option}

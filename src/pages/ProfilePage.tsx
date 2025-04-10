@@ -71,29 +71,31 @@ const ProfilePage = () => {
     navigate('/perfil/editar');
   };
   
+  // Get class icon based on selected class
   const getClassIcon = () => {
-    if (!userClass) return <Shield className="w-5 h-5 text-ghost-white-95" />;
+    if (!userClass) return <Shield className="w-5 h-5 text-white" />;
     
     switch (userClass) {
-      case 'Guerreiro': return <Sword className="w-5 h-5 text-ghost-white-95" />;
-      case 'Monge': return <Dumbbell className="w-5 h-5 text-ghost-white-95" />;
-      case 'Ninja': return <Wind className="w-5 h-5 text-ghost-white-95" />;
-      case 'Bruxo': return <Sparkles className="w-5 h-5 text-ghost-white-95" />;
-      case 'Paladino': return <Shield className="w-5 h-5 text-ghost-white-95" />;
-      default: return <Shield className="w-5 h-5 text-ghost-white-95" />;
+      case 'Guerreiro': return <Sword className="w-5 h-5 text-white" />;
+      case 'Monge': return <Dumbbell className="w-5 h-5 text-white" />;
+      case 'Ninja': return <Wind className="w-5 h-5 text-white" />;
+      case 'Bruxo': return <Sparkles className="w-5 h-5 text-white" />;
+      case 'Paladino': return <Shield className="w-5 h-5 text-white" />;
+      default: return <Shield className="w-5 h-5 text-white" />;
     }
   };
   
+  // RPG data 
   const rpgData = {
     level: profile?.level || 1,
     currentXP: profile?.xp || 0,
     nextLevelXP: (profile?.level || 1) * 100,
-    dailyXP: 150,
+    dailyXP: 150, // Mock data - could be calculated based on today's workouts
     dailyXPCap: 300,
     streak: profile?.streak || 0,
     achievements: {
       unlocked: profile?.achievements_count || 0,
-      total: 50
+      total: 50 // Mock total achievements
     },
     className: userClass || 'Sem Classe',
     classDescription: ClassService.getClassDescription(userClass),
@@ -101,6 +103,7 @@ const ProfilePage = () => {
     xpGain: '+25 EXP',
   };
   
+  // Mock recent achievements
   const recentAchievements = [
     {
       id: 'streak',
@@ -120,16 +123,16 @@ const ProfilePage = () => {
     }
   ];
   
+  // Default avatar if user doesn't have one
   const userAvatar = profile?.avatar_url || "/lovable-uploads/c6066df0-70c1-48cf-b017-126e8f7e850a.png";
   const userName = profile?.name || user?.email || 'User';
   const userName1 = userName.split('@')[0] || 'user';
   const userName2 = userName1.toLowerCase().replace(/\s/g, '');
   
   return (
-    <div className="pb-20 min-h-screen bg-bg-deep">
+    <div className="pb-20 min-h-screen bg-gray-50">
       <PageHeader 
         title="Perfil" 
-        showThemeToggle={true}
         rightContent={
           <div className="flex gap-2">
             <Button 
@@ -170,7 +173,6 @@ const ProfilePage = () => {
           dailyXPCap={rpgData.dailyXPCap}
           lastActivity={rpgData.lastActivity}
           xpGain={rpgData.xpGain}
-          streak={rpgData.streak}
         />
         
         <StreakAchievementsSection 

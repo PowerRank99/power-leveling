@@ -6,71 +6,16 @@ interface StatCardProps {
   value: number | string;
   label: string;
   light?: boolean;
-  animateValue?: boolean;
-  color?: 'arcane' | 'valor' | 'xpgold' | 'energy' | 'restgreen';
 }
 
-const StatCard: React.FC<StatCardProps> = ({ 
-  icon, 
-  value, 
-  label, 
-  light = false,
-  animateValue = false,
-  color = 'arcane'
-}) => {
-  // Determine color classes based on the color prop with refined muted tones
-  const getColorClass = () => {
-    switch(color) {
-      case 'valor': return 'text-valor-crimson-60';
-      case 'xpgold': return 'text-xp-gold-60';
-      case 'energy': return 'text-energy-cyan';
-      case 'restgreen': return 'text-rest-green';
-      default: return 'text-arcane-purple-60';
-    }
-  };
-  
-  const getGlowClass = () => {
-    switch(color) {
-      case 'valor': return 'shadow-glow-valor';
-      case 'xpgold': return 'shadow-glow-xpgold';
-      case 'energy': return 'shadow-glow-energy';
-      default: return 'shadow-glow-md';
-    }
-  };
-  
+const StatCard: React.FC<StatCardProps> = ({ icon, value, label, light = false }) => {
   return (
-    <div className="flex flex-col items-center relative">
-      {/* Refined subtle particle effects for animated values */}
-      {animateValue && (
-        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-70">
-          {[...Array(1)].map((_, i) => (
-            <div 
-              key={i}
-              className={`absolute w-0.5 h-0.5 ${color === 'xpgold' ? 'bg-xp-gold-60' : color === 'energy' ? 'bg-energy-cyan' : 'bg-arcane-purple-60'} rounded-full opacity-60`}
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animation: `magic-particles ${1 + Math.random()}s ease-out`,
-                animationDelay: `${Math.random() * 2}s`
-              }}
-            ></div>
-          ))}
-        </div>
-      )}
-
-      <div className={`mb-1 transform transition-premium ${animateValue ? 'animate-float' : 'hover:scale-105'}`}>
+    <div className="flex flex-col items-center">
+      <div className="mb-1">
         {icon}
       </div>
-      
-      {value && (
-        <span className={`text-lg font-ibm-plex font-medium tracking-wider ${light ? "text-ghost-white-95" : "text-gray-800 dark:text-ghost-white-95"} ${animateValue ? getColorClass() : ''} ${animateValue ? getGlowClass() : ''}`}>
-          {value}
-        </span>
-      )}
-      
-      <span className={`text-xs font-sora ${light ? "text-ghost-white-50/80" : "text-gray-500 dark:text-ghost-white-50"}`}>
-        {label}
-      </span>
+      {value && <span className={`text-xl font-bold ${light ? "text-white" : ""}`}>{value}</span>}
+      <span className={`text-xs ${light ? "text-blue-100" : "text-gray-500"}`}>{label}</span>
     </div>
   );
 };
