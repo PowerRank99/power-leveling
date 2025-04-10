@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -71,7 +70,6 @@ const ProfilePage = () => {
     navigate('/perfil/editar');
   };
   
-  // Get class icon based on selected class
   const getClassIcon = () => {
     if (!userClass) return <Shield className="w-5 h-5 text-white" />;
     
@@ -85,17 +83,16 @@ const ProfilePage = () => {
     }
   };
   
-  // RPG data 
   const rpgData = {
     level: profile?.level || 1,
     currentXP: profile?.xp || 0,
     nextLevelXP: (profile?.level || 1) * 100,
-    dailyXP: 150, // Mock data - could be calculated based on today's workouts
+    dailyXP: 150,
     dailyXPCap: 300,
     streak: profile?.streak || 0,
     achievements: {
       unlocked: profile?.achievements_count || 0,
-      total: 50 // Mock total achievements
+      total: 50
     },
     className: userClass || 'Sem Classe',
     classDescription: ClassService.getClassDescription(userClass),
@@ -103,7 +100,6 @@ const ProfilePage = () => {
     xpGain: '+25 EXP',
   };
   
-  // Mock recent achievements
   const recentAchievements = [
     {
       id: 'streak',
@@ -123,16 +119,16 @@ const ProfilePage = () => {
     }
   ];
   
-  // Default avatar if user doesn't have one
   const userAvatar = profile?.avatar_url || "/lovable-uploads/c6066df0-70c1-48cf-b017-126e8f7e850a.png";
   const userName = profile?.name || user?.email || 'User';
   const userName1 = userName.split('@')[0] || 'user';
   const userName2 = userName1.toLowerCase().replace(/\s/g, '');
   
   return (
-    <div className="pb-20 min-h-screen bg-gray-50">
+    <div className="pb-20 min-h-screen bg-gray-50 dark:bg-gray-900">
       <PageHeader 
         title="Perfil" 
+        showThemeToggle={true}
         rightContent={
           <div className="flex gap-2">
             <Button 

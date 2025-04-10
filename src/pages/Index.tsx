@@ -63,7 +63,7 @@ const IndexPage = () => {
   ];
   
   return (
-    <div className="pb-20 bg-gray-50 min-h-screen">
+    <div className="pb-20 bg-gray-50 dark:bg-gray-900 min-h-screen">
       {/* Header */}
       <FeedHeader />
       
