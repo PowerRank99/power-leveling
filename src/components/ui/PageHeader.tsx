@@ -30,19 +30,19 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   };
   
   return (
-    <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 z-10">
+    <div className="sticky top-0 bg-background border-b border-border z-10">
       <div className="px-4 py-4 flex items-center justify-between">
         <div className="flex items-center">
           {showBackButton && (
             <button 
               onClick={handleBackClick}
-              className="mr-3 p-1 text-gray-800 dark:text-gray-200"
+              className="mr-3 p-1 text-foreground"
               aria-label="Voltar"
             >
               <BackIcon className="w-6 h-6" />
             </button>
           )}
-          <h1 className="text-xl font-bold dark:text-white">{title}</h1>
+          <h1 className="text-xl font-bold text-foreground">{title}</h1>
         </div>
         <div className="flex items-center gap-2">
           {showThemeToggle && <ThemeToggle />}
