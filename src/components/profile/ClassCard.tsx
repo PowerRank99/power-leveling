@@ -95,6 +95,64 @@ const ClassCard: React.FC<ClassCardProps> = ({
     return ClassFlavorMap[className.toLowerCase()] || 'Siga sua jornada para evoluir suas habilidades.';
   };
   
+  // Get border and background colors based on class
+  const getClassColors = () => {
+    const lowerClass = className.toLowerCase();
+    
+    switch(lowerClass) {
+      case 'guerreiro':
+        return {
+          border: 'border-valor-30',
+          accent: 'bg-valor-15',
+          iconBg: 'text-valor',
+          shadow: 'shadow-glow-valor',
+          textAccent: 'text-valor'
+        };
+      case 'monge':
+        return {
+          border: 'border-amber-500/30',
+          accent: 'bg-amber-500/15',
+          iconBg: 'text-amber-500',
+          shadow: 'shadow-[0_0_15px_rgba(245,158,11,0.4)]',
+          textAccent: 'text-amber-500'
+        };
+      case 'ninja':
+        return {
+          border: 'border-emerald-500/30',
+          accent: 'bg-emerald-500/15',
+          iconBg: 'text-emerald-500',
+          shadow: 'shadow-[0_0_15px_rgba(16,185,129,0.4)]',
+          textAccent: 'text-emerald-500'
+        };
+      case 'bruxo':
+        return {
+          border: 'border-blue-500/30',
+          accent: 'bg-blue-500/15',
+          iconBg: 'text-blue-500',
+          shadow: 'shadow-[0_0_15px_rgba(59,130,246,0.4)]',
+          textAccent: 'text-blue-500'
+        };
+      case 'paladino':
+        return {
+          border: 'border-achievement-30',
+          accent: 'bg-achievement-15',
+          iconBg: 'text-achievement',
+          shadow: 'shadow-glow-gold',
+          textAccent: 'text-achievement'
+        };
+      default:
+        return {
+          border: 'border-arcane-30',
+          accent: 'bg-arcane-15',
+          iconBg: 'text-arcane-60',
+          shadow: 'shadow-glow-purple',
+          textAccent: 'text-arcane'
+        };
+    }
+  };
+  
+  const classColors = getClassColors();
+  
   // Consolidate and translate bonuses - limit to maximum 2
   const consolidateBonuses = (bonuses: ClassBonus[]) => {
     if (!bonuses || bonuses.length === 0) return [];
@@ -140,10 +198,10 @@ const ClassCard: React.FC<ClassCardProps> = ({
   const displayBonuses = consolidateBonuses(bonuses);
   
   return (
-    <div className="class-card p-4 mt-4 transition-all duration-300 hover:shadow-glow-purple border border-arcane-15 hover:border-arcane-30 rounded-xl">
+    <div className={`class-card p-4 mt-4 transition-all duration-300 hover:${classColors.shadow} border ${classColors.border} hover:border-opacity-50 rounded-xl`}>
       <div className="flex items-center mb-3">
         <div className="relative">
-          <div className="w-12 h-12 bg-midnight-elevated backdrop-blur-sm rounded-lg flex items-center justify-center mr-3 shadow-subtle overflow-hidden border border-arcane-30">
+          <div className={`w-12 h-12 bg-midnight-elevated backdrop-blur-sm rounded-lg flex items-center justify-center mr-3 shadow-subtle overflow-hidden border ${classColors.border}`}>
             {showAvatar ? (
               <img 
                 src={getClassAvatarImage()} 
@@ -155,7 +213,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
             )}
           </div>
           {showAvatar && (
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-arcane rounded-full flex items-center justify-center shadow-glow-purple">
+            <div className={`absolute -bottom-1 -right-1 w-6 h-6 ${classColors.accent} rounded-full flex items-center justify-center ${classColors.shadow}`}>
               {cardIcon}
             </div>
           )}
@@ -168,7 +226,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
       
       <div className="mt-4">
         <div className="flex items-center mb-2 font-sora">
-          <span className="bg-arcane-15 rounded-full p-1 mr-2 border border-arcane-30 shadow-subtle text-arcane-60">🟣</span>
+          <span className={`${classColors.accent} rounded-full p-1 mr-2 border ${classColors.border} shadow-subtle ${classColors.iconBg}`}>🟣</span>
           <span className="text-sm text-text-secondary">Bônus Passivo</span>
         </div>
         
@@ -178,12 +236,12 @@ const ClassCard: React.FC<ClassCardProps> = ({
               <TooltipProvider key={index}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="transition-all duration-300 hover:scale-105 bg-midnight-elevated backdrop-blur-sm rounded-lg p-3 shadow-subtle hover:shadow-glow-purple border border-arcane-30 flex items-center">
-                      <div className="flex-shrink-0 mr-3 bg-arcane-15 p-1.5 rounded-full border border-arcane-30">
+                    <div className={`transition-all duration-300 hover:scale-105 bg-midnight-elevated backdrop-blur-sm rounded-lg p-3 shadow-subtle hover:${classColors.shadow} border ${classColors.border} flex items-center`}>
+                      <div className={`flex-shrink-0 mr-3 ${classColors.accent} p-1.5 rounded-full border ${classColors.border}`}>
                         {typeof bonus.description === 'string' ? getBonusIcon(bonus.description) : BonusIconMap.strength}
                       </div>
                       <div className="flex items-center flex-1">
-                        <span className="text-lg font-bold mr-2 whitespace-nowrap font-space text-arcane shadow-glow-subtle">{bonus.value}</span>
+                        <span className={`text-lg font-bold mr-2 whitespace-nowrap font-space ${classColors.textAccent} shadow-glow-subtle`}>{bonus.value}</span>
                         <p className="text-sm font-sora text-text-secondary">{bonus.description}</p>
                       </div>
                     </div>
@@ -196,7 +254,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
             ))}
           </div>
         ) : (
-          <div className="mb-3 bg-midnight-elevated backdrop-blur-sm rounded-lg p-3 shadow-subtle border border-arcane-30">
+          <div className={`mb-3 bg-midnight-elevated backdrop-blur-sm rounded-lg p-3 shadow-subtle border ${classColors.border}`}>
             <p className="text-sm text-center text-text-tertiary font-sora">
               {className === 'Sem Classe' 
                 ? 'Selecione uma classe para obter bônus' 
