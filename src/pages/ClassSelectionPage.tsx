@@ -51,7 +51,7 @@ const ClassSelectionPage = () => {
   };
   
   return (
-    <div className="pb-20 min-h-screen bg-gray-50">
+    <div className="pb-20 min-h-screen bg-gradient-to-b from-midnight to-midnight-100">
       <PageHeader 
         title="Seleção de Classe"
         showBackButton={true}
@@ -72,7 +72,7 @@ const ClassSelectionPage = () => {
           </div>
         ) : (
           <>
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">Classes Disponíveis</h3>
+            <h3 className="text-xl font-display mb-4 text-arcane-100 tracking-wide">Classes Disponíveis</h3>
             
             <ClassCarousel
               classes={classes}

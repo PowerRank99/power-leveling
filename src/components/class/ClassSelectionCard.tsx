@@ -41,14 +41,14 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
   return (
     <div 
       className={`h-full rounded-xl overflow-hidden shadow-md transition-all duration-300 transform cursor-pointer
-        ${isSelected ? 'ring-4 ring-fitblue ring-offset-2' : ''}
+        ${isSelected ? 'ring-4 ring-arcane shadow-glow' : ''}
         ${isFocused ? 'scale-100 opacity-100 z-10' : 'scale-90 opacity-70'}
         ${isOnCooldown && !isCurrentClass ? 'opacity-60' : ''}
         ${isFocused ? 'shadow-lg' : 'shadow-md'}
       `}
       onClick={onClick}
     >
-      <div className={`bg-gradient-to-br ${classInfo.color} text-white p-5 h-full flex flex-col`}>
+      <div className={`bg-gradient-to-br ${classInfo.color} text-ghost p-5 h-full flex flex-col`}>
         <div className="flex items-start mb-3">
           <div className="relative">
             <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center mr-3 shadow-inner overflow-hidden">
@@ -58,26 +58,26 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
                 className="w-full h-full object-cover object-center"
               />
             </div>
-            <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center shadow-inner">
+            <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-black/30 backdrop-blur-sm rounded-full flex items-center justify-center shadow-inner">
               {getClassIcon(classInfo.icon)}
             </div>
           </div>
           <div className="flex-1">
             <div className="flex items-center">
-              <h3 className="font-bold text-2xl">{classInfo.class_name}</h3>
+              <h3 className="font-display text-2xl tracking-wide">{classInfo.class_name}</h3>
               {isCurrentClass && (
                 <span className="ml-2 bg-white/30 text-white text-xs px-2 py-0.5 rounded-full flex items-center">
                   <Check className="w-3 h-3 mr-1" /> Atual
                 </span>
               )}
             </div>
-            <p className="text-white/90">{classInfo.description}</p>
+            <p className="text-ghost/90 font-body">{classInfo.description}</p>
           </div>
         </div>
         
         <div className="flex-1">
-          <p className="text-sm text-white/80 mb-2 flex items-center">
-            <span className="bg-white/20 rounded-full p-1 mr-2">🔍</span> 
+          <p className="text-sm text-ghost/80 mb-2 flex items-center font-mono">
+            <span className="bg-black/20 rounded-full p-1 mr-2">✧</span> 
             Bônus Passivo
           </p>
           
@@ -85,10 +85,10 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
             {displayBonuses.map((bonus, idx) => (
               <div 
                 key={idx} 
-                className="bg-white/10 backdrop-blur-sm rounded-lg p-3 shadow-inner hover:bg-white/15 transition-colors"
+                className="bg-black/20 backdrop-blur-sm rounded-lg p-3 shadow-inner hover:bg-black/30 transition-colors"
               >
                 <div className="flex items-center">
-                  <span className="text-lg font-bold mr-2 whitespace-nowrap">
+                  <span className="text-lg font-bold mr-2 whitespace-nowrap font-mono text-xpgold">
                     {`+${Math.round(bonus.bonus_value * 100)}%`}
                   </span>
                   <p className="text-sm">{bonus.description}</p>

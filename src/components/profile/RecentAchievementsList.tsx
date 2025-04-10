@@ -1,8 +1,9 @@
 
 import React from 'react';
-import { ChevronRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { ChevronRight, Trophy } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 interface Achievement {
   id: string;
@@ -16,37 +17,58 @@ interface RecentAchievementsListProps {
 }
 
 const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achievements }) => {
+  const navigate = useNavigate();
+  
   return (
-    <Card className="mt-3 shadow-sm border-none">
+    <Card className="rpg-panel overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-xpgold/5 to-energy/5 opacity-20"></div>
+      
       <CardHeader className="px-4 py-3 flex flex-row justify-between items-center">
-        <h3 className="text-lg font-bold text-gray-800">Conquistas Recentes</h3>
-        <Link to="/conquistas" className="text-fitblue flex items-center text-sm">
-          Ver Todas <ChevronRight className="w-4 h-4" />
-        </Link>
-      </CardHeader>
-
-      <CardContent className="p-4 pt-2">
-        <div className="flex justify-between gap-2">
-          {achievements.map((achievement) => (
-            <div
-              key={achievement.id}
-              className={`flex flex-col items-center justify-center rounded-full w-20 h-20 ${
-                achievement.isLocked 
-                  ? 'bg-gray-100 text-gray-400' 
-                  : achievement.id === 'streak' 
-                    ? 'bg-gradient-to-br from-orange-400 to-orange-600 text-white' 
-                    : achievement.id === 'workouts' 
-                      ? 'bg-gradient-to-br from-fitblue to-fitblue-700 text-white' 
-                      : 'bg-gradient-to-br from-fitpurple to-fitpurple-700 text-white'
-              } shadow-md transform transition-transform hover:scale-105 cursor-pointer`}
-            >
-              <div className="flex items-center justify-center">
-                {achievement.icon}
-              </div>
-              <span className="text-xs text-center mt-1 font-medium">{achievement.name}</span>
-            </div>
-          ))}
+        <div className="flex items-center">
+          <Trophy className="w-5 h-5 text-xpgold mr-2" />
+          <CardTitle className="text-lg">Conquistas Recentes</CardTitle>
         </div>
+        <Button 
+          variant="ghost" 
+          className="text-xpgold flex items-center text-sm h-auto p-0 hover:text-xpgold" 
+          onClick={() => navigate('/conquistas')}
+        >
+          Ver Todas <ChevronRight className="w-4 h-4" />
+        </Button>
+      </CardHeader>
+      
+      <CardContent className="p-0 relative z-10">
+        {achievements.map((achievement) => (
+          <div 
+            key={achievement.id} 
+            className={`
+              flex items-center p-4 border-t border-arcane/10
+              ${achievement.isLocked ? 'opacity-60' : ''}
+            `}
+          >
+            <div className={`
+              w-10 h-10 rounded-full flex items-center justify-center mr-3
+              ${achievement.isLocked 
+                ? 'bg-midnight-200 text-ghost-500' 
+                : 'bg-xpgold/20 text-xpgold-500'}
+            `}>
+              {achievement.icon}
+            </div>
+            <div className="flex-1">
+              <p className={`font-medium ${achievement.isLocked ? 'text-ghost-500' : 'text-ghost'}`}>
+                {achievement.name}
+              </p>
+              {achievement.isLocked && (
+                <p className="text-xs text-ghost-600">Complete desafios para desbloquear</p>
+              )}
+            </div>
+            {!achievement.isLocked && (
+              <div className="flex items-center">
+                <span className="text-xs bg-xpgold/20 text-xpgold px-2 py-1 rounded-full font-mono">+50 XP</span>
+              </div>
+            )}
+          </div>
+        ))}
       </CardContent>
     </Card>
   );

@@ -1,46 +1,103 @@
 
+/* Pulsating effect for elements that need attention */
+.pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
 @keyframes pulse {
-  0% {
+  0%, 100% {
+    opacity: 1;
     transform: scale(1);
   }
   50% {
-    transform: scale(1.02);
-  }
-  100% {
-    transform: scale(1);
+    opacity: 0.8;
+    transform: scale(1.05);
   }
 }
 
-.pulse {
-  animation: pulse 0.2s ease-in-out;
+/* Floating animation for UI elements */
+.float {
+  animation: float 3s ease-in-out infinite;
 }
 
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
+@keyframes float {
+  0%, 100% {
     transform: translateY(0);
   }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.3s ease-out;
-}
-
-@keyframes scale-in {
-  from {
-    transform: scale(0.95);
-    opacity: 0;
+  50% {
+    transform: translateY(-10px);
   }
-  to {
+}
+
+/* Shimmer effect for XP gain and leveling */
+.shimmer {
+  background: linear-gradient(90deg, rgba(250,204,21,0) 0%, rgba(250,204,21,0.3) 50%, rgba(250,204,21,0) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Level up flash animation */
+.level-up-flash {
+  animation: level-up-flash 2s ease-out forwards;
+}
+
+@keyframes level-up-flash {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  10% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  20% {
     transform: scale(1);
+  }
+  80% {
     opacity: 1;
   }
+  100% {
+    opacity: 0;
+  }
 }
 
-.animate-scale-in {
-  animation: scale-in 0.3s ease-out;
+/* Progress bar filling animation */
+.progress-fill {
+  animation: progress-fill 1s ease-out forwards;
+}
+
+@keyframes progress-fill {
+  from {
+    width: 0;
+  }
+  to {
+    width: var(--fill-width);
+  }
+}
+
+/* Timer countdown animation */
+.countdown-ring {
+  stroke-dasharray: 283;
+  stroke-dashoffset: 0;
+  transform-origin: center;
+  transform: rotate(-90deg);
+  animation: countdown linear forwards;
+}
+
+@keyframes countdown {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: 283;
+  }
 }

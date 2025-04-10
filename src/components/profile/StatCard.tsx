@@ -14,8 +14,8 @@ const StatCard: React.FC<StatCardProps> = ({ icon, value, label, light = false }
       <div className="mb-1">
         {icon}
       </div>
-      {value && <span className={`text-xl font-bold ${light ? "text-white" : ""}`}>{value}</span>}
-      <span className={`text-xs ${light ? "text-blue-100" : "text-gray-500"}`}>{label}</span>
+      {value && <span className={`text-xl font-bold font-mono ${light ? "text-ghost" : "text-ghost"}`}>{value}</span>}
+      <span className={`text-xs ${light ? "text-ghost-400" : "text-ghost-500"} font-display tracking-wide`}>{label}</span>
     </div>
   );
 };

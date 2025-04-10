@@ -73,15 +73,15 @@ const ProfilePage = () => {
   
   // Get class icon based on selected class
   const getClassIcon = () => {
-    if (!userClass) return <Shield className="w-5 h-5 text-white" />;
+    if (!userClass) return <Shield className="w-5 h-5 text-xpgold" />;
     
     switch (userClass) {
-      case 'Guerreiro': return <Sword className="w-5 h-5 text-white" />;
-      case 'Monge': return <Dumbbell className="w-5 h-5 text-white" />;
-      case 'Ninja': return <Wind className="w-5 h-5 text-white" />;
-      case 'Bruxo': return <Sparkles className="w-5 h-5 text-white" />;
-      case 'Paladino': return <Shield className="w-5 h-5 text-white" />;
-      default: return <Shield className="w-5 h-5 text-white" />;
+      case 'Guerreiro': return <Sword className="w-5 h-5 text-xpgold" />;
+      case 'Monge': return <Dumbbell className="w-5 h-5 text-xpgold" />;
+      case 'Ninja': return <Wind className="w-5 h-5 text-xpgold" />;
+      case 'Bruxo': return <Sparkles className="w-5 h-5 text-xpgold" />;
+      case 'Paladino': return <Shield className="w-5 h-5 text-xpgold" />;
+      default: return <Shield className="w-5 h-5 text-xpgold" />;
     }
   };
   
@@ -107,17 +107,17 @@ const ProfilePage = () => {
   const recentAchievements = [
     {
       id: 'streak',
-      icon: <Flame className="w-5 h-5" />,
+      icon: <Flame className="w-5 h-5 text-valor" />,
       name: '7 Dias Seguidos'
     },
     {
       id: 'workouts',
-      icon: <Dumbbell className="w-5 h-5" />,
+      icon: <Dumbbell className="w-5 h-5 text-energy" />,
       name: '50 Treinos'
     },
     {
       id: 'locked',
-      icon: <Award className="w-5 h-5" />,
+      icon: <Award className="w-5 h-5 text-steel-400" />,
       name: 'Bloqueada',
       isLocked: true
     }
@@ -130,7 +130,7 @@ const ProfilePage = () => {
   const userName2 = userName1.toLowerCase().replace(/\s/g, '');
   
   return (
-    <div className="pb-20 min-h-screen bg-gray-50">
+    <div className="pb-20 min-h-screen bg-gradient-to-b from-midnight to-midnight-100">
       <PageHeader 
         title="Perfil" 
         rightContent={
@@ -140,6 +140,7 @@ const ProfilePage = () => {
               size="icon" 
               onClick={handleEditProfile}
               title="Editar perfil"
+              className="text-ghost hover:text-arcane-200 hover:bg-midnight-50"
             >
               <Edit3 className="h-5 w-5" />
             </Button>
@@ -148,6 +149,7 @@ const ProfilePage = () => {
               size="icon" 
               onClick={handleSignOut}
               title="Sair da conta"
+              className="text-ghost hover:text-valor-300 hover:bg-midnight-50"
             >
               <LogOut className="h-5 w-5" />
             </Button>
