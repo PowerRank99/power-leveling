@@ -1,10 +1,11 @@
 
 import React from 'react';
-import { Award } from 'lucide-react';
+import { Award, Trophy, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Trophy from '@/components/icons/Trophy';
 import StatCard from '@/components/profile/StatCard';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import XPProgressBar from '@/components/profile/XPProgressBar';
 
 interface ProfileHeaderProps {
   avatar: string;
@@ -29,7 +30,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   currentXP,
   nextLevelXP
 }) => {
-  const levelProgress = Math.min(Math.round((currentXP / nextLevelXP) * 100), 100);
+  const isTopRanking = ranking <= 10;
   
   return (
     <div className="bg-gradient-to-b from-midnight-deep to-midnight-base text-text-primary p-6 relative rounded-b-xl shadow-elevated">
@@ -37,14 +38,23 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         <div className="relative">
           <Avatar className="h-24 w-24 profile-avatar">
             <AvatarImage src={avatar} alt={name} />
-            <AvatarFallback className="bg-midnight-elevated text-arcane font-orbitron">{name.charAt(0)}</AvatarFallback>
+            <AvatarFallback className="bg-midnight-elevated text-arcane orbitron-text">{name.charAt(0)}</AvatarFallback>
           </Avatar>
           
           {/* Level Badge */}
-          <div className="absolute -bottom-2 -right-2 level-badge px-2 py-1 rounded-full flex items-center">
-            <Award className="w-3 h-3 mr-1 text-arcane" /> 
-            <span className="font-space font-bold text-xs text-arcane">{level}</span>
-          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="absolute -bottom-2 -right-2 level-badge px-2 py-1 rounded-full flex items-center">
+                  <Award className="w-3 h-3 mr-1 text-arcane" /> 
+                  <span className="font-space font-bold text-xs text-arcane">{level}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p className="text-xs font-sora">Nível de Aventureiro</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
         
         <div className="ml-4 flex-1">
@@ -65,14 +75,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           </div>
           
           {/* Level Progress */}
-          <div className="mb-1 flex justify-between text-xs">
-            <span className="text-text-tertiary font-sora">Nível {level}</span>
-            <span className="font-space font-medium text-arcane-60">{currentXP}/{nextLevelXP} XP</span>
-          </div>
-          <div className="h-1.5 bg-divider rounded-full overflow-hidden">
-            <div className="progress-bar-fill h-full bg-gradient-to-r from-arcane-60 to-valor-60 rounded-full transition-all duration-500" 
-                 style={{ width: `${levelProgress}%` }}></div>
-          </div>
+          <XPProgressBar
+            current={currentXP}
+            total={nextLevelXP}
+            label={`Nível ${level}`}
+            showXpRemaining={true}
+            nextLevel={level + 1}
+          />
         </div>
       </div>
       
@@ -87,12 +96,32 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         
         <div className="h-10 w-px bg-divider my-auto"></div>
         
-        <StatCard 
-          icon={<div className="text-lg font-bold font-space text-achievement shadow-glow-gold">#{ranking}</div>}
-          value=""
-          label="Ranking"
-          light
-        />
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <StatCard 
+                  icon={
+                    <div className={`text-lg font-bold font-space ${isTopRanking ? 'text-achievement shadow-glow-gold' : 'text-arcane-60'}`}>
+                      #{ranking}
+                    </div>
+                  }
+                  value=""
+                  label={
+                    <div className="flex items-center">
+                      Ranking
+                      <Info className="w-3 h-3 ml-1 text-text-tertiary" />
+                    </div>
+                  }
+                  light
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              <p className="text-xs font-sora">Ranking semanal baseado em XP total</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 import React from 'react';
 import { Shield, Sword, Dumbbell, Wind, Sparkles } from 'lucide-react';
 import { ClassService } from '@/services/rpg/ClassService';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ClassBonus {
   description: string | React.ReactNode;
@@ -15,6 +16,16 @@ interface ClassCardProps {
   bonuses: ClassBonus[];
   showAvatar?: boolean;
 }
+
+// Icon mapping for bonus types
+const BonusIconMap: Record<string, React.ReactNode> = {
+  compound: <Sword className="w-4 h-4" />,
+  strength: <Dumbbell className="w-4 h-4" />,
+  bodyweight: <Wind className="w-4 h-4" />,
+  cardio: <Wind className="w-4 h-4" />,
+  flexibility: <Sparkles className="w-4 h-4" />,
+  recovery: <Shield className="w-4 h-4" />,
+};
 
 const ClassCard: React.FC<ClassCardProps> = ({
   className,
@@ -51,11 +62,48 @@ const ClassCard: React.FC<ClassCardProps> = ({
     
     return avatarMap[className.toLowerCase()] || '/lovable-uploads/d84a92f5-828a-4ff9-a21b-3233e15d4276.png';
   };
+
+  // Get bonus icon based on description text
+  const getBonusIcon = (description: string | React.ReactNode) => {
+    if (typeof description !== 'string') return BonusIconMap.strength;
+    
+    const lowerDesc = description.toLowerCase();
+    if (lowerDesc.includes('compost') || lowerDesc.includes('agachamento') || lowerDesc.includes('supino')) return BonusIconMap.compound;
+    if (lowerDesc.includes('força')) return BonusIconMap.strength;
+    if (lowerDesc.includes('peso corporal') || lowerDesc.includes('bodyweight')) return BonusIconMap.bodyweight;
+    if (lowerDesc.includes('cardio') || lowerDesc.includes('hiit')) return BonusIconMap.cardio;
+    if (lowerDesc.includes('flex') || lowerDesc.includes('yoga')) return BonusIconMap.flexibility;
+    if (lowerDesc.includes('recup') || lowerDesc.includes('mobil')) return BonusIconMap.recovery;
+    
+    return BonusIconMap.strength;
+  };
   
   const cardIcon = icon || getDefaultIcon();
   
+  // Consolidate and translate bonuses
+  const consolidateBonuses = (bonuses: ClassBonus[]) => {
+    if (!bonuses || bonuses.length === 0) return [];
+    
+    // Filter out duplicates and English versions
+    const seen = new Set();
+    return bonuses.filter(bonus => {
+      if (typeof bonus.description !== 'string') return true;
+      
+      // Skip loading placeholders
+      if (bonus.description.toString().includes('loading-text')) return true;
+      
+      const lowerDesc = bonus.description.toLowerCase();
+      if (seen.has(lowerDesc)) return false;
+      seen.add(lowerDesc);
+      
+      return true;
+    });
+  };
+  
+  const displayBonuses = consolidateBonuses(bonuses);
+  
   return (
-    <div className="class-card p-4 mt-4">
+    <div className="class-card p-4 mt-4 transition-all duration-300 hover:shadow-glow-purple">
       <div className="flex items-center mb-3">
         <div className="relative">
           <div className="w-12 h-12 bg-midnight-elevated backdrop-blur-sm rounded-lg flex items-center justify-center mr-3 shadow-subtle overflow-hidden border border-arcane-30">
@@ -82,20 +130,34 @@ const ClassCard: React.FC<ClassCardProps> = ({
       </div>
       
       <div className="mt-4">
-        <p className="text-sm text-text-secondary mb-2 flex items-center font-sora">
-          <span className="bg-arcane-15 rounded-full p-1 mr-2 border border-arcane-30 shadow-subtle">🔍</span> 
-          Bônus Passivo
-        </p>
+        <div className="flex items-center mb-2 font-sora">
+          <span className="bg-arcane-15 rounded-full p-1 mr-2 border border-arcane-30 shadow-subtle text-arcane-60">🟣</span>
+          <span className="text-sm text-text-secondary">Bônus Passivo</span>
+        </div>
         
-        {bonuses.length > 0 ? (
-          bonuses.map((bonus, index) => (
-            <div key={index} className="mb-3 bg-midnight-elevated backdrop-blur-sm rounded-lg p-3 shadow-subtle hover:shadow-glow-purple transition-all duration-300 border border-arcane-30">
-              <div className="flex items-center">
-                <span className="text-lg font-bold mr-2 whitespace-nowrap font-space text-arcane shadow-glow-subtle">{bonus.value}</span>
-                <p className="text-sm font-sora text-text-secondary">{bonus.description}</p>
-              </div>
-            </div>
-          ))
+        {displayBonuses.length > 0 ? (
+          <div className="grid grid-cols-1 gap-3">
+            {displayBonuses.map((bonus, index) => (
+              <TooltipProvider key={index}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="transition-all duration-300 hover:scale-105 bg-midnight-elevated backdrop-blur-sm rounded-lg p-3 shadow-subtle hover:shadow-glow-purple border border-arcane-30 flex items-center">
+                      <div className="flex-shrink-0 mr-3 bg-arcane-15 p-1.5 rounded-full border border-arcane-30">
+                        {typeof bonus.description === 'string' ? getBonusIcon(bonus.description) : BonusIconMap.strength}
+                      </div>
+                      <div className="flex items-center flex-1">
+                        <span className="text-lg font-bold mr-2 whitespace-nowrap font-space text-arcane shadow-glow-subtle">{bonus.value}</span>
+                        <p className="text-sm font-sora text-text-secondary">{bonus.description}</p>
+                      </div>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p className="text-xs">Bônus aplicado automaticamente durante treinos</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ))}
+          </div>
         ) : (
           <div className="mb-3 bg-midnight-elevated backdrop-blur-sm rounded-lg p-3 shadow-subtle border border-arcane-30">
             <p className="text-sm text-center text-text-tertiary font-sora">

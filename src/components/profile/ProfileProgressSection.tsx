@@ -1,8 +1,9 @@
 
 import React from 'react';
-import { Clock } from 'lucide-react';
+import { Clock, Trophy, Info } from 'lucide-react';
 import XPProgressBar from '@/components/profile/XPProgressBar';
 import { Card, CardContent } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ProfileProgressSectionProps {
   dailyXP: number;
@@ -23,6 +24,13 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
   const hasStreakBonus = streak >= 2;
   const streakBonusPercent = Math.min(streak * 5, 35); // 5% per day up to 35%
   
+  // Define milestone ticks for the XP progress
+  const milestones = [
+    { value: 100, label: 'Bronze', percent: (100 / dailyXPCap) * 100 },
+    { value: 200, label: 'Prata', percent: (200 / dailyXPCap) * 100 },
+    { value: dailyXPCap, label: 'Ouro', percent: 100 }
+  ];
+  
   return (
     <Card className="mt-3 premium-card hover:premium-card-elevated transition-all duration-300">
       <CardContent className="p-4">
@@ -31,29 +39,79 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
             Progresso Diário
           </h3>
           
+          <div className="flex items-center mb-3 justify-between">
+            <div className="flex items-center text-text-secondary font-sora text-sm">
+              <Clock className="w-4 h-4 mr-1 text-arcane-60" /> 
+              <span>Tempo Ativo: {lastActivity}</span>
+            </div>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="xp-value animate-pulse-subtle flex items-center">
+                    {xpGain.replace('XP', 'EXP')}
+                    <Info className="w-3 h-3 ml-1 text-achievement-60" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <p className="text-xs">XP ganho hoje</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+
           <XPProgressBar 
             current={dailyXP}
             total={dailyXPCap}
             label="EXP do Dia"
           />
           
-          {hasStreakBonus && (
-            <div className="mt-2 mb-2 text-xs flex justify-between items-center">
-              <span className="text-text-secondary font-sora">Bônus de Sequência ({streak} dias)</span>
-              <span className="text-arcane-60 font-space font-medium">+{streakBonusPercent}% EXP</span>
-            </div>
-          )}
-        </div>
-        
-        <div className="flex justify-between text-sm mt-4">
-          <div className="flex items-center text-text-tertiary">
-            <Clock className="w-4 h-4 mr-1" /> 
-            <span className="font-sora">{lastActivity}</span>
+          {/* Milestone ticks */}
+          <div className="relative h-1 mt-1 mb-3">
+            {milestones.map((milestone, index) => (
+              <TooltipProvider key={index}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div 
+                      className={`absolute top-0 w-1 h-3 transform -translate-y-1 rounded-full 
+                                ${dailyXP >= milestone.value ? 'bg-achievement shadow-glow-gold' : 'bg-divider'}`}
+                      style={{ left: `${milestone.percent}%` }}
+                    ></div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p className="text-xs">{milestone.label}: {milestone.value} XP</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ))}
           </div>
           
-          <div className="xp-value animate-pulse-subtle">
-            {xpGain.replace('XP', 'EXP')}
-          </div>
+          {hasStreakBonus && (
+            <div className="mt-2 mb-2 text-xs flex justify-between items-center bg-valor-15 rounded-lg p-2 border border-valor-30">
+              <div className="flex items-center">
+                <div className="mr-2 bg-gradient-to-br from-valor to-valor-60 p-1 rounded-full shadow-glow-purple text-white">
+                  <Flame className="w-3 h-3" /> 
+                </div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-text-secondary font-sora">
+                        {streak < 7 ? (
+                          <>Bônus de Sequência <span className="font-space">({streak} dias)</span></>
+                        ) : (
+                          <span className="font-medium text-valor">🔥 Streak Lendário <span className="font-space">({streak} dias)</span></span>
+                        )}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p className="text-xs">Mantenha o streak para +EXP diário</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <span className="text-valor font-space font-medium">+{streakBonusPercent}% EXP</span>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

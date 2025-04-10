@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Sora:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&display=swap');
 
 @tailwind base;
@@ -180,6 +181,26 @@
   .orbitron-text {
     @apply font-orbitron tracking-wider;
   }
+  
+  /* Badge styles */
+  .badge-achievement {
+    @apply bg-achievement-15 text-achievement border border-achievement-30 
+           px-2 py-0.5 rounded-full font-space shadow-glow-gold;
+  }
+  
+  .badge-primary {
+    @apply bg-arcane-15 text-arcane border border-arcane-30 
+           px-2 py-0.5 rounded-full font-space shadow-glow-purple;
+  }
+  
+  /* Milestone ticks */
+  .milestone-tick {
+    @apply absolute w-1 h-3 bg-divider rounded-full transform -translate-y-1;
+  }
+  
+  .milestone-tick-complete {
+    @apply bg-achievement shadow-glow-gold;
+  }
 }
 
 /* Animation utilities */
@@ -188,8 +209,23 @@
     animation: pulse-subtle 2s infinite;
   }
   
+  .animate-pulse-glow {
+    animation: pulse-glow 2s infinite;
+  }
+  
   .animate-loading-bar {
     animation: loading-bar 1.5s infinite;
+  }
+  
+  .animate-shimmer {
+    animation: shimmer 2.5s infinite;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    background-size: 200% 100%;
   }
 
   .shadow-glow-subtle {
@@ -211,6 +247,10 @@
   .tracking-tight {
     letter-spacing: -0.01em;
   }
+  
+  .tracking-wider {
+    letter-spacing: 0.05em;
+  }
 }
 
 @keyframes pulse-subtle {
@@ -219,6 +259,15 @@
   }
   50% {
     opacity: 0.8;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(124, 58, 237, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.6);
   }
 }
 
@@ -231,6 +280,15 @@
   }
   100% {
     width: 0%;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
   }
 }
 
