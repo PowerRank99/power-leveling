@@ -76,7 +76,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
           )}
         </div>
         <div>
-          <h3 className="font-orbitron font-bold text-xl text-text-primary tracking-tight">{className}</h3>
+          <h3 className="font-oxanium font-bold text-xl text-text-primary tracking-wider">{className}</h3>
           <p className="text-sm text-text-secondary font-sora">{description}</p>
         </div>
       </div>
