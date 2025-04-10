@@ -21,6 +21,9 @@ const StreakAchievementsSection: React.FC<StreakAchievementsSectionProps> = ({
   // Determine if streak is notable (3+ days)
   const isNotableStreak = streak >= 3;
   
+  // Calculate streak progress percentage for the progress ring
+  const streakProgress = Math.min(streak / 7 * 100, 100);
+  
   return (
     <Card className="mt-3 premium-card hover:premium-card-elevated transition-all duration-300">
       <CardContent className="p-4">
@@ -29,20 +32,57 @@ const StreakAchievementsSection: React.FC<StreakAchievementsSectionProps> = ({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className={`bg-gradient-to-br from-valor to-valor-60 p-2 rounded-full mr-3 text-white 
-                    ${isLegendaryStreak ? 'shadow-glow-gold animate-pulse-glow border border-achievement-30' : 'shadow-glow-purple border border-valor-30'}`}>
-                    <Flame className="w-5 h-5" />
+                  <div className="relative">
+                    <div className={`bg-gradient-to-br from-valor to-valor-60 p-2 rounded-full mr-3 text-white 
+                      ${isLegendaryStreak ? 'shadow-glow-gold animate-pulse-glow border border-achievement-30' : 'shadow-glow-purple border border-valor-30'}`}>
+                      <Flame className="w-5 h-5" />
+                      
+                      {/* Progress ring for streak */}
+                      {streak > 1 && (
+                        <svg className="absolute -top-1 -left-1 h-10 w-10">
+                          <circle
+                            className="text-divider"
+                            strokeWidth="2"
+                            stroke="currentColor"
+                            fill="transparent"
+                            r="15"
+                            cx="20"
+                            cy="20"
+                          />
+                          <circle
+                            className={`${isLegendaryStreak ? 'text-achievement' : 'text-valor-60'}`}
+                            strokeWidth="2"
+                            strokeDasharray={`${streakProgress} 100`}
+                            strokeLinecap="round"
+                            stroke="currentColor"
+                            fill="transparent"
+                            r="15"
+                            cx="20"
+                            cy="20"
+                            style={{ transformOrigin: 'center', transform: 'rotate(-90deg)' }}
+                          />
+                        </svg>
+                      )}
+                    </div>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="top">
-                  <p className="text-xs">{isLegendaryStreak ? 'Streak Lendário! +35% EXP' : 'Mantenha seu streak para bônus de EXP'}</p>
+                  <p className="text-xs">
+                    {isLegendaryStreak 
+                      ? 'Streak Lendário! +35% EXP' 
+                      : streak > 1 
+                        ? `+${streak * 5}% EXP por manter o streak por ${streak} dias` 
+                        : 'Mantenha seu streak para bônus de EXP'}
+                  </p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
             <div>
               <p className="text-xs text-text-tertiary font-sora">Streak</p>
               <div className="flex items-center">
-                <p className="font-bold text-lg font-space text-text-primary">{streak} {streak === 1 ? 'dia' : 'dias'}</p>
+                <p className="font-bold text-lg font-space text-text-primary">
+                  {streak === 1 ? '🔥 1 dia de streak' : `🔥 ${streak} dias de streak`}
+                </p>
                 {isNotableStreak && !isLegendaryStreak && (
                   <span className="ml-2 text-xs bg-valor-15 text-valor-60 px-2 py-0.5 rounded-full font-space border border-valor-30">
                     🔥 {streak}

@@ -31,6 +31,11 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
     { value: dailyXPCap, label: 'Ouro', percent: 100 }
   ];
   
+  // Check if milestones are achieved
+  const bronzeAchieved = dailyXP >= 100;
+  const silverAchieved = dailyXP >= 200;
+  const goldAchieved = dailyXP >= dailyXPCap;
+  
   return (
     <Card className="mt-3 premium-card hover:premium-card-elevated transition-all duration-300">
       <CardContent className="p-4">
@@ -74,17 +79,44 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
                   <TooltipTrigger asChild>
                     <div 
                       className={`absolute top-0 w-1 h-3 transform -translate-y-1 rounded-full 
-                                ${dailyXP >= milestone.value ? 'bg-achievement shadow-glow-gold' : 'bg-divider'}`}
+                                ${dailyXP >= milestone.value 
+                                  ? 'bg-achievement shadow-glow-gold animate-pulse-subtle' 
+                                  : 'bg-divider'}`}
                       style={{ left: `${milestone.percent}%` }}
                     ></div>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    <p className="text-xs">{milestone.label}: {milestone.value} XP</p>
+                    <p className="text-xs">
+                      {dailyXP >= milestone.value 
+                        ? `Recompensa de ${milestone.label} alcançada: ${milestone.value} XP` 
+                        : `${milestone.label}: ${milestone.value} XP`}
+                    </p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             ))}
           </div>
+          
+          {/* Display milestone achievements */}
+          {(bronzeAchieved || silverAchieved || goldAchieved) && (
+            <div className="flex gap-1 mb-2">
+              {bronzeAchieved && (
+                <span className="text-xs px-2 py-0.5 bg-amber-900/30 text-amber-500 rounded-full border border-amber-800/50">
+                  Bronze
+                </span>
+              )}
+              {silverAchieved && (
+                <span className="text-xs px-2 py-0.5 bg-gray-400/20 text-gray-300 rounded-full border border-gray-400/50">
+                  Prata
+                </span>
+              )}
+              {goldAchieved && (
+                <span className="text-xs px-2 py-0.5 bg-achievement-15 text-achievement rounded-full border border-achievement-30 animate-pulse-subtle">
+                  Ouro
+                </span>
+              )}
+            </div>
+          )}
           
           {hasStreakBonus && (
             <div className="mt-2 mb-2 text-xs flex justify-between items-center bg-valor-15 rounded-lg p-2 border border-valor-30">
@@ -97,14 +129,14 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
                     <TooltipTrigger asChild>
                       <span className="text-text-secondary font-sora">
                         {streak < 7 ? (
-                          <>Bônus de Sequência <span className="font-space">({streak} dias)</span></>
+                          <>Bônus de Streak <span className="font-space">({streak} dias)</span></>
                         ) : (
                           <span className="font-medium text-valor">🔥 Streak Lendário <span className="font-space">({streak} dias)</span></span>
                         )}
                       </span>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
-                      <p className="text-xs">Mantenha o streak para +EXP diário</p>
+                      <p className="text-xs">+5% EXP extra por dia consecutivo</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>

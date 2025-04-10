@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Award, Trophy, Info } from 'lucide-react';
+import { Award, Trophy, Info, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import StatCard from '@/components/profile/StatCard';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -87,12 +87,14 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       
       {/* Stats */}
       <div className="flex justify-between mt-6 px-4 py-3 metric-container">
-        <StatCard 
-          icon={<div className="text-lg font-bold font-space text-text-primary">{workoutsCount}</div>}
-          value=""
-          label="Treinos"
-          light
-        />
+        <div className="flex flex-col items-center">
+          <span className="text-xs font-sora text-text-tertiary mb-1">Treinos Realizados</span>
+          <div className="text-lg flex items-center font-bold font-space text-text-primary">
+            <Calendar className="w-4 h-4 mr-1 text-valor" />
+            {workoutsCount}
+          </div>
+          <span className="text-xs text-text-tertiary mt-1 font-sora">Média semanal: 2 treinos</span>
+        </div>
         
         <div className="h-10 w-px bg-divider my-auto"></div>
         

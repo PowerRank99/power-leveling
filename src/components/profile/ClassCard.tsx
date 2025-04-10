@@ -27,6 +27,16 @@ const BonusIconMap: Record<string, React.ReactNode> = {
   recovery: <Shield className="w-4 h-4" />,
 };
 
+// Class flavor text map
+const ClassFlavorMap: Record<string, string> = {
+  'guerreiro': 'Domina a força bruta. Guerreiros ganham mais XP com pesos pesados.',
+  'monge': 'Mestre do próprio corpo. Monges prosperam com exercícios corporais e consistência.',
+  'ninja': 'Veloz como o vento. Ninjas se destacam em treinos intensos e rápidos.',
+  'bruxo': 'Flexível e resiliente. Bruxos dominam a mobilidade e recuperação.',
+  'paladino': 'Atleta versátil. Paladinos ganham bônus em esportes e treinos longos.',
+  'sem classe': 'Escolha uma classe para desbloquear bônus de experiência.',
+};
+
 const ClassCard: React.FC<ClassCardProps> = ({
   className,
   description,
@@ -80,6 +90,11 @@ const ClassCard: React.FC<ClassCardProps> = ({
   
   const cardIcon = icon || getDefaultIcon();
   
+  // Get flavor text for the class
+  const getFlavorText = () => {
+    return ClassFlavorMap[className.toLowerCase()] || 'Siga sua jornada para evoluir suas habilidades.';
+  };
+  
   // Consolidate and translate bonuses
   const consolidateBonuses = (bonuses: ClassBonus[]) => {
     if (!bonuses || bonuses.length === 0) return [];
@@ -97,13 +112,32 @@ const ClassCard: React.FC<ClassCardProps> = ({
       seen.add(lowerDesc);
       
       return true;
+    }).map(bonus => {
+      if (typeof bonus.description === 'string') {
+        // Merge duplicate descriptions that might be in different languages
+        if (bonus.description.toLowerCase().includes('compound lift') || 
+            bonus.description.toLowerCase().includes('exercícios compostos')) {
+          return {
+            ...bonus,
+            description: "+20% XP de exercícios compostos (agachamento, supino, terra)"
+          };
+        }
+        if (bonus.description.toLowerCase().includes('strength') || 
+            bonus.description.toLowerCase().includes('força')) {
+          return {
+            ...bonus,
+            description: "+10% XP de todos os exercícios de força"
+          };
+        }
+      }
+      return bonus;
     });
   };
   
   const displayBonuses = consolidateBonuses(bonuses);
   
   return (
-    <div className="class-card p-4 mt-4 transition-all duration-300 hover:shadow-glow-purple">
+    <div className="class-card p-4 mt-4 transition-all duration-300 hover:shadow-glow-purple border border-arcane-15 hover:border-arcane-30 rounded-xl">
       <div className="flex items-center mb-3">
         <div className="relative">
           <div className="w-12 h-12 bg-midnight-elevated backdrop-blur-sm rounded-lg flex items-center justify-center mr-3 shadow-subtle overflow-hidden border border-arcane-30">
@@ -167,6 +201,11 @@ const ClassCard: React.FC<ClassCardProps> = ({
             </p>
           </div>
         )}
+        
+        {/* Class flavor text */}
+        <div className="mt-4 text-sm font-sora text-text-tertiary italic border-t border-divider pt-3">
+          {getFlavorText()}
+        </div>
       </div>
     </div>
   );
