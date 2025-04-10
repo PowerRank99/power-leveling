@@ -23,11 +23,14 @@ const ExerciseList: React.FC<ExerciseListProps> = ({
 }) => {
   if (exercises.length === 0) {
     return (
-      <EmptyState message={
-        searchQuery ? 
-        `Nenhum exercício encontrado para "${searchQuery}"${equipmentFilter !== 'Todos' ? ` com ${equipmentFilter}` : ''}${muscleFilter !== 'Todos' ? ` para ${muscleFilter}` : ''}.` : 
-        "Nenhum exercício encontrado com os filtros selecionados."
-      } />
+      <EmptyState 
+        title={
+          searchQuery ? 
+          `Nenhum exercício encontrado para "${searchQuery}"${equipmentFilter !== 'Todos' ? ` com ${equipmentFilter}` : ''}${muscleFilter !== 'Todos' ? ` para ${muscleFilter}` : ''}.` : 
+          "Nenhum exercício encontrado com os filtros selecionados."
+        }
+        description="Tente ajustar os filtros ou a busca para encontrar exercícios."
+      />
     );
   }
 
@@ -48,6 +51,7 @@ const ExerciseList: React.FC<ExerciseListProps> = ({
             name={exercise.name}
             category={exercise.category}
             level={exercise.level as any}
+            type="Força" // Add default type
             image={exercise.image_url || '/placeholder.svg'}
             description={exercise.description || ''}
             equipment={exercise.equipment || ''}

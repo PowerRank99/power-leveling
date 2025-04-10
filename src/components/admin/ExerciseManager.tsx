@@ -101,10 +101,10 @@ const ExerciseManager = () => {
                 name={exercise.name}
                 category={exercise.category}
                 level={exercise.level as any}
+                type={exercise.type as any}
                 image={exercise.image_url || '/placeholder.svg'}
                 description={exercise.description}
                 equipment={exercise.equipment}
-                // type prop is no longer passed since we don't display it
               />
               <button 
                 className={`absolute top-3 right-3 bg-red-100 text-red-600 p-2 rounded-full ${isDeleting === exercise.id ? 'opacity-50' : ''}`}
@@ -117,7 +117,10 @@ const ExerciseManager = () => {
           ))}
         </div>
       ) : (
-        <EmptyState message="Não há exercícios cadastrados ainda. Use o importador de exercícios para adicionar." />
+        <EmptyState 
+          title="Não há exercícios cadastrados"
+          description="Use o importador de exercícios para adicionar."
+        />
       )}
     </div>
   );

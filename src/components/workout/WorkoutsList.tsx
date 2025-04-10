@@ -40,7 +40,8 @@ const WorkoutsList: React.FC<WorkoutsListProps> = ({
   if (error) {
     return (
       <EmptyState 
-        message="Não foi possível carregar seus treinos" 
+        title="Não foi possível carregar seus treinos" 
+        description={error}
         action={
           <Button 
             onClick={onRetry}
@@ -56,7 +57,7 @@ const WorkoutsList: React.FC<WorkoutsListProps> = ({
   
   if (workouts.length === 0) {
     return (
-      <EmptyState message="Você ainda não tem treinos registrados" />
+      <EmptyState title="Você ainda não tem treinos registrados" description="Complete um treino para ver seu histórico aqui" />
     );
   }
   
@@ -96,8 +97,8 @@ const WorkoutsList: React.FC<WorkoutsListProps> = ({
             {isLoadingMore ? (
               <>
                 <div className="flex items-center">
-                  <LoadingSpinner size="sm" className="mr-2" message="" /> 
-                  <span>Carregando...</span>
+                  <LoadingSpinner size="sm" message="" /> 
+                  <span className="ml-2">Carregando...</span>
                 </div>
               </>
             ) : (

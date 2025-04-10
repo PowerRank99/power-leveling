@@ -25,6 +25,7 @@ const SelectedExercisesList: React.FC<SelectedExercisesListProps> = ({ exercises
               name={exercise.name}
               category={exercise.category}
               level={exercise.level as any}
+              type="Força" // Add default type
               image={exercise.image_url || '/placeholder.svg'}
               description={exercise.description}
               equipment={exercise.equipment}

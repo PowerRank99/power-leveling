@@ -44,7 +44,7 @@ const QuestTabs: React.FC<QuestTabsProps> = ({
           <QuestList quests={filteredQuests} onQuestClick={handleQuestClick} />
         ) : (
           <EmptyState 
-            icon="Compass" 
+            icon="Search" 
             title="No active quests" 
             description="This guild has no active quests at the moment."
             action={
@@ -75,7 +75,7 @@ const QuestTabs: React.FC<QuestTabsProps> = ({
           <QuestList quests={filteredQuests} onQuestClick={handleQuestClick} />
         ) : (
           <EmptyState 
-            icon="X" 
+            icon="AlertCircle" 
             title="No failed quests" 
             description="This guild has no failed quests."
           />
@@ -87,7 +87,7 @@ const QuestTabs: React.FC<QuestTabsProps> = ({
           <QuestList quests={filteredQuests} onQuestClick={handleQuestClick} />
         ) : (
           <EmptyState 
-            icon="Compass" 
+            icon="Search" 
             title="No quests found" 
             description="No quests were found with this filter."
           />

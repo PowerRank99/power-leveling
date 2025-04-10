@@ -28,6 +28,20 @@ const WorkoutPage = () => {
     loadMoreWorkouts
   } = useWorkoutData();
   
+  // Wrap deleteRoutine to match expected signature
+  const handleDeleteRoutine = async (id: string): Promise<void> => {
+    await deleteRoutine(id);
+  };
+  
+  // Create a proper Record for isDeletingItem
+  const isDeletingItemRecord: Record<string, boolean> = {};
+  savedRoutines.forEach(routine => {
+    isDeletingItemRecord[routine.id] = isDeletingItem(routine.id);
+  });
+  recentWorkouts.forEach(workout => {
+    isDeletingItemRecord[workout.id] = isDeletingItem(workout.id);
+  });
+  
   // Refresh data when component mounts
   useEffect(() => {
     const initialLoad = async () => {
@@ -79,8 +93,8 @@ const WorkoutPage = () => {
               onRetry={handleRetry}
               error={error}
               hasAttemptedLoad={hasAttemptedLoad}
-              onDeleteRoutine={deleteRoutine}
-              isDeletingItem={isDeletingItem}
+              onDeleteRoutine={handleDeleteRoutine}
+              isDeletingItem={isDeletingItemRecord}
             />
           </div>
           

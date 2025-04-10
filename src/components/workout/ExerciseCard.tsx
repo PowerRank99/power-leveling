@@ -7,7 +7,7 @@ interface ExerciseCardProps {
   name: string;
   category: string;
   level: 'Iniciante' | 'Intermediário' | 'Avançado';
-  type: 'Força' | 'Cardio' | 'Flexibilidade' | 'Equilíbrio';
+  type?: 'Força' | 'Cardio' | 'Flexibilidade' | 'Equilíbrio'; // Make type optional
   image: string;
   description?: string;
   equipment?: string;
@@ -19,7 +19,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
   name,
   category,
   level,
-  type,
+  type = 'Força', // Default value for backward compatibility
   image,
   description,
   equipment,

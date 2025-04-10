@@ -3,7 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Play, Trash2 } from 'lucide-react';
+import { Play, Trash2, Plus } from 'lucide-react';
 import EmptyState from '@/components/ui/EmptyState';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { RoutineWithExercises } from '@/components/workout/types/Workout';

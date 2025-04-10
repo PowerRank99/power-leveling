@@ -26,7 +26,7 @@ const ClassSelectButton: React.FC<ClassSelectButtonProps> = ({
     >
       {isSelecting ? (
         <>
-          <LoadingSpinner size="sm" className="mr-2 py-0" /> 
+          <LoadingSpinner size="sm" className="mr-2" /> 
           Selecionando...
         </>
       ) : userClass === selectedClass ? (

@@ -5,12 +5,14 @@ interface LoadingSpinnerProps {
   message?: string;
   subMessage?: string;
   size?: 'sm' | 'md' | 'lg';
+  className?: string; // Add className prop
 }
 
 const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
   message = "Carregando...", 
   subMessage,
-  size = "md" 
+  size = "md",
+  className = "" // Default empty string
 }) => {
   const getSizeClass = () => {
     switch (size) {
@@ -22,7 +24,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   };
   
   return (
-    <div className="flex flex-col items-center justify-center p-8 text-center">
+    <div className={`flex flex-col items-center justify-center p-8 text-center ${className}`}>
       <div className={`animate-spin ${getSizeClass()} mb-3 border-4 border-transparent border-t-arcane rounded-full shadow-glow-purple`}></div>
       <p className="text-text-primary font-orbitron mb-1">{message}</p>
       {subMessage && <p className="text-text-tertiary text-sm font-sora">{subMessage}</p>}

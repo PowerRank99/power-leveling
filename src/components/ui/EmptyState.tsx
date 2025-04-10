@@ -4,17 +4,24 @@ import { AlertCircle, Search, ClipboardList, Users, Trophy, FileText } from 'luc
 
 interface EmptyStateProps {
   icon?: 'AlertCircle' | 'Search' | 'ClipboardList' | 'Users' | 'Trophy' | 'FileText';
-  title: string;
-  description: string;
+  title?: string; // Make title optional
+  description?: string; // Make description optional
   action?: React.ReactNode;
+  message?: string; // Add message prop for backward compatibility
 }
 
 const EmptyState: React.FC<EmptyStateProps> = ({ 
   icon = 'AlertCircle', 
   title, 
   description, 
-  action 
+  action,
+  message 
 }) => {
+  // For backward compatibility - use message for title if title is not provided
+  const displayTitle = title || message || "Não encontrado";
+  // For backward compatibility - use message for description if description is not provided and different from title
+  const displayDescription = description || (message && message !== displayTitle ? message : "Nenhum item encontrado");
+  
   const getIcon = () => {
     switch (icon) {
       case 'AlertCircle': return <AlertCircle className="h-12 w-12 text-text-tertiary" />;
@@ -32,8 +39,8 @@ const EmptyState: React.FC<EmptyStateProps> = ({
       <div className="bg-midnight-elevated p-4 rounded-full mb-4">
         {getIcon()}
       </div>
-      <h3 className="text-lg font-orbitron mb-2 text-text-primary">{title}</h3>
-      <p className="text-text-secondary font-sora mb-4 max-w-xs">{description}</p>
+      <h3 className="text-lg font-orbitron mb-2 text-text-primary">{displayTitle}</h3>
+      <p className="text-text-secondary font-sora mb-4 max-w-xs">{displayDescription}</p>
       {action && action}
     </div>
   );
