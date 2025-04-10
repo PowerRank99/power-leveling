@@ -18,8 +18,10 @@ interface RecentAchievementsListProps {
 const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achievements }) => {
   return (
     <Card className="mt-3 premium-card hover:premium-card-elevated transition-all duration-300">
-      <CardHeader className="px-4 py-3 flex flex-row justify-between items-center bg-midnight-card bg-opacity-50 backdrop-blur-sm border-b border-divider">
-        <h3 className="text-lg font-orbitron font-bold text-text-primary tracking-wide">Conquistas Recentes</h3>
+      <CardHeader className="px-4 py-3 flex flex-row justify-between items-center bg-midnight-card bg-opacity-50 backdrop-blur-sm border-b border-divider/30">
+        <h3 className="section-header text-lg font-orbitron font-bold text-text-primary">
+          Conquistas Recentes
+        </h3>
         <Link to="/conquistas" className="text-arcane flex items-center text-sm font-sora hover:text-arcane-60 transition-colors">
           Ver Todas <ChevronRight className="w-4 h-4" />
         </Link>
@@ -32,13 +34,13 @@ const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achieve
               key={achievement.id}
               className={`flex flex-col items-center justify-center rounded-full w-20 h-20 achievement-circle ${
                 achievement.isLocked 
-                  ? 'bg-midnight-elevated text-inactive border border-divider' 
+                  ? 'bg-midnight-elevated text-inactive border border-divider/30' 
                   : achievement.id === 'streak' 
                     ? 'bg-gradient-to-br from-valor to-achievement text-text-primary border border-valor-30' 
                     : achievement.id === 'workouts' 
                       ? 'bg-gradient-to-br from-arcane to-arcane-60 text-text-primary border border-arcane-30' 
                       : 'bg-gradient-to-br from-arcane to-valor text-text-primary border border-arcane-30'
-              } shadow-subtle transform transition-all duration-300 hover:scale-105 hover:shadow-elevated cursor-pointer`}
+              } shadow-subtle transform transition-all duration-300 hover:scale-105 hover:shadow-glow-purple cursor-pointer`}
             >
               <div className="flex items-center justify-center">
                 {achievement.icon}

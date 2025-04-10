@@ -1,5 +1,5 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Sora:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Sora:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -85,7 +85,7 @@
 
 @layer components {
   .premium-card {
-    @apply bg-midnight-card border border-divider rounded-lg shadow-subtle transition-all duration-200;
+    @apply bg-midnight-card border border-divider/30 rounded-xl shadow-subtle transition-all duration-300;
   }
   
   .premium-card-elevated {
@@ -119,12 +119,16 @@
 
   /* Progress Bar Fill with Glow */
   .progress-bar-fill {
-    @apply shadow-glow-subtle;
+    @apply shadow-glow-subtle relative;
+  }
+  
+  .progress-bar-fill:after {
+    @apply content-[''] absolute right-0 top-0 bottom-0 w-1.5 shadow-glow-purple;
   }
 
   /* Metric Container */
   .metric-container {
-    @apply bg-midnight-card backdrop-blur-sm border border-divider 
+    @apply bg-midnight-card backdrop-blur-sm border border-divider/30 
            rounded-lg shadow-subtle hover:shadow-elevated 
            transition-all duration-300;
   }
@@ -132,7 +136,7 @@
   /* Metric Icon Container */
   .metric-icon-container {
     @apply w-10 h-10 rounded-full bg-midnight-elevated
-           border border-divider flex items-center justify-center;
+           border border-divider/30 flex items-center justify-center;
   }
 
   /* Class Card */
@@ -151,12 +155,37 @@
   .achievement-circle:not(.locked):hover {
     @apply shadow-glow-purple transform scale-105;
   }
+  
+  /* Section Headers */
+  .section-header {
+    @apply flex items-center mb-3 border-l-2 border-arcane-60/60 pl-2 py-0.5;
+  }
+  
+  /* Loading Animation */
+  .loading-text {
+    @apply relative inline-block after:absolute after:bottom-0 after:left-0 after:w-full 
+           after:h-0.5 after:bg-arcane-30 after:animate-loading-bar;
+  }
+  
+  /* Name Display */
+  .profile-name {
+    @apply font-orbitron font-bold tracking-tight text-text-primary;
+  }
+  
+  /* XP Value Display */
+  .xp-value {
+    @apply text-achievement font-space font-medium shadow-glow-gold;
+  }
 }
 
 /* Animation utilities */
 @layer utilities {
   .animate-pulse-subtle {
     animation: pulse-subtle 2s infinite;
+  }
+  
+  .animate-loading-bar {
+    animation: loading-bar 1.5s infinite;
   }
 
   .shadow-glow-subtle {
@@ -166,9 +195,17 @@
   .shadow-glow-purple {
     box-shadow: 0 0 12px rgba(124, 58, 237, 0.3);
   }
+  
+  .shadow-glow-gold {
+    text-shadow: 0 0 8px rgba(250, 204, 21, 0.4);
+  }
 
   .tracking-wide {
     letter-spacing: 0.025em;
+  }
+  
+  .tracking-tight {
+    letter-spacing: -0.01em;
   }
 }
 
@@ -178,6 +215,18 @@
   }
   50% {
     opacity: 0.8;
+  }
+}
+
+@keyframes loading-bar {
+  0% {
+    width: 0%;
+  }
+  50% {
+    width: 100%;
+  }
+  100% {
+    width: 0%;
   }
 }
 

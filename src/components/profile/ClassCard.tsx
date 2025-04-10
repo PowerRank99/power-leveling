@@ -4,7 +4,7 @@ import { Shield, Sword, Dumbbell, Wind, Sparkles } from 'lucide-react';
 import { ClassService } from '@/services/rpg/ClassService';
 
 interface ClassBonus {
-  description: string;
+  description: string | React.ReactNode;
   value: string;
 }
 
@@ -76,14 +76,14 @@ const ClassCard: React.FC<ClassCardProps> = ({
           )}
         </div>
         <div>
-          <h3 className="font-orbitron font-bold text-xl text-text-primary tracking-wide">{className}</h3>
+          <h3 className="font-orbitron font-bold text-xl text-text-primary tracking-tight">{className}</h3>
           <p className="text-sm text-text-secondary font-sora">{description}</p>
         </div>
       </div>
       
       <div className="mt-4">
         <p className="text-sm text-text-secondary mb-2 flex items-center font-sora">
-          <span className="bg-arcane-15 rounded-full p-1 mr-2 border border-arcane-30">🔍</span> 
+          <span className="bg-arcane-15 rounded-full p-1 mr-2 border border-arcane-30 shadow-subtle">🔍</span> 
           Bônus Passivo
         </p>
         
@@ -91,7 +91,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
           bonuses.map((bonus, index) => (
             <div key={index} className="mb-3 bg-midnight-elevated backdrop-blur-sm rounded-lg p-3 shadow-subtle hover:shadow-glow-purple transition-all duration-300 border border-arcane-30">
               <div className="flex items-center">
-                <span className="text-lg font-bold mr-2 whitespace-nowrap font-space text-arcane">{bonus.value}</span>
+                <span className="text-lg font-bold mr-2 whitespace-nowrap font-space text-arcane shadow-glow-subtle">{bonus.value}</span>
                 <p className="text-sm font-sora text-text-secondary">{bonus.description}</p>
               </div>
             </div>

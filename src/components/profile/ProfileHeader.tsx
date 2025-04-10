@@ -50,7 +50,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         <div className="ml-4 flex-1">
           <div className="flex justify-between items-start">
             <div>
-              <h2 className="text-xl font-orbitron font-bold text-text-primary tracking-wide">{name}</h2>
+              <h2 className="text-xl profile-name">{name}</h2>
               <p className="text-text-tertiary text-sm">@{username}</p>
             </div>
           </div>
@@ -88,7 +88,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         <div className="h-10 w-px bg-divider my-auto"></div>
         
         <StatCard 
-          icon={<div className="text-lg font-bold font-space text-achievement">#{ranking}</div>}
+          icon={<div className="text-lg font-bold font-space text-achievement shadow-glow-gold">#{ranking}</div>}
           value=""
           label="Ranking"
           light
