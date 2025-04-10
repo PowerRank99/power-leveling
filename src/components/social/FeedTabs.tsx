@@ -14,19 +14,19 @@ const FeedTabs: React.FC<FeedTabsProps> = ({ activeTab, onTabChange }) => {
         <TabsList className="grid grid-cols-3 w-full bg-midnight-elevated">
           <TabsTrigger 
             value="todos" 
-            className={`${activeTab === 'todos' ? 'bg-arcane-15 text-arcane border-b-2 border-arcane' : 'text-text-secondary'} transition-all duration-300 data-[state=active]:shadow-none`}
+            className="font-orbitron text-sm data-[state=active]:bg-arcane-15 data-[state=active]:text-arcane data-[state=active]:border-b-2 data-[state=active]:border-arcane data-[state=active]:shadow-none transition-all duration-300"
           >
             Todos
           </TabsTrigger>
           <TabsTrigger 
             value="guildas" 
-            className={`${activeTab === 'guildas' ? 'bg-arcane-15 text-arcane border-b-2 border-arcane' : 'text-text-secondary'} transition-all duration-300 data-[state=active]:shadow-none`}
+            className="font-orbitron text-sm data-[state=active]:bg-arcane-15 data-[state=active]:text-arcane data-[state=active]:border-b-2 data-[state=active]:border-arcane data-[state=active]:shadow-none transition-all duration-300"
           >
             Guildas
           </TabsTrigger>
           <TabsTrigger 
             value="amigos" 
-            className={`${activeTab === 'amigos' ? 'bg-arcane-15 text-arcane border-b-2 border-arcane' : 'text-text-secondary'} transition-all duration-300 data-[state=active]:shadow-none`}
+            className="font-orbitron text-sm data-[state=active]:bg-arcane-15 data-[state=active]:text-arcane data-[state=active]:border-b-2 data-[state=active]:border-arcane data-[state=active]:shadow-none transition-all duration-300"
           >
             Amigos
           </TabsTrigger>

@@ -34,16 +34,28 @@ const QuestTabs: React.FC<QuestTabsProps> = ({
     <div>
       <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-4 mb-4 bg-midnight-elevated border border-divider">
-          <TabsTrigger value="active" className="font-orbitron text-sm data-[state=active]:text-arcane data-[state=active]:shadow-glow-subtle">
+          <TabsTrigger 
+            value="active" 
+            className="font-orbitron text-sm data-[state=active]:bg-arcane-15 data-[state=active]:text-arcane data-[state=active]:border-b-2 data-[state=active]:border-arcane data-[state=active]:shadow-none"
+          >
             Ativas
           </TabsTrigger>
-          <TabsTrigger value="completed" className="font-orbitron text-sm data-[state=active]:text-achievement data-[state=active]:shadow-glow-subtle">
+          <TabsTrigger 
+            value="completed" 
+            className="font-orbitron text-sm data-[state=active]:bg-achievement-15 data-[state=active]:text-achievement data-[state=active]:border-b-2 data-[state=active]:border-achievement data-[state=active]:shadow-none"
+          >
             Completas
           </TabsTrigger>
-          <TabsTrigger value="failed" className="font-orbitron text-sm data-[state=active]:text-valor data-[state=active]:shadow-glow-subtle">
+          <TabsTrigger 
+            value="failed" 
+            className="font-orbitron text-sm data-[state=active]:bg-valor-15 data-[state=active]:text-valor data-[state=active]:border-b-2 data-[state=active]:border-valor data-[state=active]:shadow-none"
+          >
             Falhas
           </TabsTrigger>
-          <TabsTrigger value="all" className="font-orbitron text-sm data-[state=active]:text-text-primary data-[state=active]:shadow-glow-subtle">
+          <TabsTrigger 
+            value="all" 
+            className="font-orbitron text-sm data-[state=active]:bg-midnight-card data-[state=active]:text-text-primary data-[state=active]:border-b-2 data-[state=active]:border-divider data-[state=active]:shadow-none"
+          >
             Todas
           </TabsTrigger>
         </TabsList>
@@ -52,11 +64,7 @@ const QuestTabs: React.FC<QuestTabsProps> = ({
           {filteredQuests.length > 0 ? (
             filteredQuests.map(quest => (
               <div key={quest.id} onClick={() => handleQuestClick(quest.id)} className="cursor-pointer">
-                <Card className="bg-midnight-elevated border border-divider hover:border-arcane-30 hover:shadow-glow-subtle transition-all duration-300">
-                  <CardContent className="p-4">
-                    <QuestCard quest={quest} />
-                  </CardContent>
-                </Card>
+                <QuestCard quest={quest} />
               </div>
             ))
           ) : (
