@@ -15,6 +15,7 @@ interface ClassCardProps {
   icon?: React.ReactNode;
   bonuses: ClassBonus[];
   showAvatar?: boolean;
+  colorClass?: string;
 }
 
 // Icon mapping for bonus types
@@ -42,11 +43,9 @@ const ClassCard: React.FC<ClassCardProps> = ({
   description,
   icon,
   bonuses,
-  showAvatar = false
+  showAvatar = false,
+  colorClass
 }) => {
-  // Use ClassService for gradient colors
-  const gradientColors = ClassService.getClassColor(className);
-  
   // Get appropriate icon based on class
   const getDefaultIcon = () => {
     switch (className.toLowerCase()) {
@@ -139,8 +138,18 @@ const ClassCard: React.FC<ClassCardProps> = ({
   
   const displayBonuses = consolidateBonuses(bonuses);
   
+  // Generate gradient background based on class
+  const getCardGradient = () => {
+    if (colorClass) {
+      return `bg-gradient-to-br ${colorClass} bg-opacity-10`;
+    }
+    
+    // Default gradient if no colorClass provided
+    return 'bg-midnight-card';
+  };
+  
   return (
-    <div className="class-card p-4 mt-4 transition-all duration-300 hover:shadow-glow-purple border border-arcane-15 hover:border-arcane-30 rounded-xl">
+    <div className={`class-card p-4 mt-4 transition-all duration-300 hover:shadow-glow-purple border border-arcane-15 hover:border-arcane-30 rounded-xl ${getCardGradient()}`}>
       <div className="flex items-center mb-3">
         <div className="relative">
           <div className="w-12 h-12 bg-midnight-elevated backdrop-blur-sm rounded-lg flex items-center justify-center mr-3 shadow-subtle overflow-hidden border border-arcane-30">

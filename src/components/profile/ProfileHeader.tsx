@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Award, Trophy, Calendar } from 'lucide-react';
+import { Award, Trophy, Calendar, Medal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -29,8 +29,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   currentXP,
   nextLevelXP
 }) => {
-  const isTopRanking = ranking <= 10;
-  
   return (
     <div className="bg-gradient-to-b from-midnight-deep to-midnight-base text-text-primary p-6 relative rounded-b-xl shadow-elevated">
       <div className="flex items-center">
@@ -102,16 +100,17 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <TooltipTrigger asChild>
               <div>
                 <div className="flex flex-col items-center">
-                  <span className="text-xs font-sora text-text-tertiary mb-1">Ranking</span>
-                  <div className={`text-lg font-bold font-space ${isTopRanking ? 'text-achievement shadow-glow-gold' : 'text-arcane-60'}`}>
-                    #{ranking}
+                  <span className="text-xs font-sora text-text-tertiary mb-1">Conquistas</span>
+                  <div className="text-lg flex items-center font-bold font-space text-text-primary">
+                    <Medal className="w-4 h-4 mr-1 text-achievement" />
+                    0/50
                   </div>
-                  <span className="text-xs text-text-tertiary mt-1 font-sora">Ranking semanal</span>
+                  <span className="text-xs text-text-tertiary mt-1 font-sora">Conquistas desbloqueadas</span>
                 </div>
               </div>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              <p className="text-xs font-sora">Ranking semanal baseado em XP total</p>
+              <p className="text-xs font-sora">Conquistas desbloqueadas do total disponível</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
