@@ -4,6 +4,7 @@ export interface Routine {
   name: string;
   exercises_count?: number;
   last_used_at?: string | null;
+  created_at?: string;
 }
 
 export interface RecentWorkout {

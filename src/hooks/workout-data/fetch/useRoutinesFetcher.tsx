@@ -25,7 +25,7 @@ export const useRoutinesFetcher = (
         
         const { data: routines, error: routinesError } = await supabase
           .from('routines')
-          .select('id, name, last_used_at')
+          .select('id, name, last_used_at, created_at')  // Added created_at here
           .eq('user_id', userId)
           .order('created_at', { ascending: false });
         

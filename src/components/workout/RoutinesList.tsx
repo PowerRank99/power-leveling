@@ -79,11 +79,17 @@ const RoutinesList: React.FC<RoutinesListProps> = ({
             
             <div className="mt-3">
               <ul className="text-sm text-text-secondary space-y-1 font-sora">
-                {routine.exercises.slice(0, 3).map((exercise, index) => (
-                  <li key={index} className="truncate">{exercise.name}</li>
-                ))}
-                {routine.exercises.length > 3 && (
-                  <li className="text-text-tertiary">+ {routine.exercises.length - 3} mais</li>
+                {(routine.exercises && routine.exercises.length > 0) ? (
+                  <>
+                    {routine.exercises.slice(0, 3).map((exercise, index) => (
+                      <li key={index} className="truncate">{exercise.name}</li>
+                    ))}
+                    {routine.exercises.length > 3 && (
+                      <li className="text-text-tertiary">+ {routine.exercises.length - 3} mais</li>
+                    )}
+                  </>
+                ) : (
+                  <li className="text-text-tertiary">Carregando exercícios...</li>
                 )}
               </ul>
             </div>

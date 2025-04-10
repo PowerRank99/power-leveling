@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { RoutineWithExercises } from '@/components/workout/types/Workout';
 
 const WorkoutPage = () => {
   const { 
@@ -27,6 +28,16 @@ const WorkoutPage = () => {
     isLoadingMore,
     loadMoreWorkouts
   } = useWorkoutData();
+  
+  // Transform Routine[] to RoutineWithExercises[]
+  const routinesWithExercises: RoutineWithExercises[] = savedRoutines.map(routine => ({
+    id: routine.id,
+    name: routine.name,
+    exercise_count: routine.exercises_count || 0,
+    last_used_at: routine.last_used_at || null,
+    created_at: routine.created_at || new Date().toISOString(),
+    exercises: [] // Empty array as we don't have exercise details at this level
+  }));
   
   // Wrap deleteRoutine to match expected signature
   const handleDeleteRoutine = async (id: string): Promise<void> => {
@@ -88,7 +99,7 @@ const WorkoutPage = () => {
           <div className="mt-6">
             <h2 className="text-xl font-orbitron font-bold mb-4 text-text-primary">Rotinas Salvas</h2>
             <RoutinesList 
-              routines={savedRoutines} 
+              routines={routinesWithExercises} 
               isLoading={isLoading} 
               onRetry={handleRetry}
               error={error}
