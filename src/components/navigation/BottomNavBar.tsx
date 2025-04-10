@@ -63,13 +63,13 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, isActive }) => {
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
               />
             )}
             <motion.div 
               className={`${isActive ? 'transform scale-110' : ''} transition-transform`}
               whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+              whileTap={{ scale: 0.9, transition: { duration: 0.1 } }}
             >
               {icon}
             </motion.div>
@@ -81,6 +81,7 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, isActive }) => {
         <TooltipContent 
           side="top" 
           className="bg-midnight-elevated border border-arcane-30 text-text-primary text-xs"
+          sideOffset={6}
         >
           {label}
         </TooltipContent>

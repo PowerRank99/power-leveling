@@ -8,20 +8,21 @@ import { cn } from "@/lib/utils"
 interface ProgressProps extends React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root> {
   indicatorColor?: string;
   showAnimation?: boolean;
+  pulsateIndicator?: boolean;
 }
 
 const Progress = React.forwardRef<
   React.ElementRef<typeof ProgressPrimitive.Root>,
   ProgressProps
->(({ className, value, indicatorColor, showAnimation = true, ...props }, ref) => {
+>(({ className, value, indicatorColor, showAnimation = true, pulsateIndicator = false, ...props }, ref) => {
   const [displayValue, setDisplayValue] = React.useState(0);
   
   React.useEffect(() => {
     if (showAnimation && value !== undefined) {
-      // Animate the progress value
+      // Animate the progress value with a slight delay for better visual effect
       const timer = setTimeout(() => {
         setDisplayValue(value);
-      }, 100);
+      }, 50);
       return () => clearTimeout(timer);
     } else {
       setDisplayValue(value || 0);
@@ -39,7 +40,8 @@ const Progress = React.forwardRef<
     >
       <ProgressPrimitive.Indicator
         className={cn(
-          "h-full w-full flex-1 transition-all duration-500 ease-in-out progress-bar-fill",
+          "h-full w-full flex-1 transition-all duration-700 ease-in-out progress-bar-fill",
+          pulsateIndicator && "animate-pulse-subtle",
           indicatorColor || "bg-gradient-to-r from-arcane to-valor"
         )}
         style={{ transform: `translateX(-${100 - (displayValue || 0)}%)` }}
@@ -49,6 +51,7 @@ const Progress = React.forwardRef<
           initial={{ x: "0%" }}
           animate={{ x: "0%" }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className={pulsateIndicator ? "shadow-glow-subtle" : ""}
         />
       </ProgressPrimitive.Indicator>
     </ProgressPrimitive.Root>

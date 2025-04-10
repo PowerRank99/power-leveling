@@ -10,6 +10,8 @@ import { SearchIcon, PlusIcon, Shield, Trophy, Compass } from 'lucide-react';
 import GuildCard from '@/components/guilds/GuildCard';
 import { useAuth } from '@/hooks/useAuth';
 import EmptyState from '@/components/ui/EmptyState';
+import { motion } from 'framer-motion';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const GuildsListPage: React.FC = () => {
   const { user } = useAuth();
@@ -85,67 +87,134 @@ const GuildsListPage: React.FC = () => {
     guild.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
+  // Animation variants for list items
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+  
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] } }
+  };
+  
+  const categoryPillVariants = {
+    hover: { 
+      y: -2, 
+      boxShadow: "0 0 15px rgba(124, 58, 237, 0.4)",
+      transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] }
+    }
+  };
+  
   return (
     <div className="min-h-screen bg-midnight-base pb-16">
       <PageHeader title="Guildas" />
       
-      {/* Introduction Banner with Accent Gradient */}
+      {/* Introduction Banner with Enhanced Gradient */}
       <div className="bg-gradient-to-r from-arcane to-valor text-text-primary p-4 border-b border-arcane-30 shadow-glow-subtle">
-        <h2 className="text-xl font-orbitron font-bold mb-1 tracking-wider">Guildas</h2>
-        <p className="text-sm text-text-secondary font-sora mb-3">
+        <h2 className="text-xl font-orbitron font-bold mb-1 tracking-wider text-white" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Guildas</h2>
+        <p className="text-sm text-text-primary/90 font-sora mb-3 leading-relaxed" style={{ textShadow: '0 1px 1px rgba(0, 0, 0, 0.2)' }}>
           Junte-se a outros atletas, complete missões e ganhe recompensas juntos.
         </p>
         
-        {/* Category Pills (replaced with tabbed navigation) */}
+        {/* Enhanced Category Pills with hover effects */}
         <div className="flex gap-3 flex-wrap">
-          <div className="bg-midnight-elevated/30 backdrop-blur-sm rounded-full p-2 px-3 flex items-center text-sm border border-white/10 font-sora transition-all duration-300 hover:shadow-glow-purple">
-            <Shield className="h-4 w-4 mr-1.5 text-text-primary" />
-            <span>Comunidade</span>
-          </div>
-          <div className="bg-midnight-elevated/30 backdrop-blur-sm rounded-full p-2 px-3 flex items-center text-sm border border-white/10 font-sora transition-all duration-300 hover:shadow-glow-purple">
-            <Compass className="h-4 w-4 mr-1.5 text-text-primary" />
-            <span>Missões</span>
-          </div>
-          <div className="bg-midnight-elevated/30 backdrop-blur-sm rounded-full p-2 px-3 flex items-center text-sm border border-white/10 font-sora transition-all duration-300 hover:shadow-glow-purple">
-            <Trophy className="h-4 w-4 mr-1.5 text-achievement" />
-            <span>Conquistas</span>
-          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <motion.div 
+                  className="bg-midnight-elevated/30 backdrop-blur-sm rounded-full p-2 px-3 flex items-center text-sm border border-white/10 font-sora transition-all duration-300"
+                  variants={categoryPillVariants}
+                  whileHover="hover"
+                >
+                  <Shield className="h-4 w-4 mr-1.5 text-text-primary" />
+                  <span>Comunidade</span>
+                </motion.div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="bg-midnight-elevated border border-arcane-30 text-text-primary text-xs">
+                Crie e gerencie guildas
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <motion.div 
+                  className="bg-midnight-elevated/30 backdrop-blur-sm rounded-full p-2 px-3 flex items-center text-sm border border-white/10 font-sora transition-all duration-300"
+                  variants={categoryPillVariants}
+                  whileHover="hover"
+                >
+                  <Compass className="h-4 w-4 mr-1.5 text-text-primary" />
+                  <span>Missões</span>
+                </motion.div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="bg-midnight-elevated border border-arcane-30 text-text-primary text-xs">
+                Participar de missões coletivas
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <motion.div 
+                  className="bg-midnight-elevated/30 backdrop-blur-sm rounded-full p-2 px-3 flex items-center text-sm border border-white/10 font-sora transition-all duration-300"
+                  variants={categoryPillVariants}
+                  whileHover="hover"
+                >
+                  <Trophy className="h-4 w-4 mr-1.5 text-achievement" />
+                  <span>Conquistas</span>
+                </motion.div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="bg-midnight-elevated border border-achievement-30 text-text-primary text-xs">
+                Recompensas de guilda
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
       
       <div className="p-4 space-y-4">
-        {/* Search and Create */}
+        {/* Enhanced Search and Create */}
         <div className="flex gap-2">
           <div className="relative flex-1">
             <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-tertiary h-4 w-4" />
             <Input 
               placeholder="Pesquisar guildas..." 
-              className="pl-9 bg-midnight-elevated border-divider text-text-primary placeholder:text-text-tertiary font-sora" 
+              className="pl-9 bg-midnight-elevated border-divider text-text-primary placeholder:text-text-tertiary font-sora focus:border-arcane-30 focus:shadow-glow-subtle transition-shadow duration-300" 
               value={searchQuery} 
               onChange={handleSearch} 
             />
           </div>
-          <Button 
-            onClick={handleCreateGuild} 
-            className="bg-arcane hover:bg-arcane-60 text-text-primary shadow-glow-subtle border border-arcane-30 hover:shadow-glow-purple transition-all duration-300"
-          >
-            <PlusIcon className="h-5 w-5 mr-1" />
-            <span className="hidden sm:inline font-sora">Criar Guilda</span>
-          </Button>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button 
+              onClick={handleCreateGuild} 
+              className="bg-arcane hover:bg-arcane-60 text-text-primary shadow-glow-subtle border border-arcane-30 hover:shadow-glow-purple transition-all duration-300 group"
+            >
+              <PlusIcon className="h-5 w-5 mr-1 group-hover:rotate-90 transition-transform duration-300" />
+              <span className="hidden sm:inline font-sora">Criar Guilda</span>
+            </Button>
+          </motion.div>
         </div>
         
-        {/* Tabs with Enhanced Styling */}
+        {/* Enhanced Tabs with Improved Styling */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid grid-cols-2 w-full bg-midnight-elevated overflow-hidden rounded-lg p-1">
             <TabsTrigger 
               value="my-guilds" 
-              className="rounded-md transition-all duration-300 font-orbitron tracking-wider data-[state=active]:bg-arcane-15 data-[state=active]:text-arcane data-[state=active]:shadow-glow-subtle data-[state=active]:border-b-2 data-[state=active]:border-arcane text-text-secondary"
+              className="rounded-md transition-all duration-300 font-orbitron tracking-wider data-[state=active]:bg-arcane-15 data-[state=active]:text-arcane data-[state=active]:shadow-glow-subtle data-[state=active]:border-b-2 data-[state=active]:border-arcane data-[state=inactive]:hover:bg-arcane-15/30 data-[state=inactive]:hover:text-text-primary text-text-secondary"
             >
               Minhas Guildas
             </TabsTrigger>
             <TabsTrigger 
               value="suggested" 
-              className="rounded-md transition-all duration-300 font-orbitron tracking-wider data-[state=active]:bg-arcane-15 data-[state=active]:text-arcane data-[state=active]:shadow-glow-subtle data-[state=active]:border-b-2 data-[state=active]:border-arcane text-text-secondary"
+              className="rounded-md transition-all duration-300 font-orbitron tracking-wider data-[state=active]:bg-arcane-15 data-[state=active]:text-arcane data-[state=active]:shadow-glow-subtle data-[state=active]:border-b-2 data-[state=active]:border-arcane data-[state=inactive]:hover:bg-arcane-15/30 data-[state=inactive]:hover:text-text-primary text-text-secondary"
             >
               Sugeridas
             </TabsTrigger>
@@ -154,11 +223,18 @@ const GuildsListPage: React.FC = () => {
           <TabsContent value="my-guilds" className="mt-4 space-y-4 animate-fade-in">
             {filteredMyGuilds.length > 0 ? (
               <ScrollArea className="h-[calc(100vh-250px)]">
-                <div className="space-y-4">
+                <motion.div 
+                  className="space-y-4"
+                  variants={container}
+                  initial="hidden"
+                  animate="show"
+                >
                   {filteredMyGuilds.map(guild => (
-                    <GuildCard key={guild.id} guild={guild} isUserMember={true} />
+                    <motion.div key={guild.id} variants={item}>
+                      <GuildCard guild={guild} isUserMember={true} />
+                    </motion.div>
                   ))}
-                </div>
+                </motion.div>
               </ScrollArea>
             ) : (
               <EmptyState 
@@ -168,9 +244,15 @@ const GuildsListPage: React.FC = () => {
                 action={
                   <Button 
                     onClick={handleCreateGuild} 
-                    className="bg-arcane hover:bg-arcane-60 mt-4 text-text-primary shadow-glow-subtle border border-arcane-30 transition-all duration-300 hover:shadow-glow-purple"
+                    className="bg-arcane hover:bg-arcane-60 mt-4 text-text-primary shadow-glow-subtle border border-arcane-30 transition-all duration-300 hover:shadow-glow-purple group hover:-translate-y-1"
                   >
-                    Criar uma guilda
+                    <span>Criar uma guilda</span>
+                    <motion.span
+                      animate={{ x: [0, 2, 0] }}
+                      transition={{ repeat: Infinity, duration: 1.5 }}
+                    >
+                      <PlusIcon className="h-4 w-4 ml-1.5" />
+                    </motion.span>
                   </Button>
                 } 
               />
@@ -180,11 +262,18 @@ const GuildsListPage: React.FC = () => {
           <TabsContent value="suggested" className="mt-4 space-y-4 animate-fade-in">
             {filteredSuggestedGuilds.length > 0 ? (
               <ScrollArea className="h-[calc(100vh-300px)]">
-                <div className="space-y-4">
+                <motion.div 
+                  className="space-y-4"
+                  variants={container}
+                  initial="hidden"
+                  animate="show"
+                >
                   {filteredSuggestedGuilds.map(guild => (
-                    <GuildCard key={guild.id} guild={guild} isUserMember={false} />
+                    <motion.div key={guild.id} variants={item}>
+                      <GuildCard guild={guild} isUserMember={false} />
+                    </motion.div>
                   ))}
-                </div>
+                </motion.div>
               </ScrollArea>
             ) : (
               <EmptyState 
