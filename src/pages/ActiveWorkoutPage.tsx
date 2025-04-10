@@ -79,7 +79,7 @@ const ActiveWorkoutPage = () => {
   }
   
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-midnight-base">
       <WorkoutHeader 
         onFinish={finishWorkout}
         onDiscard={discardWorkout}
@@ -95,7 +95,7 @@ const ActiveWorkoutPage = () => {
       <ScrollArea className="h-[calc(100vh-120px)] pb-20">
         <div className="p-4 pb-24">
           {exercises.map((exercise, exerciseIndex) => (
-            <Card key={exercise.id} className="mb-8 bg-white shadow-sm border-0">
+            <Card key={exercise.id} className="mb-8 premium-card shadow-subtle">
               <ActiveWorkout 
                 exerciseName={exercise.name}
                 sets={exercise.sets}
@@ -118,7 +118,7 @@ const ActiveWorkoutPage = () => {
         </div>
       </ScrollArea>
       
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gray-50 border-t border-gray-200">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-midnight-base border-t border-divider">
         <FinishWorkoutButton 
           onFinish={finishWorkout}
           isFinishing={isSubmitting}

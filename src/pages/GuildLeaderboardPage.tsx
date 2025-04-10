@@ -9,7 +9,7 @@ import LeaderboardPodium from '@/components/guilds/LeaderboardPodium';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
-// Import the new components
+// Import the components
 import GuildHeader from '@/components/guilds/GuildHeader';
 import GuildStats from '@/components/guilds/GuildStats';
 import LeaderboardFilters from '@/components/guilds/LeaderboardFilters';
@@ -76,7 +76,7 @@ const GuildLeaderboardPage: React.FC = () => {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-16">
+      <div className="min-h-screen bg-midnight-base pb-16">
         <PageHeader title="Classificação da Guilda" />
         <LoadingSpinner message="Carregando classificação..." />
         <BottomNavBar />
@@ -85,15 +85,16 @@ const GuildLeaderboardPage: React.FC = () => {
   }
   
   return (
-    <div className="min-h-screen bg-gray-50 pb-16">
+    <div className="min-h-screen bg-midnight-base pb-16">
       <PageHeader 
         title="Classificação da Guilda" 
+        showBackButton={true}
         rightContent={
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={handleShareRanking}
-            className="text-gray-600"
+            className="text-text-secondary hover:text-text-primary"
           >
             <Share2 className="h-5 w-5" />
           </Button>
@@ -101,30 +102,40 @@ const GuildLeaderboardPage: React.FC = () => {
       />
       
       {/* Guild Header Component */}
-      <GuildHeader guildInfo={guildInfo} guildId={id || ''} />
+      <div className="premium-card mx-4 mb-4 p-4 shadow-subtle">
+        <GuildHeader guildInfo={guildInfo} guildId={id || ''} />
+      </div>
       
       {/* Guild Stats Component */}
-      <GuildStats 
-        weeklyExp={guildInfo.weeklyExp}
-        totalExp={guildInfo.totalExp}
-        activeMemberCount={guildInfo.activeMemberCount}
-        memberCount={guildInfo.memberCount}
-        activeQuests={guildInfo.activeQuests}
-      />
+      <div className="premium-card mx-4 mb-4 p-4 shadow-subtle">
+        <GuildStats 
+          weeklyExp={guildInfo.weeklyExp}
+          totalExp={guildInfo.totalExp}
+          activeMemberCount={guildInfo.activeMemberCount}
+          memberCount={guildInfo.memberCount}
+          activeQuests={guildInfo.activeQuests}
+        />
+      </div>
       
       {/* Leaderboard Filters Component */}
-      <LeaderboardFilters 
-        timeFilter={timeFilter}
-        metricFilter={metricFilter}
-        onTimeFilterChange={setTimeFilter}
-        onMetricFilterChange={setMetricFilter}
-      />
+      <div className="premium-card mx-4 mb-4 p-4 shadow-subtle">
+        <LeaderboardFilters 
+          timeFilter={timeFilter}
+          metricFilter={metricFilter}
+          onTimeFilterChange={setTimeFilter}
+          onMetricFilterChange={setMetricFilter}
+        />
+      </div>
       
       {/* Podium Component with improved spacing */}
-      <LeaderboardPodium members={topMembers} />
+      <div className="premium-card mx-4 mb-4 p-4 shadow-subtle">
+        <LeaderboardPodium members={topMembers} />
+      </div>
       
       {/* Members List Component */}
-      <MembersList members={allMembers} />
+      <div className="premium-card mx-4 mb-4 p-4 shadow-subtle">
+        <MembersList members={allMembers} />
+      </div>
       
       <BottomNavBar />
     </div>

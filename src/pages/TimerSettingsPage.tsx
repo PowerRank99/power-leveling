@@ -107,74 +107,78 @@ const TimerSettingsPage: React.FC = () => {
 
   return (
     <AuthRequiredRoute>
-      <div className="pb-20">
+      <div className="pb-20 min-h-screen bg-midnight-base">
         <PageHeader title="Configurações do Timer" showBackButton={true} onBackClick={() => navigate(-1)} />
         
-        <div className="p-4 bg-gray-50 min-h-[80vh]">
-          <Card className="p-5 mb-6">
-            <h2 className="text-xl font-bold mb-4">Tempo de Descanso Padrão</h2>
+        <div className="p-4">
+          <Card className="premium-card p-5 mb-6 shadow-subtle">
+            <h2 className="text-xl font-bold mb-4 font-orbitron text-text-primary">Tempo de Descanso Padrão</h2>
             
             <div className="flex justify-between items-center mb-6">
-              <span className="text-gray-600">Duração padrão</span>
+              <span className="text-text-secondary font-sora">Duração padrão</span>
               <Button
                 onClick={() => setShowDurationSelector(true)}
                 variant="outline"
+                className="bg-midnight-elevated border-divider text-text-primary hover:bg-arcane-15 font-sora"
               >
                 {formatDuration(settings.defaultDuration)}
               </Button>
             </div>
             
             <div className="mb-8">
-              <p className="text-sm text-gray-500 mb-2">
+              <p className="text-sm text-text-tertiary font-sora mb-2">
                 Esta duração será usada como padrão para exercícios sem um tempo específico definido.
               </p>
             </div>
           </Card>
           
-          <Card className="p-5 mb-6">
-            <h2 className="text-xl font-bold mb-4">Notificações</h2>
+          <Card className="premium-card p-5 mb-6 shadow-subtle">
+            <h2 className="text-xl font-bold mb-4 font-orbitron text-text-primary">Notificações</h2>
             
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="sound" className="text-base">Som</Label>
-                  <p className="text-sm text-gray-500">Alerta sonoro quando o timer finalizar</p>
+                  <Label htmlFor="sound" className="text-base text-text-primary font-sora">Som</Label>
+                  <p className="text-sm text-text-tertiary font-sora">Alerta sonoro quando o timer finalizar</p>
                 </div>
                 <Switch
                   id="sound"
                   checked={settings.soundEnabled}
                   onCheckedChange={(checked) => updateSetting('soundEnabled', checked)}
+                  className="data-[state=checked]:bg-arcane"
                 />
               </div>
               
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="vibration" className="text-base">Vibração</Label>
-                  <p className="text-sm text-gray-500">Vibrar o dispositivo quando o timer finalizar</p>
+                  <Label htmlFor="vibration" className="text-base text-text-primary font-sora">Vibração</Label>
+                  <p className="text-sm text-text-tertiary font-sora">Vibrar o dispositivo quando o timer finalizar</p>
                 </div>
                 <Switch
                   id="vibration"
                   checked={settings.vibrationEnabled}
                   onCheckedChange={(checked) => updateSetting('vibrationEnabled', checked)}
+                  className="data-[state=checked]:bg-arcane"
                 />
               </div>
               
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="notification" className="text-base">Notificação</Label>
-                  <p className="text-sm text-gray-500">Mostrar notificação quando o timer finalizar</p>
+                  <Label htmlFor="notification" className="text-base text-text-primary font-sora">Notificação</Label>
+                  <p className="text-sm text-text-tertiary font-sora">Mostrar notificação quando o timer finalizar</p>
                 </div>
                 <Switch
                   id="notification"
                   checked={settings.notificationEnabled}
                   onCheckedChange={(checked) => updateSetting('notificationEnabled', checked)}
+                  className="data-[state=checked]:bg-arcane"
                 />
               </div>
               
               <Button
                 onClick={testTimerNotifications}
                 variant="outline"
-                className="w-full"
+                className="w-full bg-midnight-elevated border-divider text-text-primary hover:bg-arcane-15 font-sora"
               >
                 Testar Notificações
               </Button>
@@ -183,7 +187,7 @@ const TimerSettingsPage: React.FC = () => {
           
           <Button
             onClick={saveSettings}
-            className="w-full"
+            className="w-full bg-arcane hover:bg-arcane-60 text-text-primary shadow-glow-subtle font-sora"
             disabled={isLoading || isSaving}
           >
             {isSaving ? "Salvando..." : "Salvar Configurações"}

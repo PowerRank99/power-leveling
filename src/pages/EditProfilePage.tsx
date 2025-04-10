@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/ui/PageHeader';
@@ -105,11 +106,11 @@ const EditProfilePage = () => {
   };
   
   return (
-    <div className="min-h-screen pb-20 bg-gray-50">
-      <PageHeader title="Editar Perfil" />
+    <div className="min-h-screen pb-20 bg-midnight-base">
+      <PageHeader title="Editar Perfil" showBackButton={true} />
       
       <div className="p-4">
-        <div className="bg-white rounded-lg p-4 shadow-sm">
+        <div className="premium-card p-4 shadow-subtle">
           <form onSubmit={updateProfile}>
             <div className="flex flex-col items-center mb-6">
               <div className="w-24 h-24 rounded-lg overflow-hidden mb-2 relative">
@@ -122,10 +123,10 @@ const EditProfilePage = () => {
                 <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                   <label 
                     htmlFor="avatar-upload" 
-                    className="cursor-pointer text-white flex flex-col items-center"
+                    className="cursor-pointer text-text-primary flex flex-col items-center"
                   >
                     <Camera size={20} />
-                    <span className="text-xs mt-1">Alterar</span>
+                    <span className="text-xs mt-1 font-sora">Alterar</span>
                   </label>
                   <input
                     id="avatar-upload"
@@ -137,48 +138,50 @@ const EditProfilePage = () => {
                   />
                 </div>
               </div>
-              {uploading && <p className="text-sm text-gray-500">Enviando...</p>}
+              {uploading && <p className="text-sm text-text-tertiary font-sora">Enviando...</p>}
             </div>
             
             <div className="space-y-4">
               <div>
-                <Label htmlFor="name">Nome</Label>
+                <Label htmlFor="name" className="text-text-primary font-sora">Nome</Label>
                 <Input
                   id="name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Seu nome"
+                  className="bg-midnight-elevated border-divider text-text-primary placeholder:text-text-tertiary font-sora mt-1"
                 />
               </div>
               
               <div>
-                <Label htmlFor="bio">Sobre mim</Label>
+                <Label htmlFor="bio" className="text-text-primary font-sora">Sobre mim</Label>
                 <Input
                   id="bio"
                   type="text"
                   value={bio || ''}
                   onChange={(e) => setBio(e.target.value)}
                   placeholder="Uma breve descrição sobre você"
+                  className="bg-midnight-elevated border-divider text-text-primary placeholder:text-text-tertiary font-sora mt-1"
                 />
               </div>
               
               <div>
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-text-primary font-sora">Email</Label>
                 <Input
                   id="email"
                   type="text"
                   value={user?.email || ''}
                   disabled
-                  className="bg-gray-50"
+                  className="bg-midnight-card border-divider text-text-tertiary font-sora mt-1"
                 />
-                <p className="text-xs text-gray-500 mt-1">O email não pode ser alterado</p>
+                <p className="text-xs text-text-tertiary font-sora mt-1">O email não pode ser alterado</p>
               </div>
               
               <div className="pt-4">
                 <Button 
                   type="submit" 
-                  className="w-full"
+                  className="w-full bg-arcane hover:bg-arcane-60 text-text-primary shadow-glow-subtle font-sora"
                   disabled={loading}
                 >
                   {loading ? 'Salvando...' : 'Salvar alterações'}

@@ -118,30 +118,50 @@ const CreateQuestPage: React.FC = () => {
     null;
   
   return (
-    <div className="min-h-screen bg-gray-50 pb-16">
+    <div className="min-h-screen bg-midnight-base pb-16">
       <QuestFormHeader 
         title="Escolher Quest" 
         onBackClick={handleBackClick}
       />
       
       <div className="p-4">
-        <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
+        <div className="premium-card p-4 mb-4 shadow-subtle">
           <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-text-tertiary" />
             <Input
               placeholder="Buscar quests..."
-              className="pl-10"
+              className="pl-10 bg-midnight-elevated border-divider text-text-primary placeholder:text-text-tertiary font-sora"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           
           <Tabs defaultValue="all" value={activeCategory} onValueChange={setActiveCategory}>
-            <TabsList className="w-full grid grid-cols-4 mb-4">
-              <TabsTrigger value="all">Todas</TabsTrigger>
-              <TabsTrigger value="facil">Fácil</TabsTrigger>
-              <TabsTrigger value="medio">Médio</TabsTrigger>
-              <TabsTrigger value="dificil">Difícil</TabsTrigger>
+            <TabsList className="grid grid-cols-4 w-full bg-midnight-elevated mb-4">
+              <TabsTrigger 
+                value="all" 
+                className="data-[state=active]:bg-arcane-15 data-[state=active]:text-arcane data-[state=active]:shadow-glow-subtle font-sora"
+              >
+                Todas
+              </TabsTrigger>
+              <TabsTrigger 
+                value="facil" 
+                className="data-[state=active]:bg-arcane-15 data-[state=active]:text-arcane data-[state=active]:shadow-glow-subtle font-sora"
+              >
+                Fácil
+              </TabsTrigger>
+              <TabsTrigger 
+                value="medio" 
+                className="data-[state=active]:bg-arcane-15 data-[state=active]:text-arcane data-[state=active]:shadow-glow-subtle font-sora"
+              >
+                Médio
+              </TabsTrigger>
+              <TabsTrigger 
+                value="dificil" 
+                className="data-[state=active]:bg-arcane-15 data-[state=active]:text-arcane data-[state=active]:shadow-glow-subtle font-sora"
+              >
+                Difícil
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value={activeCategory} className="mt-0">
@@ -157,7 +177,7 @@ const CreateQuestPage: React.FC = () => {
                   ))}
                   
                   {filteredQuests.length === 0 && (
-                    <div className="col-span-full flex flex-col items-center justify-center p-8 text-center text-gray-500">
+                    <div className="col-span-full flex flex-col items-center justify-center p-8 text-center text-text-tertiary font-sora">
                       <p>Nenhuma quest encontrada.</p>
                       <p className="text-sm">Tente uma busca diferente ou altere a categoria.</p>
                     </div>

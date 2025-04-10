@@ -31,11 +31,11 @@ const CreateRoutinePage: React.FC = () => {
 
   return (
     <div className="pb-20 min-h-screen bg-midnight-base">
-      <PageHeader title="Criar Rotina" />
+      <PageHeader title="Criar Rotina" showBackButton={true} />
 
       <div className="p-4">
         {!user && (
-          <Alert variant="destructive" className="mb-4 bg-valor-15 border-valor-30 text-valor">
+          <Alert variant="destructive" className="mb-4 bg-valor-15 border-valor-30 text-valor shadow-subtle">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle className="font-orbitron">Autenticação necessária</AlertTitle>
             <AlertDescription className="font-sora">
@@ -45,7 +45,7 @@ const CreateRoutinePage: React.FC = () => {
         )}
 
         {error && (
-          <Alert variant="destructive" className="mb-4 bg-valor-15 border-valor-30 text-valor">
+          <Alert variant="destructive" className="mb-4 bg-valor-15 border-valor-30 text-valor shadow-subtle">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle className="font-orbitron">Erro ao salvar</AlertTitle>
             <AlertDescription className="font-sora">{error}</AlertDescription>
@@ -56,14 +56,16 @@ const CreateRoutinePage: React.FC = () => {
           value={routineName}
           onChange={(e) => setRoutineName(e.target.value)}
           placeholder="Nome da rotina (ex: Treino A - Peito e Tríceps)"
-          className="mb-4 bg-midnight-elevated border-divider text-text-primary placeholder:text-text-tertiary"
+          className="mb-4 bg-midnight-elevated border-divider text-text-primary placeholder:text-text-tertiary font-sora"
         />
 
         {/* List of selected exercises */}
-        <SelectedExercisesList 
-          exercises={selectedExercises} 
-          onRemoveExercise={removeExercise} 
-        />
+        <div className="premium-card mb-4 shadow-subtle">
+          <SelectedExercisesList 
+            exercises={selectedExercises} 
+            onRemoveExercise={removeExercise} 
+          />
+        </div>
 
         {/* Add exercises */}
         {isShowingSearch ? (
@@ -75,7 +77,7 @@ const CreateRoutinePage: React.FC = () => {
         ) : (
           <Button 
             onClick={() => setIsShowingSearch(true)} 
-            className="w-full mb-4 bg-arcane-15 text-arcane hover:bg-arcane-30 border border-arcane-30"
+            className="w-full mb-4 bg-arcane-15 text-arcane hover:bg-arcane-30 border border-arcane-30 font-sora shadow-glow-subtle"
           >
             <Plus className="w-5 h-5 mr-2" /> Adicionar Exercício
           </Button>
@@ -83,7 +85,7 @@ const CreateRoutinePage: React.FC = () => {
 
         {/* Save routine button with better feedback */}
         <Button 
-          className={`w-full ${isButtonDisabled ? 'bg-midnight-elevated text-text-tertiary' : 'bg-arcane hover:bg-arcane-60 text-text-primary shadow-glow-subtle'}`}
+          className={`w-full ${isButtonDisabled ? 'bg-midnight-elevated text-text-tertiary' : 'bg-arcane hover:bg-arcane-60 text-text-primary shadow-glow-subtle'} font-sora`}
           onClick={saveRoutine}
           disabled={isButtonDisabled}
         >

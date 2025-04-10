@@ -96,59 +96,65 @@ const GuildQuestsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-16">
+    <div className="min-h-screen bg-midnight-base pb-16">
       <QuestPageHeader guildId={id || ''} />
       
       {/* Guild Info Banner */}
-      <div className="bg-white p-4 mb-4 border-b border-gray-200 flex items-center justify-between">
-        <div className="flex items-center">
-          <img 
-            src={guildInfo.avatar} 
-            alt={guildInfo.name} 
-            className="h-10 w-10 object-cover rounded-lg mr-3"
-          />
-          <div>
-            <h2 className="font-bold text-lg">{guildInfo.name}</h2>
-            <div className="flex gap-3 text-sm text-gray-500">
-              <span className="flex items-center">
-                <Users className="h-3.5 w-3.5 mr-1" />
-                {guildInfo.memberCount}
-              </span>
-              <span className="flex items-center">
-                <Crown className="h-3.5 w-3.5 mr-1 text-yellow-500" />
-                Level {guildInfo.level}
-              </span>
+      <div className="bg-gradient-to-r from-arcane to-valor p-4 border-b border-divider shadow-glow-subtle mb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <img 
+              src={guildInfo.avatar} 
+              alt={guildInfo.name} 
+              className="h-10 w-10 object-cover rounded-lg mr-3"
+            />
+            <div>
+              <h2 className="font-bold text-lg font-orbitron text-text-primary">{guildInfo.name}</h2>
+              <div className="flex gap-3 text-sm text-text-secondary font-sora">
+                <span className="flex items-center">
+                  <Users className="h-3.5 w-3.5 mr-1" />
+                  {guildInfo.memberCount}
+                </span>
+                <span className="flex items-center">
+                  <Crown className="h-3.5 w-3.5 mr-1 text-achievement" />
+                  Level {guildInfo.level}
+                </span>
+              </div>
             </div>
           </div>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="border-arcane-30 text-text-primary bg-midnight-elevated/30 backdrop-blur-sm hover:bg-arcane-15 font-sora"
+            onClick={handleLeaderboardClick}
+          >
+            <Shield className="h-4 w-4 mr-1" />
+            Leaderboard
+          </Button>
         </div>
-        
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="border-fitblue text-fitblue"
-          onClick={handleLeaderboardClick}
-        >
-          <Shield className="h-4 w-4 mr-1" />
-          Leaderboard
-        </Button>
       </div>
       
       <div className="p-4 space-y-4">
-        <QuestSearch 
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          guildId={id || ''}
-          isGuildMaster={isGuildMaster}
-        />
+        <div className="premium-card p-4 shadow-subtle mb-4">
+          <QuestSearch 
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            guildId={id || ''}
+            isGuildMaster={isGuildMaster}
+          />
+        </div>
         
-        <QuestTabs 
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          filteredQuests={filteredQuests}
-          guildId={id || ''}
-          isGuildMaster={isGuildMaster}
-          handleQuestClick={handleQuestClick}
-        />
+        <div className="premium-card p-4 shadow-subtle">
+          <QuestTabs 
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            filteredQuests={filteredQuests}
+            guildId={id || ''}
+            isGuildMaster={isGuildMaster}
+            handleQuestClick={handleQuestClick}
+          />
+        </div>
       </div>
       
       <BottomNavBar />

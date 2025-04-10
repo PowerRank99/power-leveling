@@ -140,30 +140,30 @@ const AuthPage = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="bg-fitblue h-48 flex items-center justify-center">
-        <h1 className="text-white text-3xl font-bold">FitTracker</h1>
+    <div className="min-h-screen bg-midnight-deep flex flex-col">
+      <div className="bg-gradient-to-r from-arcane to-valor h-48 flex items-center justify-center">
+        <h1 className="text-text-primary text-3xl font-bold font-orbitron">PowerLeveling</h1>
       </div>
       
       <div className="flex-1 flex flex-col items-center px-4 -mt-20">
-        <div className="bg-white rounded-lg shadow-md w-full max-w-md p-6">
+        <div className="premium-card w-full max-w-md p-6 shadow-elevated">
           <div className="flex space-x-2 mb-8">
             <button
               onClick={() => setMode('login')}
-              className={`flex-1 text-center py-2 font-semibold rounded-lg ${
+              className={`flex-1 text-center py-2 font-semibold rounded-lg font-sora ${
                 mode === 'login'
-                  ? 'bg-fitblue text-white'
-                  : 'bg-gray-100 text-gray-500'
+                  ? 'bg-arcane text-text-primary shadow-glow-subtle'
+                  : 'bg-midnight-elevated text-text-tertiary border border-divider'
               }`}
             >
               Login
             </button>
             <button
               onClick={() => setMode('register')}
-              className={`flex-1 text-center py-2 font-semibold rounded-lg ${
+              className={`flex-1 text-center py-2 font-semibold rounded-lg font-sora ${
                 mode === 'register'
-                  ? 'bg-fitblue text-white'
-                  : 'bg-gray-100 text-gray-500'
+                  ? 'bg-arcane text-text-primary shadow-glow-subtle'
+                  : 'bg-midnight-elevated text-text-tertiary border border-divider'
               }`}
             >
               Cadastro
@@ -179,11 +179,15 @@ const AuthPage = () => {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel className="text-text-primary font-sora">Email</FormLabel>
                         <FormControl>
-                          <Input placeholder="seu@email.com" {...field} />
+                          <Input 
+                            placeholder="seu@email.com" 
+                            {...field} 
+                            className="bg-midnight-elevated border-divider text-text-primary placeholder:text-text-tertiary font-sora"
+                          />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="text-valor font-sora" />
                       </FormItem>
                     )}
                   />
@@ -193,18 +197,23 @@ const AuthPage = () => {
                     name="password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Senha</FormLabel>
+                        <FormLabel className="text-text-primary font-sora">Senha</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="********" {...field} />
+                          <Input 
+                            type="password" 
+                            placeholder="********" 
+                            {...field} 
+                            className="bg-midnight-elevated border-divider text-text-primary placeholder:text-text-tertiary font-sora"
+                          />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="text-valor font-sora" />
                       </FormItem>
                     )}
                   />
                   
                   <Button 
                     type="submit" 
-                    className="w-full bg-fitblue hover:bg-fitblue-600"
+                    className="w-full bg-arcane hover:bg-arcane-60 text-text-primary shadow-glow-subtle font-sora"
                     disabled={loading}
                   >
                     {loading ? 'Entrando...' : 'Entrar'}
@@ -214,9 +223,9 @@ const AuthPage = () => {
               
               <div className="mt-6">
                 <div className="relative">
-                  <Separator className="my-4" />
+                  <Separator className="my-4 bg-divider" />
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="bg-white px-2 text-sm text-gray-500">ou</span>
+                    <span className="bg-midnight-card px-2 text-sm text-text-tertiary font-sora">ou</span>
                   </div>
                 </div>
                 
@@ -224,7 +233,7 @@ const AuthPage = () => {
                   type="button"
                   variant="outline" 
                   onClick={handleGoogleSignIn}
-                  className="w-full mt-4 flex items-center justify-center gap-2"
+                  className="w-full mt-4 flex items-center justify-center gap-2 bg-midnight-elevated border-divider text-text-primary hover:bg-midnight-card font-sora"
                   disabled={loading}
                 >
                   <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
@@ -245,11 +254,15 @@ const AuthPage = () => {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nome</FormLabel>
+                      <FormLabel className="text-text-primary font-sora">Nome</FormLabel>
                       <FormControl>
-                        <Input placeholder="Seu nome" {...field} />
+                        <Input 
+                          placeholder="Seu nome" 
+                          {...field} 
+                          className="bg-midnight-elevated border-divider text-text-primary placeholder:text-text-tertiary font-sora"
+                        />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-valor font-sora" />
                     </FormItem>
                   )}
                 />
@@ -259,11 +272,15 @@ const AuthPage = () => {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel className="text-text-primary font-sora">Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="seu@email.com" {...field} />
+                        <Input 
+                          placeholder="seu@email.com" 
+                          {...field} 
+                          className="bg-midnight-elevated border-divider text-text-primary placeholder:text-text-tertiary font-sora"
+                        />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-valor font-sora" />
                     </FormItem>
                   )}
                 />
@@ -273,18 +290,23 @@ const AuthPage = () => {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Senha</FormLabel>
+                      <FormLabel className="text-text-primary font-sora">Senha</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="********" {...field} />
+                        <Input 
+                          type="password" 
+                          placeholder="********" 
+                          {...field} 
+                          className="bg-midnight-elevated border-divider text-text-primary placeholder:text-text-tertiary font-sora"
+                        />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-valor font-sora" />
                     </FormItem>
                   )}
                 />
                 
                 <Button 
                   type="submit" 
-                  className="w-full bg-fitblue hover:bg-fitblue-600"
+                  className="w-full bg-arcane hover:bg-arcane-60 text-text-primary shadow-glow-subtle font-sora"
                   disabled={loading}
                 >
                   {loading ? 'Cadastrando...' : 'Cadastrar'}

@@ -51,7 +51,7 @@ const ClassSelectionPage = () => {
   };
   
   return (
-    <div className="pb-20 min-h-screen bg-gray-50">
+    <div className="pb-20 min-h-screen bg-midnight-base">
       <PageHeader 
         title="Seleção de Classe"
         showBackButton={true}
@@ -59,12 +59,16 @@ const ClassSelectionPage = () => {
       />
       
       <div className="px-4 mb-6">
-        <ClassInstructionCard />
+        <div className="premium-card p-4 mb-4 shadow-subtle">
+          <ClassInstructionCard />
+        </div>
         
-        <ClassCooldownNotice 
-          isOnCooldown={isOnCooldown} 
-          cooldownText={cooldownText} 
-        />
+        <div className="premium-card p-4 mb-4 shadow-subtle">
+          <ClassCooldownNotice 
+            isOnCooldown={isOnCooldown} 
+            cooldownText={cooldownText} 
+          />
+        </div>
         
         {loading ? (
           <div className="flex justify-center py-12">
@@ -72,15 +76,17 @@ const ClassSelectionPage = () => {
           </div>
         ) : (
           <>
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">Classes Disponíveis</h3>
+            <h3 className="text-lg font-semibold mb-4 text-text-primary font-orbitron">Classes Disponíveis</h3>
             
-            <ClassCarousel
-              classes={classes}
-              selectedClass={selectedClass}
-              userClass={userClass}
-              isOnCooldown={isOnCooldown}
-              onClassSelect={handleClassSelect}
-            />
+            <div className="premium-card p-4 mb-4 shadow-subtle">
+              <ClassCarousel
+                classes={classes}
+                selectedClass={selectedClass}
+                userClass={userClass}
+                isOnCooldown={isOnCooldown}
+                onClassSelect={handleClassSelect}
+              />
+            </div>
             
             <ClassSelectButton
               selectedClass={selectedClass}
