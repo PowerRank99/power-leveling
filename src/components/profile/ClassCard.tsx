@@ -95,13 +95,13 @@ const ClassCard: React.FC<ClassCardProps> = ({
     return ClassFlavorMap[className.toLowerCase()] || 'Siga sua jornada para evoluir suas habilidades.';
   };
   
-  // Consolidate and translate bonuses
+  // Consolidate and translate bonuses - limit to maximum 2
   const consolidateBonuses = (bonuses: ClassBonus[]) => {
     if (!bonuses || bonuses.length === 0) return [];
     
     // Filter out duplicates and English versions
     const seen = new Set();
-    return bonuses.filter(bonus => {
+    const uniqueBonuses = bonuses.filter(bonus => {
       if (typeof bonus.description !== 'string') return true;
       
       // Skip loading placeholders
@@ -132,6 +132,9 @@ const ClassCard: React.FC<ClassCardProps> = ({
       }
       return bonus;
     });
+    
+    // Only return the first 2 bonuses
+    return uniqueBonuses.slice(0, 2);
   };
   
   const displayBonuses = consolidateBonuses(bonuses);

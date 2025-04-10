@@ -51,7 +51,7 @@ const XPProgressBar: React.FC<XPProgressBarProps> = ({
       <div className="h-1.5 bg-divider rounded-full overflow-hidden relative">
         <div 
           className={`h-full ${className} rounded-full transition-all duration-500 progress-bar-fill`} 
-          style={{ width: `${percentage}%` }}
+          style={{ width: `${percentage}%`, background: 'linear-gradient(90deg, rgba(124, 58, 237, 0.6), rgba(239, 68, 68, 0.6))' }}
         ></div>
       </div>
 

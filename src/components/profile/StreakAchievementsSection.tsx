@@ -33,8 +33,15 @@ const StreakAchievementsSection: React.FC<StreakAchievementsSectionProps> = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="relative">
-                    <div className={`bg-gradient-to-br from-valor to-valor-60 p-2 rounded-full mr-3 text-white 
-                      ${isLegendaryStreak ? 'shadow-glow-gold animate-pulse-glow border border-achievement-30' : 'shadow-glow-purple border border-valor-30'}`}>
+                    <div 
+                      className={`p-2 rounded-full mr-3 text-white 
+                        ${isLegendaryStreak 
+                          ? 'shadow-glow-gold animate-pulse-glow border border-achievement-30' 
+                          : 'shadow-glow-purple border border-valor-30'}`}
+                      style={{ 
+                        background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(250, 204, 21, 0.85))'
+                      }}
+                    >
                       <Flame className="w-5 h-5" />
                       
                       {/* Progress ring for streak */}

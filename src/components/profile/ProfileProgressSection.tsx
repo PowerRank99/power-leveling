@@ -37,7 +37,7 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
   const goldAchieved = dailyXP >= dailyXPCap;
   
   return (
-    <Card className="mt-3 premium-card hover:premium-card-elevated transition-all duration-300">
+    <Card className="mt-3 premium-card hover:premium-card-elevated transition-all duration-300 border border-divider/30 shadow-subtle">
       <CardContent className="p-4">
         <div className="mb-1">
           <h3 className="section-header text-base orbitron-text font-bold text-text-primary">
@@ -53,9 +53,9 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="xp-value animate-pulse-subtle flex items-center">
+                  <div className="xp-value animate-pulse-subtle flex items-center" style={{ color: 'rgba(250, 204, 21, 0.85)' }}>
                     {xpGain.replace('XP', 'EXP')}
-                    <Info className="w-3 h-3 ml-1 text-achievement-60" />
+                    <Info className="w-3 h-3 ml-1" style={{ color: 'rgba(250, 204, 21, 0.6)' }} />
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="top">
@@ -121,7 +121,9 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
           {hasStreakBonus && (
             <div className="mt-2 mb-2 text-xs flex justify-between items-center bg-valor-15 rounded-lg p-2 border border-valor-30">
               <div className="flex items-center">
-                <div className="mr-2 bg-gradient-to-br from-valor to-valor-60 p-1 rounded-full shadow-glow-purple text-white">
+                <div className="mr-2 p-1 rounded-full shadow-glow-purple text-white" style={{ 
+                  background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(250, 204, 21, 0.85))'
+                }}>
                   <Flame className="w-3 h-3" /> 
                 </div>
                 <TooltipProvider>

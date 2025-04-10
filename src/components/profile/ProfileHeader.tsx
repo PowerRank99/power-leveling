@@ -86,7 +86,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       </div>
       
       {/* Stats */}
-      <div className="flex justify-between mt-6 px-4 py-3 metric-container">
+      <div className="flex justify-between mt-6 px-4 py-3 metric-container border border-divider shadow-subtle">
         <div className="flex flex-col items-center">
           <span className="text-xs font-sora text-text-tertiary mb-1">Treinos Realizados</span>
           <div className="text-lg flex items-center font-bold font-space text-text-primary">
