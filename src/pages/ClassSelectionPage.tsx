@@ -35,6 +35,17 @@ const ClassSelectionPage = () => {
     }
   }, [userClass]);
   
+  // Play a subtle feedback sound when switching classes
+  const playSelectSound = () => {
+    try {
+      const audio = new Audio('/sounds/class-select.mp3');
+      audio.volume = 0.2;
+      audio.play();
+    } catch (error) {
+      // Silent fail if audio not available or browser blocks autoplay
+    }
+  };
+  
   const handleSelectClass = async () => {
     if (!user || !selectedClass) return;
     
@@ -50,6 +61,15 @@ const ClassSelectionPage = () => {
       return;
     }
     
+    try {
+      // Play confirmation sound
+      const audio = new Audio('/sounds/class-confirm.mp3');
+      audio.volume = 0.3;
+      audio.play();
+    } catch (error) {
+      // Silent fail if audio not available
+    }
+    
     setIsSelecting(true);
     const success = await selectClass(selectedClass);
     setIsSelecting(false);
@@ -58,19 +78,55 @@ const ClassSelectionPage = () => {
       toast.success(`Você agora é um ${selectedClass}!`, {
         description: "Os bônus da sua nova classe já estão ativos"
       });
+      
+      // Add vibration feedback if available
+      if (navigator.vibrate) {
+        navigator.vibrate(200);
+      }
+      
       navigate('/perfil');
     }
   };
   
   const handleClassSelect = (className: string, index?: number) => {
-    setSelectedClass(className);
+    if (className !== selectedClass) {
+      setSelectedClass(className);
+      playSelectSound();
+      
+      // Add subtle vibration if available
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+    }
+    
     if (index !== undefined) {
       setFocusedIndex(index);
     }
   };
   
+  // Animation variants
+  const pageVariants = {
+    initial: { opacity: 0 },
+    animate: { 
+      opacity: 1,
+      transition: { 
+        duration: 0.5,
+        staggerChildren: 0.1
+      }
+    }
+  };
+  
+  const itemVariants = {
+    initial: { opacity: 0, y: 20 },
+    animate: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.4 }
+    }
+  };
+  
   return (
-    <div className="pb-20 min-h-screen bg-midnight-base">
+    <div className="pb-20 min-h-screen bg-gradient-to-b from-midnight-deep via-midnight-base to-midnight-base">
       <PageHeader 
         title="Seleção de Classe"
         showBackButton={true}
@@ -86,17 +142,21 @@ const ClassSelectionPage = () => {
       
       <motion.div 
         className="px-4 py-2 mb-6"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        variants={pageVariants}
+        initial="initial"
+        animate="animate"
       >
-        <ClassInstructionCard />
+        <motion.div variants={itemVariants}>
+          <ClassInstructionCard />
+        </motion.div>
         
         {isOnCooldown && (
-          <ClassCooldownNotice 
-            isOnCooldown={isOnCooldown} 
-            cooldownText={cooldownText} 
-          />
+          <motion.div variants={itemVariants}>
+            <ClassCooldownNotice 
+              isOnCooldown={isOnCooldown} 
+              cooldownText={cooldownText} 
+            />
+          </motion.div>
         )}
         
         {loading ? (
@@ -105,12 +165,12 @@ const ClassSelectionPage = () => {
           </div>
         ) : (
           <>
-            <div className="mb-4">
+            <motion.div variants={itemVariants} className="mb-4">
               <h3 className="text-lg font-semibold mb-2 text-text-primary font-orbitron tracking-wide">Classes Disponíveis</h3>
               <Separator className="bg-divider opacity-30" />
-            </div>
+            </motion.div>
             
-            <div className="premium-card p-4 mb-6 shadow-elevated">
+            <motion.div variants={itemVariants} className="premium-card p-4 mb-6 bg-midnight-elevated/80 backdrop-blur-md border border-white/10 rounded-xl shadow-elevated">
               {/* Mobile view: Carousel */}
               <div className="block lg:hidden">
                 <ClassCarousel
@@ -131,15 +191,17 @@ const ClassSelectionPage = () => {
                 focusedIndex={focusedIndex}
                 onClassSelect={handleClassSelect}
               />
-            </div>
+            </motion.div>
             
-            <ClassSelectButton
-              selectedClass={selectedClass}
-              userClass={userClass}
-              isSelecting={isSelecting}
-              isOnCooldown={isOnCooldown}
-              onClick={handleSelectClass}
-            />
+            <motion.div variants={itemVariants}>
+              <ClassSelectButton
+                selectedClass={selectedClass}
+                userClass={userClass}
+                isSelecting={isSelecting}
+                isOnCooldown={isOnCooldown}
+                onClick={handleSelectClass}
+              />
+            </motion.div>
           </>
         )}
       </motion.div>

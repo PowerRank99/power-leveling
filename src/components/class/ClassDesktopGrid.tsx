@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { motion } from 'framer-motion';
 import { ClassInfo } from '@/services/rpg/ClassService';
 import ClassSelectionCard from './ClassSelectionCard';
 
@@ -20,10 +21,39 @@ const ClassDesktopGrid: React.FC<ClassDesktopGridProps> = ({
   focusedIndex,
   onClassSelect,
 }) => {
+  // Animation variants for grid items
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    show: { 
+      y: 0, 
+      opacity: 1,
+      transition: { type: "spring", stiffness: 300, damping: 24 }
+    }
+  };
+
   return (
-    <div className="hidden lg:grid lg:grid-cols-3 gap-6 mb-8 mt-12">
+    <motion.div 
+      className="hidden lg:grid lg:grid-cols-3 gap-8 mb-8 mt-12"
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+    >
       {classes.map((classInfo, index) => (
-        <div key={`grid-${classInfo.class_name}`} className="h-full">
+        <motion.div 
+          key={`grid-${classInfo.class_name}`} 
+          className="h-full"
+          variants={itemVariants}
+        >
           <ClassSelectionCard
             classInfo={classInfo}
             isCurrentClass={userClass === classInfo.class_name}
@@ -36,9 +66,9 @@ const ClassDesktopGrid: React.FC<ClassDesktopGridProps> = ({
               }
             }}
           />
-        </div>
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 };
 

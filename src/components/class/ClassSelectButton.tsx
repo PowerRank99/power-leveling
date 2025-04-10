@@ -3,8 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { motion } from 'framer-motion';
-import { Check } from 'lucide-react';
-import { ClassService } from '@/services/rpg/ClassService';
+import { Check, ArrowRight } from 'lucide-react';
 
 interface ClassSelectButtonProps {
   selectedClass: string | null;
@@ -29,7 +28,7 @@ const ClassSelectButton: React.FC<ClassSelectButtonProps> = ({
     const gradientMap: Record<string, string> = {
       'Guerreiro': 'from-red-600 to-red-500',
       'Monge': 'from-amber-600 to-amber-500',
-      'Ninja': 'from-green-600 to-green-500',
+      'Ninja': 'from-emerald-600 to-emerald-500',
       'Bruxo': 'from-purple-600 to-purple-500',
       'Paladino': 'from-blue-600 to-blue-500'
     };
@@ -44,6 +43,16 @@ const ClassSelectButton: React.FC<ClassSelectButtonProps> = ({
     return 'Confirmar Seleção';
   };
   
+  // Button animations
+  const buttonVariants = {
+    initial: { scale: 1 },
+    hover: { 
+      scale: 1.03,
+      transition: { type: "spring", stiffness: 400, damping: 10 }
+    },
+    tap: { scale: 0.97 }
+  };
+  
   // Define button content with gradient or spinner
   const buttonContent = isSelecting ? (
     <>
@@ -54,32 +63,43 @@ const ClassSelectButton: React.FC<ClassSelectButtonProps> = ({
     <>
       {userClass === selectedClass ? (
         <Check className="mr-2 w-5 h-5" />
-      ) : null}
+      ) : (
+        <ArrowRight className="mr-2 w-5 h-5" />
+      )}
       {getButtonText()}
     </>
   );
   
   return (
-    <motion.div
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      className="w-full"
-    >
-      <Button
-        onClick={onClick}
-        disabled={!selectedClass || isSelecting || (isOnCooldown && selectedClass !== userClass)}
-        className={`w-full py-6 text-lg bg-gradient-to-r ${getClassGradient(selectedClass)} shadow-lg`}
+    <div className="w-full mt-8">
+      <motion.div
+        variants={buttonVariants}
+        initial="initial"
+        whileHover={(!selectedClass || isSelecting || (isOnCooldown && selectedClass !== userClass)) ? "initial" : "hover"}
+        whileTap={(!selectedClass || isSelecting || (isOnCooldown && selectedClass !== userClass)) ? "initial" : "tap"}
+        className="w-full"
       >
-        {buttonContent}
-      </Button>
+        <Button
+          onClick={onClick}
+          disabled={!selectedClass || isSelecting || (isOnCooldown && selectedClass !== userClass)}
+          className={`w-full py-7 text-lg font-bold bg-gradient-to-r ${getClassGradient(selectedClass)} shadow-lg border border-white/20 rounded-xl`}
+        >
+          {buttonContent}
+        </Button>
+      </motion.div>
       
       {/* Current selection indicator */}
       {selectedClass && (
-        <div className="mt-3 text-center text-sm text-text-secondary">
-          Classe selecionada: <span className="font-medium text-arcane">{selectedClass}</span>
-        </div>
+        <motion.div 
+          className="mt-3 text-center text-sm text-white/80"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          Classe selecionada: <span className="font-medium text-white">{selectedClass}</span>
+        </motion.div>
       )}
-    </motion.div>
+    </div>
   );
 };
 

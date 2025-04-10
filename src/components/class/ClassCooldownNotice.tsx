@@ -1,72 +1,75 @@
 
 import React from 'react';
-import { Clock, AlertCircle } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { motion } from 'framer-motion';
+import { Clock, AlertTriangle } from 'lucide-react';
 
 interface ClassCooldownNoticeProps {
   isOnCooldown: boolean;
   cooldownText: string;
 }
 
-const ClassCooldownNotice: React.FC<ClassCooldownNoticeProps> = ({ 
-  isOnCooldown, 
-  cooldownText 
+const ClassCooldownNotice: React.FC<ClassCooldownNoticeProps> = ({
+  isOnCooldown,
+  cooldownText,
 }) => {
   if (!isOnCooldown) return null;
   
-  // Extract days for animation
-  const getDays = () => {
-    const match = cooldownText.match(/(\d+)/);
-    return match ? parseInt(match[1]) : 0;
+  // Animation for the timer
+  const timerVariants = {
+    animate: {
+      rotate: 360,
+      transition: {
+        duration: 10,
+        repeat: Infinity,
+        ease: "linear"
+      }
+    }
+  };
+  
+  // Animation for the pulsing card
+  const cardVariants = {
+    pulse: {
+      boxShadow: [
+        "0 0 10px rgba(239, 68, 68, 0.3)",
+        "0 0 20px rgba(239, 68, 68, 0.5)",
+        "0 0 10px rgba(239, 68, 68, 0.3)"
+      ],
+      transition: {
+        duration: 2,
+        repeat: Infinity,
+        repeatType: "reverse" as const
+      }
+    }
   };
   
   return (
-    <motion.div 
-      className="mb-6 bg-amber-950/20 p-4 rounded-lg border border-amber-500/30 flex items-center gap-3"
-      initial={{ opacity: 0, y: -10 }}
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
+      variants={cardVariants}
+      animate="pulse"
     >
-      <div className="relative flex-shrink-0">
-        <Clock className="h-6 w-6 text-amber-400" />
-        <motion.div 
-          className="absolute inset-0 bg-amber-400/20 rounded-full"
-          animate={{ 
-            scale: [1, 1.2, 1],
-            opacity: [0.6, 0.2, 0.6] 
-          }}
-          transition={{ 
-            duration: 2, 
-            repeat: Infinity,
-            repeatType: "reverse" 
-          }}
-        />
-      </div>
-      
-      <div>
-        <div className="flex items-center">
-          <AlertCircle className="h-4 w-4 text-amber-500 mr-1" />
-          <p className="text-amber-100 font-medium">Mudança de classe em cooldown</p>
-        </div>
-        <div className="flex items-center mt-1">
-          <p className="text-amber-200/90 text-sm">
-            Próxima mudança disponível em: 
-            <span className="font-space font-medium ml-1">{cooldownText}</span>
-          </p>
-        </div>
-        
-        {/* Progressive countdown bar */}
-        {getDays() > 0 && (
-          <div className="mt-2 w-full bg-amber-900/30 rounded-full h-1.5 overflow-hidden">
-            <motion.div 
-              className="bg-amber-500 h-full rounded-full"
-              initial={{ width: '0%' }}
-              animate={{ width: `${100 - (getDays() / 15) * 100}%` }}
-              transition={{ duration: 1, delay: 0.5 }}
-            />
+      <Card className="mb-4 overflow-hidden border border-valor/40 bg-gradient-to-r from-valor/10 to-valor/5 backdrop-blur-sm">
+        <CardContent className="p-4">
+          <div className="flex items-center">
+            <div className="mr-3 bg-valor/20 rounded-full p-2 border border-valor/30">
+              <motion.div variants={timerVariants} animate="animate">
+                <Clock className="h-5 w-5 text-valor" />
+              </motion.div>
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center">
+                <AlertTriangle className="h-4 w-4 text-valor mr-2" />
+                <h3 className="font-semibold text-valor">Cooldown de Mudança</h3>
+              </div>
+              <p className="text-sm text-text-secondary mt-1">{cooldownText}</p>
+              <p className="text-xs text-text-tertiary mt-2 italic">Você ainda pode selecionar sua classe atual.</p>
+            </div>
           </div>
-        )}
-      </div>
+        </CardContent>
+      </Card>
     </motion.div>
   );
 };
