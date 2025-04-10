@@ -97,22 +97,22 @@ const GuildQuestsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-midnight-base pb-16">
-      <QuestPageHeader guildId={id || ''} />
+      <QuestPageHeader guildId={id || ''} guildName={guildName} />
       
       {/* Guild Info Banner */}
-      <div className="bg-gradient-to-r from-arcane to-valor p-4 border-b border-divider shadow-glow-subtle mb-4">
+      <div className="bg-gradient-to-r from-arcane-30 to-valor-30 p-4 border-b border-divider shadow-glow-subtle mb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <img 
               src={guildInfo.avatar} 
               alt={guildInfo.name} 
-              className="h-10 w-10 object-cover rounded-lg mr-3"
+              className="h-12 w-12 object-cover rounded-lg mr-3 border border-white/20 shadow-glow-purple"
             />
             <div>
               <h2 className="font-bold text-lg font-orbitron text-text-primary">{guildInfo.name}</h2>
               <div className="flex gap-3 text-sm text-text-secondary font-sora">
                 <span className="flex items-center">
-                  <Users className="h-3.5 w-3.5 mr-1" />
+                  <Users className="h-3.5 w-3.5 mr-1 text-text-secondary" />
                   {guildInfo.memberCount}
                 </span>
                 <span className="flex items-center">
@@ -129,14 +129,14 @@ const GuildQuestsPage: React.FC = () => {
             className="border-arcane-30 text-text-primary bg-midnight-elevated/30 backdrop-blur-sm hover:bg-arcane-15 font-sora"
             onClick={handleLeaderboardClick}
           >
-            <Shield className="h-4 w-4 mr-1" />
+            <Shield className="h-4 w-4 mr-1 text-arcane" />
             Leaderboard
           </Button>
         </div>
       </div>
       
       <div className="p-4 space-y-4">
-        <div className="premium-card p-4 shadow-subtle mb-4">
+        <div className="premium-card p-4 shadow-subtle">
           <QuestSearch 
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}

@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/ui/PageHeader';
 import BottomNavBar from '@/components/navigation/BottomNavBar';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { Share2 } from 'lucide-react';
+import { Share2, Shield } from 'lucide-react';
 import LeaderboardPodium from '@/components/guilds/LeaderboardPodium';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -32,6 +32,7 @@ const GuildLeaderboardPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [timeFilter, setTimeFilter] = useState('weekly');
   const [metricFilter, setMetricFilter] = useState('xp');
+  const navigate = useNavigate();
   
   // Mock data for initial UI
   const guildInfo = {
@@ -74,6 +75,10 @@ const GuildLeaderboardPage: React.FC = () => {
     });
   };
   
+  const handleQuestsClick = () => {
+    navigate(`/guilds/${id}/quests`);
+  };
+  
   if (loading) {
     return (
       <div className="min-h-screen bg-midnight-base pb-16">
@@ -101,40 +106,69 @@ const GuildLeaderboardPage: React.FC = () => {
         }
       />
       
-      {/* Guild Header Component */}
-      <div className="premium-card mx-4 mb-4 p-4 shadow-subtle">
-        <GuildHeader guildInfo={guildInfo} guildId={id || ''} />
-      </div>
-      
-      {/* Guild Stats Component */}
-      <div className="premium-card mx-4 mb-4 p-4 shadow-subtle">
-        <GuildStats 
-          weeklyExp={guildInfo.weeklyExp}
-          totalExp={guildInfo.totalExp}
-          activeMemberCount={guildInfo.activeMemberCount}
-          memberCount={guildInfo.memberCount}
-          activeQuests={guildInfo.activeQuests}
-        />
-      </div>
-      
-      {/* Leaderboard Filters Component */}
-      <div className="premium-card mx-4 mb-4 p-4 shadow-subtle">
-        <LeaderboardFilters 
-          timeFilter={timeFilter}
-          metricFilter={metricFilter}
-          onTimeFilterChange={setTimeFilter}
-          onMetricFilterChange={setMetricFilter}
-        />
-      </div>
-      
-      {/* Podium Component with improved spacing */}
-      <div className="premium-card mx-4 mb-4 p-4 shadow-subtle">
-        <LeaderboardPodium members={topMembers} />
-      </div>
-      
-      {/* Members List Component */}
-      <div className="premium-card mx-4 mb-4 p-4 shadow-subtle">
-        <MembersList members={allMembers} />
+      <div className="space-y-4 p-4">
+        {/* Guild Header Component */}
+        <div className="premium-card p-4 shadow-subtle bg-gradient-to-r from-arcane-15 to-arcane-30 border-arcane-30">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center">
+              <img 
+                src={guildInfo.avatar} 
+                alt={guildInfo.name} 
+                className="h-14 w-14 object-cover rounded-lg mr-3 border border-arcane-30 shadow-glow-purple"
+              />
+              <div>
+                <h2 className="font-orbitron text-xl font-bold text-text-primary">{guildInfo.name}</h2>
+                <div className="flex gap-2 text-sm text-text-secondary font-sora">
+                  <span>{guildInfo.memberCount} membros</span>
+                  <span>•</span>
+                  <span>{guildInfo.completedQuests} quests</span>
+                </div>
+              </div>
+            </div>
+            
+            <Button 
+              onClick={handleQuestsClick}
+              className="bg-arcane-15 hover:bg-arcane-30 text-text-primary border border-arcane-30 shadow-glow-subtle"
+              size="sm"
+            >
+              <Shield className="h-4 w-4 mr-2 text-arcane" />
+              Quests
+            </Button>
+          </div>
+        </div>
+        
+        {/* Guild Stats Component */}
+        <div className="premium-card p-4 shadow-subtle">
+          <GuildStats 
+            weeklyExp={guildInfo.weeklyExp}
+            totalExp={guildInfo.totalExp}
+            activeMemberCount={guildInfo.activeMemberCount}
+            memberCount={guildInfo.memberCount}
+            activeQuests={guildInfo.activeQuests}
+          />
+        </div>
+        
+        {/* Leaderboard Filters Component */}
+        <div className="premium-card p-4 shadow-subtle">
+          <h3 className="text-lg font-orbitron font-bold mb-3 text-text-primary">Classificação</h3>
+          <LeaderboardFilters 
+            timeFilter={timeFilter}
+            metricFilter={metricFilter}
+            onTimeFilterChange={setTimeFilter}
+            onMetricFilterChange={setMetricFilter}
+          />
+        </div>
+        
+        {/* Podium Component */}
+        <div className="premium-card p-4 shadow-subtle">
+          <LeaderboardPodium members={topMembers} />
+        </div>
+        
+        {/* Members List Component */}
+        <div className="premium-card p-4 shadow-subtle">
+          <h3 className="text-lg font-orbitron font-bold mb-3 text-text-primary">Todos os Membros</h3>
+          <MembersList members={allMembers} />
+        </div>
       </div>
       
       <BottomNavBar />

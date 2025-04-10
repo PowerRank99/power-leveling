@@ -73,9 +73,9 @@ const WorkoutPage = () => {
       <div className="pb-20 min-h-screen bg-midnight-base">
         <PageHeader title="Treino" showBackButton={false} />
         
-        <div className="p-4">
+        <div className="p-4 space-y-6">
           {error && (
-            <Alert variant="destructive" className="mb-4 bg-valor-15 border-valor-30 text-valor">
+            <Alert variant="destructive" className="mb-4 bg-valor-15 border-valor-30 text-valor shadow-subtle">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle className="font-orbitron">Erro ao carregar dados</AlertTitle>
               <AlertDescription className="font-sora">
@@ -94,9 +94,11 @@ const WorkoutPage = () => {
             </Alert>
           )}
           
-          <ActionsBar />
+          <div className="premium-card p-4 shadow-subtle">
+            <ActionsBar />
+          </div>
           
-          <div className="mt-6">
+          <div className="premium-card p-4 shadow-subtle">
             <h2 className="text-xl font-orbitron font-bold mb-4 text-text-primary">Rotinas Salvas</h2>
             <RoutinesList 
               routines={routinesWithExercises} 
@@ -109,7 +111,7 @@ const WorkoutPage = () => {
             />
           </div>
           
-          <div className="mt-8">
+          <div className="premium-card p-4 shadow-subtle">
             <h2 className="text-xl font-orbitron font-bold mb-4 text-text-primary">Treinos Recentes</h2>
             <WorkoutsList 
               workouts={recentWorkouts} 

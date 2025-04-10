@@ -17,22 +17,22 @@ import QuestRewardField from './QuestRewardField';
 // Define form schema
 const formSchema = z.object({
   title: z.string().min(3, {
-    message: "Name must have at least 3 characters",
+    message: "Nome precisa ter pelo menos 3 caracteres",
   }),
   daysRequired: z.number().min(1, {
-    message: "At least 1 day required",
+    message: "Pelo menos 1 dia é necessário",
   }).max(30, {
-    message: "Maximum of 30 days",
+    message: "Máximo de 30 dias",
   }),
   totalDays: z.number().min(1, {
-    message: "At least 1 day required",
+    message: "Pelo menos 1 dia é necessário",
   }).max(30, {
-    message: "Maximum of 30 days",
+    message: "Máximo de 30 dias",
   }),
   startDate: z.date(),
   endDate: z.date(),
   xpReward: z.number().min(50, {
-    message: "Minimum reward is 50 XP",
+    message: "Recompensa mínima é 50 XP",
   }),
 });
 
@@ -42,7 +42,6 @@ interface QuestFormProps {
   guildId: string;
 }
 
-// Note: This component is kept for backward compatibility but is no longer used in the main flow
 const QuestForm: React.FC<QuestFormProps> = ({ guildId }) => {
   const navigate = useNavigate();
   
@@ -63,7 +62,9 @@ const QuestForm: React.FC<QuestFormProps> = ({ guildId }) => {
     console.log('Form data:', data);
     
     // Here you would send the data to your API
-    toast.success('Quest created successfully!');
+    toast.success('Quest criada com sucesso!', {
+      description: `"${data.title}" foi adicionada às quests da guilda.`
+    });
     
     // Navigate back to quests page
     navigate(`/guilds/${guildId}/quests`);
@@ -72,7 +73,7 @@ const QuestForm: React.FC<QuestFormProps> = ({ guildId }) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <div className="bg-midnight-card border border-divider rounded-xl p-6 space-y-6 shadow-subtle">
+        <div className="premium-card border border-divider rounded-xl p-6 space-y-6 shadow-subtle bg-midnight-card">
           <QuestNameField form={form} />
           <QuestDaysField form={form} />
           <QuestDateRangeField form={form} />
@@ -81,9 +82,9 @@ const QuestForm: React.FC<QuestFormProps> = ({ guildId }) => {
         
         <Button 
           type="submit" 
-          className="w-full h-14 text-lg bg-arcane hover:bg-arcane-60 text-text-primary shadow-glow-subtle border border-arcane-30"
+          className="w-full h-14 text-lg bg-arcane hover:bg-arcane-60 text-text-primary shadow-glow-subtle border border-arcane-30 font-orbitron"
         >
-          <Plus className="h-5 w-5 mr-2" /> Create Quest
+          <Plus className="h-5 w-5 mr-2" /> Criar Quest
         </Button>
       </form>
     </Form>
