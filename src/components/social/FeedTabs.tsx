@@ -2,6 +2,7 @@
 import React from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, Globe, UserCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface FeedTabsProps {
   activeTab: 'todos' | 'guildas' | 'amigos';
@@ -21,9 +22,15 @@ const FeedTabs: React.FC<FeedTabsProps> = ({ activeTab, onTabChange }) => {
                        data-[state=active]:shadow-glow-subtle transition-all duration-300 
                        flex items-center justify-center gap-2 tracking-wider"
           >
-            <Globe className="w-4 h-4" />
-            Todos
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            >
+              <Globe className="w-4 h-4" />
+            </motion.div>
+            <span>Todos</span>
           </TabsTrigger>
+          
           <TabsTrigger 
             value="guildas" 
             className="font-orbitron text-sm py-3 rounded-md
@@ -32,9 +39,15 @@ const FeedTabs: React.FC<FeedTabsProps> = ({ activeTab, onTabChange }) => {
                        data-[state=active]:shadow-glow-subtle transition-all duration-300
                        flex items-center justify-center gap-2 tracking-wider"
           >
-            <Users className="w-4 h-4" />
-            Guildas
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            >
+              <Users className="w-4 h-4" />
+            </motion.div>
+            <span>Guildas</span>
           </TabsTrigger>
+          
           <TabsTrigger 
             value="amigos" 
             className="font-orbitron text-sm py-3 rounded-md
@@ -43,8 +56,13 @@ const FeedTabs: React.FC<FeedTabsProps> = ({ activeTab, onTabChange }) => {
                        data-[state=active]:shadow-glow-subtle transition-all duration-300
                        flex items-center justify-center gap-2 tracking-wider"
           >
-            <UserCircle className="w-4 h-4" />
-            Amigos
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            >
+              <UserCircle className="w-4 h-4" />
+            </motion.div>
+            <span>Amigos</span>
           </TabsTrigger>
         </TabsList>
       </Tabs>

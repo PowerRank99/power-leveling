@@ -6,6 +6,29 @@ import FeedTabs from '@/components/social/FeedTabs';
 import PostList, { Post } from '@/components/social/PostList';
 import WelcomeHeader from '@/components/social/WelcomeHeader';
 import FeaturedContentCarousel from '@/components/social/FeaturedContentCarousel';
+import { motion } from 'framer-motion';
+
+const staggerContainerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { 
+    opacity: 1, 
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: [0.16, 1, 0.3, 1]
+    }
+  }
+};
 
 const IndexPage = () => {
   const [activeTab, setActiveTab] = useState<'todos' | 'guildas' | 'amigos'>('todos');
@@ -67,13 +90,22 @@ const IndexPage = () => {
       {/* Header */}
       <FeedHeader />
       
-      <div className="px-4 py-3">
+      <motion.div 
+        className="px-4 py-3"
+        variants={staggerContainerVariants}
+        initial="hidden"
+        animate="show"
+      >
         {/* Welcome Section */}
-        <WelcomeHeader />
+        <motion.div variants={itemVariants}>
+          <WelcomeHeader />
+        </motion.div>
         
         {/* Featured Content */}
-        <FeaturedContentCarousel />
-      </div>
+        <motion.div variants={itemVariants}>
+          <FeaturedContentCarousel />
+        </motion.div>
+      </motion.div>
       
       {/* Tabs */}
       <FeedTabs activeTab={activeTab} onTabChange={setActiveTab} />
