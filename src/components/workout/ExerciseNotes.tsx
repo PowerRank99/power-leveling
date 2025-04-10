@@ -11,8 +11,8 @@ const ExerciseNotes: React.FC<ExerciseNotesProps> = ({ notes, onChange }) => {
     <div className="mb-4">
       <input
         type="text"
-        placeholder="Add notes here..."
-        className="w-full px-0 py-2 text-gray-500 border-0 border-b border-gray-200 focus:outline-none focus:ring-0 focus:border-gray-300 bg-transparent"
+        placeholder="Adicionar notas aqui..."
+        className="w-full px-0 py-2 text-text-secondary border-0 border-b border-divider focus:outline-none focus:ring-0 focus:border-arcane-30 bg-transparent font-sora placeholder:text-text-tertiary"
         value={notes}
         onChange={(e) => onChange(e.target.value)}
       />

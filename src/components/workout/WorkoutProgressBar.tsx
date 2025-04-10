@@ -16,10 +16,10 @@ const WorkoutProgressBar: React.FC<WorkoutProgressBarProps> = ({
     : 0;
   
   return (
-    <div className="bg-white">
+    <div className="bg-midnight-base border-b border-divider">
       <Progress 
         value={progressPercentage} 
-        className="h-1 rounded-none bg-gray-200"
+        className="h-1 rounded-none"
       />
     </div>
   );

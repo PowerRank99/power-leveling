@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { SetData } from './types';
+import { SetData } from '@/types/workoutTypes';
 import PreviousValues from './PreviousValues';
 import InputField from './InputField';
 import CompleteButton from './CompleteButton';
@@ -24,11 +24,13 @@ const SetRowContent: React.FC<SetRowContentProps> = ({
   onRepsChange
 }) => {
   const isCompleted = set.completed;
-  const rowClass = isCompleted ? "bg-gray-50" : "bg-white";
+  const rowClass = isCompleted 
+    ? "bg-arcane-15/50 border-arcane-30" 
+    : "bg-midnight-elevated border-divider/20";
 
   return (
-    <div className={`grid grid-cols-12 gap-2 items-center py-4 ${rowClass} border-b border-gray-100`}>
-      <div className="col-span-1 font-bold text-gray-800">{index + 1}</div>
+    <div className={`grid grid-cols-12 gap-2 items-center py-4 ${rowClass} border-b rounded-md mb-2`}>
+      <div className="col-span-1 font-bold text-text-primary font-space">{index + 1}</div>
       
       <PreviousValues previous={set.previous} />
       

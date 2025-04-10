@@ -79,7 +79,7 @@ const ActiveWorkoutPage = () => {
   }
   
   return (
-    <div className="min-h-screen bg-midnight-base">
+    <div className="min-h-screen bg-midnight-deep">
       <WorkoutHeader 
         onFinish={finishWorkout}
         onDiscard={discardWorkout}

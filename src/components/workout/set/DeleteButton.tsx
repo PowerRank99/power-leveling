@@ -11,7 +11,7 @@ interface DeleteButtonProps {
 const DeleteButton: React.FC<DeleteButtonProps> = ({ offsetX, swiping, onClick }) => {
   return (
     <div 
-      className="absolute top-0 right-0 h-full flex items-center bg-red-500 text-white"
+      className="absolute top-0 right-0 h-full flex items-center bg-valor text-text-primary"
       style={{ 
         width: '80px', 
         transform: offsetX > 0 ? 'translateX(0)' : 'translateX(80px)',
