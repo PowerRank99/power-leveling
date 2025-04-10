@@ -7,7 +7,6 @@ import ClassCard from '@/components/profile/ClassCard';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useClass } from '@/contexts/ClassContext';
 import { ClassService } from '@/services/rpg/ClassService';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ClassSectionProps {
   className: string;
@@ -47,25 +46,33 @@ const ClassSection: React.FC<ClassSectionProps> = ({
     return flavorTextMap[className] || 'Escolha uma classe para iniciar sua jornada.';
   };
   
+  const getHeaderAccentColor = () => {
+    switch(actualClassName?.toLowerCase()) {
+      case 'guerreiro': return 'border-red-500/30';
+      case 'monge': return 'border-amber-500/30';
+      case 'ninja': return 'border-emerald-500/30';
+      case 'bruxo': return 'border-blue-500/30';
+      case 'paladino': return 'border-yellow-500/30';
+      default: return 'border-divider/30';
+    }
+  };
+  
+  const getHeaderTextColor = () => {
+    switch(actualClassName?.toLowerCase()) {
+      case 'guerreiro': return 'text-red-500';
+      case 'monge': return 'text-amber-500';
+      case 'ninja': return 'text-emerald-500';
+      case 'bruxo': return 'text-blue-500';
+      case 'paladino': return 'text-yellow-500';
+      default: return 'text-text-primary';
+    }
+  };
+  
   return (
     <Card className="mt-3 premium-card hover:premium-card-elevated transition-all duration-300">
-      <CardHeader className="px-4 py-3 flex flex-row justify-between items-center bg-midnight-card bg-opacity-50 backdrop-blur-sm rounded-t-lg border-b border-divider/30">
+      <CardHeader className={`px-4 py-3 flex flex-row justify-between items-center bg-midnight-card bg-opacity-50 backdrop-blur-sm rounded-t-lg border-b ${getHeaderAccentColor()}`}>
         <div className="flex items-center">
-          <h3 className="orbitron-text font-bold text-lg text-text-primary">Classe</h3>
-          {isOnCooldown && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="ml-2 text-xs bg-achievement-15 text-achievement border border-achievement-30 px-2 py-0.5 rounded-full font-space animate-pulse shadow-glow-gold">
-                    {cooldownText}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <p className="text-xs font-sora">Você precisa esperar para trocar de classe novamente</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
+          <h3 className={`orbitron-text font-bold text-lg ${getHeaderTextColor()}`}>Classe</h3>
         </div>
         <Button 
           variant="ghost" 
@@ -84,13 +91,6 @@ const ClassSection: React.FC<ClassSectionProps> = ({
           bonuses={displayBonuses}
           showAvatar={true}
         />
-        
-        {/* Flavor text */}
-        {actualClassName && (
-          <div className="mt-3 text-xs font-sora text-text-tertiary italic border-t border-divider pt-2">
-            "{getClassFlavorText(actualClassName)}"
-          </div>
-        )}
       </CardContent>
     </Card>
   );

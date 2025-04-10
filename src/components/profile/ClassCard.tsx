@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Shield, Sword, Dumbbell, Wind, Sparkles } from 'lucide-react';
+import { Sword, Wind, Sparkles, Shield, Dumbbell } from 'lucide-react';
 import { ClassService } from '@/services/rpg/ClassService';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -44,10 +44,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
   bonuses,
   showAvatar = false
 }) => {
-  // Use ClassService for gradient colors
-  const gradientColors = ClassService.getClassColor(className);
-  
-  // Get appropriate icon based on class
+  // Get default icon based on class
   const getDefaultIcon = () => {
     switch (className.toLowerCase()) {
       case 'guerreiro': return <Sword className="h-6 w-6 text-white" />;
@@ -95,18 +92,19 @@ const ClassCard: React.FC<ClassCardProps> = ({
     return ClassFlavorMap[className.toLowerCase()] || 'Siga sua jornada para evoluir suas habilidades.';
   };
   
-  // Get border and background colors based on class
+  // Get border, background and text colors based on class
   const getClassColors = () => {
     const lowerClass = className.toLowerCase();
     
     switch(lowerClass) {
       case 'guerreiro':
         return {
-          border: 'border-valor-30',
-          accent: 'bg-valor-15',
-          iconBg: 'text-valor',
-          shadow: 'shadow-glow-valor',
-          textAccent: 'text-valor'
+          border: 'border-red-500/30',
+          accent: 'bg-red-500/15',
+          iconBg: 'text-red-500',
+          shadow: 'shadow-[0_0_15px_rgba(239,68,68,0.4)]',
+          textAccent: 'text-red-500',
+          gradientBg: 'bg-gradient-to-br from-red-600/20 to-red-700/10'
         };
       case 'monge':
         return {
@@ -114,7 +112,8 @@ const ClassCard: React.FC<ClassCardProps> = ({
           accent: 'bg-amber-500/15',
           iconBg: 'text-amber-500',
           shadow: 'shadow-[0_0_15px_rgba(245,158,11,0.4)]',
-          textAccent: 'text-amber-500'
+          textAccent: 'text-amber-500',
+          gradientBg: 'bg-gradient-to-br from-amber-600/20 to-amber-700/10'
         };
       case 'ninja':
         return {
@@ -122,7 +121,8 @@ const ClassCard: React.FC<ClassCardProps> = ({
           accent: 'bg-emerald-500/15',
           iconBg: 'text-emerald-500',
           shadow: 'shadow-[0_0_15px_rgba(16,185,129,0.4)]',
-          textAccent: 'text-emerald-500'
+          textAccent: 'text-emerald-500',
+          gradientBg: 'bg-gradient-to-br from-emerald-600/20 to-emerald-700/10'
         };
       case 'bruxo':
         return {
@@ -130,15 +130,17 @@ const ClassCard: React.FC<ClassCardProps> = ({
           accent: 'bg-blue-500/15',
           iconBg: 'text-blue-500',
           shadow: 'shadow-[0_0_15px_rgba(59,130,246,0.4)]',
-          textAccent: 'text-blue-500'
+          textAccent: 'text-blue-500',
+          gradientBg: 'bg-gradient-to-br from-blue-600/20 to-blue-700/10'
         };
       case 'paladino':
         return {
-          border: 'border-achievement-30',
-          accent: 'bg-achievement-15',
-          iconBg: 'text-achievement',
-          shadow: 'shadow-glow-gold',
-          textAccent: 'text-achievement'
+          border: 'border-yellow-500/30',
+          accent: 'bg-yellow-500/15',
+          iconBg: 'text-yellow-500',
+          shadow: 'shadow-[0_0_15px_rgba(250,204,21,0.4)]',
+          textAccent: 'text-yellow-500',
+          gradientBg: 'bg-gradient-to-br from-yellow-500/20 to-yellow-600/10'
         };
       default:
         return {
@@ -146,7 +148,8 @@ const ClassCard: React.FC<ClassCardProps> = ({
           accent: 'bg-arcane-15',
           iconBg: 'text-arcane-60',
           shadow: 'shadow-glow-purple',
-          textAccent: 'text-arcane'
+          textAccent: 'text-arcane',
+          gradientBg: 'bg-gradient-to-br from-arcane/20 to-arcane/10'
         };
     }
   };
@@ -198,7 +201,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
   const displayBonuses = consolidateBonuses(bonuses);
   
   return (
-    <div className={`class-card p-4 mt-4 transition-all duration-300 hover:${classColors.shadow} border ${classColors.border} hover:border-opacity-50 rounded-xl`}>
+    <div className={`class-card p-4 mt-4 transition-all duration-300 hover:${classColors.shadow} border ${classColors.border} ${classColors.gradientBg} hover:border-opacity-50 rounded-xl`}>
       <div className="flex items-center mb-3">
         <div className="relative">
           <div className={`w-12 h-12 bg-midnight-elevated backdrop-blur-sm rounded-lg flex items-center justify-center mr-3 shadow-subtle overflow-hidden border ${classColors.border}`}>
@@ -219,7 +222,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
           )}
         </div>
         <div>
-          <h3 className="orbitron-text font-bold text-xl text-text-primary">{className}</h3>
+          <h3 className={`orbitron-text font-bold text-xl ${classColors.textAccent}`}>{className}</h3>
           <p className="text-sm text-text-secondary font-sora">{description}</p>
         </div>
       </div>
