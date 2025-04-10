@@ -4,7 +4,7 @@ import React from 'react';
 interface StatCardProps {
   icon: React.ReactNode;
   value: number | string;
-  label: string;
+  label: React.ReactNode; // Changed from string to ReactNode to accept elements
   light?: boolean;
 }
 
