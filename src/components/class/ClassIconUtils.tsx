@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Dumbbell, Wind, Sparkles, Shield, Award, Star, Zap, Flame, Target, Search, Sword } from 'lucide-react';
+import { Dumbbell, Wind, Sparkles, Shield, Award, Star, Zap, Flame, Target, Search, Sword, Trophy } from 'lucide-react';
 
 export const getClassIcon = (iconName: string) => {
   switch (iconName) {
