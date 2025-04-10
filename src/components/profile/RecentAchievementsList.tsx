@@ -17,10 +17,10 @@ interface RecentAchievementsListProps {
 
 const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achievements }) => {
   return (
-    <Card className="mt-3 shadow-sm border-none">
-      <CardHeader className="px-4 py-3 flex flex-row justify-between items-center">
-        <h3 className="text-lg font-bold text-gray-800">Conquistas Recentes</h3>
-        <Link to="/conquistas" className="text-fitblue flex items-center text-sm">
+    <Card className="mt-3 premium-card">
+      <CardHeader className="px-4 py-3 flex flex-row justify-between items-center bg-midnight-card bg-opacity-50 backdrop-blur-sm border-b border-divider">
+        <h3 className="text-lg font-orbitron font-bold text-text-primary">Conquistas Recentes</h3>
+        <Link to="/conquistas" className="text-arcane flex items-center text-sm font-sora hover:text-arcane-60">
           Ver Todas <ChevronRight className="w-4 h-4" />
         </Link>
       </CardHeader>
@@ -32,18 +32,18 @@ const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achieve
               key={achievement.id}
               className={`flex flex-col items-center justify-center rounded-full w-20 h-20 ${
                 achievement.isLocked 
-                  ? 'bg-gray-100 text-gray-400' 
+                  ? 'bg-midnight-elevated text-inactive border border-divider' 
                   : achievement.id === 'streak' 
-                    ? 'bg-gradient-to-br from-orange-400 to-orange-600 text-white' 
+                    ? 'bg-gradient-to-br from-valor to-achievement text-text-primary border border-valor-30' 
                     : achievement.id === 'workouts' 
-                      ? 'bg-gradient-to-br from-fitblue to-fitblue-700 text-white' 
-                      : 'bg-gradient-to-br from-fitpurple to-fitpurple-700 text-white'
-              } shadow-md transform transition-transform hover:scale-105 cursor-pointer`}
+                      ? 'bg-gradient-to-br from-arcane to-arcane-60 text-text-primary border border-arcane-30' 
+                      : 'bg-gradient-to-br from-arcane to-valor text-text-primary border border-arcane-30'
+              } shadow-subtle transform transition-transform hover:scale-105 hover:shadow-elevated cursor-pointer`}
             >
               <div className="flex items-center justify-center">
                 {achievement.icon}
               </div>
-              <span className="text-xs text-center mt-1 font-medium">{achievement.name}</span>
+              <span className="text-xs text-center mt-1 font-medium font-sora">{achievement.name}</span>
             </div>
           ))}
         </div>

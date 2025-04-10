@@ -1,4 +1,6 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Sora:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -76,8 +78,38 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-midnight-base font-sora text-text-primary;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .premium-card {
+    @apply bg-midnight-card border border-divider rounded-lg shadow-subtle transition-all duration-200;
+  }
+  
+  .premium-card-elevated {
+    @apply bg-midnight-elevated border-arcane-30 shadow-elevated;
+  }
+  
+  .progress-bar {
+    @apply h-1.5 bg-divider rounded-full overflow-hidden;
+  }
+  
+  .progress-bar-fill {
+    @apply h-full bg-gradient-to-r from-arcane-60 to-valor-60 rounded-full transition-all duration-500;
+  }
+  
+  .premium-badge {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-space font-medium;
+  }
+  
+  .premium-badge-primary {
+    @apply bg-arcane-15 text-arcane-60 border border-arcane-30;
+  }
+  
+  .premium-badge-achievement {
+    @apply bg-achievement-15 text-achievement-60 border border-achievement-30;
   }
 }
 

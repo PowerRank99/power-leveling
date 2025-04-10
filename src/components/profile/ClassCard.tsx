@@ -55,10 +55,10 @@ const ClassCard: React.FC<ClassCardProps> = ({
   const cardIcon = icon || getDefaultIcon();
   
   return (
-    <div className={`rounded-xl bg-gradient-to-br ${gradientColors} text-white p-4 shadow-md`}>
+    <div className="rounded-xl bg-gradient-to-br from-arcane-15 to-arcane-30 text-text-primary p-4 shadow-subtle border border-arcane-30 mt-4">
       <div className="flex items-center mb-3">
         <div className="relative">
-          <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center mr-3 shadow-inner overflow-hidden">
+          <div className="w-12 h-12 bg-midnight-elevated backdrop-blur-sm rounded-lg flex items-center justify-center mr-3 shadow-subtle overflow-hidden border border-arcane-30">
             {showAvatar ? (
               <img 
                 src={getClassAvatarImage()} 
@@ -70,35 +70,35 @@ const ClassCard: React.FC<ClassCardProps> = ({
             )}
           </div>
           {showAvatar && (
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center shadow-inner">
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-arcane rounded-full flex items-center justify-center shadow-subtle">
               {cardIcon}
             </div>
           )}
         </div>
         <div>
-          <h3 className="font-bold text-xl">{className}</h3>
-          <p className="text-sm text-blue-100">{description}</p>
+          <h3 className="font-orbitron font-bold text-xl text-text-primary">{className}</h3>
+          <p className="text-sm text-text-secondary font-sora">{description}</p>
         </div>
       </div>
       
       <div className="mt-4">
-        <p className="text-sm text-blue-200 mb-2 flex items-center">
-          <span className="bg-white/20 rounded-full p-1 mr-2">🔍</span> 
+        <p className="text-sm text-text-secondary mb-2 flex items-center font-sora">
+          <span className="bg-arcane-15 rounded-full p-1 mr-2 border border-arcane-30">🔍</span> 
           Bônus Passivo
         </p>
         
         {bonuses.length > 0 ? (
           bonuses.map((bonus, index) => (
-            <div key={index} className="mb-3 bg-white/10 backdrop-blur-sm rounded-lg p-3 shadow-inner hover:bg-white/15 transition-colors">
+            <div key={index} className="mb-3 bg-midnight-elevated backdrop-blur-sm rounded-lg p-3 shadow-subtle hover:shadow-glow-purple transition-all duration-300 border border-arcane-30">
               <div className="flex items-center">
-                <span className="text-lg font-bold mr-2 whitespace-nowrap">{bonus.value}</span>
-                <p className="text-sm">{bonus.description}</p>
+                <span className="text-lg font-bold mr-2 whitespace-nowrap font-space text-arcane">{bonus.value}</span>
+                <p className="text-sm font-sora text-text-secondary">{bonus.description}</p>
               </div>
             </div>
           ))
         ) : (
-          <div className="mb-3 bg-white/10 backdrop-blur-sm rounded-lg p-3 shadow-inner">
-            <p className="text-sm text-center text-white/70">
+          <div className="mb-3 bg-midnight-elevated backdrop-blur-sm rounded-lg p-3 shadow-subtle border border-arcane-30">
+            <p className="text-sm text-center text-text-tertiary font-sora">
               {className === 'Sem Classe' 
                 ? 'Selecione uma classe para obter bônus' 
                 : 'Carregando bonificações...'}

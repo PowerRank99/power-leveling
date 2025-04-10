@@ -130,7 +130,7 @@ const ProfilePage = () => {
   const userName2 = userName1.toLowerCase().replace(/\s/g, '');
   
   return (
-    <div className="pb-20 min-h-screen bg-gray-50">
+    <div className="pb-20 min-h-screen bg-midnight-base">
       <PageHeader 
         title="Perfil" 
         rightContent={
@@ -140,6 +140,7 @@ const ProfilePage = () => {
               size="icon" 
               onClick={handleEditProfile}
               title="Editar perfil"
+              className="hover:bg-arcane-15 text-arcane hover:text-arcane"
             >
               <Edit3 className="h-5 w-5" />
             </Button>
@@ -148,6 +149,7 @@ const ProfilePage = () => {
               size="icon" 
               onClick={handleSignOut}
               title="Sair da conta"
+              className="hover:bg-valor-15 text-valor hover:text-valor"
             >
               <LogOut className="h-5 w-5" />
             </Button>
@@ -173,6 +175,7 @@ const ProfilePage = () => {
           dailyXPCap={rpgData.dailyXPCap}
           lastActivity={rpgData.lastActivity}
           xpGain={rpgData.xpGain}
+          streak={rpgData.streak}
         />
         
         <StreakAchievementsSection 

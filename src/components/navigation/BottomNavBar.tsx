@@ -10,37 +10,37 @@ const BottomNavBar = () => {
   const { user } = useAuth();
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 flex justify-around">
+    <div className="fixed bottom-0 left-0 right-0 bg-midnight-card border-t border-divider px-4 py-2 flex justify-around shadow-elevated backdrop-blur-lg">
       <Link to="/" className="flex flex-col items-center">
         <Home 
-          className={path === '/' ? 'fill-fitblue stroke-fitblue' : 'text-gray-500'} 
+          className={path === '/' ? 'fill-arcane stroke-arcane' : 'text-text-tertiary'} 
           size={24} 
         />
-        <span className={`text-xs mt-1 ${path === '/' ? 'text-fitblue' : 'text-gray-500'}`}>Início</span>
+        <span className={`text-xs mt-1 font-sora ${path === '/' ? 'text-arcane' : 'text-text-tertiary'}`}>Início</span>
       </Link>
       
       <Link to="/treino" className="flex flex-col items-center">
         <Dumbbell 
-          className={path.includes('/treino') ? 'fill-fitblue stroke-fitblue' : 'text-gray-500'} 
+          className={path.includes('/treino') ? 'fill-arcane stroke-arcane' : 'text-text-tertiary'} 
           size={24} 
         />
-        <span className={`text-xs mt-1 ${path.includes('/treino') ? 'text-fitblue' : 'text-gray-500'}`}>Treinos</span>
+        <span className={`text-xs mt-1 font-sora ${path.includes('/treino') ? 'text-arcane' : 'text-text-tertiary'}`}>Treinos</span>
       </Link>
       
       <Link to="/guilds" className="flex flex-col items-center">
         <Trophy 
-          className={path.includes('/guilds') ? 'fill-fitblue stroke-fitblue' : 'text-gray-500'} 
+          className={path.includes('/guilds') ? 'fill-arcane stroke-arcane' : 'text-text-tertiary'} 
           size={24} 
         />
-        <span className={`text-xs mt-1 ${path.includes('/guilds') ? 'text-fitblue' : 'text-gray-500'}`}>Guildas</span>
+        <span className={`text-xs mt-1 font-sora ${path.includes('/guilds') ? 'text-arcane' : 'text-text-tertiary'}`}>Guildas</span>
       </Link>
       
       <Link to={user ? "/perfil" : "/auth"} className="flex flex-col items-center">
         <UserCircle2 
-          className={path.includes('/perfil') || path.includes('/auth') ? 'fill-fitblue stroke-fitblue' : 'text-gray-500'} 
+          className={path.includes('/perfil') || path.includes('/auth') ? 'fill-arcane stroke-arcane' : 'text-text-tertiary'} 
           size={24} 
         />
-        <span className={`text-xs mt-1 ${path.includes('/perfil') || path.includes('/auth') ? 'text-fitblue' : 'text-gray-500'}`}>
+        <span className={`text-xs mt-1 font-sora ${path.includes('/perfil') || path.includes('/auth') ? 'text-arcane' : 'text-text-tertiary'}`}>
           {user ? 'Perfil' : 'Entrar'}
         </span>
       </Link>

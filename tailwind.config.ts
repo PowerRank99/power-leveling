@@ -19,12 +19,53 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				orbitron: ['Orbitron', 'sans-serif'],
+				sora: ['Sora', 'sans-serif'],
+				space: ['Space Grotesk', 'monospace'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
+				// Midnight theme colors
+				midnight: {
+					deep: '#050510',
+					base: '#07071A',
+					card: '#0D0D2B',
+					elevated: '#12123A',
+				},
+				// Accent colors
+				arcane: {
+					DEFAULT: 'rgba(124, 58, 237, 0.9)',
+					60: 'rgba(124, 58, 237, 0.6)',
+					30: 'rgba(124, 58, 237, 0.3)',
+					15: 'rgba(124, 58, 237, 0.15)',
+				},
+				valor: {
+					DEFAULT: 'rgba(239, 68, 68, 0.9)',
+					60: 'rgba(239, 68, 68, 0.6)',
+					30: 'rgba(239, 68, 68, 0.3)',
+					15: 'rgba(239, 68, 68, 0.15)',
+				},
+				achievement: {
+					DEFAULT: 'rgba(250, 204, 21, 0.85)',
+					60: 'rgba(250, 204, 21, 0.6)',
+					30: 'rgba(250, 204, 21, 0.3)',
+					15: 'rgba(250, 204, 21, 0.15)',
+				},
+				// Text colors
+				text: {
+					primary: 'rgba(255, 255, 255, 0.95)',
+					secondary: 'rgba(255, 255, 255, 0.75)',
+					tertiary: 'rgba(255, 255, 255, 0.5)',
+				},
+				divider: 'rgba(255, 255, 255, 0.07)',
+				overlay: 'rgba(0, 0, 0, 0.3)',
+				inactive: 'rgba(255, 255, 255, 0.4)',
+				// Original colors
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
 					foreground: 'hsl(var(--primary-foreground))'
@@ -108,6 +149,12 @@ export default {
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
 			},
+			boxShadow: {
+				'subtle': '0 4px 10px rgba(0, 0, 0, 0.2)',
+				'elevated': '0 6px 16px rgba(0, 0, 0, 0.35)',
+				'glow-purple': '0 0 15px rgba(124, 58, 237, 0.4)',
+				'glow-gold': '0 0 15px rgba(250, 204, 21, 0.4)',
+			},
 			keyframes: {
 				'accordion-down': {
 					from: {
@@ -145,12 +192,21 @@ export default {
 						opacity: "1"
 					}
 				},
+				'pulse-glow': {
+					"0%, 100%": {
+						boxShadow: "0 0 10px rgba(124, 58, 237, 0.2)"
+					},
+					"50%": {
+						boxShadow: "0 0 20px rgba(124, 58, 237, 0.6)"
+					}
+				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'fade-in': 'fade-in 0.3s ease-out',
 				'scale-in': 'scale-in 0.2s ease-out',
+				'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
 			}
 		}
 	},
