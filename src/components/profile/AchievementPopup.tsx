@@ -10,15 +10,13 @@ const AchievementPopup: React.FC = () => {
   const { isVisible, achievement, hideAchievement } = achievementPopupStore();
   
   useEffect(() => {
-    // Add sound effect or haptic feedback could be implemented here
     if (isVisible) {
-      // Play sound effect or vibration
-      const audio = new Audio('/sounds/achievement.mp3');
-      audio.volume = 0.5;
-      // Uncomment below to add sound when implemented
+      // Placeholder for sound effect
+      // const audio = new Audio('/sounds/achievement.mp3');
+      // audio.volume = 0.5;
       // audio.play().catch(e => console.log('Audio play failed', e));
       
-      // Create magic particles effect
+      // Create subtle particle effects
       if (document.querySelector('.achievement-popup-container')) {
         createMagicParticles();
       }
@@ -29,10 +27,10 @@ const AchievementPopup: React.FC = () => {
     const container = document.querySelector('.achievement-popup-container');
     if (!container) return;
     
-    // Create 20 particles with different sizes and colors
-    for (let i = 0; i < 20; i++) {
+    // Create fewer particles with smaller sizes for a more subtle effect
+    for (let i = 0; i < 8; i++) {
       const particle = document.createElement('div');
-      const size = 1 + Math.random() * 3;
+      const size = 0.5 + Math.random() * 1.5;
       const colors = ['#FACC15', '#EF4444', '#7C3AED', '#06B6D4'];
       const color = colors[Math.floor(Math.random() * colors.length)];
       
@@ -57,57 +55,48 @@ const AchievementPopup: React.FC = () => {
 
   return (
     <Dialog open={isVisible} onOpenChange={(open) => !open && hideAchievement()}>
-      <DialogContent className="p-0 rounded-xl shadow-xl border-0 max-w-sm mx-auto overflow-hidden bg-midnight-light animate-scale-in achievement-popup-container">
-        <div className="relative bg-gradient-midnight-arcane-xpgold p-6 pb-8 flex flex-col items-center overflow-hidden">
-          {/* Background effects */}
-          <div className="absolute inset-0">
-            <div className="absolute w-60 h-60 bg-arcane/30 rounded-full blur-xl top-20 -left-20 animate-pulse"></div>
-            <div className="absolute w-80 h-80 bg-xpgold/20 rounded-full blur-xl -bottom-40 -right-40 animate-pulse"></div>
-            <div className="absolute w-40 h-40 bg-valor/20 rounded-full blur-xl top-40 right-20 animate-pulse"></div>
-          </div>
-          
-          {/* Magical runes */}
-          <div className="absolute inset-0 opacity-5">
-            <svg className="w-full h-full" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="50" cy="50" r="45" stroke="#FFFFFF" fill="none" strokeWidth="0.5"/>
-              <path d="M20,50 L80,50 M50,20 L50,80 M30,30 L70,70 M30,70 L70,30" stroke="#FFFFFF" strokeWidth="0.5"/>
-            </svg>
+      <DialogContent className="p-0 rounded-xl shadow-md border-0 max-w-sm mx-auto overflow-hidden bg-midnight-light/70 backdrop-blur-md animate-scale-in achievement-popup-container">
+        <div className="relative bg-gradient-to-br from-midnight-deep/90 via-arcane-muted/30 to-xp-gold-muted/20 p-6 pb-8 flex flex-col items-center overflow-hidden">
+          {/* Subtle background effects */}
+          <div className="absolute inset-0 opacity-20 pointer-events-none">
+            <div className="absolute w-60 h-60 bg-arcane/10 rounded-full blur-xl top-20 -left-20"></div>
+            <div className="absolute w-80 h-80 bg-xp-gold/10 rounded-full blur-xl -bottom-40 -right-40"></div>
           </div>
           
           {/* Trophy icon with circle */}
-          <div className="relative mb-4 rounded-full bg-gradient-valor-xpgold p-6 -mt-12 border-4 border-white/20 shadow-lg z-10 animate-trophy-bounce">
-            <Trophy className="h-12 w-12 text-white" strokeWidth={1.5} />
-            <div className="absolute -top-2 -right-2 w-8 h-8">
-              <Star className="h-8 w-8 text-xpgold animate-pulse" fill="#FACC15" />
+          <div className="relative mb-4 rounded-full bg-gradient-to-br from-valor-muted/90 to-xp-gold-muted/90 p-5 -mt-10 border border-white/10 shadow-md z-10">
+            <Trophy className="h-10 w-10 text-white/95" strokeWidth={1.5} />
+            <div className="absolute -top-2 -right-2 w-6 h-6">
+              <Star className="h-6 w-6 text-xp-gold" fill="#FACC15" />
             </div>
           </div>
           
           {/* Title */}
-          <div className="text-xpgold text-xl font-space-grotesk font-bold mt-2 mb-1 animate-glow-pulse relative z-10 flex items-center">
-            <Award className="w-5 h-5 mr-2" />
-            Nova Conquista!
-            <Award className="w-5 h-5 ml-2" />
+          <div className="text-xp-gold-muted text-base font-space-grotesk font-medium mt-2 mb-1 relative z-10 flex items-center">
+            <Award className="w-4 h-4 mr-2" />
+            Nova Conquista
+            <Award className="w-4 h-4 ml-2" />
           </div>
-          <h2 className="text-2xl font-orbitron font-bold mb-1 text-center text-ghostwhite tracking-wide relative z-10">{achievement.title}</h2>
-          <p className="text-gray-300 text-center mb-6 font-sora relative z-10">{achievement.description}</p>
+          <h2 className="text-xl font-orbitron font-bold mb-1 text-center text-ghostwhite/95 tracking-wide relative z-10">{achievement.title}</h2>
+          <p className="text-gray-300/90 text-center mb-6 font-sora text-sm relative z-10">{achievement.description}</p>
           
           {/* XP Reward */}
-          <div className="bg-arcane/20 w-full py-3 px-4 rounded-lg mb-6 backdrop-blur-sm border border-arcane/30 relative overflow-hidden shadow-glow-md z-10">
-            <div className="absolute inset-0 opacity-20">
-              <div className="absolute w-20 h-20 bg-xpgold rounded-full blur-xl top-5 -left-10 animate-pulse"></div>
-              <div className="absolute w-30 h-30 bg-xpgold rounded-full blur-xl -bottom-10 -right-10 animate-pulse"></div>
+          <div className="bg-arcane/10 w-full py-2.5 px-4 rounded-lg mb-6 backdrop-blur-sm border border-arcane/20 relative overflow-hidden shadow-sm z-10">
+            <div className="absolute inset-0 opacity-10 pointer-events-none">
+              <div className="absolute w-20 h-20 bg-xp-gold rounded-full blur-xl top-5 -left-10"></div>
+              <div className="absolute w-30 h-30 bg-xp-gold rounded-full blur-xl -bottom-10 -right-10"></div>
             </div>
             <div className="flex justify-center items-center relative">
-              <span className="text-xl font-bold text-xpgold font-space-grotesk tracking-wider flex items-center">
-                <Sparkles className="w-5 h-5 mr-2 animate-pulse" /> +{achievement.xpReward} XP Bônus!
+              <span className="text-lg font-medium text-xp-gold-muted font-space-grotesk tracking-wider flex items-center">
+                <Sparkles className="w-4 h-4 mr-2" /> +{achievement.xpReward} XP Bônus
               </span>
             </div>
-            <div className="text-center text-sm text-arcane-light relative">{achievement.bonusText}</div>
+            <div className="text-center text-xs text-arcane-light/80 relative">{achievement.bonusText}</div>
           </div>
           
           {/* Button */}
           <Button 
-            className="w-full bg-gradient-arcane-valor hover:bg-gradient-valor-xpgold text-white py-6 transition-all duration-300 transform hover:scale-105 font-orbitron tracking-wide relative z-10"
+            className="w-full bg-gradient-to-r from-arcane-muted/90 to-valor-muted/90 hover:from-arcane hover:to-valor text-white/95 py-5 transition-all duration-300 transform hover:scale-[1.02] font-orbitron tracking-wide relative z-10"
             onClick={hideAchievement}
           >
             <Sparkles className="w-4 h-4 mr-2" /> Incrível! <Sparkles className="w-4 h-4 ml-2" />

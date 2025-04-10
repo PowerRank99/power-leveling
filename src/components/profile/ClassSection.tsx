@@ -34,24 +34,24 @@ const ClassSection: React.FC<ClassSectionProps> = ({
   ];
   
   return (
-    <Card className="mt-3 shadow-lg border-none dark:bg-midnight-light/50 dark:border dark:border-arcane/20 rpg-card card-glow hover:shadow-glow-lg transition-shadow">
-      <CardHeader className="px-4 py-3 flex flex-row justify-between items-center bg-midnight-light/50 dark:bg-midnight/80 rounded-t-lg border-b border-arcane/10">
+    <Card className="mt-3 shadow-md border-none dark:bg-midnight-light/30 dark:border dark:border-arcane/10 rpg-card">
+      <CardHeader className="px-4 py-3 flex flex-row justify-between items-center bg-midnight-light/20 dark:bg-midnight/40 rounded-t-lg border-b border-arcane/5">
         <div className="flex items-center">
-          <h3 className="font-orbitron font-bold text-lg text-gray-800 dark:text-ghostwhite flex items-center">
-            <Sparkles className="w-4 h-4 mr-2 text-arcane" /> Classe
+          <h3 className="font-orbitron font-medium text-base text-gray-800 dark:text-ghostwhite/90 flex items-center">
+            <Sparkles className="w-3.5 h-3.5 mr-2 text-arcane-muted opacity-80" /> Classe
           </h3>
           {isOnCooldown && (
-            <span className="ml-2 text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-full font-space-grotesk animate-pulse">
+            <span className="ml-2 text-xs bg-amber-100/10 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300/90 px-2 py-0.5 rounded-full font-space-grotesk text-[10px]">
               {cooldownText}
             </span>
           )}
         </div>
         <Button 
           variant="ghost" 
-          className="text-arcane flex items-center text-sm h-auto p-0 hover:bg-arcane/10 font-orbitron" 
+          className="text-arcane-muted/90 flex items-center text-xs h-auto p-0 hover:bg-arcane/5 font-orbitron" 
           onClick={() => navigate('/classes')}
         >
-          {actualClassName ? 'Trocar Classe' : 'Selecionar Classe'} <ChevronRight className="w-4 h-4" />
+          {actualClassName ? 'Trocar Classe' : 'Selecionar Classe'} <ChevronRight className="w-3.5 h-3.5" />
         </Button>
       </CardHeader>
       

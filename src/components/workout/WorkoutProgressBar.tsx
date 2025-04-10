@@ -18,9 +18,9 @@ const WorkoutProgressBar: React.FC<WorkoutProgressBarProps> = ({
   const isAlmostComplete = progressPercentage >= 75;
   
   return (
-    <div className="bg-white dark:bg-midnight/50">
+    <div className="bg-midnight/30 dark:bg-midnight/20">
       <div className="text-xs font-ibm-plex text-right pr-2 text-gray-500 dark:text-gray-400 flex justify-end items-center">
-        <span className={isAlmostComplete ? 'text-xpgold animate-pulse' : ''}>
+        <span className={isAlmostComplete ? 'text-xp-gold-muted' : ''}>
           {currentExerciseIndex + 1}
         </span>
         <span>/{totalExercises}</span>
@@ -28,17 +28,17 @@ const WorkoutProgressBar: React.FC<WorkoutProgressBarProps> = ({
       <div className="relative">
         <Progress 
           value={progressPercentage} 
-          className="h-1.5 rounded-none bg-gray-200 dark:bg-midnight-dark/50"
-          indicatorColor={`${isAlmostComplete ? 'bg-gradient-to-r from-valor to-xpgold' : 'bg-arcane'}`}
+          className="h-1 rounded-none bg-gray-700/20"
+          indicatorColor={`${isAlmostComplete ? 'bg-gradient-to-r from-valor-muted to-xp-gold-muted' : 'bg-arcane-muted'}`}
           showAnimation={isAlmostComplete}
         />
         
-        {/* Add subtle glow effect when close to completion */}
+        {/* Subtle glow effect when close to completion */}
         {isAlmostComplete && (
           <div 
-            className="absolute inset-0 opacity-30 pointer-events-none"
+            className="absolute inset-0 opacity-20 pointer-events-none"
             style={{
-              boxShadow: '0 0 4px rgba(250, 204, 21, 0.7)',
+              boxShadow: '0 0 3px rgba(250, 204, 21, 0.5)',
               filter: 'blur(1px)'
             }}
           ></div>

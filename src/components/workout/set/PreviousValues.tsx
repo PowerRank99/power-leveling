@@ -15,12 +15,12 @@ const PreviousValues: React.FC<PreviousValuesProps> = ({ previous }) => {
       {previous ? (
         <div className="flex items-center">
           <span className="font-medium">{previous.weight}</span>
-          <span className="mx-0.5">kg</span>
-          <span className="mx-0.5">×</span>
+          <span className="mx-0.5 opacity-80">kg</span>
+          <span className="mx-0.5 opacity-80">×</span>
           <span className="font-medium">{previous.reps}</span>
         </div>
       ) : (
-        '-'
+        <span className="opacity-60">-</span>
       )}
     </div>
   );

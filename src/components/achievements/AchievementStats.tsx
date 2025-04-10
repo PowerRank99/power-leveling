@@ -17,46 +17,47 @@ const AchievementStats: React.FC<AchievementStatsProps> = ({
   const isHighProgress = percentage >= 70;
   
   return (
-    <div className="bg-white dark:bg-midnight-light/50 rounded-lg shadow-sm p-4 mb-4 border border-gray-100 dark:border-arcane/20 transform transition-all duration-300 hover:shadow-md">
+    <div className="bg-midnight-light/30 dark:bg-midnight-light/20 rounded-lg shadow-sm p-4 mb-4 border border-arcane/5 dark:border-arcane/10 transform transition-all duration-300 hover:shadow-md">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center">
-          <div className={`p-1.5 rounded-full ${isHighProgress ? 'bg-gradient-valor-xpgold animate-pulse' : 'bg-fitblue-100 dark:bg-arcane/20'} mr-2`}>
-            <Trophy className={`${isHighProgress ? 'text-white' : 'text-fitblue-500 dark:text-arcane'} w-5 h-5`} />
+          <div className={`p-1.5 rounded-full ${isHighProgress ? 'bg-gradient-to-br from-valor-muted/90 to-xp-gold-muted/90' : 'bg-arcane/15'} mr-2`}>
+            <Trophy className={`${isHighProgress ? 'text-white/95' : 'text-arcane-muted/90'} w-4 h-4`} />
           </div>
-          <h2 className="text-lg font-orbitron font-bold dark:text-ghostwhite">Progresso das Conquistas</h2>
+          <h2 className="text-base font-orbitron font-medium dark:text-ghostwhite/90">Progresso das Conquistas</h2>
         </div>
-        <div className="text-lg font-medium font-ibm-plex">
-          <span className={`${isHighProgress ? 'text-xpgold animate-pulse' : 'text-fitgreen-600 dark:text-restgreen'}`}>
+        <div className="text-base font-medium font-ibm-plex">
+          <span className={`${isHighProgress ? 'text-xp-gold-muted' : 'text-fitgreen-600 dark:text-restgreen/90'}`}>
             {unlockedCount}
           </span>
-          <span className="text-gray-400 dark:text-gray-500">/{totalCount}</span>
+          <span className="text-gray-400 dark:text-gray-500">/</span>
+          <span className="text-gray-400 dark:text-gray-500">{totalCount}</span>
         </div>
       </div>
       
       <div className="relative">
         <Progress 
           value={percentage} 
-          className="h-2.5 bg-gray-100 dark:bg-midnight-dark/50 rounded-full" 
-          indicatorColor={`bg-gradient-to-r ${isHighProgress ? 'from-valor to-xpgold animate-shimmer bg-[length:200%_100%]' : 'from-fitblue-400 to-fitgreen-400'}`}
+          className="h-1.5 bg-gray-100/10 dark:bg-midnight-dark/40 rounded-full" 
+          indicatorColor={`bg-gradient-to-r ${isHighProgress ? 'from-valor-muted to-xp-gold-muted' : 'from-arcane-muted/90 to-energy-muted/90'}`}
+          showAnimation={isHighProgress}
         />
         
-        {/* Dynamic glow effect for high progress */}
+        {/* Subtle glow effect for high progress */}
         {isHighProgress && (
           <div 
-            className="absolute inset-0 rounded-full opacity-30 pointer-events-none"
+            className="absolute inset-0 rounded-full opacity-20 pointer-events-none"
             style={{
-              boxShadow: '0 0 6px #FACC15',
-              filter: 'blur(2px)',
-              animation: 'glow-pulse 2s ease-in-out infinite'
+              boxShadow: '0 0 4px #FACC15',
+              filter: 'blur(1px)'
             }}
           ></div>
         )}
       </div>
       
-      <div className="flex justify-between mt-2 text-sm text-gray-500 dark:text-gray-400">
+      <div className="flex justify-between mt-2 text-xs text-gray-500 dark:text-gray-400/80">
         <span className="font-ibm-plex flex items-center">
           {percentage}% completo
-          {isHighProgress && <Sparkles className="w-3 h-3 ml-1 text-xpgold" />}
+          {isHighProgress && <Sparkles className="w-2.5 h-2.5 ml-1 text-xp-gold-muted opacity-70" />}
         </span>
         <span className="font-ibm-plex">{totalCount - unlockedCount} restantes</span>
       </div>

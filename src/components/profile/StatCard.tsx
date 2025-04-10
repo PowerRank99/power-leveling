@@ -18,14 +18,14 @@ const StatCard: React.FC<StatCardProps> = ({
   animateValue = false,
   color = 'arcane'
 }) => {
-  // Determine color classes based on the color prop
+  // Determine color classes based on the color prop with refined muted tones
   const getColorClass = () => {
     switch(color) {
-      case 'valor': return 'text-valor';
-      case 'xpgold': return 'text-xpgold';
-      case 'energy': return 'text-energy';
+      case 'valor': return 'text-valor-muted';
+      case 'xpgold': return 'text-xp-gold-muted';
+      case 'energy': return 'text-energy-muted';
       case 'restgreen': return 'text-restgreen';
-      default: return 'text-arcane';
+      default: return 'text-arcane-muted';
     }
   };
   
@@ -40,13 +40,13 @@ const StatCard: React.FC<StatCardProps> = ({
   
   return (
     <div className="flex flex-col items-center relative">
-      {/* Add subtle particle effects for animated values */}
+      {/* Refined subtle particle effects for animated values */}
       {animateValue && (
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(2)].map((_, i) => (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-70">
+          {[...Array(1)].map((_, i) => (
             <div 
               key={i}
-              className={`absolute w-1 h-1 ${color === 'xpgold' ? 'bg-xpgold' : color === 'energy' ? 'bg-energy' : 'bg-arcane'} rounded-full opacity-70`}
+              className={`absolute w-0.5 h-0.5 ${color === 'xpgold' ? 'bg-xp-gold-muted' : color === 'energy' ? 'bg-energy-muted' : 'bg-arcane-muted'} rounded-full opacity-60`}
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
@@ -58,17 +58,17 @@ const StatCard: React.FC<StatCardProps> = ({
         </div>
       )}
 
-      <div className={`mb-1 transform transition-transform duration-300 ${animateValue ? 'animate-float' : 'hover:scale-110'}`}>
+      <div className={`mb-1 transform transition-transform duration-300 ${animateValue ? 'animate-float' : 'hover:scale-105'}`}>
         {icon}
       </div>
       
       {value && (
-        <span className={`text-xl font-ibm-plex font-bold tracking-wider ${light ? "text-ghostwhite" : "text-gray-800 dark:text-ghostwhite"} ${animateValue ? getColorClass() : ''} ${animateValue ? getGlowClass() : ''}`}>
+        <span className={`text-lg font-ibm-plex font-medium tracking-wider ${light ? "text-ghostwhite/90" : "text-gray-800 dark:text-ghostwhite/90"} ${animateValue ? getColorClass() : ''} ${animateValue ? getGlowClass() : ''}`}>
           {value}
         </span>
       )}
       
-      <span className={`text-xs font-sora ${light ? "text-blue-100" : "text-gray-500 dark:text-gray-400"}`}>
+      <span className={`text-xs font-sora ${light ? "text-blue-100/80" : "text-gray-500 dark:text-gray-400"}`}>
         {label}
       </span>
     </div>
