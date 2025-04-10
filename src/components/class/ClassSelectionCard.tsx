@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Search, Check, Star } from 'lucide-react';
+import { Check, Shield } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import ClassIconSelector from '@/components/profile/ClassIconSelector';
 import { getBonusTypeIcon } from './ClassIconUtils';
@@ -49,7 +49,6 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
           hoverBorder: 'hover:border-red-500',
           accent: 'bg-red-600/20',
           indicator: 'bg-gradient-to-r from-red-500 to-red-600',
-          progress: 'from-red-500/80 to-red-600/80',
           particleColor: '#ef4444'
         };
       case 'Monge':
@@ -61,7 +60,6 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
           hoverBorder: 'hover:border-amber-500',
           accent: 'bg-amber-600/20',
           indicator: 'bg-gradient-to-r from-amber-500 to-amber-600',
-          progress: 'from-amber-500/80 to-amber-600/80',
           particleColor: '#f59e0b'
         };
       case 'Ninja':
@@ -73,7 +71,6 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
           hoverBorder: 'hover:border-emerald-500',
           accent: 'bg-emerald-600/20',
           indicator: 'bg-gradient-to-r from-emerald-500 to-emerald-600',
-          progress: 'from-emerald-500/80 to-emerald-600/80',
           particleColor: '#10b981'
         };
       case 'Bruxo':
@@ -85,7 +82,6 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
           hoverBorder: 'hover:border-violet-500',
           accent: 'bg-violet-600/20',
           indicator: 'bg-gradient-to-r from-violet-500 to-violet-600',
-          progress: 'from-violet-500/80 to-violet-600/80',
           particleColor: '#8b5cf6'
         };
       case 'Paladino':
@@ -97,7 +93,6 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
           hoverBorder: 'hover:border-blue-500',
           accent: 'bg-blue-600/20',
           indicator: 'bg-gradient-to-r from-blue-500 to-blue-600',
-          progress: 'from-blue-500/80 to-blue-600/80',
           particleColor: '#3b82f6'
         };
       default:
@@ -109,7 +104,6 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
           hoverBorder: 'hover:border-gray-400',
           accent: 'bg-gray-600/20',
           indicator: 'bg-gradient-to-r from-gray-500 to-gray-600',
-          progress: 'from-gray-500/80 to-gray-600/80',
           particleColor: '#9ca3af'
         };
     }
@@ -125,9 +119,7 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
       
       return {
         ...bonus,
-        formattedText: `${value} ${description}`,
-        // Simulate progress for each bonus (in a real app, this would come from the backend)
-        progress: Math.random() * 100
+        formattedText: `${value} ${description}`
       };
     });
   };
@@ -138,13 +130,13 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
   const cardVariants = {
     initial: { scale: 1, boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)" },
     hover: { 
-      scale: 1.03,
+      scale: 1.02,
       boxShadow: isCurrentClass ? 
         colors.shadow : 
         "0 10px 25px rgba(0, 0, 0, 0.2)"
     },
     selected: {
-      scale: 1.02,
+      scale: 1.01,
       boxShadow: colors.shadow
     },
     tap: { scale: 0.98 }
@@ -152,15 +144,7 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
 
   const iconVariants = {
     initial: { scale: 1, rotate: 0 },
-    hover: { scale: 1.2, rotate: 10, transition: { type: "spring", stiffness: 300 } }
-  };
-
-  const progressVariants = {
-    initial: { width: 0 },
-    animate: (progress: number) => ({ 
-      width: `${progress}%`,
-      transition: { duration: 1, ease: "easeOut" }
-    })
+    hover: { scale: 1.1, rotate: 5, transition: { type: "spring", stiffness: 300 } }
   };
   
   return (
@@ -177,7 +161,7 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
     >
       <Card
         className={cn(
-          "overflow-hidden border backdrop-blur-sm transition-all duration-300 relative z-10",
+          "overflow-hidden border transition-all duration-300 relative z-10",
           colors.gradient,
           isSelected
             ? `border-2 border-white/30`
@@ -204,11 +188,11 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
         
         <CardContent className="p-6 z-10 relative">
           {/* Class Header */}
-          <div className="flex justify-between items-start mb-5">
+          <div className="flex justify-between items-start mb-4">
             <div className="flex items-center">
               <motion.div 
                 variants={iconVariants}
-                className={`mr-4 ${colors.accent} p-3 rounded-xl border border-white/20 flex items-center justify-center backdrop-blur-sm`}
+                className={`mr-4 ${colors.accent} p-3 rounded-xl border border-white/20 flex items-center justify-center`}
               >
                 <ClassIconSelector className={classInfo.class_name} size="lg" />
               </motion.div>
@@ -226,56 +210,43 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
                     </motion.span>
                   )}
                 </h3>
-                <Badge variant="outline" className={`mt-1 text-white/90 border-white/30 backdrop-blur-sm`}>
-                  {classInfo.description}
-                </Badge>
               </div>
             </div>
           </div>
           
           {/* Bonus Section */}
-          <div className="mt-5">
+          <div className="mt-4">
             <div className="flex items-center mb-3">
-              <span className={`${colors.accent} rounded-full p-1.5 mr-2 border border-white/30 backdrop-blur-sm`}>
-                <Star className={`h-4 w-4 text-white`} />
+              <span className={`${colors.accent} rounded-full p-1.5 mr-2 border border-white/30`}>
+                <Shield className={`h-4 w-4 text-white`} />
               </span>
               <span className={`text-sm font-medium text-white/90`}>Bônus Passivos</span>
             </div>
             
             <div className="space-y-3">
               {bonuses.map((bonus, index) => (
-                <TooltipProvider key={index}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className={`transition-all duration-300 hover:translate-x-1 bg-black/20 backdrop-blur-sm rounded-lg p-3.5 border border-white/20`}>
-                        <div className="flex items-center mb-2">
-                          <div className={`flex-shrink-0 mr-3 ${colors.accent} p-2 rounded-full border border-white/30 backdrop-blur-sm`}>
-                            {getBonusTypeIcon(bonus.bonus_type)}
-                          </div>
-                          <p className="text-sm font-sora text-white/90">
-                            {bonus.formattedText}
-                          </p>
-                        </div>
-                        
-                        {/* Progress bar */}
-                        <div className="h-1.5 w-full bg-black/30 rounded-full overflow-hidden mt-1">
-                          <motion.div 
-                            className={`h-full rounded-full bg-gradient-to-r ${colors.progress}`}
-                            variants={progressVariants}
-                            initial="initial"
-                            animate="animate"
-                            custom={bonus.progress}
-                          />
-                        </div>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="backdrop-blur-md bg-black/80 border border-white/20">
-                      <p className="text-xs">Progresso do bônus: {Math.round(bonus.progress)}%</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <div 
+                  key={index}
+                  className={`transition-all duration-300 hover:translate-x-1 bg-black/20 rounded-lg p-3.5 border border-white/20`}
+                >
+                  <div className="flex items-center">
+                    <div className={`flex-shrink-0 mr-3 ${colors.accent} p-2 rounded-full border border-white/30`}>
+                      {getBonusTypeIcon(bonus.bonus_type)}
+                    </div>
+                    <p className="text-sm font-sora text-white/90">
+                      {bonus.formattedText}
+                    </p>
+                  </div>
+                </div>
               ))}
             </div>
+          </div>
+          
+          {/* Class description at bottom */}
+          <div className="mt-5 pt-3 border-t border-white/10">
+            <Badge variant="outline" className="w-full flex justify-center text-white/90 border-white/30 py-2">
+              {classInfo.description}
+            </Badge>
           </div>
         </CardContent>
       </Card>

@@ -32,20 +32,20 @@ export const getBonusTypeIcon = (bonusType: string) => {
     case 'hiit': return <Zap className="h-5 w-5 text-white" />;
     
     // Bruxo bonuses
-    case 'flexibility': return <Sparkles className="h-5 w-5 text-white" />;
+    case 'flexibility': return <Sparkles className="h-5 w-5 text-white" />; 
     case 'recovery': return <Heart className="h-5 w-5 text-white" />;
     
     // Paladino bonuses
-    case 'sports': return <Trophy className="h-5 w-5 text-white" />;
+    case 'sports': return <Trophy className="h-5 w-5 text-white" />; 
     case 'long_workouts': return <Timer className="h-5 w-5 text-white" />;
     
     // Movement-related bonuses
     case 'movement': return <Footprints className="h-5 w-5 text-white" />;
     
     // General bonuses
-    case 'bonus': return <Star className="h-5 w-5 text-white" />;
+    case 'bonus': return <Shield className="h-5 w-5 text-white" />; 
     case 'achievement': return <Award className="h-5 w-5 text-white" />;
     
-    default: return <Star className="h-5 w-5 text-white" />;
+    default: return <Shield className="h-5 w-5 text-white" />;
   }
 };
