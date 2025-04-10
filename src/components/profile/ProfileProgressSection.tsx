@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Clock, Sparkles, TrendingUp } from 'lucide-react';
+import { Clock, Sparkles, TrendingUp, Shield } from 'lucide-react';
 import XPProgressBar from '@/components/profile/XPProgressBar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -23,11 +23,17 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
   // Calculate streak bonus (will be displayed if streak is 2 or more days)
   const hasStreakBonus = streak >= 2;
   const streakBonusPercent = Math.min(streak * 5, 35); // 5% per day up to 35%
+  const isHighXP = dailyXP > dailyXPCap * 0.7;
   
   return (
     <Card className="mt-3 shadow-lg overflow-hidden border-none dark:bg-midnight-light/50 dark:border dark:border-arcane/20 rpg-card card-glow">
-      <CardContent className="p-4">
-        <div className="mb-1">
+      <CardContent className="p-4 relative">
+        {/* Ambient glow effect for high XP */}
+        {isHighXP && (
+          <div className="absolute top-0 right-0 w-32 h-32 bg-xpgold/10 rounded-full blur-xl animate-pulse"></div>
+        )}
+        
+        <div className="relative z-10">
           <h3 className="text-base font-orbitron font-bold mb-3 dark:text-ghostwhite flex items-center">
             <TrendingUp className="w-4 h-4 mr-2 text-energy" />
             Progresso Diário
@@ -51,7 +57,7 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
           )}
         </div>
         
-        <div className="flex justify-between text-sm mt-4 font-sora">
+        <div className="flex justify-between text-sm mt-4 font-sora relative z-10">
           <div className="flex items-center text-gray-500 dark:text-gray-400">
             <Clock className="w-4 h-4 mr-1" /> 
             {lastActivity}

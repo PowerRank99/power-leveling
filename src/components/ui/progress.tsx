@@ -25,11 +25,12 @@ const Progress = React.forwardRef<
       className={cn(
         "h-full w-full flex-1 transition-all duration-300",
         indicatorColor ? indicatorColor : "bg-arcane",
-        showAnimation && value && value > 0 ? "animate-shimmer bg-[length:200%_100%] bg-gradient-arcane-valor" : ""
+        showAnimation && value && value > 0 ? "animate-shimmer bg-[length:200%_100%]" : ""
       )}
       style={{ 
         transform: `translateX(-${100 - (value || 0)}%)`,
-        backgroundSize: showAnimation ? "200% 100%" : "100% 100%"
+        backgroundSize: showAnimation ? "200% 100%" : "100% 100%",
+        boxShadow: showAnimation ? "0 0 10px rgba(124, 58, 237, 0.3)" : "none"
       }}
     />
   </ProgressPrimitive.Root>

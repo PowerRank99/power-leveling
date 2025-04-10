@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ChevronRight, Lock } from 'lucide-react';
+import { ChevronRight, Lock, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
@@ -30,7 +30,7 @@ const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achieve
           {achievements.map((achievement) => (
             <div
               key={achievement.id}
-              className={`flex flex-col items-center justify-center rounded-lg w-24 h-24 
+              className={`flex flex-col items-center justify-center rounded-lg w-24 h-24 relative
                 ${achievement.isLocked 
                   ? 'bg-gray-100 dark:bg-midnight/80 text-gray-400 shadow-inner' 
                   : achievement.id === 'streak' 
@@ -39,10 +39,17 @@ const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achieve
                       ? 'bg-gradient-arcane-energy text-white shadow-glow-energy' 
                       : 'bg-gradient-arcane-valor text-white shadow-glow-md'
                 } 
-                transform transition-transform hover:scale-105 cursor-pointer 
+                transform transition-all hover:scale-105 hover:translate-y-[-2px] cursor-pointer 
                 ${!achievement.isLocked ? 'animate-glow-pulse' : ''}`}
             >
-              <div className={`flex items-center justify-center ${!achievement.isLocked ? 'animate-float' : ''}`}>
+              {/* Star icon for important achievements */}
+              {!achievement.isLocked && achievement.id === 'streak' && (
+                <div className="absolute -top-2 -right-2">
+                  <Star className="h-5 w-5 text-xpgold fill-xpgold animate-pulse" />
+                </div>
+              )}
+              
+              <div className={`flex items-center justify-center ${!achievement.isLocked ? 'animate-float' : ''} mt-2`}>
                 {achievement.isLocked ? <Lock className="h-6 w-6" /> : achievement.icon}
               </div>
               <span className="text-sm text-center mt-2 font-medium font-orbitron tracking-wide">
@@ -53,6 +60,20 @@ const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achieve
               {!achievement.isLocked && (
                 <div className="absolute inset-0 pointer-events-none">
                   <div className="absolute inset-0 rounded-lg opacity-20 bg-gradient-radial"></div>
+                  
+                  {/* Particle effects */}
+                  {[...Array(3)].map((_, i) => (
+                    <div 
+                      key={i}
+                      className="absolute w-1 h-1 bg-white rounded-full opacity-70"
+                      style={{
+                        left: `${10 + Math.random() * 80}%`,
+                        top: `${10 + Math.random() * 80}%`,
+                        animation: `magic-particles ${1 + Math.random()}s ease-out infinite`,
+                        animationDelay: `${Math.random() * 2}s`
+                      }}
+                    ></div>
+                  ))}
                 </div>
               )}
             </div>

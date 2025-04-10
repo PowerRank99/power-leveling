@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { Trophy, Star, Sparkles } from 'lucide-react';
+import { Trophy, Star, Sparkles, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { achievementPopupStore } from '@/stores/achievementPopupStore';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -29,10 +29,17 @@ const AchievementPopup: React.FC = () => {
     const container = document.querySelector('.achievement-popup-container');
     if (!container) return;
     
-    // Create 20 particles
+    // Create 20 particles with different sizes and colors
     for (let i = 0; i < 20; i++) {
       const particle = document.createElement('div');
-      particle.className = 'absolute w-2 h-2 rounded-full bg-xpgold animate-magic-particles';
+      const size = 1 + Math.random() * 3;
+      const colors = ['#FACC15', '#EF4444', '#7C3AED', '#06B6D4'];
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      
+      particle.className = 'absolute rounded-full animate-magic-particles';
+      particle.style.width = `${size}px`;
+      particle.style.height = `${size}px`;
+      particle.style.backgroundColor = color;
       particle.style.left = `${Math.random() * 100}%`;
       particle.style.top = `${Math.random() * 100}%`;
       particle.style.opacity = '0';
@@ -54,8 +61,17 @@ const AchievementPopup: React.FC = () => {
         <div className="relative bg-gradient-midnight-arcane-xpgold p-6 pb-8 flex flex-col items-center overflow-hidden">
           {/* Background effects */}
           <div className="absolute inset-0">
-            <div className="absolute w-40 h-40 bg-arcane/20 rounded-full blur-xl top-20 -left-20 animate-pulse"></div>
-            <div className="absolute w-80 h-80 bg-xpgold/10 rounded-full blur-xl -bottom-40 -right-40 animate-pulse"></div>
+            <div className="absolute w-60 h-60 bg-arcane/30 rounded-full blur-xl top-20 -left-20 animate-pulse"></div>
+            <div className="absolute w-80 h-80 bg-xpgold/20 rounded-full blur-xl -bottom-40 -right-40 animate-pulse"></div>
+            <div className="absolute w-40 h-40 bg-valor/20 rounded-full blur-xl top-40 right-20 animate-pulse"></div>
+          </div>
+          
+          {/* Magical runes */}
+          <div className="absolute inset-0 opacity-5">
+            <svg className="w-full h-full" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="50" cy="50" r="45" stroke="#FFFFFF" fill="none" strokeWidth="0.5"/>
+              <path d="M20,50 L80,50 M50,20 L50,80 M30,30 L70,70 M30,70 L70,30" stroke="#FFFFFF" strokeWidth="0.5"/>
+            </svg>
           </div>
           
           {/* Trophy icon with circle */}
@@ -67,7 +83,11 @@ const AchievementPopup: React.FC = () => {
           </div>
           
           {/* Title */}
-          <h3 className="text-xpgold text-xl font-space-grotesk font-bold mt-2 mb-1 animate-glow-pulse relative z-10">Nova Conquista!</h3>
+          <div className="text-xpgold text-xl font-space-grotesk font-bold mt-2 mb-1 animate-glow-pulse relative z-10 flex items-center">
+            <Award className="w-5 h-5 mr-2" />
+            Nova Conquista!
+            <Award className="w-5 h-5 ml-2" />
+          </div>
           <h2 className="text-2xl font-orbitron font-bold mb-1 text-center text-ghostwhite tracking-wide relative z-10">{achievement.title}</h2>
           <p className="text-gray-300 text-center mb-6 font-sora relative z-10">{achievement.description}</p>
           
@@ -87,10 +107,10 @@ const AchievementPopup: React.FC = () => {
           
           {/* Button */}
           <Button 
-            className="w-full bg-gradient-arcane-valor hover:bg-gradient-valor-xpgold text-white py-6 transition-all duration-300 font-orbitron tracking-wide relative z-10"
+            className="w-full bg-gradient-arcane-valor hover:bg-gradient-valor-xpgold text-white py-6 transition-all duration-300 transform hover:scale-105 font-orbitron tracking-wide relative z-10"
             onClick={hideAchievement}
           >
-            Incrível!
+            <Sparkles className="w-4 h-4 mr-2" /> Incrível! <Sparkles className="w-4 h-4 ml-2" />
           </Button>
         </div>
       </DialogContent>

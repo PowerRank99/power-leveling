@@ -39,13 +39,31 @@ const StatCard: React.FC<StatCardProps> = ({
   };
   
   return (
-    <div className="flex flex-col items-center">
-      <div className={`mb-1 transform ${animateValue ? 'animate-float' : ''}`}>
+    <div className="flex flex-col items-center relative">
+      {/* Add subtle particle effects for animated values */}
+      {animateValue && (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {[...Array(2)].map((_, i) => (
+            <div 
+              key={i}
+              className={`absolute w-1 h-1 ${color === 'xpgold' ? 'bg-xpgold' : color === 'energy' ? 'bg-energy' : 'bg-arcane'} rounded-full opacity-70`}
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animation: `magic-particles ${1 + Math.random()}s ease-out`,
+                animationDelay: `${Math.random() * 2}s`
+              }}
+            ></div>
+          ))}
+        </div>
+      )}
+
+      <div className={`mb-1 transform transition-transform duration-300 ${animateValue ? 'animate-float' : 'hover:scale-110'}`}>
         {icon}
       </div>
       
       {value && (
-        <span className={`text-xl font-ibm-plex font-bold tracking-wider ${light ? "text-ghostwhite" : "text-gray-800 dark:text-ghostwhite"} ${animateValue ? getColorClass() : ''}`}>
+        <span className={`text-xl font-ibm-plex font-bold tracking-wider ${light ? "text-ghostwhite" : "text-gray-800 dark:text-ghostwhite"} ${animateValue ? getColorClass() : ''} ${animateValue ? getGlowClass() : ''}`}>
           {value}
         </span>
       )}

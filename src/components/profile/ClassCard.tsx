@@ -80,11 +80,25 @@ const ClassCard: React.FC<ClassCardProps> = ({
   };
   
   return (
-    <div className={`rounded-xl bg-gradient-to-br ${getRpgGradient()} text-white p-4 shadow-md ${getGlowClass()} relative overflow-hidden`}>
+    <div className={`rounded-xl bg-gradient-to-br ${getRpgGradient()} text-white p-4 shadow-md ${getGlowClass()} relative overflow-hidden transform transition-all duration-300 hover:scale-[1.01] hover:shadow-lg`}>
       {/* Animated background effects */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute w-40 h-40 bg-white/5 rounded-full blur-xl top-5 -left-20 animate-pulse"></div>
         <div className="absolute w-20 h-20 bg-white/10 rounded-full blur-lg -bottom-5 right-10 animate-pulse"></div>
+        {/* Add magical runes or symbols */}
+        <div className="absolute top-5 right-5 w-16 h-16 opacity-10">
+          {className.toLowerCase() === 'bruxo' && (
+            <svg viewBox="0 0 24 24" className="w-full h-full">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" fill="none" strokeWidth="0.5"/>
+              <path d="M12 2L12 22M2 12L22 12M4 4L20 20M4 20L20 4" stroke="currentColor" strokeWidth="0.5"/>
+            </svg>
+          )}
+          {className.toLowerCase() === 'guerreiro' && (
+            <svg viewBox="0 0 24 24" className="w-full h-full">
+              <path d="M12 2L16 12L22 14L16 16L12 22L8 16L2 14L8 12L12 2Z" stroke="currentColor" fill="none" strokeWidth="0.5"/>
+            </svg>
+          )}
+        </div>
       </div>
       
       <div className="relative z-10">
@@ -123,7 +137,10 @@ const ClassCard: React.FC<ClassCardProps> = ({
           
           {bonuses.length > 0 ? (
             bonuses.map((bonus, index) => (
-              <div key={index} className="mb-3 card-glass rounded-lg p-3 shadow-inner hover:bg-white/15 transition-colors">
+              <div 
+                key={index} 
+                className="mb-3 card-glass rounded-lg p-3 shadow-inner hover:bg-white/15 transition-colors transform hover:translate-y-[-2px] duration-200"
+              >
                 <div className="flex items-center">
                   <span className="text-lg font-bold mr-2 whitespace-nowrap font-space-grotesk tracking-wider animate-pulse">{bonus.value}</span>
                   <p className="text-sm font-sora">{bonus.description}</p>

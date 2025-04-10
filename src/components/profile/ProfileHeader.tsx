@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Award, Sparkles } from 'lucide-react';
+import { Award, Sparkles, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Trophy from '@/components/icons/Trophy';
 import StatCard from '@/components/profile/StatCard';
@@ -32,17 +32,39 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   nextLevelXP
 }) => {
   const levelProgress = Math.min(Math.round((currentXP / nextLevelXP) * 100), 100);
+  const isHighLevel = level >= 10;
   
   return (
-    <div className="bg-gradient-arcane-valor text-ghostwhite p-6 relative rounded-b-xl shadow-lg card-glass overflow-hidden">
+    <div className="bg-gradient-arcane-valor text-ghostwhite p-6 relative rounded-xl shadow-lg card-glass overflow-hidden">
       {/* Animated background patterns */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute w-20 h-20 bg-ghostwhite rounded-full blur-xl top-20 -left-10 animate-pulse"></div>
-        <div className="absolute w-32 h-32 bg-xpgold rounded-full blur-xl -bottom-10 -right-10 animate-pulse"></div>
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute w-32 h-32 bg-ghostwhite rounded-full blur-xl top-10 -left-10 animate-pulse"></div>
+        <div className="absolute w-40 h-40 bg-xpgold rounded-full blur-xl -bottom-20 -right-10 animate-pulse"></div>
+        <div className="absolute w-24 h-24 bg-energy rounded-full blur-xl bottom-20 left-40 animate-pulse"></div>
       </div>
+      
+      {/* Particle effects for high-level players */}
+      {isHighLevel && (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {[...Array(5)].map((_, i) => (
+            <div 
+              key={i}
+              className="absolute w-1 h-1 bg-xpgold rounded-full opacity-70 animate-magic-particles"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 2}s`,
+                animationDuration: `${1 + Math.random() * 2}s`
+              }}
+            ></div>
+          ))}
+        </div>
+      )}
       
       <div className="flex items-center relative z-10">
         <div className="relative">
+          <div className={`absolute inset-0 rounded-full ${isHighLevel ? 'animate-glow-pulse' : ''}`} 
+               style={{boxShadow: isHighLevel ? '0 0 15px rgba(250, 204, 21, 0.7)' : 'none'}}></div>
           <Avatar className="h-24 w-24 border-4 border-white/20 shadow-lg">
             <AvatarImage src={avatar} alt={name} />
             <AvatarFallback className="font-orbitron text-xl bg-arcane">{name.charAt(0)}</AvatarFallback>
@@ -74,11 +96,14 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           {/* Level Progress */}
           <div className="mb-1 flex justify-between text-xs font-ibm-plex">
             <span className="flex items-center">
-              <Badge variant="outline" className="bg-midnight-light/40 border-ghostwhite/20 text-ghostwhite mr-2 font-orbitron">
-                Nível {level}
+              <Badge 
+                variant="outline" 
+                className={`bg-midnight-light/40 border-ghostwhite/20 text-ghostwhite mr-2 font-orbitron ${isHighLevel ? 'shadow-glow-xpgold' : ''}`}
+              >
+                <Shield className="w-3 h-3 mr-1" /> Nível {level}
               </Badge>
               {level % 5 === 0 && (
-                <Badge className="bg-xpgold text-midnight font-sora font-bold animate-pulse">
+                <Badge className="bg-xpgold text-midnight font-sora font-bold animate-pulse shadow-glow-xpgold">
                   <Sparkles className="w-3 h-3 mr-1" /> Milestone!
                 </Badge>
               )}
@@ -87,7 +112,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           </div>
           <Progress 
             value={levelProgress} 
-            className="h-1.5 bg-white/20" 
+            className="h-2 bg-white/20" 
             indicatorColor="bg-gradient-valor-xpgold"
             showAnimation={true}
           />

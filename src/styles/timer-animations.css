@@ -1,46 +1,160 @@
 
-@keyframes pulse {
+/* Timer animations */
+@keyframes countdown {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: var(--dash-length); }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); opacity: 0.7; }
+  50% { transform: scale(1.05); opacity: 0.9; }
+  100% { transform: scale(0.95); opacity: 0.7; }
+}
+
+@keyframes pulse-dot {
+  0% { transform: scale(0.9); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(0.9); }
+}
+
+@keyframes timer-fade-in {
+  0% { opacity: 0; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes timer-countdown-complete {
+  0% { transform: scale(1); }
+  10% { transform: scale(1.1); filter: brightness(1.3); }
+  20% { transform: scale(1); }
+  100% { transform: scale(1); }
+}
+
+/* Magic particles animation */
+@keyframes magic-particles {
   0% {
-    transform: scale(1);
+    transform: translateY(0) scale(1);
+    opacity: 0;
   }
-  50% {
-    transform: scale(1.02);
+  10% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 0.5;
   }
   100% {
+    transform: translateY(-20px) scale(0);
+    opacity: 0;
+  }
+}
+
+/* Achievement unlock animation */
+@keyframes achievement-reveal {
+  0% { 
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+    filter: blur(4px);
+  }
+  100% { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes xp-gain {
+  0% { 
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  50% { 
+    opacity: 1;
+    transform: scale(1.2);
+    filter: drop-shadow(0 0 10px rgba(250, 204, 21, 0.6));
+  }
+  100% { 
+    opacity: 1;
     transform: scale(1);
   }
 }
 
-.pulse {
-  animation: pulse 0.2s ease-in-out;
-}
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
+@keyframes level-up-shine {
+  0% {
+    background-position: -400px;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  100% {
+    background-position: 400px;
   }
 }
 
-.animate-fade-in {
-  animation: fade-in 0.3s ease-out;
-}
-
-@keyframes scale-in {
-  from {
-    transform: scale(0.95);
-    opacity: 0;
+/* Progress bar fill animation */
+@keyframes progress-fill {
+  0% {
+    width: 0%;
+    opacity: 0.6;
   }
-  to {
-    transform: scale(1);
+  50% {
     opacity: 1;
   }
+  100% {
+    width: 100%;
+    opacity: 0.8;
+  }
 }
 
-.animate-scale-in {
-  animation: scale-in 0.3s ease-out;
+/* Border glow animation */
+@keyframes border-glow {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(124, 58, 237, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(124, 58, 237, 0.8);
+  }
+}
+
+/* Trophy shine effect */
+@keyframes trophy-shine {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Glow animations for elements */
+.glow-arcane {
+  animation: border-glow 2s infinite;
+  box-shadow: 0 0 8px rgba(124, 58, 237, 0.5);
+}
+
+.glow-valor {
+  animation: border-glow 2s infinite;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+}
+
+.glow-xpgold {
+  animation: border-glow 2s infinite;
+  box-shadow: 0 0 8px rgba(250, 204, 21, 0.5);
+}
+
+.trophy-icon {
+  position: relative;
+  overflow: hidden;
+}
+
+.trophy-icon::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -100%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: rotate(30deg);
+  animation: trophy-shine 3s infinite;
 }
