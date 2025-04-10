@@ -5,26 +5,27 @@ interface LoadingSpinnerProps {
   message?: string;
   subMessage?: string;
   size?: 'sm' | 'md' | 'lg';
-  className?: string;
 }
 
 const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
-  message = 'Carregando...', 
+  message = "Carregando...", 
   subMessage,
-  size = 'md',
-  className = ''
+  size = "md" 
 }) => {
-  const sizeClass = {
-    'sm': 'w-4 h-4 border-2',
-    'md': 'w-8 h-8 border-4',
-    'lg': 'w-12 h-12 border-4'
-  }[size];
-
+  const getSizeClass = () => {
+    switch (size) {
+      case 'sm': return 'h-5 w-5';
+      case 'md': return 'h-8 w-8';
+      case 'lg': return 'h-12 w-12';
+      default: return 'h-8 w-8';
+    }
+  };
+  
   return (
-    <div className={`text-center py-8 ${className}`}>
-      <div className={`animate-spin ${sizeClass} border-fitblue border-t-transparent rounded-full mx-auto mb-2`}></div>
-      {message && <p className="text-gray-700 font-medium">{message}</p>}
-      {subMessage && <p className="text-gray-500 text-sm mt-1">{subMessage}</p>}
+    <div className="flex flex-col items-center justify-center p-8 text-center">
+      <div className={`animate-spin ${getSizeClass()} mb-3 border-4 border-transparent border-t-arcane rounded-full shadow-glow-purple`}></div>
+      <p className="text-text-primary font-orbitron mb-1">{message}</p>
+      {subMessage && <p className="text-text-tertiary text-sm font-sora">{subMessage}</p>}
     </div>
   );
 };

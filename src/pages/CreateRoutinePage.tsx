@@ -30,25 +30,25 @@ const CreateRoutinePage: React.FC = () => {
   const isButtonDisabled = isSaving || routineName.trim() === '' || selectedExercises.length === 0 || !user;
 
   return (
-    <div className="pb-20">
+    <div className="pb-20 min-h-screen bg-midnight-base">
       <PageHeader title="Criar Rotina" />
 
       <div className="p-4">
         {!user && (
-          <Alert variant="destructive" className="mb-4">
+          <Alert variant="destructive" className="mb-4 bg-valor-15 border-valor-30 text-valor">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Autenticação necessária</AlertTitle>
-            <AlertDescription>
+            <AlertTitle className="font-orbitron">Autenticação necessária</AlertTitle>
+            <AlertDescription className="font-sora">
               Você precisa estar logado para criar rotinas.
             </AlertDescription>
           </Alert>
         )}
 
         {error && (
-          <Alert variant="destructive" className="mb-4">
+          <Alert variant="destructive" className="mb-4 bg-valor-15 border-valor-30 text-valor">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Erro ao salvar</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
+            <AlertTitle className="font-orbitron">Erro ao salvar</AlertTitle>
+            <AlertDescription className="font-sora">{error}</AlertDescription>
           </Alert>
         )}
 
@@ -56,7 +56,7 @@ const CreateRoutinePage: React.FC = () => {
           value={routineName}
           onChange={(e) => setRoutineName(e.target.value)}
           placeholder="Nome da rotina (ex: Treino A - Peito e Tríceps)"
-          className="mb-4"
+          className="mb-4 bg-midnight-elevated border-divider text-text-primary placeholder:text-text-tertiary"
         />
 
         {/* List of selected exercises */}
@@ -75,7 +75,7 @@ const CreateRoutinePage: React.FC = () => {
         ) : (
           <Button 
             onClick={() => setIsShowingSearch(true)} 
-            className="w-full mb-4 bg-fitblue-100 text-fitblue hover:bg-fitblue-200 border-none"
+            className="w-full mb-4 bg-arcane-15 text-arcane hover:bg-arcane-30 border border-arcane-30"
           >
             <Plus className="w-5 h-5 mr-2" /> Adicionar Exercício
           </Button>
@@ -83,7 +83,7 @@ const CreateRoutinePage: React.FC = () => {
 
         {/* Save routine button with better feedback */}
         <Button 
-          className={`w-full ${isButtonDisabled ? 'bg-gray-400' : 'bg-fitblue'}`}
+          className={`w-full ${isButtonDisabled ? 'bg-midnight-elevated text-text-tertiary' : 'bg-arcane hover:bg-arcane-60 text-text-primary shadow-glow-subtle'}`}
           onClick={saveRoutine}
           disabled={isButtonDisabled}
         >
@@ -97,11 +97,11 @@ const CreateRoutinePage: React.FC = () => {
         </Button>
 
         {routineName.trim() === '' && (
-          <p className="text-red-500 text-sm mt-2">Nome da rotina é obrigatório</p>
+          <p className="text-valor text-sm mt-2 font-sora">Nome da rotina é obrigatório</p>
         )}
         
         {selectedExercises.length === 0 && (
-          <p className="text-red-500 text-sm mt-2">Adicione pelo menos um exercício</p>
+          <p className="text-valor text-sm mt-2 font-sora">Adicione pelo menos um exercício</p>
         )}
       </div>
 

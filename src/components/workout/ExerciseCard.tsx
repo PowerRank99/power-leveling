@@ -1,90 +1,113 @@
 
-import React from 'react';
-import { ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React, { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface ExerciseCardProps {
   name: string;
   category: string;
   level: 'Iniciante' | 'Intermediário' | 'Avançado';
-  type?: 'Composto' | 'Isolado'; // Kept for backward compatibility but not displayed
+  type: 'Força' | 'Cardio' | 'Flexibilidade' | 'Equilíbrio';
   image: string;
   description?: string;
   equipment?: string;
   muscleGroup?: string;
   equipmentType?: string;
-  onClick?: () => void;
 }
 
-const ExerciseCard: React.FC<ExerciseCardProps> = ({ 
-  name, 
-  category, 
-  level, 
-  type, // Kept for backward compatibility
+const ExerciseCard: React.FC<ExerciseCardProps> = ({
+  name,
+  category,
+  level,
+  type,
   image,
   description,
   equipment,
   muscleGroup,
-  equipmentType,
-  onClick 
+  equipmentType
 }) => {
-  const getLevelColor = () => {
-    switch(level) {
-      case 'Iniciante': return 'bg-fitgreen-100 text-fitgreen-700';
-      case 'Intermediário': return 'bg-fitblue-100 text-fitblue-700';
-      case 'Avançado': return 'bg-orange-100 text-orange-700';
-      default: return 'bg-gray-100 text-gray-700';
+  const [expanded, setExpanded] = useState(false);
+  
+  const getLevelClass = () => {
+    switch (level) {
+      case 'Iniciante': return 'bg-arcane-15 text-arcane border-arcane-30';
+      case 'Intermediário': return 'bg-achievement-15 text-achievement border-achievement-30';
+      case 'Avançado': return 'bg-valor-15 text-valor border-valor-30';
+      default: return 'bg-arcane-15 text-arcane border-arcane-30';
     }
   };
   
-  // Format display values with proper capitalization for consistent UI
-  const formatDisplayValue = (value: string | undefined | null): string => {
-    if (!value || value.trim() === '') return 'Não especificado';
-    
-    // Capitalize the first letter if it's "não especificado"
-    if (value.toLowerCase() === 'não especificado') return 'Não especificado';
-    
-    return value;
+  const getTypeClass = () => {
+    switch (type) {
+      case 'Força': return 'bg-arcane-15 text-arcane border-arcane-30';
+      case 'Cardio': return 'bg-valor-15 text-valor border-valor-30';
+      case 'Flexibilidade': return 'bg-achievement-15 text-achievement border-achievement-30';
+      case 'Equilíbrio': return 'bg-arcane-15 text-arcane border-arcane-30';
+      default: return 'bg-arcane-15 text-arcane border-arcane-30';
+    }
   };
   
-  // Use consistent display values
-  const displayMuscleGroup = formatDisplayValue(muscleGroup || category);
-  const displayEquipment = formatDisplayValue(equipmentType || equipment);
-  
   return (
-    <div 
-      className="border border-gray-200 rounded-lg overflow-hidden mb-3 bg-white shadow-sm card-hover"
-      onClick={onClick}
-    >
-      <div className="flex items-center p-3">
-        <div className="w-20 h-20 bg-gray-100 rounded-md overflow-hidden mr-4 flex-shrink-0">
-          <img src={image} alt={name} className="w-full h-full object-cover" />
-        </div>
-        
-        <div className="flex-grow">
-          <h3 className="font-bold text-lg mb-1">{name}</h3>
-          <p className="text-gray-600 text-sm">{displayMuscleGroup}</p>
+    <Card className="mb-3 premium-card hover:premium-card-elevated transition-all duration-300">
+      <CardContent className="p-0">
+        <div 
+          className="p-4 flex items-center cursor-pointer"
+          onClick={() => setExpanded(!expanded)}
+        >
+          <div className="h-12 w-12 overflow-hidden rounded-md mr-3 border border-divider shadow-subtle">
+            <img src={image} alt={name} className="h-full w-full object-cover" />
+          </div>
           
-          <p className="text-gray-500 text-xs mt-1">
-            <span className="font-medium">Equipamento:</span> {displayEquipment}
-          </p>
+          <div className="flex-1">
+            <h3 className="font-orbitron font-semibold text-text-primary">{name}</h3>
+            <div className="flex flex-wrap gap-1 mt-1">
+              <span className={`text-xs px-2 py-0.5 rounded-full border ${getLevelClass()}`}>
+                {level}
+              </span>
+              <span className={`text-xs px-2 py-0.5 rounded-full border ${getTypeClass()}`}>
+                {type}
+              </span>
+            </div>
+          </div>
           
-          <div className="flex mt-2 space-x-2">
-            <span className={cn("text-xs px-2 py-1 rounded-full", getLevelColor())}>
-              {level}
-            </span>
+          <div className="ml-2">
+            {expanded ? <ChevronUp className="text-text-tertiary" /> : <ChevronDown className="text-text-tertiary" />}
           </div>
         </div>
         
-        <ChevronRight className="text-gray-400" />
-      </div>
-      
-      {description && (
-        <div className="px-3 pb-3 pt-0 text-sm text-gray-600 border-t border-gray-100 mt-1">
-          {description}
-        </div>
-      )}
-    </div>
+        {expanded && (
+          <div className="p-4 pt-0 border-t border-divider">
+            {description && (
+              <div className="mb-3">
+                <h4 className="text-sm font-orbitron mb-1 text-text-secondary">Descrição</h4>
+                <p className="text-sm text-text-secondary font-sora">{description}</p>
+              </div>
+            )}
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <h4 className="text-xs font-orbitron mb-1 text-text-tertiary">Grupo Muscular</h4>
+                <p className="text-sm text-text-secondary font-sora">{muscleGroup || category}</p>
+              </div>
+              
+              {equipment && (
+                <div>
+                  <h4 className="text-xs font-orbitron mb-1 text-text-tertiary">Equipamento</h4>
+                  <p className="text-sm text-text-secondary font-sora">{equipment}</p>
+                </div>
+              )}
+              
+              {equipmentType && (
+                <div>
+                  <h4 className="text-xs font-orbitron mb-1 text-text-tertiary">Tipo de Equipamento</h4>
+                  <p className="text-sm text-text-secondary font-sora">{equipmentType}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

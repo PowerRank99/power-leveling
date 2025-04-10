@@ -16,43 +16,43 @@ const WelcomeHeader = () => {
   else greeting = "Boa noite";
   
   return (
-    <Card className="mb-4 overflow-hidden border-none shadow-md">
-      <div className="bg-gradient-to-r from-fitblue-600 to-fitblue-700 p-4 text-white">
-        <h2 className="text-xl font-bold">
+    <Card className="mb-4 premium-card premium-card-elevated overflow-hidden border-none shadow-elevated">
+      <div className="bg-gradient-to-r from-arcane to-valor p-4 text-text-primary">
+        <h2 className="text-xl font-orbitron font-bold">
           {greeting}{user ? `, ${user.user_metadata?.name || 'Atleta'}` : ''}!
         </h2>
-        <p className="text-blue-100 text-sm mt-1">Vamos treinar hoje?</p>
+        <p className="text-text-secondary text-sm mt-1 font-sora">Vamos treinar hoje?</p>
       </div>
       
-      <CardContent className="p-4 bg-white">
+      <CardContent className="p-4 bg-midnight-card">
         <div className="flex justify-between">
           <div className="flex items-center">
-            <div className="p-2 rounded-full bg-orange-100 mr-2">
-              <Flame className="h-5 w-5 text-orange-500" />
+            <div className="p-2 rounded-full bg-valor-15 mr-2 border border-valor-30">
+              <Flame className="h-5 w-5 text-valor" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Streak</p>
-              <p className="font-semibold">5 dias</p>
+              <p className="text-sm text-text-tertiary font-sora">Streak</p>
+              <p className="font-space font-semibold text-text-primary">5 dias</p>
             </div>
           </div>
           
           <div className="flex items-center">
-            <div className="p-2 rounded-full bg-purple-100 mr-2">
-              <Award className="h-5 w-5 text-purple-500" />
+            <div className="p-2 rounded-full bg-arcane-15 mr-2 border border-arcane-30">
+              <Award className="h-5 w-5 text-arcane" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">XP</p>
-              <p className="font-semibold">450 pontos</p>
+              <p className="text-sm text-text-tertiary font-sora">XP</p>
+              <p className="font-space font-semibold text-text-primary">450 pontos</p>
             </div>
           </div>
           
           <div className="flex items-center">
-            <div className="p-2 rounded-full bg-fitblue-100 mr-2">
-              <Dumbbell className="h-5 w-5 text-fitblue-500" />
+            <div className="p-2 rounded-full bg-achievement-15 mr-2 border border-achievement-30">
+              <Dumbbell className="h-5 w-5 text-achievement" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Treinos</p>
-              <p className="font-semibold">12 completos</p>
+              <p className="text-sm text-text-tertiary font-sora">Treinos</p>
+              <p className="font-space font-semibold text-text-primary">12 completos</p>
             </div>
           </div>
         </div>

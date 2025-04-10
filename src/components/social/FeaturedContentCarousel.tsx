@@ -1,77 +1,51 @@
 
 import React from 'react';
-import { 
-  Carousel, 
-  CarouselContent, 
-  CarouselItem, 
-  CarouselPrevious, 
-  CarouselNext 
-} from '@/components/ui/carousel';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Trophy, Users, Award } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { ChevronRight } from 'lucide-react';
 
 const FeaturedContentCarousel = () => {
-  const carouselItems = [
+  const featuredItems = [
     {
-      title: "Conquiste sua primeira medalha",
-      description: "Complete um treino hoje e ganhe XP extra!",
-      icon: <Award className="h-8 w-8 text-white" />,
-      action: "Começar treino",
-      bgColor: "from-fitblue-500 to-fitblue-700",
-      link: "/treino"
+      title: "Desafio Semanal",
+      description: "5 treinos em 7 dias",
+      image: "/lovable-uploads/38b244e2-15ad-44b7-8d2d-48eb9e4227a8.png",
+      gradient: "from-arcane-30 to-valor-30"
     },
     {
-      title: "Entre para uma guilda",
-      description: "Treine com amigos e conquiste juntos",
-      icon: <Users className="h-8 w-8 text-white" />,
-      action: "Ver guildas",
-      bgColor: "from-fitpurple-500 to-fitpurple-700",
-      link: "/guilds"
-    },
-    {
-      title: "Conquistas desbloqueadas",
-      description: "Veja seu progresso e próximas metas",
-      icon: <Trophy className="h-8 w-8 text-white" />,
-      action: "Ver conquistas",
-      bgColor: "from-fitgreen-500 to-fitgreen-700",
-      link: "/conquistas"
+      title: "Nova Guilda",
+      description: "Junte-se aos Paladinos",
+      image: "/lovable-uploads/71073810-f05a-4adc-a860-636599324c62.png",
+      gradient: "from-arcane-30 to-achievement-30"
     }
   ];
-
+  
   return (
-    <Carousel className="mb-6 w-full">
-      <CarouselContent>
-        {carouselItems.map((item, index) => (
-          <CarouselItem key={index}>
-            <Card className="border-none shadow-md overflow-hidden">
-              <CardContent className={`p-0`}>
-                <div className={`flex items-center p-6 bg-gradient-to-r ${item.bgColor} text-white`}>
-                  <div className="bg-white/20 p-3 rounded-full mr-4">
-                    {item.icon}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-lg">{item.title}</h3>
-                    <p className="text-white/80 text-sm">{item.description}</p>
-                  </div>
-                  <Button 
-                    variant="secondary" 
-                    className="ml-4 bg-white hover:bg-white/90 text-gray-800"
-                    onClick={() => window.location.href = item.link}
-                  >
-                    {item.action}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </CarouselItem>
-        ))}
-      </CarouselContent>
-      <div className="flex justify-center mt-2">
-        <CarouselPrevious className="relative static left-0 right-auto mr-2 translate-y-0" />
-        <CarouselNext className="relative static right-0 left-auto translate-y-0" />
+    <div className="mb-4">
+      <div className="flex justify-between items-center mb-2">
+        <h3 className="font-orbitron font-semibold text-text-primary">Destaque</h3>
+        <button className="text-arcane text-sm font-sora flex items-center">
+          Ver tudo <ChevronRight className="h-4 w-4 ml-1" />
+        </button>
       </div>
-    </Carousel>
+      
+      <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
+        {featuredItems.map((item, index) => (
+          <Card key={index} className="flex-none w-[280px] h-28 premium-card hover:premium-card-elevated cursor-pointer transition-all duration-300">
+            <div 
+              className={`h-full rounded-xl p-4 flex items-center bg-gradient-to-br ${item.gradient} hover:shadow-glow-purple transition-all duration-300`}
+            >
+              <div className="flex-1">
+                <h4 className="font-orbitron font-bold text-text-primary">{item.title}</h4>
+                <p className="text-sm text-text-secondary font-sora">{item.description}</p>
+              </div>
+              <div className="w-14 h-14 overflow-hidden rounded-full border-2 border-divider/30 shadow-subtle">
+                <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
   );
 };
 

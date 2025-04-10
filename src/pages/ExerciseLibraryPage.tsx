@@ -114,22 +114,22 @@ const ExerciseLibraryPage = () => {
   }, [activeCategory, toast]);
   
   return (
-    <div className="pb-20 min-h-screen bg-gray-50">
+    <div className="pb-20 min-h-screen bg-midnight-base">
       <PageHeader 
         title="Biblioteca de Exercícios" 
-        rightContent={<SearchIcon className="w-6 h-6" />}
+        rightContent={<SearchIcon className="w-6 h-6 text-text-secondary" />}
       />
       
       {/* Categories */}
-      <div className="px-4 py-3 bg-white border-b border-gray-200 overflow-x-auto">
+      <div className="px-4 py-3 bg-midnight-card border-b border-divider overflow-x-auto">
         <div className="flex space-x-2 min-w-max">
           {categories.map(category => (
             <button
               key={category}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${
+              className={`px-4 py-2 rounded-full text-sm font-sora ${
                 activeCategory === category
-                  ? 'bg-fitblue text-white'
-                  : 'bg-gray-100 text-gray-700'
+                  ? 'bg-arcane text-text-primary shadow-glow-subtle'
+                  : 'bg-midnight-elevated text-text-secondary border border-divider'
               }`}
               onClick={() => setActiveCategory(category)}
             >
@@ -159,7 +159,11 @@ const ExerciseLibraryPage = () => {
             />
           ))
         ) : (
-          <EmptyState message={`Nenhum exercício encontrado ${activeCategory !== 'Todos' ? `na categoria ${activeCategory}` : ''}.`} />
+          <EmptyState 
+            icon="Search" 
+            title="Nenhum exercício encontrado" 
+            description={`Nenhum exercício encontrado ${activeCategory !== 'Todos' ? `na categoria ${activeCategory}` : ''}.`} 
+          />
         )}
       </div>
       
