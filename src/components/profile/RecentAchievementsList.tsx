@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
@@ -17,10 +17,10 @@ interface RecentAchievementsListProps {
 
 const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achievements }) => {
   return (
-    <Card className="mt-3 shadow-sm border-none dark:bg-card dark:border dark:border-arcane/20">
-      <CardHeader className="px-4 py-3 flex flex-row justify-between items-center">
-        <h3 className="text-lg font-cinzel font-bold text-gray-800 dark:text-white">Conquistas Recentes</h3>
-        <Link to="/conquistas" className="text-arcane flex items-center text-sm font-inter">
+    <Card className="mt-3 shadow-lg border-none dark:bg-midnight-light/50 dark:border dark:border-arcane/20 rpg-card card-glow">
+      <CardHeader className="px-4 py-3 flex flex-row justify-between items-center bg-midnight-light/50 dark:bg-midnight/80 rounded-t-lg border-b border-arcane/10">
+        <h3 className="text-lg font-orbitron font-bold text-gray-800 dark:text-ghostwhite">Conquistas Recentes</h3>
+        <Link to="/conquistas" className="text-arcane flex items-center text-sm font-sora hover:text-arcane-light transition-colors">
           Ver Todas <ChevronRight className="w-4 h-4" />
         </Link>
       </CardHeader>
@@ -30,22 +30,31 @@ const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achieve
           {achievements.map((achievement) => (
             <div
               key={achievement.id}
-              className={`flex flex-col items-center justify-center rounded-full w-20 h-20 ${
-                achievement.isLocked 
-                  ? 'bg-gray-100 dark:bg-gray-800 text-gray-400' 
+              className={`flex flex-col items-center justify-center rounded-lg w-24 h-24 
+                ${achievement.isLocked 
+                  ? 'bg-gray-100 dark:bg-midnight/80 text-gray-400 shadow-inner' 
                   : achievement.id === 'streak' 
-                    ? 'bg-gradient-to-br from-valor to-xpgold text-white' 
+                    ? 'bg-gradient-valor-xpgold text-white shadow-glow-xpgold' 
                     : achievement.id === 'workouts' 
-                      ? 'bg-gradient-to-br from-energy to-arcane text-white' 
-                      : 'bg-gradient-to-br from-arcane to-valor text-white'
-              } shadow-md transform transition-transform hover:scale-105 cursor-pointer ${
-                !achievement.isLocked ? 'animate-glow-pulse' : ''
-              }`}
+                      ? 'bg-gradient-arcane-energy text-white shadow-glow-energy' 
+                      : 'bg-gradient-arcane-valor text-white shadow-glow-md'
+                } 
+                transform transition-transform hover:scale-105 cursor-pointer 
+                ${!achievement.isLocked ? 'animate-glow-pulse' : ''}`}
             >
-              <div className="flex items-center justify-center">
-                {achievement.icon}
+              <div className={`flex items-center justify-center ${!achievement.isLocked ? 'animate-float' : ''}`}>
+                {achievement.isLocked ? <Lock className="h-6 w-6" /> : achievement.icon}
               </div>
-              <span className="text-xs text-center mt-1 font-medium font-inter">{achievement.name}</span>
+              <span className="text-sm text-center mt-2 font-medium font-orbitron tracking-wide">
+                {achievement.name}
+              </span>
+              
+              {/* Add sparkle/glow effect for unlocked achievements */}
+              {!achievement.isLocked && (
+                <div className="absolute inset-0 pointer-events-none">
+                  <div className="absolute inset-0 rounded-lg opacity-20 bg-gradient-radial"></div>
+                </div>
+              )}
             </div>
           ))}
         </div>

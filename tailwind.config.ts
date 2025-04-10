@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -56,6 +55,8 @@ export default {
 				// RPG theme colors
 				midnight: {
 					DEFAULT: '#0D0D2B',
+					dark: '#070720',
+					light: '#151540',
 				},
 				arcane: {
 					DEFAULT: '#7C3AED',
@@ -81,6 +82,15 @@ export default {
 					DEFAULT: '#22C55E',
 					light: '#86EFAC',
 					dark: '#15803D',
+				},
+				steel: {
+					DEFAULT: '#9CA3AF',
+					light: '#D1D5DB',
+					dark: '#6B7280',
+				},
+				ghostwhite: {
+					DEFAULT: '#F8FAFC',
+					dark: '#E2E8F0',
 				},
 				// App-specific colors from existing theme
 				fitblue: {
@@ -124,6 +134,10 @@ export default {
 				}
 			},
 			fontFamily: {
+                orbitron: ['Orbitron', 'sans-serif'],
+                sora: ['Sora', 'sans-serif'],
+                'space-grotesk': ['"Space Grotesk"', 'sans-serif'],
+                // Keeping existing fonts for compatibility
                 cinzel: ['Cinzel', 'serif'],
                 inter: ['Inter', 'sans-serif'],
                 'ibm-plex': ['"IBM Plex Mono"', 'monospace'],
@@ -188,6 +202,57 @@ export default {
 						backgroundPosition: "200% 0"
 					}
 				},
+				'float': {
+					"0%, 100%": { 
+						transform: "translateY(0)"
+					},
+					"50%": { 
+						transform: "translateY(-5px)"
+					}
+				},
+				'magic-particles': {
+					"0%": {
+						transform: "translateY(0) scale(1)",
+						opacity: "0"
+					},
+					"50%": {
+						opacity: "1"
+					},
+					"100%": {
+						transform: "translateY(-20px) scale(0)",
+						opacity: "0"
+					}
+				},
+				'glow-border': {
+					"0%, 100%": {
+						boxShadow: "0 0 5px 2px rgba(124, 58, 237, 0.5)"
+					},
+					"50%": {
+						boxShadow: "0 0 10px 3px rgba(124, 58, 237, 0.8)"
+					}
+				},
+				'level-up-flash': {
+					"0%": {
+						opacity: "0",
+						transform: "scale(0.8)"
+					},
+					"60%": {
+						opacity: "1",
+						transform: "scale(1.1)"
+					},
+					"100%": {
+						opacity: "0",
+						transform: "scale(1.2)"
+					}
+				},
+				'trophy-bounce': {
+					"0%, 100%": {
+						transform: "translateY(0)"
+					},
+					"50%": {
+						transform: "translateY(-15px)"
+					}
+				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
@@ -196,10 +261,35 @@ export default {
 				'scale-in': 'scale-in 0.2s ease-out',
 				'glow-pulse': 'glow-pulse 2s ease-in-out infinite',
 				'shimmer': 'shimmer 2s linear infinite',
+				'float': 'float 3s ease-in-out infinite',
+				'magic-particles': 'magic-particles 1.5s ease-out',
+				'glow-border': 'glow-border 2s ease-in-out infinite',
+				'level-up-flash': 'level-up-flash 2s ease-out',
+				'trophy-bounce': 'trophy-bounce 1s ease-in-out',
 			},
 			backgroundSize: {
 				'200%': '200% 100%',
 			},
+			backgroundImage: {
+				'hero-pattern': 'url("/images/hero-pattern.svg")',
+				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+				'arcane-valor': 'linear-gradient(135deg, #7C3AED 0%, #EF4444 100%)',
+				'arcane-energy': 'linear-gradient(135deg, #7C3AED 0%, #06B6D4 100%)',
+				'valor-xpgold': 'linear-gradient(135deg, #EF4444 0%, #FACC15 100%)',
+				'midnight-arcane-xpgold': 'linear-gradient(135deg, #0D0D2B 0%, #7C3AED 50%, #FACC15 100%)',
+				'dark-card': 'linear-gradient(180deg, rgba(13,13,43,0.8) 0%, rgba(13,13,43,0.95) 100%)',
+				'stats-glow': 'radial-gradient(circle, rgba(124,58,237,0.15) 0%, rgba(0,0,0,0) 70%)',
+			},
+			boxShadow: {
+				'glow-sm': '0 0 5px rgba(124, 58, 237, 0.5)',
+				'glow-md': '0 0 10px rgba(124, 58, 237, 0.5)',
+				'glow-lg': '0 0 15px rgba(124, 58, 237, 0.5)',
+				'glow-xl': '0 0 20px rgba(124, 58, 237, 0.5)',
+				'glow-valor': '0 0 10px rgba(239, 68, 68, 0.5)',
+				'glow-xpgold': '0 0 10px rgba(250, 204, 21, 0.5)',
+				'glow-energy': '0 0 10px rgba(6, 182, 212, 0.5)',
+				'inner-glow': 'inset 0 0 10px rgba(124, 58, 237, 0.3)',
+			}
 		}
 	},
 	plugins: [require("tailwindcss-animate")],

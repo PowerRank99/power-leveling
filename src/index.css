@@ -5,49 +5,6 @@
  
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 47.4% 11.2%;
- 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
- 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 47.4% 11.2%;
- 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
- 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 47.4% 11.2%;
- 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
- 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
- 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
- 
-    --destructive: 0 100% 50%;
-    --destructive-foreground: 210 40% 98%;
- 
-    --ring: 215 20.2% 65.1%;
- 
-    --radius: 0.5rem;
-
-    /* PowerLeveling Brand Colors */
-    --midnight-void: 240 58% 11%;
-    --arcane-purple: 265 84% 58%;
-    --valor-crimson: 0 91% 60%;
-    --xp-gold: 46 94% 53%;
-    --energy-cyan: 188 93% 42%;
-    --rest-green: 142 70% 45%;
-    --steel-gray: 220 9% 65%;
-    --ghost-white: 214 100% 98%;
-  }
- 
-  .dark {
     --background: 240 58% 11%; /* Midnight Void */
     --foreground: 214 100% 98%; /* Ghost White */
  
@@ -78,6 +35,49 @@
     --ring: 265 84% 30%;
  
     --radius: 0.5rem;
+
+    /* PowerLeveling Brand Colors */
+    --midnight-void: 240 58% 11%;
+    --arcane-purple: 265 84% 58%;
+    --valor-crimson: 0 91% 60%;
+    --xp-gold: 46 94% 53%;
+    --energy-cyan: 188 93% 42%;
+    --rest-green: 142 70% 45%;
+    --steel-gray: 220 9% 65%;
+    --ghost-white: 214 100% 98%;
+  }
+ 
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 222.2 47.4% 11.2%;
+ 
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 47.4% 11.2%;
+ 
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+ 
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 47.4% 11.2%;
+ 
+    --primary: 265 84% 58%; /* Keep arcane purple in light mode too */
+    --primary-foreground: 210 40% 98%;
+ 
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+ 
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+ 
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --ring: 215 20.2% 65.1%;
+ 
+    --radius: 0.5rem;
   }
 }
  
@@ -88,33 +88,41 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    background-image: radial-gradient(rgba(124, 58, 237, 0.05) 1px, transparent 0),
+                      radial-gradient(rgba(124, 58, 237, 0.05) 1px, transparent 0);
+    background-size: 40px 40px;
+    background-position: 0 0, 20px 20px;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-cinzel font-bold;
+    @apply font-orbitron font-bold;
+  }
+
+  p, span, div, a, button, input, label, select, textarea {
+    @apply font-sora;
   }
 
   .font-stats {
-    font-family: 'IBM Plex Mono', monospace;
+    @apply font-space-grotesk;
   }
 }
 
 /* Utility classes for brand gradients */
 @layer utilities {
   .bg-gradient-arcane-valor {
-    @apply bg-gradient-to-r from-[#7C3AED] to-[#EF4444];
+    @apply bg-gradient-to-r from-arcane to-valor;
   }
   
-  .bg-gradient-arcane-cyan {
-    @apply bg-gradient-to-r from-[#7C3AED] to-[#06B6D4];
+  .bg-gradient-arcane-energy {
+    @apply bg-gradient-to-r from-arcane to-energy;
   }
   
-  .bg-gradient-crimson-gold {
-    @apply bg-gradient-to-r from-[#EF4444] to-[#FACC15];
+  .bg-gradient-valor-xpgold {
+    @apply bg-gradient-to-r from-valor to-xpgold;
   }
   
-  .bg-gradient-void-gold {
-    @apply bg-gradient-to-r from-[#0D0D2B] via-[#7C3AED] to-[#FACC15];
+  .bg-gradient-midnight-arcane-xpgold {
+    @apply bg-gradient-to-r from-midnight via-arcane to-xpgold;
   }
   
   .text-gradient {
@@ -127,7 +135,38 @@
   }
   
   .card-glass {
-    @apply backdrop-blur-sm bg-white/10 dark:bg-black/20 border border-white/20 dark:border-white/10;
+    @apply backdrop-blur-sm bg-white/5 dark:bg-black/10 border border-white/10 dark:border-white/5 shadow-lg;
+  }
+
+  .card-glow {
+    @apply relative overflow-hidden;
+  }
+
+  .card-glow::before {
+    content: '';
+    @apply absolute inset-0 rounded-lg pointer-events-none;
+    box-shadow: inset 0 0 15px rgba(124, 58, 237, 0.3);
+    z-index: 1;
+  }
+
+  .card-glow-valor::before {
+    box-shadow: inset 0 0 15px rgba(239, 68, 68, 0.3);
+  }
+
+  .card-glow-xpgold::before {
+    box-shadow: inset 0 0 15px rgba(250, 204, 21, 0.3);
+  }
+
+  .rpg-card {
+    @apply bg-midnight-light/80 backdrop-blur-sm border border-arcane/20 rounded-lg shadow-lg overflow-hidden;
+  }
+
+  .rpg-stats {
+    @apply font-space-grotesk font-medium text-ghostwhite animate-glow-pulse;
+  }
+
+  .progress-glow {
+    filter: drop-shadow(0 0 4px currentColor);
   }
 }
 
@@ -135,4 +174,4 @@
 @import './styles/timer-animations.css';
 
 /* Import Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Sora:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Cinzel:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
