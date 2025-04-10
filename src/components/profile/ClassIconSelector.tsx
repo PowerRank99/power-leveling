@@ -22,12 +22,12 @@ const ClassIconSelector: React.FC<ClassIconSelectorProps> = ({ className, size =
   
   if (!className) return <Shield className={`${sizeClass} text-white`} />;
   
-  switch (className) {
-    case 'Guerreiro': return <Sword className={`${sizeClass} text-white`} />;
-    case 'Monge': return <Dumbbell className={`${sizeClass} text-white`} />;
-    case 'Ninja': return <Wind className={`${sizeClass} text-white`} />;
-    case 'Bruxo': return <Sparkles className={`${sizeClass} text-white`} />;
-    case 'Paladino': return <Shield className={`${sizeClass} text-white`} />;
+  switch (className?.toLowerCase()) {
+    case 'guerreiro': return <Sword className={`${sizeClass} text-white`} />;
+    case 'monge': return <Dumbbell className={`${sizeClass} text-white`} />;
+    case 'ninja': return <Wind className={`${sizeClass} text-white`} />;
+    case 'bruxo': return <Sparkles className={`${sizeClass} text-white`} />;
+    case 'paladino': return <Shield className={`${sizeClass} text-white`} />;
     default: return <Shield className={`${sizeClass} text-white`} />;
   }
 };

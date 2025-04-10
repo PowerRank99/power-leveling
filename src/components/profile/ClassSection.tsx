@@ -33,37 +33,26 @@ const ClassSection: React.FC<ClassSectionProps> = ({
     { description: <span className="loading-text">Carregando bonificações...</span>, value: '' }
   ];
   
-  // Class flavor text based on class
-  const getClassFlavorText = (className: string) => {
-    const flavorTextMap: Record<string, string> = {
-      'Guerreiro': 'Especialista em força bruta. Domina os compostos.',
-      'Monge': 'Mestre do próprio corpo. Flui como água, forte como pedra.',
-      'Ninja': 'Veloz e eficiente. Treinos curtos, resultados extraordinários.',
-      'Bruxo': 'Manipula energias sutis. Domina flexibilidade e recuperação.',
-      'Paladino': 'Defensor da consistência. Resiste onde outros desistem.'
-    };
-    
-    return flavorTextMap[className] || 'Escolha uma classe para iniciar sua jornada.';
-  };
-  
+  // Get header accent color
   const getHeaderAccentColor = () => {
     switch(actualClassName?.toLowerCase()) {
       case 'guerreiro': return 'border-red-500/30';
       case 'monge': return 'border-amber-500/30';
       case 'ninja': return 'border-emerald-500/30';
-      case 'bruxo': return 'border-blue-500/30';
-      case 'paladino': return 'border-yellow-500/30';
+      case 'bruxo': return 'border-violet-500/30';
+      case 'paladino': return 'border-blue-500/30';
       default: return 'border-divider/30';
     }
   };
   
+  // Get header text color
   const getHeaderTextColor = () => {
     switch(actualClassName?.toLowerCase()) {
       case 'guerreiro': return 'text-red-500';
       case 'monge': return 'text-amber-500';
       case 'ninja': return 'text-emerald-500';
-      case 'bruxo': return 'text-blue-500';
-      case 'paladino': return 'text-yellow-500';
+      case 'bruxo': return 'text-violet-500';
+      case 'paladino': return 'text-blue-500';
       default: return 'text-text-primary';
     }
   };

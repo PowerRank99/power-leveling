@@ -1,8 +1,9 @@
 
 import React from 'react';
-import { Sword, Wind, Sparkles, Shield, Dumbbell } from 'lucide-react';
+import { Sword, Wind, Sparkles, Shield, Dumbbell, Star } from 'lucide-react';
 import { ClassService } from '@/services/rpg/ClassService';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { getBonusTypeIcon } from '@/components/class/ClassIconUtils';
 
 interface ClassBonus {
   description: string | React.ReactNode;
@@ -16,16 +17,6 @@ interface ClassCardProps {
   bonuses: ClassBonus[];
   showAvatar?: boolean;
 }
-
-// Icon mapping for bonus types
-const BonusIconMap: Record<string, React.ReactNode> = {
-  compound: <Sword className="w-4 h-4" />,
-  strength: <Dumbbell className="w-4 h-4" />,
-  bodyweight: <Wind className="w-4 h-4" />,
-  cardio: <Wind className="w-4 h-4" />,
-  flexibility: <Sparkles className="w-4 h-4" />,
-  recovery: <Shield className="w-4 h-4" />,
-};
 
 // Class flavor text map
 const ClassFlavorMap: Record<string, string> = {
@@ -71,18 +62,28 @@ const ClassCard: React.FC<ClassCardProps> = ({
   };
 
   // Get bonus icon based on description text
-  const getBonusIcon = (description: string | React.ReactNode) => {
-    if (typeof description !== 'string') return BonusIconMap.strength;
+  const getBonusIconFromDescription = (description: string | React.ReactNode) => {
+    if (typeof description !== 'string') return <Star className="h-5 w-5 text-white" />;
     
     const lowerDesc = description.toLowerCase();
-    if (lowerDesc.includes('compost') || lowerDesc.includes('agachamento') || lowerDesc.includes('supino')) return BonusIconMap.compound;
-    if (lowerDesc.includes('força')) return BonusIconMap.strength;
-    if (lowerDesc.includes('peso corporal') || lowerDesc.includes('bodyweight')) return BonusIconMap.bodyweight;
-    if (lowerDesc.includes('cardio') || lowerDesc.includes('hiit')) return BonusIconMap.cardio;
-    if (lowerDesc.includes('flex') || lowerDesc.includes('yoga')) return BonusIconMap.flexibility;
-    if (lowerDesc.includes('recup') || lowerDesc.includes('mobil')) return BonusIconMap.recovery;
+    if (lowerDesc.includes('compost') || lowerDesc.includes('agachamento') || lowerDesc.includes('supino')) 
+      return getBonusTypeIcon('compound_lifts');
+    if (lowerDesc.includes('força')) 
+      return getBonusTypeIcon('strength');
+    if (lowerDesc.includes('peso corporal') || lowerDesc.includes('bodyweight')) 
+      return getBonusTypeIcon('bodyweight');
+    if (lowerDesc.includes('cardio') || lowerDesc.includes('hiit')) 
+      return getBonusTypeIcon('cardio');
+    if (lowerDesc.includes('flex') || lowerDesc.includes('yoga')) 
+      return getBonusTypeIcon('flexibility');
+    if (lowerDesc.includes('recup') || lowerDesc.includes('mobil')) 
+      return getBonusTypeIcon('recovery');
+    if (lowerDesc.includes('esport')) 
+      return getBonusTypeIcon('sports');
+    if (lowerDesc.includes('longo') || lowerDesc.includes('60 minutos')) 
+      return getBonusTypeIcon('long_workouts');
     
-    return BonusIconMap.strength;
+    return <Star className="h-5 w-5 text-white" />;
   };
   
   const cardIcon = icon || getDefaultIcon();
@@ -126,21 +127,21 @@ const ClassCard: React.FC<ClassCardProps> = ({
         };
       case 'bruxo':
         return {
+          border: 'border-violet-500/30',
+          accent: 'bg-violet-500/15',
+          iconBg: 'text-violet-500',
+          shadow: 'shadow-[0_0_15px_rgba(139,92,246,0.4)]',
+          textAccent: 'text-violet-500',
+          gradientBg: 'bg-gradient-to-br from-violet-600/20 to-violet-700/10'
+        };
+      case 'paladino':
+        return {
           border: 'border-blue-500/30',
           accent: 'bg-blue-500/15',
           iconBg: 'text-blue-500',
           shadow: 'shadow-[0_0_15px_rgba(59,130,246,0.4)]',
           textAccent: 'text-blue-500',
-          gradientBg: 'bg-gradient-to-br from-blue-600/20 to-blue-700/10'
-        };
-      case 'paladino':
-        return {
-          border: 'border-yellow-500/30',
-          accent: 'bg-yellow-500/15',
-          iconBg: 'text-yellow-500',
-          shadow: 'shadow-[0_0_15px_rgba(250,204,21,0.4)]',
-          textAccent: 'text-yellow-500',
-          gradientBg: 'bg-gradient-to-br from-yellow-500/20 to-yellow-600/10'
+          gradientBg: 'bg-gradient-to-br from-blue-500/20 to-blue-600/10'
         };
       default:
         return {
@@ -229,7 +230,9 @@ const ClassCard: React.FC<ClassCardProps> = ({
       
       <div className="mt-4">
         <div className="flex items-center mb-2 font-sora">
-          <span className={`${classColors.accent} rounded-full p-1 mr-2 border ${classColors.border} shadow-subtle ${classColors.iconBg}`}>🟣</span>
+          <span className={`${classColors.accent} rounded-full p-1 mr-2 border ${classColors.border} shadow-subtle ${classColors.iconBg}`}>
+            <Star className="h-4 w-4 text-white" />
+          </span>
           <span className="text-sm text-text-secondary">Bônus Passivo</span>
         </div>
         
@@ -241,7 +244,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
                   <TooltipTrigger asChild>
                     <div className={`transition-all duration-300 hover:scale-105 bg-midnight-elevated backdrop-blur-sm rounded-lg p-3 shadow-subtle hover:${classColors.shadow} border ${classColors.border} flex items-center`}>
                       <div className={`flex-shrink-0 mr-3 ${classColors.accent} p-1.5 rounded-full border ${classColors.border}`}>
-                        {typeof bonus.description === 'string' ? getBonusIcon(bonus.description) : BonusIconMap.strength}
+                        {typeof bonus.description === 'string' ? getBonusIconFromDescription(bonus.description) : <Star className="h-5 w-5 text-white" />}
                       </div>
                       <div className="flex items-center flex-1">
                         <span className={`text-lg font-bold mr-2 whitespace-nowrap font-space ${classColors.textAccent} shadow-glow-subtle`}>{bonus.value}</span>
