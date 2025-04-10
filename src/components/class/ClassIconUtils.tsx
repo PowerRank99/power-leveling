@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Shield, Sword, Dumbbell, Wind, Sparkles, Award, Star, Zap, Flame, Target, Trophy } from 'lucide-react';
+import { Dumbbell, Wind, Sparkles, Shield, Award, Star, Zap, Flame, Target, Search, Sword } from 'lucide-react';
 
 export const getClassIcon = (iconName: string) => {
   switch (iconName) {
@@ -16,7 +16,7 @@ export const getClassIcon = (iconName: string) => {
   }
 };
 
-// Get bonus type icon with appropriate color based on type
+// Get bonus type icon with magnifying glass for bonus section header
 export const getBonusTypeIcon = (bonusType: string) => {
   switch (bonusType) {
     case 'compound_lifts': return <Flame className="h-5 w-5 text-red-400" />;
@@ -29,6 +29,7 @@ export const getBonusTypeIcon = (bonusType: string) => {
     case 'recovery': return <Shield className="h-5 w-5 text-violet-400" />;
     case 'sports': return <Trophy className="h-5 w-5 text-blue-400" />;
     case 'long_workouts': return <Target className="h-5 w-5 text-blue-400" />;
-    default: return <Star className="h-5 w-5 text-text-secondary" />;
+    case 'bonus': return <Search className="h-5 w-5 text-white" />;
+    default: return <Search className="h-5 w-5 text-white" />;
   }
 };

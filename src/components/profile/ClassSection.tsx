@@ -1,12 +1,19 @@
 
 import React from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import ClassCard from '@/components/profile/ClassCard';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useClass } from '@/contexts/ClassContext';
 import { ClassService } from '@/services/rpg/ClassService';
+import ClassIconSelector from './ClassIconSelector';
+import { getBonusTypeIcon } from '../class/ClassIconUtils';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+
+interface ClassBonus {
+  description: string;
+  value: string;
+}
 
 interface ClassSectionProps {
   className: string;
@@ -22,64 +29,149 @@ const ClassSection: React.FC<ClassSectionProps> = ({
   bonuses = []
 }) => {
   const navigate = useNavigate();
-  const { isOnCooldown, cooldownText, userClass } = useClass();
+  const { userClass } = useClass();
   
-  // Use the class from context if available, otherwise use the prop
-  const actualClassName = userClass || className;
-  const actualDescription = classDescription || ClassService.getClassDescription(actualClassName);
+  // Use the class from context if available
+  const activeClass = userClass || className;
+  const description = classDescription || ClassService.getClassDescription(activeClass);
   
-  // Format bonuses for display
-  const displayBonuses = bonuses.length > 0 ? bonuses : [
-    { description: <span className="loading-text">Carregando bonificações...</span>, value: '' }
-  ];
-  
-  // Get header accent color
-  const getHeaderAccentColor = () => {
-    switch(actualClassName?.toLowerCase()) {
-      case 'guerreiro': return 'border-red-500/30';
-      case 'monge': return 'border-amber-500/30';
-      case 'ninja': return 'border-emerald-500/30';
-      case 'bruxo': return 'border-violet-500/30';
-      case 'paladino': return 'border-blue-500/30';
-      default: return 'border-divider/30';
+  // Get styling based on class
+  const getClassStyling = () => {
+    switch((activeClass || '').toLowerCase()) {
+      case 'guerreiro':
+        return {
+          border: 'border-red-600/30',
+          text: 'text-red-500',
+          accent: 'bg-red-600/15',
+          gradient: 'bg-gradient-to-br from-red-600/10 to-red-700/5'
+        };
+      case 'monge':
+        return {
+          border: 'border-amber-500/30',
+          text: 'text-amber-500',
+          accent: 'bg-amber-600/15',
+          gradient: 'bg-gradient-to-br from-amber-600/10 to-amber-700/5'
+        };
+      case 'ninja':
+        return {
+          border: 'border-emerald-500/30',
+          text: 'text-emerald-500',
+          accent: 'bg-emerald-600/15',
+          gradient: 'bg-gradient-to-br from-emerald-600/10 to-emerald-700/5'
+        };
+      case 'bruxo':
+        return {
+          border: 'border-violet-500/30',
+          text: 'text-violet-500',
+          accent: 'bg-violet-600/15',
+          gradient: 'bg-gradient-to-br from-violet-600/10 to-violet-700/5'
+        };
+      case 'paladino':
+        return {
+          border: 'border-blue-500/30',
+          text: 'text-blue-500',
+          accent: 'bg-blue-600/15',
+          gradient: 'bg-gradient-to-br from-blue-600/10 to-blue-700/5'
+        };
+      default:
+        return {
+          border: 'border-gray-400/30',
+          text: 'text-gray-400',
+          accent: 'bg-gray-500/15',
+          gradient: 'bg-gradient-to-br from-gray-700/10 to-gray-800/5'
+        };
     }
   };
-  
-  // Get header text color
-  const getHeaderTextColor = () => {
-    switch(actualClassName?.toLowerCase()) {
-      case 'guerreiro': return 'text-red-500';
-      case 'monge': return 'text-amber-500';
-      case 'ninja': return 'text-emerald-500';
-      case 'bruxo': return 'text-violet-500';
-      case 'paladino': return 'text-blue-500';
-      default: return 'text-text-primary';
-    }
-  };
-  
+
+  // Process bonuses
+  const processedBonuses = bonuses && bonuses.length > 0 
+    ? bonuses.slice(0, 2).map(bonus => ({
+        ...bonus,
+        description: typeof bonus.description === 'string' && bonus.value
+          ? `${bonus.value} ${bonus.description.replace(/^\+\d+% /, '')}`
+          : bonus.description,
+      }))
+    : [{ description: activeClass ? 'Carregando bônus...' : 'Selecione uma classe para ver os bônus', value: '' }];
+
+  const styling = getClassStyling();
+  const classIcon = icon || <ClassIconSelector className={activeClass} size="md" />;
+
   return (
-    <Card className="mt-3 premium-card hover:premium-card-elevated transition-all duration-300">
-      <CardHeader className={`px-4 py-3 flex flex-row justify-between items-center bg-midnight-card bg-opacity-50 backdrop-blur-sm rounded-t-lg border-b ${getHeaderAccentColor()}`}>
+    <Card className={`mt-3 shadow-sm hover:shadow transition-all duration-300 border ${styling.border} overflow-hidden`}>
+      <CardHeader className={`px-4 py-3 flex flex-row justify-between items-center border-b ${styling.border} ${styling.gradient}`}>
         <div className="flex items-center">
-          <h3 className={`orbitron-text font-bold text-lg ${getHeaderTextColor()}`}>Classe</h3>
+          <h3 className={`font-orbitron font-bold text-lg ${styling.text}`}>
+            Classe
+          </h3>
         </div>
-        <Button 
-          variant="ghost" 
-          className="text-arcane flex items-center text-sm h-auto p-0 hover:bg-arcane-15 hover:text-arcane font-sora" 
+        <Button
+          variant="ghost"
           onClick={() => navigate('/classes')}
+          className={`text-sm font-medium ${styling.text} hover:${styling.accent}`}
         >
-          {actualClassName ? 'Trocar Classe' : 'Selecionar Classe'} <ChevronRight className="w-4 h-4" />
+          {activeClass ? 'Trocar Classe' : 'Escolher Classe'}
+          <ChevronRight className="ml-1 h-4 w-4" />
         </Button>
       </CardHeader>
       
-      <CardContent className="p-4 pt-0">
-        <ClassCard 
-          className={actualClassName || 'Sem Classe'}
-          description={actualDescription}
-          icon={icon}
-          bonuses={displayBonuses}
-          showAvatar={true}
-        />
+      <CardContent className="p-4">
+        {/* Class info */}
+        <div className="flex items-center mt-2">
+          <div className={`flex items-center justify-center w-12 h-12 ${styling.accent} rounded-lg mr-3 border ${styling.border}`}>
+            {classIcon}
+          </div>
+          <div>
+            <h3 className={`text-xl font-bold orbitron-text ${styling.text}`}>
+              {activeClass || 'Sem Classe'}
+            </h3>
+            <p className="text-sm text-text-secondary font-sora">
+              {description || 'Escolha uma classe para obter bônus'}
+            </p>
+          </div>
+        </div>
+        
+        {/* Bonuses */}
+        <div className="mt-5">
+          <div className="flex items-center mb-2">
+            <span className={`${styling.accent} rounded-full p-1 mr-2 border ${styling.border}`}>
+              <Search className={`h-4 w-4 ${styling.text}`} />
+            </span>
+            <span className={`text-sm font-medium ${styling.text}`}>Bônus Passivo</span>
+          </div>
+          
+          <div className="space-y-2.5">
+            {processedBonuses.map((bonus, index) => (
+              <TooltipProvider key={index}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className={`flex items-center bg-midnight-elevated/80 backdrop-blur-sm rounded-lg p-3 border ${styling.border} transition-all hover:scale-[1.01]`}>
+                      {typeof bonus.description === 'string' && bonus.description.includes('Carregando') ? (
+                        <div className="animate-pulse w-full h-5 bg-gray-700/50 rounded"></div>
+                      ) : (
+                        <>
+                          <div className={`flex-shrink-0 mr-3 ${styling.accent} p-1.5 rounded-full border ${styling.border}`}>
+                            {typeof bonus.description === 'string' && bonus.description.toLowerCase().includes('força') ? 
+                              getBonusTypeIcon('strength') : 
+                              typeof bonus.description === 'string' && bonus.description.toLowerCase().includes('corpo') ? 
+                                getBonusTypeIcon('bodyweight') : 
+                                <Search className={`h-4 w-4 ${styling.text}`} />
+                            }
+                          </div>
+                          <p className="text-sm font-sora text-text-secondary">
+                            {bonus.description}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Bônus aplicado automaticamente</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ))}
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

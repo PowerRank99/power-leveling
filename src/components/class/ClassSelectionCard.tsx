@@ -1,17 +1,23 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ClassInfo } from '@/services/rpg/ClassService';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Check, Info, Clock, Star } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import ClassIconSelector from '@/components/profile/ClassIconSelector';
-import { getBonusTypeIcon } from '../class/ClassIconUtils';
+import { getBonusTypeIcon } from './ClassIconUtils';
 
 interface ClassSelectionCardProps {
-  classInfo: ClassInfo;
+  classInfo: {
+    class_name: string;
+    description: string;
+    bonuses: Array<{
+      bonus_type: string;
+      bonus_value: number;
+      description: string;
+    }>;
+  };
   isCurrentClass: boolean;
   isSelected: boolean;
   isFocused: boolean;
@@ -25,251 +31,167 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
   isSelected,
   isFocused,
   isOnCooldown,
-  onClick
+  onClick,
 }) => {
-  const isAvailable = !isOnCooldown || isCurrentClass;
-  
-  const renderBonuses = () => {
-    return classInfo.bonuses.slice(0, 2).map((bonus, index) => (
-      <div key={index} className="flex items-center bg-midnight-elevated backdrop-blur-sm rounded-lg p-3 shadow-subtle border-divider/40 border hover:scale-105 transition-all">
-        <div className={`flex-shrink-0 mr-3 ${getClassIconBackgroundColor()} p-1.5 rounded-full border ${getClassBorderColor()}`}>
-          {getBonusTypeIcon(bonus.bonus_type)}
-        </div>
-        <div className="flex items-center flex-1">
-          <span className={`text-lg font-bold mr-2 whitespace-nowrap font-space ${getClassTextColor()} shadow-glow-subtle`}>{`+${Math.round(bonus.bonus_value * 100)}%`}</span>
-          <p className="text-sm font-sora text-text-secondary">{bonus.description}</p>
-        </div>
-      </div>
-    ));
-  };
-  
-  const getClassBackgroundColor = () => {
+  // Get class styling based on class name
+  const getClassColors = () => {
     switch(classInfo.class_name) {
-      case 'Guerreiro': return 'bg-gradient-to-br from-red-600/20 to-red-700/10';
-      case 'Monge': return 'bg-gradient-to-br from-amber-600/20 to-amber-700/10';
-      case 'Ninja': return 'bg-gradient-to-br from-emerald-600/20 to-emerald-700/10';
-      case 'Bruxo': return 'bg-gradient-to-br from-violet-600/20 to-violet-700/10';
-      case 'Paladino': return 'bg-gradient-to-br from-blue-600/20 to-blue-700/10';
-      default: return 'bg-gradient-to-br from-arcane/20 to-arcane/10';
+      case 'Guerreiro':
+        return {
+          border: 'border-red-600/40',
+          hoverBorder: 'hover:border-red-500',
+          accent: 'bg-red-600/15',
+          text: 'text-red-500',
+          shadow: 'shadow-[0_0_15px_rgba(239,68,68,0.5)]',
+          gradient: 'bg-gradient-to-br from-red-600/20 to-red-700/10',
+          indicator: 'bg-gradient-to-r from-red-500 to-red-600'
+        };
+      case 'Monge':
+        return {
+          border: 'border-amber-500/40',
+          hoverBorder: 'hover:border-amber-500',
+          accent: 'bg-amber-600/15',
+          text: 'text-amber-500',
+          shadow: 'shadow-[0_0_15px_rgba(245,158,11,0.5)]',
+          gradient: 'bg-gradient-to-br from-amber-600/20 to-amber-700/10',
+          indicator: 'bg-gradient-to-r from-amber-500 to-amber-600'
+        };
+      case 'Ninja':
+        return {
+          border: 'border-emerald-500/40',
+          hoverBorder: 'hover:border-emerald-500',
+          accent: 'bg-emerald-600/15',
+          text: 'text-emerald-500',
+          shadow: 'shadow-[0_0_15px_rgba(16,185,129,0.5)]',
+          gradient: 'bg-gradient-to-br from-emerald-600/20 to-emerald-700/10',
+          indicator: 'bg-gradient-to-r from-emerald-500 to-emerald-600'
+        };
+      case 'Bruxo':
+        return {
+          border: 'border-violet-500/40',
+          hoverBorder: 'hover:border-violet-500',
+          accent: 'bg-violet-600/15',
+          text: 'text-violet-500',
+          shadow: 'shadow-[0_0_15px_rgba(139,92,246,0.5)]',
+          gradient: 'bg-gradient-to-br from-violet-600/20 to-violet-700/10',
+          indicator: 'bg-gradient-to-r from-violet-500 to-violet-600'
+        };
+      case 'Paladino':
+        return {
+          border: 'border-blue-500/40',
+          hoverBorder: 'hover:border-blue-500',
+          accent: 'bg-blue-600/15',
+          text: 'text-blue-500',
+          shadow: 'shadow-[0_0_15px_rgba(59,130,246,0.5)]',
+          gradient: 'bg-gradient-to-br from-blue-600/20 to-blue-700/10',
+          indicator: 'bg-gradient-to-r from-blue-500 to-blue-600'
+        };
+      default:
+        return {
+          border: 'border-gray-500/30',
+          hoverBorder: 'hover:border-gray-400',
+          accent: 'bg-gray-600/15',
+          text: 'text-gray-400',
+          shadow: 'shadow-[0_0_15px_rgba(156,163,175,0.3)]',
+          gradient: 'bg-gradient-to-br from-gray-700/20 to-gray-800/10',
+          indicator: 'bg-gradient-to-r from-gray-500 to-gray-600'
+        };
     }
   };
-  
-  const getClassBorderColor = () => {
-    switch(classInfo.class_name) {
-      case 'Guerreiro': return 'border-red-500/30';
-      case 'Monge': return 'border-amber-500/30';
-      case 'Ninja': return 'border-emerald-500/30';
-      case 'Bruxo': return 'border-violet-500/30';
-      case 'Paladino': return 'border-blue-500/30';
-      default: return 'border-arcane/30';
-    }
+
+  // Format bonus text to include percentage in description
+  const formatBonuses = () => {
+    if (!classInfo.bonuses || classInfo.bonuses.length === 0) return [];
+    
+    return classInfo.bonuses.slice(0, 2).map(bonus => {
+      const value = `+${Math.round(bonus.bonus_value * 100)}%`;
+      const description = bonus.description;
+      
+      return {
+        ...bonus,
+        formattedText: `${value} ${description}`
+      };
+    });
   };
-  
-  const getClassTextColor = () => {
-    switch(classInfo.class_name) {
-      case 'Guerreiro': return 'text-red-500';
-      case 'Monge': return 'text-amber-500';
-      case 'Ninja': return 'text-emerald-500';
-      case 'Bruxo': return 'text-violet-500';
-      case 'Paladino': return 'text-blue-500';
-      default: return 'text-arcane';
-    }
-  };
-  
-  const getClassShadowColor = () => {
-    switch(classInfo.class_name) {
-      case 'Guerreiro': return 'shadow-red-500/20';
-      case 'Monge': return 'shadow-amber-500/20';
-      case 'Ninja': return 'shadow-emerald-500/20';
-      case 'Bruxo': return 'shadow-violet-500/20';
-      case 'Paladino': return 'shadow-blue-500/20';
-      default: return 'shadow-purple-500/20';
-    }
-  };
-  
-  const getClassIconBackgroundColor = () => {
-    switch(classInfo.class_name) {
-      case 'Guerreiro': return 'bg-red-500/15 border-red-500/30';
-      case 'Monge': return 'bg-amber-500/15 border-amber-500/30';
-      case 'Ninja': return 'bg-emerald-500/15 border-emerald-500/30';
-      case 'Bruxo': return 'bg-violet-500/15 border-violet-500/30';
-      case 'Paladino': return 'bg-blue-500/15 border-blue-500/30';
-      default: return 'bg-arcane/15 border-arcane/30';
-    }
-  };
-  
-  const getClassButtonColor = () => {
-    switch(classInfo.class_name) {
-      case 'Guerreiro': return 'bg-red-500 hover:bg-red-600';
-      case 'Monge': return 'bg-amber-500 hover:bg-amber-600';
-      case 'Ninja': return 'bg-emerald-500 hover:bg-emerald-600';
-      case 'Bruxo': return 'bg-violet-500 hover:bg-violet-600';
-      case 'Paladino': return 'bg-blue-500 hover:bg-blue-600';
-      default: return 'bg-arcane hover:bg-arcane-60';
-    }
-  };
-  
-  const getClassBadgeVariant = () => {
-    switch(classInfo.class_name) {
-      case 'Guerreiro': return 'valor';
-      case 'Monge': return 'secondary';
-      case 'Ninja': return 'arcane';
-      case 'Bruxo': return 'achievement';
-      case 'Paladino': return 'destructive';
-      default: return 'arcane';
-    }
-  };
-  
-  const getSelectedBorderColor = () => {
-    switch(classInfo.class_name) {
-      case 'Guerreiro': return 'border-red-500 shadow-red-500/30';
-      case 'Monge': return 'border-amber-500 shadow-amber-500/30';
-      case 'Ninja': return 'border-emerald-500 shadow-emerald-500/30';
-      case 'Bruxo': return 'border-violet-500 shadow-violet-500/30';
-      case 'Paladino': return 'border-blue-500 shadow-blue-500/30';
-      default: return 'border-arcane shadow-purple-500/30';
-    }
-  };
-  
-  const getOutlineButtonColor = () => {
-    switch(classInfo.class_name) {
-      case 'Guerreiro': return 'hover:bg-red-500/15 hover:text-red-500 border-red-500/20';
-      case 'Monge': return 'hover:bg-amber-500/15 hover:text-amber-500 border-amber-500/20';
-      case 'Ninja': return 'hover:bg-emerald-500/15 hover:text-emerald-500 border-emerald-500/20';
-      case 'Bruxo': return 'hover:bg-violet-500/15 hover:text-violet-500 border-violet-500/20';
-      case 'Paladino': return 'hover:bg-blue-500/15 hover:text-blue-500 border-blue-500/20';
-      default: return 'hover:bg-arcane/15 hover:text-arcane border-arcane/20';
-    }
-  };
-  
-  const getCurrentClassColor = () => {
-    switch(classInfo.class_name) {
-      case 'Guerreiro': return 'bg-red-500/15 text-red-500 border-red-500/30';
-      case 'Monge': return 'bg-amber-500/15 text-amber-500 border-amber-500/30';
-      case 'Ninja': return 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30';
-      case 'Bruxo': return 'bg-violet-500/15 text-violet-500 border-violet-500/30';
-      case 'Paladino': return 'bg-blue-500/15 text-blue-500 border-blue-500/30';
-      default: return 'bg-arcane/15 text-arcane border-arcane/30';
-    }
-  };
-  
-  const getCurrentClassIndicatorColor = () => {
-    switch(classInfo.class_name) {
-      case 'Guerreiro': return 'bg-gradient-to-r from-red-500 to-red-600';
-      case 'Monge': return 'bg-gradient-to-r from-amber-500 to-amber-600';
-      case 'Ninja': return 'bg-gradient-to-r from-emerald-500 to-emerald-600';
-      case 'Bruxo': return 'bg-gradient-to-r from-violet-500 to-violet-600';
-      case 'Paladino': return 'bg-gradient-to-r from-blue-500 to-blue-600';
-      default: return 'bg-gradient-to-r from-arcane to-arcane-60';
-    }
-  };
+
+  const colors = getClassColors();
+  const bonuses = formatBonuses();
   
   return (
     <motion.div
-      whileHover={isAvailable ? { scale: 1.01 } : {}}
-      whileTap={isAvailable ? { scale: 0.99 } : {}}
+      whileHover={isOnCooldown ? {} : { scale: 1.02, transition: { duration: 0.2 } }}
+      whileTap={isOnCooldown ? {} : { scale: 0.99 }}
       className={`relative transition-all duration-300 ${isOnCooldown && !isCurrentClass ? 'opacity-70' : ''}`}
+      onClick={isOnCooldown && !isCurrentClass ? undefined : onClick}
     >
       <Card
-        className={`border overflow-hidden h-full transition-all duration-300 ${
+        className={`overflow-hidden ${colors.gradient} transition-all duration-300 ${
           isSelected
-            ? getSelectedBorderColor()
+            ? `border-2 ${colors.border.replace('/40', '')} ${colors.shadow}`
             : isFocused
-              ? `${getClassBorderColor()} shadow-md`
-              : 'border-divider'
-        } ${
-          getClassBackgroundColor()
-        } ${isOnCooldown && !isCurrentClass ? 'grayscale-[30%]' : ''}`}
-        onClick={onClick}
+              ? `border ${colors.border} shadow-md` 
+              : `border ${colors.border}`
+        } ${isOnCooldown && !isCurrentClass ? 'opacity-70 grayscale-[30%]' : ''}`}
       >
-        <CardContent className="p-6 relative">
-          {/* Class Name and Badge */}
-          <div className="flex items-center justify-between mb-4">
-            <h3 className={`text-xl font-bold orbitron-text tracking-wide ${getClassTextColor()}`}>{classInfo.class_name}</h3>
-            <Badge variant={getClassBadgeVariant() as any} className="font-space">
-              {classInfo.description}
-            </Badge>
-          </div>
-          
-          {/* Class Icon and Description */}
+        {isCurrentClass && (
+          <div className={`h-1 w-full absolute top-0 left-0 ${colors.indicator}`} />
+        )}
+        
+        <CardContent className="p-5">
+          {/* Class Header */}
           <div className="flex justify-between items-start mb-4">
-            <div className="mb-4 flex-1">
-              <p className="text-sm text-text-secondary mb-4">{classInfo.description}</p>
+            <div className="flex items-center">
+              <div className={`mr-3 ${colors.accent} p-2 rounded-lg border ${colors.border} flex items-center justify-center`}>
+                <ClassIconSelector className={classInfo.class_name} size="md" />
+              </div>
+              <div>
+                <h3 className={`text-xl font-bold orbitron-text ${colors.text}`}>
+                  {classInfo.class_name}
+                </h3>
+                <Badge variant="outline" className={`mt-1 ${colors.text} border-opacity-40`}>
+                  {classInfo.description}
+                </Badge>
+              </div>
             </div>
             
-            <motion.div
-              className="w-16 h-16 flex-shrink-0 ml-4"
-              animate={{ rotate: isSelected ? [0, 5, 0, -5, 0] : 0 }}
-              transition={{ duration: 0.5, repeat: isSelected ? Infinity : 0, repeatDelay: 1.5 }}
-            >
-              <div className={`w-16 h-16 flex items-center justify-center rounded-full p-1 ${
-                isSelected ? `${getClassIconBackgroundColor()} ${getClassShadowColor()}` : 'bg-midnight-elevated border-divider/40 border'
-              }`}>
-                <ClassIconSelector className={classInfo.class_name} size="lg" />
+            {isCurrentClass && (
+              <div className={`px-2 py-1 text-xs font-medium rounded-full ${colors.accent} ${colors.text} border ${colors.border}`}>
+                Atual
               </div>
-            </motion.div>
-          </div>
-          
-          {/* Bonus Section */}
-          <div className="mb-4">
-            <div className="flex items-center mb-2">
-              <div className={`${getClassIconBackgroundColor()} p-1 rounded-full mr-2`}>
-                <Star className="h-4 w-4 text-white" />
-              </div>
-              <p className={`text-sm font-medium ${getClassTextColor()}`}>Bônus Passivo</p>
-            </div>
-            <div className="space-y-2">
-              {renderBonuses()}
-            </div>
-          </div>
-          
-          {/* Action Button */}
-          <div className="mt-4">
-            {isCurrentClass ? (
-              <div className={`flex items-center justify-center rounded-md py-2 px-4 ${getCurrentClassColor()} shadow-subtle`}>
-                <Check className="w-4 h-4 mr-2" />
-                <span className="font-medium">Classe Atual</span>
-              </div>
-            ) : isSelected ? (
-              <Button 
-                variant="default" 
-                disabled={isOnCooldown}
-                className={`w-full ${getClassButtonColor()}`}
-              >
-                Selecionar Classe
-              </Button>
-            ) : (
-              <Button 
-                variant="outline" 
-                disabled={isOnCooldown}
-                className={`w-full ${getOutlineButtonColor()} transition-all`}
-              >
-                Ver Detalhes
-              </Button>
             )}
           </div>
           
-          {/* Cooldown Indicator */}
-          {isOnCooldown && !isCurrentClass && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="absolute top-3 right-3 rounded-full bg-midnight-elevated px-2 py-1 text-xs flex items-center border border-valor-30">
-                    <Clock className="w-3 h-3 mr-1 text-valor" />
-                    <span className="font-space text-text-tertiary">Bloqueado</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="top">
-                  <p className="text-xs">Você precisa esperar para trocar de classe</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-          
-          {/* Current Class Indicator */}
-          {isCurrentClass && (
-            <div className={`absolute top-0 left-0 w-full h-1 ${getCurrentClassIndicatorColor()}`} />
-          )}
+          {/* Bonus Section */}
+          <div className="mt-5">
+            <div className="flex items-center mb-3">
+              <span className={`${colors.accent} rounded-full p-1 mr-2 border ${colors.border}`}>
+                <Search className={`h-4 w-4 ${colors.text}`} />
+              </span>
+              <span className={`text-sm font-medium ${colors.text}`}>Bônus Passivo</span>
+            </div>
+            
+            <div className="space-y-2.5">
+              {bonuses.map((bonus, index) => (
+                <TooltipProvider key={index}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className={`flex items-center bg-midnight-elevated/80 backdrop-blur-sm rounded-lg p-3 border border-${colors.border.split('-')[1]}/20 transition-all hover:border-${colors.border.split('-')[1]}/30`}>
+                        <div className={`flex-shrink-0 mr-3 ${colors.accent} p-1.5 rounded-full border ${colors.border}`}>
+                          {getBonusTypeIcon(bonus.bonus_type)}
+                        </div>
+                        <p className="text-sm font-sora text-text-secondary">
+                          {bonus.formattedText}
+                        </p>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Bônus aplicado automaticamente</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ))}
+            </div>
+          </div>
         </CardContent>
       </Card>
     </motion.div>

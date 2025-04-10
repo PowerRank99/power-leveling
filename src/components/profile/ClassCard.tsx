@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Sword, Wind, Sparkles, Shield, Dumbbell, Star } from 'lucide-react';
 import { ClassService } from '@/services/rpg/ClassService';
