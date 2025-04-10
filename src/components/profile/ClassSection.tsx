@@ -37,7 +37,7 @@ const ClassSection: React.FC<ClassSectionProps> = ({
     <Card className="mt-3 premium-card hover:premium-card-elevated transition-all duration-300">
       <CardHeader className="px-4 py-3 flex flex-row justify-between items-center bg-midnight-card bg-opacity-50 backdrop-blur-sm rounded-t-lg border-b border-divider/30">
         <div className="flex items-center">
-          <h3 className="font-orbitron font-bold text-lg text-text-primary">Classe</h3>
+          <h3 className="orbitron-text font-bold text-lg text-text-primary">Classe</h3>
           {isOnCooldown && (
             <span className="ml-2 text-xs bg-achievement-15 text-achievement border border-achievement-30 px-2 py-0.5 rounded-full font-space animate-pulse shadow-glow-gold">
               {cooldownText}

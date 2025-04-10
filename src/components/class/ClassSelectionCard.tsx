@@ -64,7 +64,7 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
           </div>
           <div className="flex-1">
             <div className="flex items-center">
-              <h3 className="font-bold text-2xl">{classInfo.class_name}</h3>
+              <h3 className="font-bold text-2xl orbitron-text">{classInfo.class_name}</h3>
               {isCurrentClass && (
                 <span className="ml-2 bg-white/30 text-white text-xs px-2 py-0.5 rounded-full flex items-center">
                   <Check className="w-3 h-3 mr-1" /> Atual
