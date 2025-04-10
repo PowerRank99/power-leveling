@@ -89,23 +89,24 @@ const GuildsListPage: React.FC = () => {
     <div className="min-h-screen bg-midnight-base pb-16">
       <PageHeader title="Guildas" />
       
-      {/* Introduction Banner */}
-      <div className="bg-gradient-to-r from-arcane to-valor text-text-primary p-4 border-b border-divider shadow-glow-subtle">
-        <h2 className="text-xl font-orbitron font-bold mb-1">Guildas</h2>
+      {/* Introduction Banner with Accent Gradient */}
+      <div className="bg-gradient-to-r from-arcane to-valor text-text-primary p-4 border-b border-arcane-30 shadow-glow-subtle">
+        <h2 className="text-xl font-orbitron font-bold mb-1 tracking-wider">Guildas</h2>
         <p className="text-sm text-text-secondary font-sora mb-3">
           Junte-se a outros atletas, complete missões e ganhe recompensas juntos.
         </p>
         
+        {/* Category Pills (replaced with tabbed navigation) */}
         <div className="flex gap-3 flex-wrap">
-          <div className="bg-midnight-elevated/30 backdrop-blur-sm rounded-lg p-2 flex items-center text-sm border border-divider/30 font-sora">
+          <div className="bg-midnight-elevated/30 backdrop-blur-sm rounded-full p-2 px-3 flex items-center text-sm border border-white/10 font-sora transition-all duration-300 hover:shadow-glow-purple">
             <Shield className="h-4 w-4 mr-1.5 text-text-primary" />
             <span>Comunidade</span>
           </div>
-          <div className="bg-midnight-elevated/30 backdrop-blur-sm rounded-lg p-2 flex items-center text-sm border border-divider/30 font-sora">
+          <div className="bg-midnight-elevated/30 backdrop-blur-sm rounded-full p-2 px-3 flex items-center text-sm border border-white/10 font-sora transition-all duration-300 hover:shadow-glow-purple">
             <Compass className="h-4 w-4 mr-1.5 text-text-primary" />
             <span>Missões</span>
           </div>
-          <div className="bg-midnight-elevated/30 backdrop-blur-sm rounded-lg p-2 flex items-center text-sm border border-divider/30 font-sora">
+          <div className="bg-midnight-elevated/30 backdrop-blur-sm rounded-full p-2 px-3 flex items-center text-sm border border-white/10 font-sora transition-all duration-300 hover:shadow-glow-purple">
             <Trophy className="h-4 w-4 mr-1.5 text-achievement" />
             <span>Conquistas</span>
           </div>
@@ -119,38 +120,38 @@ const GuildsListPage: React.FC = () => {
             <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-tertiary h-4 w-4" />
             <Input 
               placeholder="Pesquisar guildas..." 
-              className="pl-9 bg-midnight-elevated border-divider text-text-primary placeholder:text-text-tertiary" 
+              className="pl-9 bg-midnight-elevated border-divider text-text-primary placeholder:text-text-tertiary font-sora" 
               value={searchQuery} 
               onChange={handleSearch} 
             />
           </div>
           <Button 
             onClick={handleCreateGuild} 
-            className="bg-arcane hover:bg-arcane-60 text-text-primary shadow-glow-subtle border border-arcane-30"
+            className="bg-arcane hover:bg-arcane-60 text-text-primary shadow-glow-subtle border border-arcane-30 hover:shadow-glow-purple transition-all duration-300"
           >
             <PlusIcon className="h-5 w-5 mr-1" />
             <span className="hidden sm:inline font-sora">Criar Guilda</span>
           </Button>
         </div>
         
-        {/* Tabs */}
+        {/* Tabs with Enhanced Styling */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-2 w-full bg-midnight-elevated">
+          <TabsList className="grid grid-cols-2 w-full bg-midnight-elevated overflow-hidden rounded-lg p-1">
             <TabsTrigger 
               value="my-guilds" 
-              className={`${activeTab === 'my-guilds' ? 'bg-arcane-15 text-arcane border-b-2 border-arcane' : 'text-text-secondary'} transition-all duration-300 data-[state=active]:shadow-none font-sora`}
+              className="rounded-md transition-all duration-300 font-orbitron tracking-wider data-[state=active]:bg-arcane-15 data-[state=active]:text-arcane data-[state=active]:shadow-glow-subtle data-[state=active]:border-b-2 data-[state=active]:border-arcane text-text-secondary"
             >
               Minhas Guildas
             </TabsTrigger>
             <TabsTrigger 
               value="suggested" 
-              className={`${activeTab === 'suggested' ? 'bg-arcane-15 text-arcane border-b-2 border-arcane' : 'text-text-secondary'} transition-all duration-300 data-[state=active]:shadow-none font-sora`}
+              className="rounded-md transition-all duration-300 font-orbitron tracking-wider data-[state=active]:bg-arcane-15 data-[state=active]:text-arcane data-[state=active]:shadow-glow-subtle data-[state=active]:border-b-2 data-[state=active]:border-arcane text-text-secondary"
             >
               Sugeridas
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="my-guilds" className="mt-4 space-y-4">
+          <TabsContent value="my-guilds" className="mt-4 space-y-4 animate-fade-in">
             {filteredMyGuilds.length > 0 ? (
               <ScrollArea className="h-[calc(100vh-250px)]">
                 <div className="space-y-4">
@@ -167,7 +168,7 @@ const GuildsListPage: React.FC = () => {
                 action={
                   <Button 
                     onClick={handleCreateGuild} 
-                    className="bg-arcane hover:bg-arcane-60 mt-4 text-text-primary shadow-glow-subtle border border-arcane-30"
+                    className="bg-arcane hover:bg-arcane-60 mt-4 text-text-primary shadow-glow-subtle border border-arcane-30 transition-all duration-300 hover:shadow-glow-purple"
                   >
                     Criar uma guilda
                   </Button>
@@ -176,7 +177,7 @@ const GuildsListPage: React.FC = () => {
             )}
           </TabsContent>
           
-          <TabsContent value="suggested" className="mt-4 space-y-4">
+          <TabsContent value="suggested" className="mt-4 space-y-4 animate-fade-in">
             {filteredSuggestedGuilds.length > 0 ? (
               <ScrollArea className="h-[calc(100vh-300px)]">
                 <div className="space-y-4">

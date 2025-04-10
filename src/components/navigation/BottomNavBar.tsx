@@ -53,7 +53,7 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, isActive }) => {
   return (
     <Link to={to} className="flex flex-col items-center relative w-1/4">
       {isActive && (
-        <div className="absolute -top-3 w-10 h-1 bg-arcane rounded-full animate-fade-in" />
+        <div className="absolute -top-3 w-10 h-1 bg-arcane rounded-full shadow-glow-purple animate-fade-in" />
       )}
       <div className={`${isActive ? 'transform scale-110' : ''} transition-transform`}>
         {icon}
