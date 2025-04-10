@@ -72,7 +72,7 @@ const QuestForm: React.FC<QuestFormProps> = ({ guildId }) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <div className="bg-white rounded-lg p-6 space-y-6">
+        <div className="bg-midnight-card border border-divider rounded-xl p-6 space-y-6 shadow-subtle">
           <QuestNameField form={form} />
           <QuestDaysField form={form} />
           <QuestDateRangeField form={form} />
@@ -81,7 +81,7 @@ const QuestForm: React.FC<QuestFormProps> = ({ guildId }) => {
         
         <Button 
           type="submit" 
-          className="w-full h-14 text-lg bg-blue-600 hover:bg-blue-700"
+          className="w-full h-14 text-lg bg-arcane hover:bg-arcane-60 text-text-primary shadow-glow-subtle border border-arcane-30"
         >
           <Plus className="h-5 w-5 mr-2" /> Create Quest
         </Button>

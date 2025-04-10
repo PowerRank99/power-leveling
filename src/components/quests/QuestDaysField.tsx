@@ -23,18 +23,18 @@ const QuestDaysField: React.FC<QuestDaysFieldProps> = ({ form }) => {
         name="daysRequired"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-lg font-medium text-gray-700">Dias Necessários</FormLabel>
+            <FormLabel className="text-lg font-orbitron text-text-primary">Dias Necessários</FormLabel>
             <FormControl>
               <Input 
                 type="number" 
                 min="1"
                 max="30"
-                className="text-lg p-4 h-14 text-center"
+                className="text-lg p-4 h-14 text-center bg-midnight-elevated border-divider text-text-primary font-space"
                 {...field}
                 onChange={e => field.onChange(parseInt(e.target.value))}
               />
             </FormControl>
-            <FormMessage />
+            <FormMessage className="text-valor" />
           </FormItem>
         )}
       />
@@ -44,18 +44,18 @@ const QuestDaysField: React.FC<QuestDaysFieldProps> = ({ form }) => {
         name="totalDays"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-lg font-medium text-gray-700">Dias Totais</FormLabel>
+            <FormLabel className="text-lg font-orbitron text-text-primary">Dias Totais</FormLabel>
             <FormControl>
               <Input 
                 type="number" 
                 min="1"
                 max="30"
-                className="text-lg p-4 h-14 text-center"
+                className="text-lg p-4 h-14 text-center bg-midnight-elevated border-divider text-text-primary font-space"
                 {...field}
                 onChange={e => field.onChange(parseInt(e.target.value))}
               />
             </FormControl>
-            <FormMessage />
+            <FormMessage className="text-valor" />
           </FormItem>
         )}
       />

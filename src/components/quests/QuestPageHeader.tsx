@@ -17,13 +17,20 @@ const QuestPageHeader: React.FC<QuestPageHeaderProps> = ({ guildId, guildName = 
   };
 
   return (
-    <div className="p-4 flex items-center gap-2 bg-gradient-to-r from-fitblue to-blue-500 text-white shadow-md sticky top-0 z-10">
-      <Button variant="ghost" size="icon" onClick={handleBackClick} className="text-white hover:bg-white/20">
-        <ArrowLeft className="h-5 w-5" />
-      </Button>
-      <div className="flex items-center">
-        <Shield className="h-5 w-5 mr-2" />
-        <h1 className="text-2xl font-bold">{guildName} - Quests</h1>
+    <div className="sticky top-0 z-10 bg-midnight-base border-b border-divider shadow-subtle">
+      <div className="p-4 flex items-center gap-2">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={handleBackClick} 
+          className="text-text-secondary hover:text-arcane hover:bg-arcane-15"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div className="flex items-center">
+          <Shield className="h-5 w-5 mr-2 text-arcane" />
+          <h1 className="text-xl font-orbitron font-bold text-text-primary">{guildName} - Quests</h1>
+        </div>
       </div>
     </div>
   );

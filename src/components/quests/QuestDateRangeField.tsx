@@ -26,8 +26,8 @@ interface QuestDateRangeFieldProps {
 
 const QuestDateRangeField: React.FC<QuestDateRangeFieldProps> = ({ form }) => {
   return (
-    <div className="bg-blue-50 rounded-lg p-4 space-y-4">
-      <h3 className="text-lg font-medium text-gray-700">Período da Quest</h3>
+    <div className="bg-arcane-15 rounded-lg border border-arcane-30 p-4 space-y-4">
+      <h3 className="text-lg font-orbitron text-text-primary">Período da Quest</h3>
       
       <div className="grid grid-cols-2 gap-4">
         <FormField
@@ -35,24 +35,24 @@ const QuestDateRangeField: React.FC<QuestDateRangeFieldProps> = ({ form }) => {
           name="startDate"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel className="text-gray-500 mb-1">Início</FormLabel>
+              <FormLabel className="text-text-secondary mb-1 font-sora">Início</FormLabel>
               <Popover>
                 <PopoverTrigger asChild>
                   <FormControl>
                     <Button
-                      variant={"outline"}
-                      className="h-14 w-full pl-3 text-left font-normal bg-white flex justify-start"
+                      variant="outline"
+                      className="h-14 w-full pl-3 text-left font-normal bg-midnight-elevated border-divider text-text-primary hover:bg-arcane-15 hover:border-arcane-30 flex justify-start"
                     >
-                      <CalendarIcon className="mr-2 h-5 w-5 text-gray-400" />
+                      <CalendarIcon className="mr-2 h-5 w-5 text-arcane" />
                       {field.value ? (
                         format(field.value, "d MMM, yyyy", { locale: ptBR })
                       ) : (
-                        <span>Selecione uma data</span>
+                        <span className="text-text-tertiary">Selecione uma data</span>
                       )}
                     </Button>
                   </FormControl>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 bg-midnight-elevated border-divider" align="start">
                   <Calendar
                     mode="single"
                     selected={field.value}
@@ -61,10 +61,11 @@ const QuestDateRangeField: React.FC<QuestDateRangeFieldProps> = ({ form }) => {
                       date < new Date(new Date().setHours(0, 0, 0, 0))
                     }
                     initialFocus
+                    className="bg-midnight-elevated text-text-primary"
                   />
                 </PopoverContent>
               </Popover>
-              <FormMessage />
+              <FormMessage className="text-valor" />
             </FormItem>
           )}
         />
@@ -74,24 +75,24 @@ const QuestDateRangeField: React.FC<QuestDateRangeFieldProps> = ({ form }) => {
           name="endDate"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel className="text-gray-500 mb-1">Término</FormLabel>
+              <FormLabel className="text-text-secondary mb-1 font-sora">Término</FormLabel>
               <Popover>
                 <PopoverTrigger asChild>
                   <FormControl>
                     <Button
-                      variant={"outline"}
-                      className="h-14 w-full pl-3 text-left font-normal bg-white flex justify-start"
+                      variant="outline"
+                      className="h-14 w-full pl-3 text-left font-normal bg-midnight-elevated border-divider text-text-primary hover:bg-arcane-15 hover:border-arcane-30 flex justify-start"
                     >
-                      <CalendarIcon className="mr-2 h-5 w-5 text-gray-400" />
+                      <CalendarIcon className="mr-2 h-5 w-5 text-arcane" />
                       {field.value ? (
                         format(field.value, "d MMM, yyyy", { locale: ptBR })
                       ) : (
-                        <span>Selecione uma data</span>
+                        <span className="text-text-tertiary">Selecione uma data</span>
                       )}
                     </Button>
                   </FormControl>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 bg-midnight-elevated border-divider" align="start">
                   <Calendar
                     mode="single"
                     selected={field.value}
@@ -100,10 +101,11 @@ const QuestDateRangeField: React.FC<QuestDateRangeFieldProps> = ({ form }) => {
                       date <= form.getValues("startDate")
                     }
                     initialFocus
+                    className="bg-midnight-elevated text-text-primary"
                   />
                 </PopoverContent>
               </Popover>
-              <FormMessage />
+              <FormMessage className="text-valor" />
             </FormItem>
           )}
         />

@@ -22,15 +22,15 @@ const QuestNameField: React.FC<QuestNameFieldProps> = ({ form }) => {
       name="title"
       render={({ field }) => (
         <FormItem>
-          <FormLabel className="text-lg font-medium text-gray-700">Nome da Quest</FormLabel>
+          <FormLabel className="text-lg font-orbitron text-text-primary">Nome da Quest</FormLabel>
           <FormControl>
             <Input 
               placeholder="Ex: Treinar 5 dias em 7" 
               {...field} 
-              className="text-lg p-4 h-14"
+              className="text-lg p-4 h-14 bg-midnight-elevated border-divider text-text-primary placeholder:text-text-tertiary"
             />
           </FormControl>
-          <FormMessage />
+          <FormMessage className="text-valor" />
         </FormItem>
       )}
     />

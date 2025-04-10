@@ -16,12 +16,12 @@ interface QuestRewardFieldProps {
 const QuestRewardField: React.FC<QuestRewardFieldProps> = ({ form }) => {
   return (
     <div>
-      <h3 className="text-lg font-medium text-gray-700 mb-4">Recompensas</h3>
+      <h3 className="text-lg font-orbitron text-text-primary mb-4">Recompensas</h3>
       
-      <div className="bg-green-50 rounded-lg p-4">
+      <div className="bg-achievement-15 rounded-lg border border-achievement-30 p-4">
         <div className="flex items-center">
-          <div className="bg-green-500 rounded-full p-3 mr-4">
-            <Trophy className="h-6 w-6 text-white" />
+          <div className="bg-achievement-30 rounded-full p-3 mr-4 border border-achievement shadow-glow-gold">
+            <Trophy className="h-6 w-6 text-achievement" />
           </div>
           <div>
             <FormField
@@ -29,13 +29,13 @@ const QuestRewardField: React.FC<QuestRewardFieldProps> = ({ form }) => {
               name="xpReward"
               render={({ field }) => (
                 <FormItem>
-                  <p className="text-xl font-semibold text-green-600">+{field.value} XP</p>
-                  <p className="text-gray-600">Ao completar a quest</p>
+                  <p className="text-xl font-semibold font-space text-achievement">+{field.value} XP</p>
+                  <p className="text-text-secondary font-sora">Ao completar a quest</p>
                   <input 
                     type="hidden" 
                     {...field}
                   />
-                  <FormMessage />
+                  <FormMessage className="text-valor" />
                 </FormItem>
               )}
             />
