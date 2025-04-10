@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { ClassInfo } from '@/services/rpg/ClassService';
 import ClassSelectionCard from './ClassSelectionCard';
-import { ChevronLeft, ChevronRight, SwipeHorizontal } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MoveHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -148,7 +148,7 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <SwipeHorizontal className="w-5 h-5" />
+            <MoveHorizontal className="w-5 h-5" />
             <span className="text-sm font-medium">Deslize para ver mais</span>
           </motion.div>
         )}
