@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import PageHeader from '@/components/ui/PageHeader';
 import BottomNavBar from '@/components/navigation/BottomNavBar';
@@ -7,7 +8,6 @@ import GuildBanner from '@/components/guilds/GuildBanner';
 import GuildSearch from '@/components/guilds/GuildSearch';
 import GuildFilters from '@/components/guilds/GuildFilters';
 import GuildTabs from '@/components/guilds/GuildTabs';
-import { GuildService } from '@/services/rpg/guild/GuildService';
 
 const GuildsListPage: React.FC = () => {
   const { user } = useAuth();
