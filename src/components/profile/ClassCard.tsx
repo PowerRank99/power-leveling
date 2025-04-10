@@ -53,9 +53,21 @@ const ClassCard: React.FC<ClassCardProps> = ({
   };
   
   const cardIcon = icon || getDefaultIcon();
+
+  // Better gradient mapping for RPG theme
+  const getRpgGradient = () => {
+    switch (className.toLowerCase()) {
+      case 'guerreiro': return 'from-valor to-xpgold';
+      case 'monge': return 'from-restgreen to-energy';
+      case 'ninja': return 'from-energy to-arcane';
+      case 'bruxo': return 'from-arcane to-valor';
+      case 'paladino': return 'from-xpgold to-restgreen';
+      default: return 'from-arcane-dark to-arcane';
+    }
+  };
   
   return (
-    <div className={`rounded-xl bg-gradient-to-br ${gradientColors} text-white p-4 shadow-md`}>
+    <div className={`rounded-xl bg-gradient-to-br ${getRpgGradient()} text-white p-4 shadow-md`}>
       <div className="flex items-center mb-3">
         <div className="relative">
           <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center mr-3 shadow-inner overflow-hidden">
@@ -66,7 +78,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
                 className="w-full h-full object-cover object-center"
               />
             ) : (
-              <div className="animate-pulse">{cardIcon}</div>
+              <div className="animate-glow-pulse">{cardIcon}</div>
             )}
           </div>
           {showAvatar && (
@@ -76,29 +88,29 @@ const ClassCard: React.FC<ClassCardProps> = ({
           )}
         </div>
         <div>
-          <h3 className="font-bold text-xl">{className}</h3>
-          <p className="text-sm text-blue-100">{description}</p>
+          <h3 className="font-cinzel font-bold text-xl">{className}</h3>
+          <p className="text-sm text-blue-100 font-inter">{description}</p>
         </div>
       </div>
       
       <div className="mt-4">
-        <p className="text-sm text-blue-200 mb-2 flex items-center">
+        <p className="text-sm text-blue-200 mb-2 flex items-center font-inter">
           <span className="bg-white/20 rounded-full p-1 mr-2">🔍</span> 
           Bônus Passivo
         </p>
         
         {bonuses.length > 0 ? (
           bonuses.map((bonus, index) => (
-            <div key={index} className="mb-3 bg-white/10 backdrop-blur-sm rounded-lg p-3 shadow-inner hover:bg-white/15 transition-colors">
+            <div key={index} className="mb-3 card-glass rounded-lg p-3 shadow-inner hover:bg-white/15 transition-colors">
               <div className="flex items-center">
-                <span className="text-lg font-bold mr-2 whitespace-nowrap">{bonus.value}</span>
-                <p className="text-sm">{bonus.description}</p>
+                <span className="text-lg font-bold mr-2 whitespace-nowrap font-ibm-plex">{bonus.value}</span>
+                <p className="text-sm font-inter">{bonus.description}</p>
               </div>
             </div>
           ))
         ) : (
-          <div className="mb-3 bg-white/10 backdrop-blur-sm rounded-lg p-3 shadow-inner">
-            <p className="text-sm text-center text-white/70">
+          <div className="mb-3 card-glass rounded-lg p-3 shadow-inner">
+            <p className="text-sm text-center text-white/70 font-inter">
               {className === 'Sem Classe' 
                 ? 'Selecione uma classe para obter bônus' 
                 : 'Carregando bonificações...'}

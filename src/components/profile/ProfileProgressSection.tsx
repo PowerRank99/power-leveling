@@ -24,33 +24,33 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
   const streakBonusPercent = Math.min(streak * 5, 35); // 5% per day up to 35%
   
   return (
-    <Card className="mt-3 shadow-sm overflow-hidden border-none">
+    <Card className="mt-3 shadow-sm overflow-hidden border-none dark:bg-card dark:border dark:border-arcane/20">
       <CardContent className="p-4">
         <div className="mb-1">
-          <h3 className="text-base font-semibold mb-3">Progresso Diário</h3>
+          <h3 className="text-base font-cinzel font-bold mb-3 dark:text-white">Progresso Diário</h3>
           
           <XPProgressBar 
             current={dailyXP}
             total={dailyXPCap}
             label="EXP do Dia"
-            className="bg-fitgreen"
+            className="bg-xpgold"
           />
           
           {hasStreakBonus && (
             <div className="mt-2 mb-2 text-xs flex justify-between items-center">
-              <span className="text-gray-600">Bônus de Sequência ({streak} dias)</span>
-              <span className="text-fitgreen font-medium">+{streakBonusPercent}% EXP</span>
+              <span className="text-gray-600 dark:text-gray-400 font-inter">Bônus de Sequência ({streak} dias)</span>
+              <span className="text-xpgold font-medium font-ibm-plex">+{streakBonusPercent}% EXP</span>
             </div>
           )}
         </div>
         
-        <div className="flex justify-between text-sm mt-4">
-          <div className="flex items-center text-gray-500">
+        <div className="flex justify-between text-sm mt-4 font-inter">
+          <div className="flex items-center text-gray-500 dark:text-gray-400">
             <Clock className="w-4 h-4 mr-1" /> 
             {lastActivity}
           </div>
           
-          <div className="text-fitgreen font-medium">
+          <div className="text-xpgold font-medium font-ibm-plex">
             {xpGain.replace('XP', 'EXP')}
           </div>
         </div>

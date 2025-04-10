@@ -35,37 +35,47 @@
     --ring: 215 20.2% 65.1%;
  
     --radius: 0.5rem;
+
+    /* PowerLeveling Brand Colors */
+    --midnight-void: 240 58% 11%;
+    --arcane-purple: 265 84% 58%;
+    --valor-crimson: 0 91% 60%;
+    --xp-gold: 46 94% 53%;
+    --energy-cyan: 188 93% 42%;
+    --rest-green: 142 70% 45%;
+    --steel-gray: 220 9% 65%;
+    --ghost-white: 214 100% 98%;
   }
  
   .dark {
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
+    --background: 240 58% 11%; /* Midnight Void */
+    --foreground: 214 100% 98%; /* Ghost White */
  
-    --muted: 223 47% 11%;
-    --muted-foreground: 215.4 16.3% 56.9%;
+    --muted: 240 25% 16%;
+    --muted-foreground: 220 9% 65%; /* Steel Gray */
  
-    --accent: 216 34% 17%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 265 84% 15%;
+    --accent-foreground: 214 100% 98%;
  
-    --popover: 224 71% 4%;
-    --popover-foreground: 215 20.2% 65.1%;
+    --popover: 240 58% 11%;
+    --popover-foreground: 214 100% 98%;
  
-    --border: 216 34% 17%;
-    --input: 216 34% 17%;
+    --border: 265 30% 20%;
+    --input: 265 30% 20%;
  
-    --card: 224 71% 4%;
-    --card-foreground: 213 31% 91%;
+    --card: 240 58% 13%;
+    --card-foreground: 214 100% 98%;
  
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 1.2%;
+    --primary: 265 84% 58%; /* Arcane Purple */
+    --primary-foreground: 214 100% 98%;
  
-    --secondary: 222.2 47.4% 11.2%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 240 25% 16%;
+    --secondary-foreground: 214 100% 98%;
  
     --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 214 100% 98%;
  
-    --ring: 216 34% 17%;
+    --ring: 265 84% 30%;
  
     --radius: 0.5rem;
   }
@@ -79,7 +89,50 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-cinzel font-bold;
+  }
+
+  .font-stats {
+    font-family: 'IBM Plex Mono', monospace;
+  }
+}
+
+/* Utility classes for brand gradients */
+@layer utilities {
+  .bg-gradient-arcane-valor {
+    @apply bg-gradient-to-r from-[#7C3AED] to-[#EF4444];
+  }
+  
+  .bg-gradient-arcane-cyan {
+    @apply bg-gradient-to-r from-[#7C3AED] to-[#06B6D4];
+  }
+  
+  .bg-gradient-crimson-gold {
+    @apply bg-gradient-to-r from-[#EF4444] to-[#FACC15];
+  }
+  
+  .bg-gradient-void-gold {
+    @apply bg-gradient-to-r from-[#0D0D2B] via-[#7C3AED] to-[#FACC15];
+  }
+  
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+  }
+  
+  .pulse-glow {
+    @apply animate-pulse;
+    filter: drop-shadow(0 0 8px currentColor);
+  }
+  
+  .card-glass {
+    @apply backdrop-blur-sm bg-white/10 dark:bg-black/20 border border-white/20 dark:border-white/10;
+  }
 }
 
 /* Import timer animations */
 @import './styles/timer-animations.css';
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');

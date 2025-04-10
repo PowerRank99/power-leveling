@@ -53,16 +53,36 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				sidebar: {
-					DEFAULT: 'hsl(var(--sidebar-background))',
-					foreground: 'hsl(var(--sidebar-foreground))',
-					primary: 'hsl(var(--sidebar-primary))',
-					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-					accent: 'hsl(var(--sidebar-accent))',
-					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-					border: 'hsl(var(--sidebar-border))',
-					ring: 'hsl(var(--sidebar-ring))'
+				// RPG theme colors
+				midnight: {
+					DEFAULT: '#0D0D2B',
 				},
+				arcane: {
+					DEFAULT: '#7C3AED',
+					light: '#9D6FF3',
+					dark: '#5B21B6',
+				},
+				valor: {
+					DEFAULT: '#EF4444',
+					light: '#F87171',
+					dark: '#B91C1C',
+				},
+				xpgold: {
+					DEFAULT: '#FACC15',
+					light: '#FDE68A',
+					dark: '#D97706',
+				},
+				energy: {
+					DEFAULT: '#06B6D4',
+					light: '#67E8F9',
+					dark: '#0891B2',
+				},
+				restgreen: {
+					DEFAULT: '#22C55E',
+					light: '#86EFAC',
+					dark: '#15803D',
+				},
+				// App-specific colors from existing theme
 				fitblue: {
 					DEFAULT: '#2563eb',
 					50: '#eff6ff',
@@ -103,6 +123,11 @@ export default {
 					900: '#4c1d95'
 				}
 			},
+			fontFamily: {
+                cinzel: ['Cinzel', 'serif'],
+                inter: ['Inter', 'sans-serif'],
+                'ibm-plex': ['"IBM Plex Mono"', 'monospace'],
+            },
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
@@ -145,13 +170,36 @@ export default {
 						opacity: "1"
 					}
 				},
+				'glow-pulse': {
+					"0%, 100%": { 
+						opacity: "0.8",
+						filter: "drop-shadow(0 0 4px currentColor)"
+					},
+					"50%": { 
+						opacity: "1",
+						filter: "drop-shadow(0 0 8px currentColor)"
+					}
+				},
+				'shimmer': {
+					"0%": { 
+						backgroundPosition: "-200% 0"
+					},
+					"100%": { 
+						backgroundPosition: "200% 0"
+					}
+				},
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'fade-in': 'fade-in 0.3s ease-out',
 				'scale-in': 'scale-in 0.2s ease-out',
-			}
+				'glow-pulse': 'glow-pulse 2s ease-in-out infinite',
+				'shimmer': 'shimmer 2s linear infinite',
+			},
+			backgroundSize: {
+				'200%': '200% 100%',
+			},
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
