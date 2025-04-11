@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
-import ExerciseEditor from '@/components/admin/ExerciseEditor';
+import ExerciseEditor from '@/components/admin/exercise-editor';
 import { RefreshCcw, Search, X } from 'lucide-react';
 import { Exercise, ExerciseType, DifficultyLevel } from '@/components/workout/types/Exercise';
 import {
