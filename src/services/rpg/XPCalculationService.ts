@@ -103,8 +103,9 @@ export class XPCalculationService {
   
   /**
    * Should preserve streak (Bruxo passive skill)
+   * This is now an async method that returns a Promise<boolean>
    */
-  static shouldPreserveStreak(userId: string, userClass: string | null): boolean {
+  static async shouldPreserveStreak(userId: string, userClass: string | null): Promise<boolean> {
     return ClassBonusCalculator.shouldPreserveStreak(userId, userClass);
   }
   

@@ -1,4 +1,3 @@
-
 import { EXERCISE_TYPES, CLASS_PASSIVE_SKILLS } from '../constants/exerciseTypes';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { XP_CONSTANTS } from '../constants/xpConstants';
@@ -202,22 +201,23 @@ export class ClassBonusCalculator {
   }
   
   /**
-   * Check if Bruxo should preserve streak using the database function
+   * Check if Bruxo should preserve streak using the database
    */
   static async shouldPreserveStreak(userId: string, userClass: string | null): Promise<boolean> {
     if (!userId || userClass !== 'Bruxo') return false;
     
     try {
-      // Use RPC function to check passive skill usage
+      // Use regular query to check passive skill usage
       const { data, error } = await supabase
-        .rpc('check_passive_skill_usage', {
-          p_user_id: userId,
-          p_skill_name: 'Folga Mística',
-          p_days: 7
-        });
+        .from('passive_skill_usage')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('skill_name', 'Folga Mística')
+        .gte('used_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+        .maybeSingle();
       
-      // If no error and data is false, the skill hasn't been used recently
-      return !error && data === false;
+      // If no data and no error, the skill hasn't been used recently
+      return !data && !error;
     } catch (error) {
       console.error('Error checking Bruxo streak preservation:', error);
       return false;

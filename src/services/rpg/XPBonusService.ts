@@ -129,24 +129,24 @@ export class XPBonusService {
     if (!userId || userClass !== 'Bruxo') return false;
     
     try {
-      // Check if the player has used this ability in the last week
-      const oneWeekAgo = new Date(Date.now() - this.ONE_WEEK_MS);
-      
-      // Use raw SQL query to check for passive skill usage since the table might not be in TypeScript types
+      // Use raw SQL query to check for passive skill usage
       const { data, error } = await supabase
-        .rpc('check_passive_skill_usage', {
-          p_user_id: userId,
-          p_skill_name: 'Folga Mística',
-          p_days: 7
-        });
+        .from('passive_skill_usage')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('skill_name', 'Folga Mística')
+        .gte('used_at', new Date(Date.now() - this.ONE_WEEK_MS).toISOString())
+        .maybeSingle();
       
-      // If there's no data or an error, assume the player hasn't used it recently
-      if (error || !data) {
-        // Record the usage using raw SQL
+      // If there's no data and no error, the player hasn't used it recently
+      if (!data && !error) {
+        // Record the usage using regular insert
         const { error: insertError } = await supabase
-          .rpc('record_passive_skill_usage', {
-            p_user_id: userId,
-            p_skill_name: 'Folga Mística'
+          .from('passive_skill_usage')
+          .insert({
+            user_id: userId,
+            skill_name: 'Folga Mística',
+            used_at: new Date().toISOString()
           });
         
         if (insertError) {
