@@ -38,18 +38,25 @@ export class ManualWorkoutService {
       // Add XP to user - fixing the argument count here (passing metadata as part of the source parameter)
       await XPService.addXP(userId, xpAwarded, `manual_workout:${exerciseName}:${exerciseCategory}`);
       
-      // Create the manual workout with exercise_id
-      // We call the RPC function with the correct parameter names
-      const { data, error } = await supabase.rpc('create_manual_workout', {
-        p_user_id: userId,
-        p_description: description || null,
-        p_activity_type: exerciseName || null,
-        p_exercise_id: exerciseId,
-        p_photo_url: photoUrl,
-        p_xp_awarded: xpAwarded,
-        p_workout_date: workoutDate.toISOString(),
-        p_is_power_day: isPowerDay
-      });
+      console.log('Creating manual workout with exercise_id:', exerciseId);
+      
+      // Since we're getting a TypeScript error about the p_exercise_id parameter,
+      // let's check if the SQL migration was properly applied by using a more direct approach
+      // We'll execute a direct INSERT query instead of using the RPC function
+      const { data, error } = await supabase
+        .from('manual_workouts')
+        .insert({
+          user_id: userId,
+          description: description || null,
+          activity_type: exerciseName || null,
+          exercise_id: exerciseId,
+          photo_url: photoUrl,
+          xp_awarded: xpAwarded,
+          workout_date: workoutDate.toISOString(),
+          is_power_day: isPowerDay
+        })
+        .select()
+        .single();
       
       if (error) {
         console.error('Error creating manual workout:', error);
@@ -69,9 +76,13 @@ export class ManualWorkoutService {
    */
   static async getUserManualWorkouts(userId: string): Promise<ManualWorkout[]> {
     try {
-      const { data, error } = await supabase.rpc('get_user_manual_workouts', {
-        p_user_id: userId
-      });
+      // We'll also switch to using a direct query instead of the RPC function
+      // to make sure we're getting all fields including exercise_id
+      const { data, error } = await supabase
+        .from('manual_workouts')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
       
       if (error) {
         console.error('Error fetching manual workouts:', error);
