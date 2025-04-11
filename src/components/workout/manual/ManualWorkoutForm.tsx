@@ -138,7 +138,7 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
   };
   
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 pb-16 md:pb-4">
       <h2 className="text-xl font-orbitron font-bold text-text-primary mb-4">
         Registrar Treino Manualmente
       </h2>
@@ -171,11 +171,13 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
         />
       </div>
       
-      <FormActions 
-        isSubmitting={isSubmitting} 
-        isSubmitDisabled={!imageFile || !selectedExercise} 
-        onCancel={onCancel} 
-      />
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-midnight-base border-t border-divider md:static md:p-0 md:border-0 md:bg-transparent">
+        <FormActions 
+          isSubmitting={isSubmitting} 
+          isSubmitDisabled={!imageFile || !selectedExercise} 
+          onCancel={onCancel} 
+        />
+      </div>
     </form>
   );
 };

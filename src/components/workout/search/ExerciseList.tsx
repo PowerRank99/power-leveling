@@ -3,6 +3,7 @@ import React from 'react';
 import ExerciseCard from '../ExerciseCard';
 import EmptyState from '@/components/ui/EmptyState';
 import { Exercise } from '../types/Exercise';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ExerciseListProps {
   exercises: Exercise[];
@@ -34,8 +35,11 @@ const ExerciseList: React.FC<ExerciseListProps> = ({
     );
   }
 
-  return (
-    <div>
+  // If there are more than 6 exercises, wrap them in a ScrollArea
+  const shouldUseScrollArea = exercises.length > 6;
+  
+  const exerciseList = (
+    <>
       {hasActiveFilters && (
         <h3 className="text-sm font-medium text-gray-500 mb-2">
           {exercises.length} resultado{exercises.length !== 1 ? 's' : ''}
@@ -60,8 +64,20 @@ const ExerciseList: React.FC<ExerciseListProps> = ({
           />
         </div>
       ))}
-    </div>
+    </>
   );
+
+  if (shouldUseScrollArea) {
+    return (
+      <div>
+        <ScrollArea className="h-[450px]">
+          {exerciseList}
+        </ScrollArea>
+      </div>
+    );
+  }
+
+  return <div>{exerciseList}</div>;
 };
 
 export default ExerciseList;

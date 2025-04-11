@@ -57,18 +57,18 @@ const ExerciseCard: React.FC<ExerciseCardProps> = memo(({
     setExpanded(!expanded);
   };
   
-  // Simplified card for search results in manual workout context
+  // Simplified card for search results in manual workout context - more compact
   if (disableExpand) {
     return (
       <Card className="mb-3 premium-card transition-all duration-200">
         <CardContent className="p-0">
-          <div className="p-4 flex items-center">
-            <div className="h-12 w-12 overflow-hidden rounded-md mr-3 border border-divider">
+          <div className="p-3 flex items-center">
+            <div className="h-10 w-10 overflow-hidden rounded-md mr-3 border border-divider">
               <img src={image} alt={name} className="h-full w-full object-cover" loading="lazy" />
             </div>
             
             <div className="flex-1">
-              <h3 className="font-orbitron font-semibold text-text-primary">{name}</h3>
+              <h3 className="font-orbitron font-semibold text-text-primary text-sm">{name}</h3>
               <div className="flex flex-wrap gap-1 mt-1">
                 <span className={`text-xs px-2 py-0.5 rounded-full border ${getLevelClass()}`}>
                   {level}

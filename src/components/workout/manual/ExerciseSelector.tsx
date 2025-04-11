@@ -10,6 +10,7 @@ import ExerciseCard from '@/components/workout/ExerciseCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ExerciseSelectorProps {
   selectedExercise: Exercise | null;
@@ -28,6 +29,7 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [results, setResults] = useState<Exercise[]>([]);
+  const [isFocused, setIsFocused] = useState(false);
   
   // Direct search function with minimal processing
   const searchExercises = async (query: string) => {
@@ -51,7 +53,7 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
         .from('exercises')
         .select('*')
         .ilike('name', `%${query}%`)
-        .limit(3);
+        .limit(5);
         
       if (error) throw error;
       
@@ -73,16 +75,16 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
     }
   };
   
-  // Debounced search
+  // Debounced search with focus protection
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !isFocused) return;
     
     const timer = setTimeout(() => {
       searchExercises(searchInput);
-    }, 300);
+    }, 400); // Increased debounce time to reduce UI stuttering
     
     return () => clearTimeout(timer);
-  }, [searchInput, isOpen]);
+  }, [searchInput, isOpen, isFocused]);
   
   const handleClearSelection = () => {
     onExerciseSelect(null);
@@ -92,6 +94,7 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
     onExerciseSelect(exercise);
     setIsOpen(false);
     setSearchInput('');
+    setIsFocused(false);
   };
   
   return (
@@ -113,7 +116,7 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
             disableExpand={true}
           />
           <button 
-            className="absolute top-3 right-3 bg-red-100 text-red-600 p-2 rounded-full"
+            className="absolute top-3 right-3 bg-arcane-30 text-text-primary p-2 rounded-full"
             onClick={handleClearSelection}
           >
             <X className="w-4 h-4" />
@@ -142,40 +145,49 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
                   placeholder="Buscar exercícios..."
                   className="pl-10 bg-midnight-elevated border-arcane/30"
                   disabled={isLoading}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => {
+                    // Use a short delay to allow click events to complete
+                    setTimeout(() => setIsFocused(false), 150);
+                  }}
                 />
               </div>
               
-              <div className="max-h-[300px] overflow-y-auto">
-                {isLoading ? (
-                  <div className="space-y-3">
-                    <p className="text-center text-sm text-gray-400 mb-2">Carregando exercícios...</p>
-                    <Skeleton className="h-16 w-full bg-midnight-elevated" />
-                    <Skeleton className="h-16 w-full bg-midnight-elevated" />
-                  </div>
-                ) : results.length > 0 ? (
-                  results.map(exercise => (
-                    <div 
-                      key={exercise.id} 
-                      className="cursor-pointer mb-2" 
-                      onClick={() => handleSelectExercise(exercise)}
-                    >
-                      <div className="p-3 bg-midnight-elevated rounded-lg hover:bg-arcane-15 transition-colors">
-                        <p className="font-orbitron font-semibold text-text-primary">{exercise.name}</p>
-                        <p className="text-sm text-text-secondary">{exercise.category}</p>
-                      </div>
+              <div className="max-h-[180px] overflow-hidden">
+                <ScrollArea className="h-[180px] rounded-md border border-divider/20 bg-midnight-elevated">
+                  {isLoading ? (
+                    <div className="space-y-3 p-2">
+                      <p className="text-center text-sm text-gray-400 mb-2">Carregando exercícios...</p>
+                      <Skeleton className="h-12 w-full bg-midnight-card" />
+                      <Skeleton className="h-12 w-full bg-midnight-card" />
                     </div>
-                  ))
-                ) : (
-                  <p className="text-center text-gray-400 py-4">
-                    {searchInput.length > 0 ? 'Nenhum exercício encontrado' : 'Digite para buscar exercícios'}
-                  </p>
-                )}
+                  ) : results.length > 0 ? (
+                    <div className="p-2">
+                      {results.map(exercise => (
+                        <div 
+                          key={exercise.id} 
+                          className="cursor-pointer mb-2" 
+                          onClick={() => handleSelectExercise(exercise)}
+                        >
+                          <div className="p-2 bg-midnight-card rounded-lg hover:bg-arcane-15 transition-colors">
+                            <p className="font-orbitron font-semibold text-text-primary text-sm">{exercise.name}</p>
+                            <p className="text-xs text-text-secondary">{exercise.category}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-center text-gray-400 py-4 px-2">
+                      {searchInput.length > 0 ? 'Nenhum exercício encontrado' : 'Digite para buscar exercícios'}
+                    </p>
+                  )}
+                </ScrollArea>
               </div>
               
               <div className="mt-4">
                 <Button 
                   type="button" 
-                  variant="outline" 
+                  variant="arcane" 
                   className="w-full"
                   onClick={() => setIsOpen(false)}
                 >

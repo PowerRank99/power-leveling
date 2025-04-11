@@ -1,6 +1,6 @@
 
-import React, { useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React from 'react';
+import { motion } from 'framer-motion';
 
 interface CollapseProps {
   open: boolean;
@@ -13,41 +13,39 @@ export const Collapse: React.FC<CollapseProps> = ({
   children,
   className = '',
 }) => {
-  // Minimal animation setup to prevent performance issues
+  // Simplified animation with fixed height for better performance
   const variants = {
     hidden: { 
       height: 0, 
       opacity: 0,
-      overflow: 'hidden'
+      overflow: 'hidden',
+      transitionEnd: {
+        display: 'none',
+      }
     },
     visible: { 
       height: 'auto', 
       opacity: 1,
+      display: 'block',
       overflow: 'hidden',
       transition: { 
-        duration: 0.15, // Shorter duration
-        ease: "easeOut" 
-      } 
-    },
-    exit: { 
-      height: 0, 
-      opacity: 0,
-      overflow: 'hidden',
-      transition: { 
-        duration: 0.15, // Shorter duration
-        ease: "easeOut" 
+        height: {
+          duration: 0.15,
+          ease: "easeOut"
+        },
+        opacity: {
+          duration: 0.1,
+          ease: "easeOut"
+        }
       } 
     }
   };
 
-  // Use simpler rendering approach
-  if (!open) return null;
-  
+  // Use a single conditional render approach
   return (
     <motion.div
-      initial="hidden"
-      animate="visible"
-      exit="exit"
+      initial={open ? "visible" : "hidden"}
+      animate={open ? "visible" : "hidden"}
       variants={variants}
       className={className}
     >
