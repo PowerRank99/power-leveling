@@ -79,6 +79,11 @@ const WorkoutPage = () => {
     }
   };
   
+  // Handle successful manual workout submission
+  const handleManualWorkoutSuccess = () => {
+    loadManualWorkouts();
+  };
+  
   // Refresh all data when component mounts
   useEffect(() => {
     const initialLoad = async () => {
@@ -98,9 +103,73 @@ const WorkoutPage = () => {
     loadManualWorkouts();
   };
   
-  const handleManualWorkoutSuccess = () => {
-    loadManualWorkouts();
+  // Render error alert if there's an error
+  const renderErrorAlert = () => {
+    if (!error) return null;
+    
+    return (
+      <Alert variant="destructive" className="mb-4 bg-valor-15 border-valor-30 text-valor shadow-subtle">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle className="font-orbitron">Erro ao carregar dados</AlertTitle>
+        <AlertDescription className="font-sora">
+          {error}
+          <div className="mt-2">
+            <Button 
+              variant="outline" 
+              onClick={handleRetry}
+              className="w-full bg-midnight-elevated border-valor-30 text-text-primary hover:bg-valor-15"
+              size="sm"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" /> Tentar novamente
+            </Button>
+          </div>
+        </AlertDescription>
+      </Alert>
+    );
   };
+  
+  // Render routines list section
+  const renderRoutinesSection = () => (
+    <div className="premium-card p-4 shadow-subtle">
+      <h2 className="text-xl font-orbitron font-bold mb-4 text-text-primary">Rotinas Salvas</h2>
+      <RoutinesList 
+        routines={routinesWithExercises} 
+        isLoading={isLoading} 
+        onRetry={handleRetry}
+        error={error}
+        hasAttemptedLoad={hasAttemptedLoad}
+        onDeleteRoutine={handleDeleteRoutine}
+        isDeletingItem={isDeletingItemRecord}
+      />
+    </div>
+  );
+  
+  // Render workouts tab content
+  const renderWorkoutsTabContent = () => (
+    <>
+      <TabsContent value="tracked" className="mt-0">
+        <WorkoutsList 
+          workouts={recentWorkouts} 
+          isLoading={isLoading}
+          onRetry={handleRetry}
+          error={error}
+          hasAttemptedLoad={hasAttemptedLoad}
+          onDeleteWorkout={deleteWorkout}
+          isDeletingItem={isDeletingItem}
+          hasMoreWorkouts={hasMoreWorkouts}
+          isLoadingMore={isLoadingMore}
+          onLoadMore={loadMoreWorkouts}
+        />
+      </TabsContent>
+      
+      <TabsContent value="manual" className="mt-0">
+        <ManualWorkoutsList 
+          workouts={manualWorkouts}
+          isLoading={isLoadingManual}
+        />
+      </TabsContent>
+    </>
+  );
 
   return (
     <AuthRequiredRoute>
@@ -108,42 +177,13 @@ const WorkoutPage = () => {
         <PageHeader title="Treino" showBackButton={false} />
         
         <div className="p-4 space-y-6">
-          {error && (
-            <Alert variant="destructive" className="mb-4 bg-valor-15 border-valor-30 text-valor shadow-subtle">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle className="font-orbitron">Erro ao carregar dados</AlertTitle>
-              <AlertDescription className="font-sora">
-                {error}
-                <div className="mt-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={handleRetry}
-                    className="w-full bg-midnight-elevated border-valor-30 text-text-primary hover:bg-valor-15"
-                    size="sm"
-                  >
-                    <RefreshCw className="w-4 h-4 mr-2" /> Tentar novamente
-                  </Button>
-                </div>
-              </AlertDescription>
-            </Alert>
-          )}
+          {renderErrorAlert()}
           
           <div className="premium-card p-4 shadow-subtle">
             <ActionsBar />
           </div>
           
-          <div className="premium-card p-4 shadow-subtle">
-            <h2 className="text-xl font-orbitron font-bold mb-4 text-text-primary">Rotinas Salvas</h2>
-            <RoutinesList 
-              routines={routinesWithExercises} 
-              isLoading={isLoading} 
-              onRetry={handleRetry}
-              error={error}
-              hasAttemptedLoad={hasAttemptedLoad}
-              onDeleteRoutine={handleDeleteRoutine}
-              isDeletingItem={isDeletingItemRecord}
-            />
-          </div>
+          {renderRoutinesSection()}
           
           <div className="premium-card p-4 shadow-subtle">
             <div className="flex justify-between items-center mb-4">
@@ -161,27 +201,7 @@ const WorkoutPage = () => {
               </Tabs>
             </div>
             
-            <TabsContent value="tracked" className="mt-0">
-              <WorkoutsList 
-                workouts={recentWorkouts} 
-                isLoading={isLoading}
-                onRetry={handleRetry}
-                error={error}
-                hasAttemptedLoad={hasAttemptedLoad}
-                onDeleteWorkout={deleteWorkout}
-                isDeletingItem={isDeletingItem}
-                hasMoreWorkouts={hasMoreWorkouts}
-                isLoadingMore={isLoadingMore}
-                onLoadMore={loadMoreWorkouts}
-              />
-            </TabsContent>
-            
-            <TabsContent value="manual" className="mt-0">
-              <ManualWorkoutsList 
-                workouts={manualWorkouts}
-                isLoading={isLoadingManual}
-              />
-            </TabsContent>
+            {renderWorkoutsTabContent()}
             
             <div className="mt-4">
               <ManualWorkoutDialog onSuccess={handleManualWorkoutSuccess} />
