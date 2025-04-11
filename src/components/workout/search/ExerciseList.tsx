@@ -1,9 +1,7 @@
 
 import React from 'react';
 import ExerciseCard from '../ExerciseCard';
-import EmptyState from '@/components/ui/EmptyState';
 import { Exercise } from '../types/Exercise';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ExerciseListProps {
   exercises: Exercise[];
@@ -19,30 +17,32 @@ const ExerciseList: React.FC<ExerciseListProps> = ({
   hasActiveFilters,
   searchQuery,
   equipmentFilter,
-  muscleFilter,
+  muscleFilter, 
   onSelectExercise 
 }) => {
   if (exercises.length === 0) {
     return (
-      <EmptyState 
-        title={
-          searchQuery ? 
-          `Nenhum exercício encontrado para "${searchQuery}"${equipmentFilter !== 'Todos' ? ` com ${equipmentFilter}` : ''}${muscleFilter !== 'Todos' ? ` para ${muscleFilter}` : ''}.` : 
-          "Nenhum exercício encontrado com os filtros selecionados."
-        }
-        description="Tente ajustar os filtros ou a busca para encontrar exercícios."
-      />
+      <div className="text-center py-6">
+        {hasActiveFilters ? (
+          <div>
+            <p className="text-gray-500 mb-1">Nenhum exercício encontrado com os filtros:</p>
+            <ul className="text-sm text-gray-400 mt-2">
+              {searchQuery && <li>Busca: "{searchQuery}"</li>}
+              {equipmentFilter !== 'Todos' && <li>Equipamento: {equipmentFilter}</li>}
+              {muscleFilter !== 'Todos' && <li>Músculo: {muscleFilter}</li>}
+            </ul>
+          </div>
+        ) : (
+          <p className="text-gray-500">
+            Nenhum exercício encontrado. Tente usar termos diferentes ou limpar os filtros.
+          </p>
+        )}
+      </div>
     );
   }
 
-  // Always use ScrollArea for better mobile experience
-  const exerciseList = (
-    <>
-      {hasActiveFilters && (
-        <h3 className="text-sm font-medium text-text-secondary mb-2">
-          {exercises.length} resultado{exercises.length !== 1 ? 's' : ''}
-        </h3>
-      )}
+  return (
+    <div>
       {exercises.map(exercise => (
         <div 
           key={exercise.id} 
@@ -53,7 +53,7 @@ const ExerciseList: React.FC<ExerciseListProps> = ({
             name={exercise.name}
             category={exercise.category}
             level={exercise.level as any}
-            type="Força" // Add default type
+            type="Força"
             image={exercise.image_url || '/placeholder.svg'}
             description={exercise.description || ''}
             equipment={exercise.equipment || ''}
@@ -62,14 +62,6 @@ const ExerciseList: React.FC<ExerciseListProps> = ({
           />
         </div>
       ))}
-    </>
-  );
-
-  return (
-    <div>
-      <ScrollArea className="h-[450px]">
-        {exerciseList}
-      </ScrollArea>
     </div>
   );
 };

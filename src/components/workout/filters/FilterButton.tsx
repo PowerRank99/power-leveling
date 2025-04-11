@@ -1,24 +1,33 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { LucideIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface FilterButtonProps {
-  isActive: boolean;
   icon: LucideIcon;
   label: string;
-  onClick?: () => void;
+  selectedOption: string;
+  onClick: () => void;
 }
 
-const FilterButton: React.FC<FilterButtonProps> = ({ isActive, icon: Icon, label, onClick }) => {
+const FilterButton: React.FC<FilterButtonProps> = ({ 
+  icon: Icon, 
+  label, 
+  selectedOption, 
+  onClick 
+}) => {
+  const isActive = selectedOption !== 'Todos';
+  
   return (
     <Button 
-      variant="outline" 
-      className={`flex-1 ${isActive ? 'bg-fitblue-50 text-fitblue border-fitblue' : ''}`}
+      variant={isActive ? "default" : "outline"}
+      size="sm"
+      className={`flex items-center gap-1 ${isActive ? 'bg-arcane text-white' : ''}`}
       onClick={onClick}
     >
-      <Icon className="mr-2 h-4 w-4" />
-      {label}
+      <Icon className="h-4 w-4" />
+      <span>{label}</span>
+      {isActive && <span className="text-xs ml-1">({selectedOption})</span>}
     </Button>
   );
 };
