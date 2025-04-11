@@ -5,19 +5,13 @@ import BottomNavBar from '@/components/navigation/BottomNavBar';
 import AuthRequiredRoute from '@/components/AuthRequiredRoute';
 import { useWorkoutData } from '@/hooks/useWorkoutData';
 import ActionsBar from '@/components/workout/ActionsBar';
-import RoutinesList from '@/components/workout/RoutinesList';
-import WorkoutsList from '@/components/workout/WorkoutsList';
-import { Button } from '@/components/ui/button';
-import { RefreshCw } from 'lucide-react';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
 import { RoutineWithExercises } from '@/components/workout/types/Workout';
-import ManualWorkoutDialog from '@/components/workout/manual/ManualWorkoutDialog';
-import ManualWorkoutsList from '@/components/workout/manual/ManualWorkoutsList';
 import { ManualWorkout } from '@/types/manualWorkoutTypes';
 import { ManualWorkoutService } from '@/services/workout/manual/ManualWorkoutService';
 import { useAuth } from '@/hooks/useAuth';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import WorkoutErrorAlert from '@/components/workout/WorkoutErrorAlert';
+import RoutinesSection from '@/components/workout/RoutinesSection';
+import WorkoutTabsSection from '@/components/workout/WorkoutTabsSection';
 
 const WorkoutPage = () => {
   const { user } = useAuth();
@@ -102,47 +96,6 @@ const WorkoutPage = () => {
     refreshData();
     loadManualWorkouts();
   };
-  
-  // Render error alert if there's an error
-  const renderErrorAlert = () => {
-    if (!error) return null;
-    
-    return (
-      <Alert variant="destructive" className="mb-4 bg-valor-15 border-valor-30 text-valor shadow-subtle">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle className="font-orbitron">Erro ao carregar dados</AlertTitle>
-        <AlertDescription className="font-sora">
-          {error}
-          <div className="mt-2">
-            <Button 
-              variant="outline" 
-              onClick={handleRetry}
-              className="w-full bg-midnight-elevated border-valor-30 text-text-primary hover:bg-valor-15"
-              size="sm"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" /> Tentar novamente
-            </Button>
-          </div>
-        </AlertDescription>
-      </Alert>
-    );
-  };
-  
-  // Render routines list section
-  const renderRoutinesSection = () => (
-    <div className="premium-card p-4 shadow-subtle">
-      <h2 className="text-xl font-orbitron font-bold mb-4 text-text-primary">Rotinas Salvas</h2>
-      <RoutinesList 
-        routines={routinesWithExercises} 
-        isLoading={isLoading} 
-        onRetry={handleRetry}
-        error={error}
-        hasAttemptedLoad={hasAttemptedLoad}
-        onDeleteRoutine={handleDeleteRoutine}
-        isDeletingItem={isDeletingItemRecord}
-      />
-    </div>
-  );
 
   return (
     <AuthRequiredRoute>
@@ -150,60 +103,39 @@ const WorkoutPage = () => {
         <PageHeader title="Treino" showBackButton={false} />
         
         <div className="p-4 space-y-6">
-          {renderErrorAlert()}
+          <WorkoutErrorAlert error={error} onRetry={handleRetry} />
           
           <div className="premium-card p-4 shadow-subtle">
             <ActionsBar />
           </div>
           
-          {renderRoutinesSection()}
+          <RoutinesSection 
+            routines={routinesWithExercises}
+            isLoading={isLoading}
+            onRetry={handleRetry}
+            error={error}
+            hasAttemptedLoad={hasAttemptedLoad}
+            onDeleteRoutine={handleDeleteRoutine}
+            isDeletingItem={isDeletingItemRecord}
+          />
           
-          <div className="premium-card p-4 shadow-subtle">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-orbitron font-bold text-text-primary">Treinos Recentes</h2>
-              
-              <Tabs 
-                value={activeTab} 
-                onValueChange={(value) => setActiveTab(value as 'tracked' | 'manual')} 
-                className="w-auto"
-              >
-                <TabsList className="bg-midnight-elevated">
-                  <TabsTrigger value="tracked" className="data-[state=active]:bg-arcane/20">
-                    Registrados
-                  </TabsTrigger>
-                  <TabsTrigger value="manual" className="data-[state=active]:bg-arcane/20">
-                    Manuais
-                  </TabsTrigger>
-                </TabsList>
-              
-                <TabsContent value="tracked" className="mt-0">
-                  <WorkoutsList 
-                    workouts={recentWorkouts} 
-                    isLoading={isLoading}
-                    onRetry={handleRetry}
-                    error={error}
-                    hasAttemptedLoad={hasAttemptedLoad}
-                    onDeleteWorkout={deleteWorkout}
-                    isDeletingItem={isDeletingItem}
-                    hasMoreWorkouts={hasMoreWorkouts}
-                    isLoadingMore={isLoadingMore}
-                    onLoadMore={loadMoreWorkouts}
-                  />
-                </TabsContent>
-                
-                <TabsContent value="manual" className="mt-0">
-                  <ManualWorkoutsList 
-                    workouts={manualWorkouts}
-                    isLoading={isLoadingManual}
-                  />
-                </TabsContent>
-              </Tabs>
-            </div>
-            
-            <div className="mt-4">
-              <ManualWorkoutDialog onSuccess={handleManualWorkoutSuccess} />
-            </div>
-          </div>
+          <WorkoutTabsSection 
+            recentWorkouts={recentWorkouts}
+            manualWorkouts={manualWorkouts}
+            isLoading={isLoading}
+            isLoadingManual={isLoadingManual}
+            onRetry={handleRetry}
+            error={error}
+            hasAttemptedLoad={hasAttemptedLoad}
+            onDeleteWorkout={deleteWorkout}
+            isDeletingItem={isDeletingItem}
+            hasMoreWorkouts={hasMoreWorkouts}
+            isLoadingMore={isLoadingMore}
+            onLoadMore={loadMoreWorkouts}
+            onManualWorkoutSuccess={handleManualWorkoutSuccess}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+          />
         </div>
         
         <BottomNavBar />
