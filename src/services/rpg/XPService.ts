@@ -18,7 +18,7 @@ export class XPService {
   
   /**
    * Calculate XP for a completed workout
-   * This now returns a number instead of an object
+   * Returns a number instead of an object
    */
   static calculateWorkoutXP(
     workout: {

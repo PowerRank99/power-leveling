@@ -129,7 +129,7 @@ export class XPBonusService {
     if (!userId || userClass !== 'Bruxo') return false;
     
     try {
-      // Use raw SQL query to check for passive skill usage
+      // Use regular query to check for passive skill usage
       const { data, error } = await supabase
         .from('passive_skill_usage')
         .select('*')
