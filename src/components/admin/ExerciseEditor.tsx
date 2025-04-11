@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Trash2, Edit2, Check, X, RefreshCw } from 'lucide-react';
-import { Exercise, ExerciseType } from '@/components/workout/types/Exercise';
+import { Exercise, ExerciseType, DifficultyLevel } from '@/components/workout/types/Exercise';
 import {
   Select,
   SelectContent,
@@ -28,7 +28,7 @@ const ExerciseEditor: React.FC<ExerciseEditorProps> = ({
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [selectedType, setSelectedType] = useState<ExerciseType>(exercise.type);
-  const [selectedLevel, setSelectedLevel] = useState<string>(exercise.level);
+  const [selectedLevel, setSelectedLevel] = useState<DifficultyLevel>(exercise.level);
   const [isUpdating, setIsUpdating] = useState(false);
 
   const exerciseTypes: ExerciseType[] = [
@@ -39,7 +39,7 @@ const ExerciseEditor: React.FC<ExerciseEditorProps> = ({
     'Flexibilidade & Mobilidade'
   ];
 
-  const difficultyLevels = [
+  const difficultyLevels: DifficultyLevel[] = [
     'Iniciante',
     'Intermediário',
     'Avançado'
@@ -49,7 +49,7 @@ const ExerciseEditor: React.FC<ExerciseEditorProps> = ({
     setSelectedType(type);
   };
 
-  const handleLevelChange = (level: string) => {
+  const handleLevelChange = (level: DifficultyLevel) => {
     setSelectedLevel(level);
   };
 
@@ -87,7 +87,7 @@ const ExerciseEditor: React.FC<ExerciseEditorProps> = ({
 
       if (error) throw error;
       
-      const updatedExercise = {
+      const updatedExercise: Exercise = {
         ...exercise,
         type: selectedType,
         level: selectedLevel
