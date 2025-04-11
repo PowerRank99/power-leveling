@@ -24,8 +24,13 @@ export class ManualWorkoutValidationService {
         throw new Error('Foto do treino é obrigatória');
       }
       
-      // Ensure workout date is not more than 24 hours in the past
+      // Ensure workout date is not in the future
       const now = new Date();
+      if (submissionDate > now) {
+        throw new Error('Não é possível registrar treinos futuros');
+      }
+      
+      // Ensure workout date is not more than 24 hours in the past
       const timeDiff = now.getTime() - submissionDate.getTime();
       const hoursDiff = timeDiff / (1000 * 3600);
       

@@ -23,7 +23,10 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
   const [activityType, setActivityType] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [workoutDate, setWorkoutDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  
+  // Set default date to current date
+  const today = new Date().toISOString().slice(0, 10);
+  const [workoutDate, setWorkoutDate] = useState<string>(today);
   
   const handleImageChange = (file: File | null) => {
     if (file) {
@@ -49,6 +52,27 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
     if (!imageFile) {
       toast.error('Foto obrigatória', {
         description: 'Por favor, adicione uma foto do seu treino'
+      });
+      return;
+    }
+    
+    // Validate date is not in the future
+    const selectedDate = new Date(workoutDate);
+    const now = new Date();
+    if (selectedDate > now) {
+      toast.error('Data inválida', {
+        description: 'Não é possível registrar treinos futuros'
+      });
+      return;
+    }
+    
+    // Validate date is not more than 24 hours in the past
+    const timeDiff = now.getTime() - selectedDate.getTime();
+    const hoursDiff = timeDiff / (1000 * 3600);
+    
+    if (hoursDiff > 24) {
+      toast.error('Data inválida', {
+        description: 'Não é possível registrar treinos com mais de 24 horas'
       });
       return;
     }
