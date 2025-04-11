@@ -1,8 +1,17 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Exercise } from '../../types/Exercise';
+
+// Cache for exercises to prevent redundant fetches
+const exerciseCache: { exercises: Exercise[], timestamp: number } = {
+  exercises: [],
+  timestamp: 0
+};
+
+// Cache expiration time (5 minutes)
+const CACHE_EXPIRATION = 5 * 60 * 1000;
 
 export const useExerciseFetch = (selectedExerciseIds: string[]) => {
   const { toast } = useToast();
@@ -10,35 +19,48 @@ export const useExerciseFetch = (selectedExerciseIds: string[]) => {
   const [availableExercises, setAvailableExercises] = useState<Exercise[]>([]);
   const [recentExercises, setRecentExercises] = useState<Exercise[]>([]);
 
-  const fetchExercises = async () => {
+  const fetchExercises = useCallback(async () => {
     setIsLoading(true);
+    
     try {
-      const { data, error } = await supabase
-        .from('exercises')
-        .select('*')
-        .order('name');
+      let exercises: Exercise[] = [];
       
-      if (error) throw error;
+      // Use cached data if available and fresh
+      const now = Date.now();
+      if (exerciseCache.exercises.length > 0 && (now - exerciseCache.timestamp) < CACHE_EXPIRATION) {
+        console.log('Using cached exercises data');
+        exercises = exerciseCache.exercises;
+      } else {
+        console.log('Fetching fresh exercises data');
+        const { data, error } = await supabase
+          .from('exercises')
+          .select('*')
+          .order('name');
+        
+        if (error) throw error;
+        
+        exercises = data || [];
+        
+        // Update cache
+        exerciseCache.exercises = exercises;
+        exerciseCache.timestamp = now;
+      }
       
-      const exercises = data?.filter(ex => !selectedExerciseIds.includes(ex.id)) || [];
+      // Filter out selected exercises
+      const filteredExercises = exercises.filter(ex => !selectedExerciseIds.includes(ex.id));
       
-      console.log('Fetched exercises:', exercises.length);
-      
-      // Log the actual muscle_group and equipment_type values from the database for debugging
-      const uniqueMuscleGroups = [...new Set(exercises.map(ex => ex.muscle_group))].filter(Boolean);
-      const uniqueEquipmentTypes = [...new Set(exercises.map(ex => ex.equipment_type))].filter(Boolean);
-      
-      console.log('Unique muscle groups in DB:', uniqueMuscleGroups);
-      console.log('Unique equipment types in DB:', uniqueEquipmentTypes);
+      console.log('Filtered exercises:', filteredExercises.length);
       
       // Process exercises to normalize values for comparison
-      const processedExercises = exercises.map(ex => ({
+      const processedExercises = filteredExercises.map(ex => ({
         ...ex,
         muscle_group: ex.muscle_group || ex.category || 'Não especificado',
         equipment_type: ex.equipment_type || 'Não especificado'
       }));
       
       setAvailableExercises(processedExercises as Exercise[]);
+      
+      // Just get 5 for recent exercises
       setRecentExercises((processedExercises.slice(0, 5)) as Exercise[]);
       
       return {
@@ -57,9 +79,11 @@ export const useExerciseFetch = (selectedExerciseIds: string[]) => {
         totalCount: 0
       };
     } finally {
-      setIsLoading(false);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 300); // Add a minimum loading time to prevent flickering
     }
-  };
+  }, [selectedExerciseIds, toast]);
 
   return {
     isLoading,

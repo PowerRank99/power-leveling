@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -7,21 +7,21 @@ interface ExerciseCardProps {
   name: string;
   category: string;
   level: 'Iniciante' | 'Intermediário' | 'Avançado';
-  type?: 'Força' | 'Cardio' | 'Flexibilidade' | 'Equilíbrio'; // Make type optional
+  type?: 'Força' | 'Cardio' | 'Flexibilidade' | 'Equilíbrio';
   image: string;
   description?: string;
   equipment?: string;
   muscleGroup?: string;
   equipmentType?: string;
-  expanded?: boolean; // Allow controlling expanded state from outside
-  disableExpand?: boolean; // Allow disabling expansion
+  expanded?: boolean;
+  disableExpand?: boolean;
 }
 
-const ExerciseCard: React.FC<ExerciseCardProps> = ({
+const ExerciseCard: React.FC<ExerciseCardProps> = memo(({
   name,
   category,
   level,
-  type = 'Força', // Default value for backward compatibility
+  type = 'Força',
   image,
   description,
   equipment,
@@ -53,19 +53,47 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
   
   const handleToggleExpand = (e: React.MouseEvent) => {
     if (disableExpand) return;
-    e.stopPropagation(); // Prevent card click from bubbling
+    e.stopPropagation();
     setExpanded(!expanded);
   };
   
+  // Simplified card for search results in manual workout context
+  if (disableExpand) {
+    return (
+      <Card className="mb-3 premium-card hover:premium-card-elevated transition-all duration-300">
+        <CardContent className="p-0">
+          <div className="p-4 flex items-center">
+            <div className="h-12 w-12 overflow-hidden rounded-md mr-3 border border-divider shadow-subtle">
+              <img src={image} alt={name} className="h-full w-full object-cover" loading="lazy" />
+            </div>
+            
+            <div className="flex-1">
+              <h3 className="font-orbitron font-semibold text-text-primary">{name}</h3>
+              <div className="flex flex-wrap gap-1 mt-1">
+                <span className={`text-xs px-2 py-0.5 rounded-full border ${getLevelClass()}`}>
+                  {level}
+                </span>
+                <span className={`text-xs px-2 py-0.5 rounded-full border ${getTypeClass()}`}>
+                  {type}
+                </span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // Full card with expansion capability for other contexts
   return (
     <Card className="mb-3 premium-card hover:premium-card-elevated transition-all duration-300">
       <CardContent className="p-0">
         <div 
-          className={`p-4 flex items-center ${!disableExpand ? 'cursor-pointer' : ''}`}
+          className="p-4 flex items-center cursor-pointer"
           onClick={handleToggleExpand}
         >
           <div className="h-12 w-12 overflow-hidden rounded-md mr-3 border border-divider shadow-subtle">
-            <img src={image} alt={name} className="h-full w-full object-cover" />
+            <img src={image} alt={name} className="h-full w-full object-cover" loading="lazy" />
           </div>
           
           <div className="flex-1">
@@ -80,14 +108,12 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
             </div>
           </div>
           
-          {!disableExpand && (
-            <div className="ml-2">
-              {expanded ? <ChevronUp className="text-text-tertiary" /> : <ChevronDown className="text-text-tertiary" />}
-            </div>
-          )}
+          <div className="ml-2">
+            {expanded ? <ChevronUp className="text-text-tertiary" /> : <ChevronDown className="text-text-tertiary" />}
+          </div>
         </div>
         
-        {expanded && !disableExpand && (
+        {expanded && (
           <div className="p-4 pt-0 border-t border-divider">
             {description && (
               <div className="mb-3">
@@ -121,6 +147,6 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
       </CardContent>
     </Card>
   );
-};
+});
 
 export default ExerciseCard;
