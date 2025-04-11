@@ -30,7 +30,8 @@ export class XPService {
     streak: number = 0,
     difficulty: 'iniciante' | 'intermediario' | 'avancado' = 'intermediario'
   ): number {
-    return XPCalculationService.calculateWorkoutXP(workout, userClass, streak, difficulty);
+    const result = XPCalculationService.calculateWorkoutXP(workout, userClass, streak, difficulty);
+    return result.totalXP; // Return just the totalXP number instead of the full object
   }
   
   /**

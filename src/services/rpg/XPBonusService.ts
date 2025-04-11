@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { XP_CONSTANTS } from './constants/xpConstants';
@@ -131,24 +132,27 @@ export class XPBonusService {
       // Check if the player has used this ability in the last week
       const oneWeekAgo = new Date(Date.now() - this.ONE_WEEK_MS);
       
+      // Use raw SQL query to check for passive skill usage since the table might not be in TypeScript types
       const { data, error } = await supabase
-        .from('passive_skill_usage')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('skill_name', 'Folga Mística')
-        .gte('used_at', oneWeekAgo.toISOString())
-        .maybeSingle();
+        .rpc('check_passive_skill_usage', {
+          p_user_id: userId,
+          p_skill_name: 'Folga Mística',
+          p_days: 7
+        });
       
-      // If player hasn't used it in the last week, they can use it now
+      // If there's no data or an error, assume the player hasn't used it recently
       if (error || !data) {
-        // Record the usage
-        await supabase
-          .from('passive_skill_usage')
-          .insert({
-            user_id: userId,
-            skill_name: 'Folga Mística',
-            used_at: new Date().toISOString()
+        // Record the usage using raw SQL
+        const { error: insertError } = await supabase
+          .rpc('record_passive_skill_usage', {
+            p_user_id: userId,
+            p_skill_name: 'Folga Mística'
           });
+        
+        if (insertError) {
+          console.error('Error recording passive skill usage:', insertError);
+          return false;
+        }
           
         toast.success('Folga Mística Ativada!', {
           description: 'Seu Bruxo usou magia para preservar sua sequência'

@@ -2,6 +2,7 @@
 import { EXERCISE_TYPES, CLASS_PASSIVE_SKILLS } from '../constants/exerciseTypes';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { XP_CONSTANTS } from '../constants/xpConstants';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Service for calculating class-specific XP bonuses
@@ -201,15 +202,26 @@ export class ClassBonusCalculator {
   }
   
   /**
-   * Check if Bruxo should preserve streak
-   * @returns Boolean indicating if streak should be preserved
+   * Check if Bruxo should preserve streak using the database function
    */
-  static shouldPreserveStreak(userId: string, userClass: string | null): boolean {
+  static async shouldPreserveStreak(userId: string, userClass: string | null): Promise<boolean> {
     if (!userId || userClass !== 'Bruxo') return false;
     
-    // This would actually check cooldown in the database
-    // Simplified version - actual implementation would be in XPBonusService
-    return true;
+    try {
+      // Use RPC function to check passive skill usage
+      const { data, error } = await supabase
+        .rpc('check_passive_skill_usage', {
+          p_user_id: userId,
+          p_skill_name: 'Folga Mística',
+          p_days: 7
+        });
+      
+      // If no error and data is false, the skill hasn't been used recently
+      return !error && data === false;
+    } catch (error) {
+      console.error('Error checking Bruxo streak preservation:', error);
+      return false;
+    }
   }
   
   /**

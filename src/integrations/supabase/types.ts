@@ -431,6 +431,27 @@ export type Database = {
           },
         ]
       }
+      passive_skill_usage: {
+        Row: {
+          id: string
+          skill_name: string
+          used_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          skill_name: string
+          used_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          skill_name?: string
+          used_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       personal_records: {
         Row: {
           exercise_id: string
