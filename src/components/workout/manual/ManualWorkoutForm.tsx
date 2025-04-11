@@ -140,47 +140,51 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
   };
   
   return (
-    <form onSubmit={handleSubmit} className={`space-y-4 ${isMobile ? 'pb-24' : 'pb-4'}`}>
+    <div className={`h-full flex flex-col ${isMobile ? 'pb-16' : ''}`}>
       <h2 className="text-xl font-orbitron font-bold text-text-primary mb-4">
         Registrar Treino Manualmente
       </h2>
       
-      <div className="space-y-3">
-        <ExerciseSelector 
-          selectedExercise={selectedExercise} 
-          onExerciseSelect={setSelectedExercise} 
-        />
-        
-        <div>
-          <Label htmlFor="description">Descrição (opcional)</Label>
-          <Textarea
-            id="description"
-            placeholder="Descreva seu treino..."
-            className="bg-midnight-elevated border-arcane/30 min-h-[100px]"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-        
-        <DateSelector 
-          value={workoutDate} 
-          onChange={setWorkoutDate} 
-        />
-        
-        <PhotoUploader 
-          previewUrl={previewUrl} 
-          onImageChange={handleImageChange} 
-        />
+      <div className="flex-grow overflow-y-auto pr-1">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-3">
+            <ExerciseSelector 
+              selectedExercise={selectedExercise} 
+              onExerciseSelect={setSelectedExercise} 
+            />
+            
+            <div>
+              <Label htmlFor="description">Descrição (opcional)</Label>
+              <Textarea
+                id="description"
+                placeholder="Descreva seu treino..."
+                className="bg-midnight-elevated border-arcane/30 min-h-[100px]"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+            
+            <DateSelector 
+              value={workoutDate} 
+              onChange={setWorkoutDate} 
+            />
+            
+            <PhotoUploader 
+              previewUrl={previewUrl} 
+              onImageChange={handleImageChange} 
+            />
+          </div>
+        </form>
       </div>
       
-      <div className={`${isMobile ? 'fixed bottom-0 left-0 right-0 p-4 bg-midnight-base border-t border-divider z-10' : ''}`}>
+      <div className={`${isMobile ? 'mt-4 border-t border-divider pt-4' : 'mt-4'}`}>
         <FormActions 
           isSubmitting={isSubmitting} 
           isSubmitDisabled={!imageFile || !selectedExercise} 
           onCancel={onCancel} 
         />
       </div>
-    </form>
+    </div>
   );
 };
 

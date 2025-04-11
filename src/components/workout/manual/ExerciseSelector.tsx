@@ -31,7 +31,6 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [results, setResults] = useState<Exercise[]>([]);
-  const [isFocused, setIsFocused] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   
   // Direct search function with minimal processing
@@ -112,6 +111,11 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
     setSearchInput('');
   };
   
+  // Handle input change without losing focus
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchInput(e.target.value);
+  };
+  
   return (
     <div className="space-y-3">
       <Label htmlFor="exercise">Tipo de Exercício</Label>
@@ -157,15 +161,24 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
                 <Input
                   ref={searchInputRef}
                   value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
+                  onChange={handleInputChange}
                   placeholder="Buscar exercícios..."
                   className="pl-10 bg-midnight-elevated border-arcane/30"
                   disabled={isLoading}
+                  onBlur={(e) => {
+                    // Prevent losing focus on mobile when the search is triggered
+                    // Small delay to prevent immediate refocus on touch devices
+                    setTimeout(() => {
+                      if (isOpen && document.activeElement !== e.target) {
+                        e.target.focus();
+                      }
+                    }, 10);
+                  }}
                 />
               </div>
               
-              <div className={`max-h-[${isMobile ? '150px' : '180px'}] overflow-hidden`}>
-                <ScrollArea className={`h-[${isMobile ? '150px' : '180px'}] rounded-md border border-divider/20 bg-midnight-elevated`}>
+              <div className="max-h-[180px] overflow-hidden">
+                <ScrollArea className="h-[180px] rounded-md border border-divider/20 bg-midnight-elevated">
                   {isLoading ? (
                     <div className="space-y-3 p-2">
                       <p className="text-center text-sm text-gray-400 mb-2">Carregando exercícios...</p>
