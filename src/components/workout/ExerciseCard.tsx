@@ -13,6 +13,8 @@ interface ExerciseCardProps {
   equipment?: string;
   muscleGroup?: string;
   equipmentType?: string;
+  expanded?: boolean; // Allow controlling expanded state from outside
+  disableExpand?: boolean; // Allow disabling expansion
 }
 
 const ExerciseCard: React.FC<ExerciseCardProps> = ({
@@ -24,9 +26,11 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
   description,
   equipment,
   muscleGroup,
-  equipmentType
+  equipmentType,
+  expanded: initialExpanded = false,
+  disableExpand = false
 }) => {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(initialExpanded);
   
   const getLevelClass = () => {
     switch (level) {
@@ -47,12 +51,18 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
     }
   };
   
+  const handleToggleExpand = (e: React.MouseEvent) => {
+    if (disableExpand) return;
+    e.stopPropagation(); // Prevent card click from bubbling
+    setExpanded(!expanded);
+  };
+  
   return (
     <Card className="mb-3 premium-card hover:premium-card-elevated transition-all duration-300">
       <CardContent className="p-0">
         <div 
-          className="p-4 flex items-center cursor-pointer"
-          onClick={() => setExpanded(!expanded)}
+          className={`p-4 flex items-center ${!disableExpand ? 'cursor-pointer' : ''}`}
+          onClick={handleToggleExpand}
         >
           <div className="h-12 w-12 overflow-hidden rounded-md mr-3 border border-divider shadow-subtle">
             <img src={image} alt={name} className="h-full w-full object-cover" />
@@ -70,12 +80,14 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
             </div>
           </div>
           
-          <div className="ml-2">
-            {expanded ? <ChevronUp className="text-text-tertiary" /> : <ChevronDown className="text-text-tertiary" />}
-          </div>
+          {!disableExpand && (
+            <div className="ml-2">
+              {expanded ? <ChevronUp className="text-text-tertiary" /> : <ChevronDown className="text-text-tertiary" />}
+            </div>
+          )}
         </div>
         
-        {expanded && (
+        {expanded && !disableExpand && (
           <div className="p-4 pt-0 border-t border-divider">
             {description && (
               <div className="mb-3">

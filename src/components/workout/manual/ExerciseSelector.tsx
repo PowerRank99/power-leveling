@@ -27,7 +27,10 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
     isLoading,
     handleSearchChange,
     resetFilters,
-  } = useExerciseSearch({ selectedExercises: selectedExercise ? [selectedExercise] : [] });
+  } = useExerciseSearch({ 
+    selectedExercises: selectedExercise ? [selectedExercise] : [],
+    maxResults: 3 // Limit to 3 results
+  });
   
   const toggleSearch = () => {
     setIsSearchOpen(!isSearchOpen);
@@ -113,6 +116,8 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
                     equipment={exercise.equipment || ''}
                     muscleGroup={exercise.muscle_group || exercise.category || 'Não especificado'}
                     equipmentType={exercise.equipment_type || 'Não especificado'}
+                    expanded={false} // Ensure cards are initially collapsed
+                    disableExpand={true} // Prevent cards from being expanded in this view
                   />
                 </div>
               ))

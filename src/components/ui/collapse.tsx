@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface CollapseProps {
@@ -13,30 +13,43 @@ export const Collapse: React.FC<CollapseProps> = ({
   children,
   className = '',
 }) => {
-  const [height, setHeight] = useState<number | undefined>(open ? undefined : 0);
-  const [ref, setRef] = useState<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!ref) return;
-    
-    if (open) {
-      setHeight(ref.getBoundingClientRect().height);
-    } else {
-      setHeight(0);
+  // Use a ref to store the content element
+  const contentRef = useRef<HTMLDivElement>(null);
+  
+  // Animation variants to improve performance
+  const variants = {
+    hidden: { height: 0, opacity: 0, overflow: 'hidden' },
+    visible: { 
+      height: 'auto', 
+      opacity: 1,
+      overflow: 'hidden',
+      transition: { 
+        height: { duration: 0.3, ease: [0.33, 1, 0.68, 1] },
+        opacity: { duration: 0.25, ease: [0.33, 1, 0.68, 1] }
+      } 
+    },
+    exit: { 
+      height: 0, 
+      opacity: 0,
+      overflow: 'hidden',
+      transition: { 
+        height: { duration: 0.3, ease: [0.33, 1, 0.68, 1] },
+        opacity: { duration: 0.2, ease: [0.33, 1, 0.68, 1] }
+      } 
     }
-  }, [open, ref, children]);
+  };
 
   return (
     <AnimatePresence initial={false}>
       {open && (
         <motion.div
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: 'auto', opacity: 1 }}
-          exit={{ height: 0, opacity: 0 }}
-          transition={{ duration: 0.3, ease: [0.33, 1, 0.68, 1] }}
-          className={`overflow-hidden ${className}`}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          variants={variants}
+          className={className}
         >
-          <div ref={setRef}>
+          <div ref={contentRef}>
             {children}
           </div>
         </motion.div>

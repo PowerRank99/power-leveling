@@ -11,7 +11,7 @@ export const FILTERED_EQUIPMENT_TYPES = EQUIPMENT_TYPES.filter(type =>
   !['Barra de Cardio', 'Equipamento de Esportes', 'Barra', 'Banco', 'TRX', 'Cabo'].includes(type)
 );
 
-export const useExerciseSearch = ({ selectedExercises }: UseExerciseSearchProps): ExerciseSearchResult => {
+export const useExerciseSearch = ({ selectedExercises, maxResults }: UseExerciseSearchProps): ExerciseSearchResult => {
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredExercises, setFilteredExercises] = useState<Exercise[]>([]);
@@ -57,21 +57,24 @@ export const useExerciseSearch = ({ selectedExercises }: UseExerciseSearchProps)
   const updateFilteredExercises = (exercises: Exercise[]) => {
     const filtered = applyFilters(exercises, searchQuery, equipmentFilter, muscleFilter);
     
-    setFilteredExercises(filtered);
+    // Apply maxResults limit if provided
+    const limitedResults = maxResults ? filtered.slice(0, maxResults) : filtered;
+    
+    setFilteredExercises(limitedResults);
     
     // Update debug info
     setDebugInfo(prev => ({
       ...prev,
       afterEquipmentFilter: equipmentFilter !== 'Todos' ? filtered.length : prev.afterEquipmentFilter,
       afterMuscleFilter: muscleFilter !== 'Todos' ? filtered.length : prev.afterMuscleFilter,
-      finalFiltered: filtered.length
+      finalFiltered: limitedResults.length
     }));
     
-    console.log('Final filtered exercises:', filtered.length);
+    console.log('Final filtered exercises:', limitedResults.length);
     
     // Log sample exercises for debugging
-    if (filtered.length > 0 && filtered.length < 10) {
-      filtered.forEach(ex => {
+    if (limitedResults.length > 0 && limitedResults.length < 10) {
+      limitedResults.forEach(ex => {
         console.log(`Exercise: ${ex.name}, Muscle: "${ex.muscle_group}", Equipment: "${ex.equipment_type}"`);
       });
     }

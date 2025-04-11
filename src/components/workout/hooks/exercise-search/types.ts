@@ -3,6 +3,7 @@ import { Exercise } from '../../types/Exercise';
 
 export interface UseExerciseSearchProps {
   selectedExercises: Exercise[];
+  maxResults?: number; // Added maxResults parameter
 }
 
 export interface ExerciseSearchState {
