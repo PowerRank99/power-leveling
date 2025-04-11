@@ -5,27 +5,13 @@ import { ptBR } from 'date-fns/locale';
 import { ManualWorkout } from '@/types/manualWorkoutTypes';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ActivityIcon, CalendarIcon, ImageIcon, ZapIcon } from 'lucide-react';
+import { ActivityIcon, CalendarIcon, ZapIcon } from 'lucide-react';
+import { getActivityLabel } from '@/utils/workoutActivityUtils';
 
 interface ManualWorkoutsListProps {
   workouts: ManualWorkout[];
   isLoading: boolean;
 }
-
-const getActivityLabel = (activityType: string | null | undefined) => {
-  const activityMap: Record<string, string> = {
-    'strength': 'Musculação',
-    'cardio': 'Cardio',
-    'running': 'Corrida',
-    'yoga': 'Yoga',
-    'sports': 'Esportes',
-    'bodyweight': 'Calistenia',
-    'flexibility': 'Flexibilidade',
-    'other': 'Outro'
-  };
-  
-  return activityType ? (activityMap[activityType] || activityType) : 'Não especificado';
-};
 
 const ManualWorkoutsList: React.FC<ManualWorkoutsListProps> = ({ workouts, isLoading }) => {
   if (isLoading) {
