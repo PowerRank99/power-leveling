@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { ManualWorkout } from '@/types/manualWorkoutTypes';
 import { ManualWorkoutValidationService } from './ManualWorkoutValidationService';
@@ -38,6 +39,7 @@ export class ManualWorkoutService {
       await XPService.addXP(userId, xpAwarded, `manual_workout:${exerciseName}:${exerciseCategory}`);
       
       // Create the manual workout with exercise_id
+      // We call the RPC function with the correct parameter names
       const { data, error } = await supabase.rpc('create_manual_workout', {
         p_user_id: userId,
         p_description: description || null,

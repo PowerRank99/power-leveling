@@ -46,7 +46,7 @@ EXCEPTION
 END;
 $$;
 
--- Update the get_user_manual_workouts function
+-- Update the get_user_manual_workouts function to include exercise_id in return values
 CREATE OR REPLACE FUNCTION public.get_user_manual_workouts(p_user_id UUID)
 RETURNS TABLE(
   id UUID,
