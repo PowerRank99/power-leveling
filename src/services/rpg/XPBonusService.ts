@@ -16,6 +16,10 @@ interface XPBreakdown {
   bonusDetails: { skill: string, amount: number, description: string }[];
 }
 
+interface PowerDayUsage {
+  count: number;
+}
+
 /**
  * Service for handling XP bonuses and updates
  */
@@ -118,7 +122,7 @@ export class XPBonusService {
       const currentYear = today.getFullYear();
       
       // Get power day usage for the current week
-      const { data: powerDayData, error: powerDayError } = await supabase.rpc(
+      const { data, error } = await supabase.rpc(
         'get_power_day_usage',
         {
           p_user_id: userId,
@@ -127,10 +131,12 @@ export class XPBonusService {
         }
       );
       
-      // Handle the powerDayData safely
+      // Handle the power day data safely
       let powerDayCount = 0;
-      if (!powerDayError && powerDayData && Array.isArray(powerDayData) && powerDayData.length > 0) {
-        powerDayCount = parseInt(powerDayData[0]?.count || '0');
+      if (!error && data && Array.isArray(data) && data.length > 0) {
+        // Since the SQL function returns a table with one column named 'count',
+        // we need to access that property on the first element of the array
+        powerDayCount = parseInt(data[0]?.count.toString() || '0');
       }
       
       powerDayAvailable = powerDayCount < 2;
@@ -146,7 +152,7 @@ export class XPBonusService {
         
         // Record power day usage
         isPowerDay = true;
-        const { error: recordError } = await supabase.rpc(
+        await supabase.rpc(
           'create_power_day_usage',
           {
             p_user_id: userId,
@@ -154,10 +160,6 @@ export class XPBonusService {
             p_year: currentYear
           }
         );
-        
-        if (recordError) {
-          console.error('Error recording power day usage:', recordError);
-        }
       }
       
       const totalXPWithBonuses = cappedWorkoutXP + recordBonusXP;
@@ -187,9 +189,7 @@ export class XPBonusService {
   /**
    * Get power day usage for a user in a specific week
    */
-  static async getPowerDayUsage(userId: string, week: number, year: number): Promise<{
-    count: number;
-  }> {
+  static async getPowerDayUsage(userId: string, week: number, year: number): Promise<PowerDayUsage> {
     try {
       const { data, error } = await supabase.rpc(
         'get_power_day_usage',
@@ -208,7 +208,7 @@ export class XPBonusService {
       // Safely handle the response
       let count = 0;
       if (Array.isArray(data) && data.length > 0) {
-        count = parseInt(data[0]?.count || '0');
+        count = parseInt(data[0]?.count.toString() || '0');
       }
       
       return { count };
@@ -406,11 +406,11 @@ export class XPBonusService {
       const currentWeek = this.getCurrentWeek();
       const currentYear = new Date().getFullYear();
       
-      const { count } = await this.getPowerDayUsage(userId, currentWeek, currentYear);
+      const powerDayUsage = await this.getPowerDayUsage(userId, currentWeek, currentYear);
       
       return {
-        available: count < 2,
-        count,
+        available: powerDayUsage.count < 2,
+        count: powerDayUsage.count,
         max: 2,
         week: currentWeek,
         year: currentYear

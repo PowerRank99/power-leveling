@@ -68,7 +68,7 @@ export class ManualWorkoutService {
       // Safely parse the count
       let recentCount = 0;
       if (Array.isArray(recentSubmissions) && recentSubmissions.length > 0) {
-        recentCount = parseInt(recentSubmissions[0]?.count || '0');
+        recentCount = parseInt(recentSubmissions[0]?.count.toString() || '0');
       }
       
       if (recentCount > 0) {

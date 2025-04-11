@@ -91,21 +91,7 @@ export class XPService {
     year: number;
   }> {
     try {
-      // Get current week and year
-      const now = new Date();
-      const currentWeek = XPBonusService.getCurrentWeek();
-      const currentYear = now.getFullYear();
-      
-      // Check power day usage using XPBonusService
-      const powerDayData = await XPBonusService.getPowerDayUsage(userId, currentWeek, currentYear);
-      
-      return {
-        available: powerDayData.count < 2,
-        used: powerDayData.count,
-        max: 2,
-        week: currentWeek,
-        year: currentYear
-      };
+      return await XPBonusService.checkPowerDayAvailability(userId);
     } catch (error) {
       console.error('Error in checkPowerDayAvailability:', error);
       return {

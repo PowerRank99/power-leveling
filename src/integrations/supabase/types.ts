@@ -431,6 +431,42 @@ export type Database = {
           },
         ]
       }
+      manual_workouts: {
+        Row: {
+          activity_type: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_power_day: boolean
+          photo_url: string
+          user_id: string
+          workout_date: string
+          xp_awarded: number
+        }
+        Insert: {
+          activity_type?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_power_day?: boolean
+          photo_url: string
+          user_id: string
+          workout_date?: string
+          xp_awarded?: number
+        }
+        Update: {
+          activity_type?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_power_day?: boolean
+          photo_url?: string
+          user_id?: string
+          workout_date?: string
+          xp_awarded?: number
+        }
+        Relationships: []
+      }
       passive_skill_usage: {
         Row: {
           id: string
@@ -486,6 +522,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      power_day_usage: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+          week_number: number
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+          week_number: number
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+          week_number?: number
+          year?: number
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -759,6 +819,28 @@ export type Database = {
         Args: { p_user_id: string; p_exercise_id: string; p_days?: number }
         Returns: boolean
       }
+      check_recent_manual_workouts: {
+        Args: { p_user_id: string; p_hours: number }
+        Returns: {
+          count: number
+        }[]
+      }
+      create_manual_workout: {
+        Args: {
+          p_user_id: string
+          p_description: string
+          p_activity_type: string
+          p_photo_url: string
+          p_xp_awarded: number
+          p_workout_date: string
+          p_is_power_day: boolean
+        }
+        Returns: boolean
+      }
+      create_power_day_usage: {
+        Args: { p_user_id: string; p_week_number: number; p_year: number }
+        Returns: boolean
+      }
       get_class_bonuses: {
         Args: { p_class_name: string }
         Returns: Json
@@ -766,6 +848,25 @@ export type Database = {
       get_class_cooldown: {
         Args: { p_user_id: string }
         Returns: Json
+      }
+      get_power_day_usage: {
+        Args: { p_user_id: string; p_week_number: number; p_year: number }
+        Returns: {
+          count: number
+        }[]
+      }
+      get_user_manual_workouts: {
+        Args: { p_user_id: string }
+        Returns: {
+          id: string
+          description: string
+          activity_type: string
+          photo_url: string
+          xp_awarded: number
+          created_at: string
+          workout_date: string
+          is_power_day: boolean
+        }[]
       }
       increment_profile_counter: {
         Args: {
