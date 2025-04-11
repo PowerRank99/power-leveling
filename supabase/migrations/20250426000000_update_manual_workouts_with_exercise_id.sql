@@ -1,8 +1,8 @@
 
 -- Add exercise_id column to manual_workouts table
-ALTER TABLE public.manual_workouts ADD COLUMN exercise_id UUID;
+ALTER TABLE public.manual_workouts ADD COLUMN IF NOT EXISTS exercise_id UUID;
 
--- Update the create_manual_workout function
+-- Update the create_manual_workout function to include exercise_id parameter
 CREATE OR REPLACE FUNCTION public.create_manual_workout(
   p_user_id UUID,
   p_description TEXT,

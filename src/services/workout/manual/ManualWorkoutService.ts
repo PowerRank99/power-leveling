@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ManualWorkout } from '@/types/manualWorkoutTypes';
 import { ManualWorkoutValidationService } from './ManualWorkoutValidationService';
@@ -38,25 +37,17 @@ export class ManualWorkoutService {
       // Add XP to user - fixing the argument count here (passing metadata as part of the source parameter)
       await XPService.addXP(userId, xpAwarded, `manual_workout:${exerciseName}:${exerciseCategory}`);
       
-      // Check if the database function includes the exercise_id parameter
-      // Use the updated version if available
-      const fnParams = {
+      // Create the manual workout with exercise_id
+      const { data, error } = await supabase.rpc('create_manual_workout', {
         p_user_id: userId,
         p_description: description || null,
         p_activity_type: exerciseName || null,
+        p_exercise_id: exerciseId,
         p_photo_url: photoUrl,
         p_xp_awarded: xpAwarded,
         p_workout_date: workoutDate.toISOString(),
         p_is_power_day: isPowerDay
-      };
-      
-      // Add exercise_id parameter if available (it was added in the migration)
-      if (exerciseId) {
-        // @ts-ignore - TypeScript doesn't know we've updated the database function yet
-        fnParams.p_exercise_id = exerciseId;
-      }
-      
-      const { data, error } = await supabase.rpc('create_manual_workout', fnParams);
+      });
       
       if (error) {
         console.error('Error creating manual workout:', error);

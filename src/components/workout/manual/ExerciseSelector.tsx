@@ -33,6 +33,7 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
   const [results, setResults] = useState<Exercise[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [lastFocusTime, setLastFocusTime] = useState(0);
+  const focusTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Direct search function with minimal processing
   const searchExercises = async (query: string) => {
@@ -75,22 +76,26 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
       setResults([]);
     } finally {
       setIsLoading(false);
-      // Re-focus the input after search completes
-      if (isOpen && searchInputRef.current) {
-        searchInputRef.current.focus();
-      }
+      // We'll handle focus in the effect
     }
   };
   
-  // Focus the search input when the collapsible is opened
+  // Clean up any pending focus timeouts when component unmounts
   useEffect(() => {
-    if (isOpen && searchInputRef.current) {
-      // Small delay to ensure the collapsible has fully opened
+    return () => {
+      if (focusTimeoutRef.current) {
+        clearTimeout(focusTimeoutRef.current);
+      }
+    };
+  }, []);
+  
+  // Focus management when opening/closing the collapsible
+  useEffect(() => {
+    if (isOpen) {
       const timer = setTimeout(() => {
-        if (searchInputRef.current) {
-          searchInputRef.current.focus();
-        }
+        requestFocus();
       }, 100);
+      
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
@@ -108,6 +113,27 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
     return () => clearTimeout(timer);
   }, [searchInput, isOpen]);
   
+  // Robust focus management
+  const requestFocus = () => {
+    const now = Date.now();
+    if (now - lastFocusTime < 100) return;
+    
+    setLastFocusTime(now);
+    
+    // Clear any existing timeout
+    if (focusTimeoutRef.current) {
+      clearTimeout(focusTimeoutRef.current);
+    }
+    
+    // Set a new timeout
+    focusTimeoutRef.current = setTimeout(() => {
+      if (isOpen && searchInputRef.current && document.activeElement !== searchInputRef.current) {
+        searchInputRef.current.focus();
+        console.log('Focus applied to search input');
+      }
+    }, 50);
+  };
+  
   const handleClearSelection = () => {
     onExerciseSelect(null);
   };
@@ -121,22 +147,6 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
   // Handle input change without losing focus
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(e.target.value);
-  };
-  
-  // Prevent losing focus and ensure input is focused after any interaction
-  const ensureFocus = () => {
-    // Prevent multiple focus attempts in a short time period
-    const now = Date.now();
-    if (now - lastFocusTime < 100) return;
-    
-    setLastFocusTime(now);
-    
-    // Use setTimeout to ensure this runs after React's updates
-    setTimeout(() => {
-      if (isOpen && searchInputRef.current && document.activeElement !== searchInputRef.current) {
-        searchInputRef.current.focus();
-      }
-    }, 10);
   };
 
   return (
@@ -188,14 +198,14 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
                   placeholder="Buscar exercícios..."
                   className="pl-10 bg-midnight-elevated border-arcane/30"
                   disabled={isLoading}
-                  onFocus={ensureFocus}
+                  onFocus={() => console.log('Search input focused')}
                   onBlur={(e) => {
                     // Delay to allow click events to complete before refocusing
-                    setTimeout(() => ensureFocus(), 50);
+                    setTimeout(() => requestFocus(), 50);
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
-                    ensureFocus();
+                    requestFocus();
                   }}
                 />
               </div>

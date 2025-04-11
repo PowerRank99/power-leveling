@@ -109,6 +109,8 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
       
       const parsedDate = new Date(workoutDate);
       
+      console.log('Submitting manual workout with exercise:', selectedExercise.id, selectedExercise.name);
+      
       const result = await ManualWorkoutService.submitManualWorkout(
         user.id,
         publicUrlData.publicUrl,
@@ -122,6 +124,10 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
       if (!result.success) {
         throw new Error(result.error || 'Erro ao registrar treino');
       }
+      
+      toast.success('Treino registrado com sucesso!', {
+        description: 'Você ganhou XP por este treino!'
+      });
       
       setDescription('');
       setSelectedExercise(null);
