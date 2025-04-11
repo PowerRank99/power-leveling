@@ -52,24 +52,18 @@ export class ManualWorkoutService {
       }
       
       // Check if user can submit a manual workout (less than 24 hours since last submission)
-      const { data: recentSubmissions, error: recentError } = await supabase.rpc(
-        'check_recent_manual_workouts',
-        {
-          p_user_id: userId,
-          p_hours: 24
-        }
-      );
+      const { data: recentWorkouts, error: recentError } = await supabase
+        .from('manual_workouts')
+        .select('id')
+        .eq('user_id', userId)
+        .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
       
       if (recentError) {
         console.error('Error checking recent submissions:', recentError);
         throw new Error('Erro ao verificar submissões recentes');
       }
       
-      // Safely parse the count
-      let recentCount = 0;
-      if (Array.isArray(recentSubmissions) && recentSubmissions.length > 0) {
-        recentCount = parseInt(recentSubmissions[0]?.count.toString() || '0');
-      }
+      const recentCount = recentWorkouts?.length || 0;
       
       if (recentCount > 0) {
         throw new Error('Você já registrou um treino manual nas últimas 24 horas');
@@ -160,19 +154,20 @@ export class ManualWorkoutService {
         cappedXP = Math.min(totalXP, this.POWER_DAY_CAP);
       }
       
-      // Insert manual workout record using RPC
-      const { data: insertData, error: insertError } = await supabase.rpc(
-        'create_manual_workout',
-        {
-          p_user_id: userId,
-          p_description: description || null,
-          p_activity_type: activityType || null,
-          p_photo_url: photoUrl,
-          p_xp_awarded: cappedXP,
-          p_workout_date: submissionDate.toISOString(),
-          p_is_power_day: isPowerDay && powerDayAvailable
-        }
-      );
+      // Insert manual workout record
+      const { data: insertData, error: insertError } = await supabase
+        .from('manual_workouts')
+        .insert({
+          user_id: userId,
+          description: description || null,
+          activity_type: activityType || null,
+          photo_url: photoUrl,
+          xp_awarded: cappedXP,
+          workout_date: submissionDate.toISOString(),
+          is_power_day: isPowerDay && powerDayAvailable
+        })
+        .select()
+        .single();
       
       if (insertError) {
         console.error('Error inserting manual workout:', insertError);
@@ -215,13 +210,11 @@ export class ManualWorkoutService {
    */
   static async getUserManualWorkouts(userId: string): Promise<ManualWorkout[]> {
     try {
-      // Use RPC to fetch manual workouts
-      const { data, error } = await supabase.rpc(
-        'get_user_manual_workouts',
-        {
-          p_user_id: userId
-        }
-      );
+      const { data, error } = await supabase
+        .from('manual_workouts')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
       
       if (error) {
         console.error('Error fetching manual workouts:', error);
