@@ -76,11 +76,18 @@ const WorkoutPage = () => {
   
   // Create a proper Record for isDeletingItem
   const isDeletingItemRecord = (id: string): boolean => {
-    if (workout.type === 'manual') {
+    const workout = unifiedWorkouts.find(w => w.id === id);
+    if (workout?.type === 'manual') {
       return isDeletingManualWorkout(id);
     }
     return isDeletingItem(id);
   };
+
+  // Convert the function to a Record object that matches the expected type
+  const isDeletingItemAsRecord: Record<string, boolean> = {};
+  savedRoutines.forEach(routine => {
+    isDeletingItemAsRecord[routine.id] = isDeletingItem(routine.id);
+  });
   
   // Handle successful manual workout submission
   const handleManualWorkoutSuccess = () => {
@@ -125,7 +132,7 @@ const WorkoutPage = () => {
             error={error}
             hasAttemptedLoad={hasAttemptedLoad}
             onDeleteRoutine={handleDeleteRoutine}
-            isDeletingItem={isDeletingItemRecord}
+            isDeletingItem={isDeletingItemAsRecord}
           />
           
           <WorkoutHistorySection 
