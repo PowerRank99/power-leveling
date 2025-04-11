@@ -8,7 +8,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
 import ExerciseEditor from '@/components/admin/ExerciseEditor';
 import { RefreshCcw, Search, X } from 'lucide-react';
-import { Exercise, ExerciseType } from '@/components/workout/types/Exercise';
+import { Exercise, ExerciseType, DifficultyLevel } from '@/components/workout/types/Exercise';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,10 +58,11 @@ const ExerciseManager = () => {
 
       if (error) throw error;
       
-      // Ensure all exercises have a valid type
+      // Ensure all exercises have valid type and level
       const processedData = (data || []).map(exercise => ({
         ...exercise,
-        type: (exercise.type || 'Musculação') as ExerciseType
+        type: (exercise.type || 'Musculação') as ExerciseType,
+        level: (exercise.level || 'Intermediário') as DifficultyLevel
       }));
       
       setExercises(processedData as Exercise[]);

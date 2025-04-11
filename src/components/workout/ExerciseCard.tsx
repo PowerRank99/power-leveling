@@ -1,14 +1,14 @@
-
 import React, { useState, memo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { ExerciseType, DifficultyLevel } from './types/Exercise';
 
 interface ExerciseCardProps {
   name: string;
   category: string;
-  level: 'Iniciante' | 'Intermediário' | 'Avançado';
-  type?: 'Musculação' | 'Calistenia' | 'Cardio' | 'Esportes' | 'Flexibilidade & Mobilidade';
+  level: DifficultyLevel;
+  type?: ExerciseType;
   image: string;
   description?: string;
   equipment?: string;
@@ -60,7 +60,6 @@ const ExerciseCard: React.FC<ExerciseCardProps> = memo(({
     setExpanded(!expanded);
   };
   
-  // Simplified card for search results in manual workout context - more compact
   if (disableExpand) {
     return (
       <Card className="mb-3 premium-card transition-all duration-200">
@@ -84,8 +83,6 @@ const ExerciseCard: React.FC<ExerciseCardProps> = memo(({
     );
   }
   
-  // Full card with expansion capability for other contexts
-  // More compact design on mobile
   return (
     <Card className="mb-3 premium-card transition-all duration-200">
       <CardContent className="p-0">

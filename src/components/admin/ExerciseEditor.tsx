@@ -28,6 +28,7 @@ const ExerciseEditor: React.FC<ExerciseEditorProps> = ({
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [selectedType, setSelectedType] = useState<ExerciseType>(exercise.type);
+  const [selectedLevel, setSelectedLevel] = useState<string>(exercise.level);
   const [isUpdating, setIsUpdating] = useState(false);
 
   const exerciseTypes: ExerciseType[] = [
@@ -38,26 +39,48 @@ const ExerciseEditor: React.FC<ExerciseEditorProps> = ({
     'Flexibilidade & Mobilidade'
   ];
 
+  const difficultyLevels = [
+    'Iniciante',
+    'Intermediário',
+    'Avançado'
+  ];
+
   const handleTypeChange = (type: ExerciseType) => {
     setSelectedType(type);
   };
 
+  const handleLevelChange = (level: string) => {
+    setSelectedLevel(level);
+  };
+
   const handleCancelEdit = () => {
     setSelectedType(exercise.type);
+    setSelectedLevel(exercise.level);
     setIsEditing(false);
   };
 
   const handleSaveChanges = async () => {
-    if (selectedType === exercise.type) {
+    // If nothing changed, just close editing mode
+    if (selectedType === exercise.type && selectedLevel === exercise.level) {
       setIsEditing(false);
       return;
     }
 
     setIsUpdating(true);
     try {
+      const updateData: any = {};
+      
+      if (selectedType !== exercise.type) {
+        updateData.type = selectedType;
+      }
+      
+      if (selectedLevel !== exercise.level) {
+        updateData.level = selectedLevel;
+      }
+      
       const { data, error } = await supabase
         .from('exercises')
-        .update({ type: selectedType })
+        .update(updateData)
         .eq('id', exercise.id)
         .select('*')
         .single();
@@ -66,13 +89,25 @@ const ExerciseEditor: React.FC<ExerciseEditorProps> = ({
       
       const updatedExercise = {
         ...exercise,
-        type: selectedType
+        type: selectedType,
+        level: selectedLevel
       };
 
       onUpdate(updatedExercise);
+      
+      // Construct a meaningful message about what was updated
+      let updateMessage = '';
+      if (selectedType !== exercise.type && selectedLevel !== exercise.level) {
+        updateMessage = `Tipo alterado para ${selectedType} e nível para ${selectedLevel}`;
+      } else if (selectedType !== exercise.type) {
+        updateMessage = `Tipo alterado para ${selectedType}`;
+      } else {
+        updateMessage = `Nível alterado para ${selectedLevel}`;
+      }
+      
       toast({
         title: 'Exercício atualizado',
-        description: `Tipo do exercício alterado para ${selectedType}`,
+        description: updateMessage,
       });
       
       setIsEditing(false);
@@ -160,6 +195,24 @@ const ExerciseEditor: React.FC<ExerciseEditorProps> = ({
                   {exerciseTypes.map((type) => (
                     <SelectItem key={type} value={type}>
                       {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <label htmlFor="level" className="block text-sm font-medium text-text-secondary mb-1">
+                Nível de Dificuldade
+              </label>
+              <Select value={selectedLevel} onValueChange={handleLevelChange}>
+                <SelectTrigger className="w-full bg-midnight-elevated">
+                  <SelectValue placeholder="Selecione o nível" />
+                </SelectTrigger>
+                <SelectContent>
+                  {difficultyLevels.map((level) => (
+                    <SelectItem key={level} value={level}>
+                      {level}
                     </SelectItem>
                   ))}
                 </SelectContent>
