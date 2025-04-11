@@ -13,6 +13,6 @@ export interface RecentWorkout {
   date: string;
   exercises_count: number;
   sets_count: number;
-  prs?: number;
-  duration_seconds?: number | null;
+  prs: number;
+  duration_seconds: number | null;
 }
