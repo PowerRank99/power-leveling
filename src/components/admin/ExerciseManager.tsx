@@ -7,17 +7,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
 import ExerciseCard from '@/components/workout/ExerciseCard';
 import { Trash2, RefreshCcw } from 'lucide-react';
-
-interface Exercise {
-  id: string;
-  name: string;
-  muscle_group: string;
-  level: string;
-  type: string;
-  image_url?: string;
-  description?: string;
-  equipment_type?: string;
-}
+import { Exercise } from '@/components/workout/types/Exercise';
 
 const ExerciseManager = () => {
   const { toast } = useToast();
@@ -101,7 +91,7 @@ const ExerciseManager = () => {
                 name={exercise.name}
                 category={exercise.muscle_group || 'Não especificado'}
                 level={exercise.level as any}
-                type={exercise.type as any}
+                type={exercise.type}
                 image={exercise.image_url || '/placeholder.svg'}
                 description={exercise.description}
                 equipment={exercise.equipment_type || 'Não especificado'}

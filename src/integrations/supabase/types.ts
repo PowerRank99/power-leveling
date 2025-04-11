@@ -230,10 +230,8 @@ export type Database = {
       }
       exercises: {
         Row: {
-          category: string
           created_at: string
           description: string | null
-          equipment: string | null
           equipment_type: string | null
           id: string
           image_url: string | null
@@ -243,10 +241,8 @@ export type Database = {
           type: string
         }
         Insert: {
-          category: string
           created_at?: string
           description?: string | null
-          equipment?: string | null
           equipment_type?: string | null
           id?: string
           image_url?: string | null
@@ -256,10 +252,8 @@ export type Database = {
           type: string
         }
         Update: {
-          category?: string
           created_at?: string
           description?: string | null
-          equipment?: string | null
           equipment_type?: string | null
           id?: string
           image_url?: string | null
