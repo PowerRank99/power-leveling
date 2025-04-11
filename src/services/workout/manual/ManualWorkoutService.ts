@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { ManualWorkout } from '@/types/manualWorkoutTypes';
 import { ManualWorkoutValidationService } from './ManualWorkoutValidationService';
@@ -31,8 +32,10 @@ export class ManualWorkoutService {
       // Check if this is a power day (user has completed a workout today)
       const isPowerDay = await ManualWorkoutValidationService.checkPowerDay(userId);
       
-      // Calculate XP (base: 50 XP, power day bonus: +50 XP)
-      const xpAwarded = isPowerDay ? 100 : 50;
+      // Calculate XP (base: 100 XP, power day bonus: +50 XP)
+      const xpAwarded = isPowerDay 
+        ? XPService.MANUAL_WORKOUT_BASE_XP + XPService.POWER_DAY_BONUS_XP 
+        : XPService.MANUAL_WORKOUT_BASE_XP;
       
       // Add XP to user - fixing the argument count here (passing metadata as part of the source parameter)
       await XPService.addXP(userId, xpAwarded, `manual_workout:${exerciseName}:${exerciseCategory}`);

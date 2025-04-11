@@ -1,4 +1,3 @@
-
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { XPCalculationService } from './XPCalculationService';
 import { PersonalRecordService, PersonalRecord } from './PersonalRecordService';
@@ -18,7 +17,7 @@ export class XPService {
   
   // Power Day constants (2x/week can exceed 300 XP cap up to 500 XP)
   static readonly POWER_DAY_CAP = 500;
-  static readonly MANUAL_WORKOUT_BASE_XP = 100;
+  static readonly MANUAL_WORKOUT_BASE_XP = 100; // Updated to 100
   
   /**
    * Calculate XP for a completed workout
