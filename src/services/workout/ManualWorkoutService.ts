@@ -50,16 +50,21 @@ export class ManualWorkoutService {
         throw new Error('Data do treino não pode ser mais de 24 horas no passado');
       }
       
-      // Check if user can submit a manual workout
-      const { data: canSubmit, error: checkError } = await supabase
-        .rpc('can_submit_manual_workout', { p_user_id: userId });
+      // Check if user can submit a manual workout (less than 24 hours since last submission)
+      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      
+      const { data: recentSubmissions, error: recentError } = await supabase
+        .from('manual_workouts')
+        .select('id')
+        .eq('user_id', userId)
+        .gte('created_at', twentyFourHoursAgo.toISOString());
         
-      if (checkError) {
-        console.error('Error checking submission availability:', checkError);
-        throw new Error('Erro ao verificar disponibilidade de submissão');
+      if (recentError) {
+        console.error('Error checking recent submissions:', recentError);
+        throw new Error('Erro ao verificar submissões recentes');
       }
       
-      if (!canSubmit) {
+      if (recentSubmissions && recentSubmissions.length > 0) {
         throw new Error('Você já registrou um treino manual nas últimas 24 horas');
       }
       
@@ -96,25 +101,42 @@ export class ManualWorkoutService {
       }
       
       // Check power day availability if this is a power day
+      let powerDayAvailable = false;
+      let powerDayWeek = 0;
+      let powerDayYear = 0;
+      
       if (isPowerDay) {
-        const { data: powerDayAvailability, error: availabilityError } = await supabase
-          .rpc('check_power_day_availability', { p_user_id: userId });
+        // Check power day usage for current week
+        const currentWeek = this.getCurrentWeek();
+        const currentYear = new Date().getFullYear();
+        
+        const { data: powerDayUsage, error: powerDayError } = await supabase
+          .from('power_day_usage')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('week_number', currentWeek)
+          .eq('year', currentYear);
           
-        if (availabilityError) {
-          console.error('Error checking power day availability:', availabilityError);
-          // Don't block submission, just log the error
-        } else if (!powerDayAvailability?.available) {
-          // This is still a power day, but user won't get the higher XP cap
-          console.log('Power day detected but weekly limit reached:', powerDayAvailability);
-          toast.info('Você atingiu o limite semanal de Power Days');
+        if (powerDayError) {
+          console.error('Error checking power day usage:', powerDayError);
         } else {
+          powerDayAvailable = !powerDayUsage || powerDayUsage.length < 2;
+          powerDayWeek = currentWeek;
+          powerDayYear = currentYear;
+        }
+        
+        if (!powerDayAvailable) {
+          // This is still a power day, but user won't get the higher XP cap
+          console.log('Power day detected but weekly limit reached');
+          toast.info('Você atingiu o limite semanal de Power Days');
+        } else if (powerDayAvailable) {
           // Record power day usage
           const { error: usageError } = await supabase
             .from('power_day_usage')
             .insert({
               user_id: userId,
-              week_number: powerDayAvailability.week,
-              year: powerDayAvailability.year
+              week_number: powerDayWeek,
+              year: powerDayYear
             });
             
           if (usageError) {
@@ -145,7 +167,7 @@ export class ManualWorkoutService {
       let cappedXP = Math.min(totalXP, XPService.DAILY_XP_CAP);
       
       // Apply power day cap if applicable
-      if (isPowerDay) {
+      if (isPowerDay && powerDayAvailable) {
         cappedXP = Math.min(totalXP, this.POWER_DAY_CAP);
       }
       
@@ -159,7 +181,7 @@ export class ManualWorkoutService {
           photo_url: photoUrl,
           xp_awarded: cappedXP,
           workout_date: submissionDate.toISOString(),
-          is_power_day: isPowerDay
+          is_power_day: isPowerDay && powerDayAvailable
         });
         
       if (insertError) {
@@ -177,7 +199,7 @@ export class ManualWorkoutService {
       await AchievementService.checkAchievements(userId);
       
       // Show success message
-      const powerDayMessage = isPowerDay 
+      const powerDayMessage = (isPowerDay && powerDayAvailable) 
         ? ' Power Day! Limite de XP aumentado para 500.'
         : '';
         
@@ -185,7 +207,10 @@ export class ManualWorkoutService {
         description: `Treino manual adicionado com sucesso.${powerDayMessage}`
       });
       
-      return { success: true, isPowerDay };
+      return { 
+        success: true, 
+        isPowerDay: isPowerDay && powerDayAvailable 
+      };
     } catch (error: any) {
       console.error('Error submitting manual workout:', error);
       toast.error('Erro ao registrar treino', {
@@ -211,7 +236,7 @@ export class ManualWorkoutService {
         return [];
       }
       
-      return data.map(workout => ({
+      return data.map((workout: any) => ({
         id: workout.id,
         description: workout.description,
         activityType: workout.activity_type,
@@ -225,6 +250,15 @@ export class ManualWorkoutService {
       console.error('Error getting manual workouts:', error);
       return [];
     }
+  }
+  
+  /**
+   * Get the current ISO week number
+   */
+  private static getCurrentWeek(): number {
+    const now = new Date();
+    const janFirst = new Date(now.getFullYear(), 0, 1);
+    return Math.ceil((((now.getTime() - janFirst.getTime()) / 86400000) + janFirst.getDay() + 1) / 7);
   }
   
   /**

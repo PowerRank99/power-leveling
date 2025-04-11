@@ -91,25 +91,14 @@ export class XPService {
     year: number;
   }> {
     try {
-      const { data, error } = await XPBonusService.checkPowerDayAvailability(userId);
-      
-      if (error) {
-        console.error('Error checking power day availability:', error);
-        return {
-          available: false,
-          used: 0,
-          max: 2,
-          week: 0,
-          year: 0
-        };
-      }
+      const data = await XPBonusService.checkPowerDayAvailability(userId);
       
       return {
-        available: data?.available || false,
-        used: data?.count || 0,
-        max: data?.max || 2,
-        week: data?.week || 0,
-        year: data?.year || 0
+        available: data.available,
+        used: data.count,
+        max: data.max,
+        week: data.week,
+        year: data.year
       };
     } catch (error) {
       console.error('Error in checkPowerDayAvailability:', error);
