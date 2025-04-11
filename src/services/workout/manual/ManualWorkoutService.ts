@@ -62,7 +62,7 @@ export class ManualWorkoutService {
       
       if (isPowerDay) {
         // Check power day usage for current week
-        const powerDayData = await XPBonusService.checkPowerDayAvailability(userId);
+        const powerDayData = await XPService.checkPowerDayAvailability(userId);
         
         powerDayAvailable = powerDayData.available;
         powerDayWeek = powerDayData.week;
@@ -74,11 +74,7 @@ export class ManualWorkoutService {
           toast.info('Você atingiu o limite semanal de Power Days');
         } else if (powerDayAvailable) {
           // Record power day usage
-          await XPBonusService.recordPowerDayUsage(
-            userId, 
-            powerDayWeek, 
-            powerDayYear
-          );
+          await XPService.recordPowerDayUsage(userId, powerDayWeek, powerDayYear);
         }
       }
       

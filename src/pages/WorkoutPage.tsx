@@ -84,7 +84,7 @@ const WorkoutPage = () => {
     loadManualWorkouts();
   };
   
-  // Refresh all data when component mounts
+  // Refresh all data when component mounts or user changes
   useEffect(() => {
     const initialLoad = async () => {
       console.log("WorkoutPage: Initial data load");
@@ -189,7 +189,11 @@ const WorkoutPage = () => {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-orbitron font-bold text-text-primary">Treinos Recentes</h2>
               
-              <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'tracked' | 'manual')} className="w-auto">
+              <Tabs 
+                value={activeTab} 
+                onValueChange={(value) => setActiveTab(value as 'tracked' | 'manual')} 
+                className="w-auto"
+              >
                 <TabsList className="bg-midnight-elevated">
                   <TabsTrigger value="tracked" className="data-[state=active]:bg-arcane/20">
                     Registrados
