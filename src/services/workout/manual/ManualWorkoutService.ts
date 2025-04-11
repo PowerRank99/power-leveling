@@ -12,7 +12,9 @@ export class ManualWorkoutService {
     userId: string,
     photoUrl: string,
     description: string,
-    activityType: string,
+    exerciseId: string,
+    exerciseName: string,
+    exerciseCategory: string,
     workoutDate: Date
   ): Promise<{ success: boolean; error?: string; data?: any }> {
     try {
@@ -34,13 +36,18 @@ export class ManualWorkoutService {
       const xpAwarded = isPowerDay ? 100 : 50;
       
       // Add XP to user
-      await XPService.addXP(userId, xpAwarded, 'manual_workout');
+      await XPService.addXP(userId, xpAwarded, 'manual_workout', {
+        exerciseId,
+        exerciseName,
+        exerciseCategory
+      });
       
       // Call the database function to create the manual workout
       const { data, error } = await supabase.rpc('create_manual_workout', {
         p_user_id: userId,
         p_description: description || null,
-        p_activity_type: activityType || null,
+        p_activity_type: exerciseName || null,
+        p_exercise_id: exerciseId,
         p_photo_url: photoUrl,
         p_xp_awarded: xpAwarded,
         p_workout_date: workoutDate.toISOString(),
@@ -78,6 +85,7 @@ export class ManualWorkoutService {
         id: workout.id,
         description: workout.description,
         activityType: workout.activity_type,
+        exerciseId: workout.exercise_id,
         photoUrl: workout.photo_url,
         xpAwarded: workout.xp_awarded,
         isPowerDay: workout.is_power_day,

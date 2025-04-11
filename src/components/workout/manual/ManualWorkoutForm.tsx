@@ -7,9 +7,10 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { ManualWorkoutService } from '@/services/workout/manual/ManualWorkoutService';
 import PhotoUploader from './PhotoUploader';
-import ActivitySelector from './ActivitySelector';
 import DateSelector from './DateSelector';
 import FormActions from './FormActions';
+import ExerciseSelector from './ExerciseSelector';
+import { Exercise } from '@/components/workout/types/Exercise';
 
 type ManualWorkoutFormProps = {
   onSuccess: () => void;
@@ -20,7 +21,7 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [description, setDescription] = useState('');
-  const [activityType, setActivityType] = useState('');
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   
@@ -52,6 +53,13 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
     if (!imageFile) {
       toast.error('Foto obrigatória', {
         description: 'Por favor, adicione uma foto do seu treino'
+      });
+      return;
+    }
+    
+    if (!selectedExercise) {
+      toast.error('Exercício obrigatório', {
+        description: 'Por favor, selecione um exercício para o seu treino'
       });
       return;
     }
@@ -103,7 +111,9 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
         user.id,
         publicUrlData.publicUrl,
         description,
-        activityType,
+        selectedExercise.id,
+        selectedExercise.name,
+        selectedExercise.category,
         parsedDate
       );
       
@@ -112,7 +122,7 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
       }
       
       setDescription('');
-      setActivityType('');
+      setSelectedExercise(null);
       setImageFile(null);
       setPreviewUrl(null);
       onSuccess();
@@ -134,9 +144,9 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
       </h2>
       
       <div className="space-y-3">
-        <ActivitySelector 
-          value={activityType} 
-          onChange={setActivityType} 
+        <ExerciseSelector 
+          selectedExercise={selectedExercise} 
+          onExerciseSelect={setSelectedExercise} 
         />
         
         <div>
@@ -163,7 +173,7 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
       
       <FormActions 
         isSubmitting={isSubmitting} 
-        isSubmitDisabled={!imageFile} 
+        isSubmitDisabled={!imageFile || !selectedExercise} 
         onCancel={onCancel} 
       />
     </form>
