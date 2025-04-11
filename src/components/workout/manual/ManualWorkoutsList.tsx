@@ -2,7 +2,7 @@
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ManualWorkout } from '@/services/workout/ManualWorkoutService';
+import { ManualWorkout } from '@/types/manualWorkoutTypes';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ActivityIcon, CalendarIcon, ImageIcon, ZapIcon } from 'lucide-react';

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Camera, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { ManualWorkoutService } from '@/services/workout/ManualWorkoutService';
+import { ManualWorkoutService } from '@/services/workout/manual/ManualWorkoutService';
 
 type ManualWorkoutFormProps = {
   onSuccess: () => void;
@@ -25,7 +24,6 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [workoutDate, setWorkoutDate] = useState<string>(new Date().toISOString().slice(0, 10));
   
-  // Activity type options
   const activityTypes = [
     { value: 'strength', label: 'Musculação' },
     { value: 'cardio', label: 'Cardio' },
@@ -41,7 +39,6 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // Size validation (5MB max)
     if (file.size > 5 * 1024 * 1024) {
       toast.error('Imagem muito grande', {
         description: 'O tamanho máximo permitido é 5MB'
@@ -71,7 +68,6 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
     try {
       setIsSubmitting(true);
       
-      // Upload image
       const fileName = `manual-workout-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('workout-photos')
@@ -81,7 +77,6 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
         throw new Error(`Erro ao fazer upload da imagem: ${uploadError.message}`);
       }
       
-      // Get public URL
       const { data: publicUrlData } = supabase.storage
         .from('workout-photos')
         .getPublicUrl(fileName);
@@ -90,10 +85,8 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
         throw new Error('Erro ao obter URL pública da imagem');
       }
       
-      // Parse workout date
       const parsedDate = new Date(workoutDate);
       
-      // Submit workout
       const result = await ManualWorkoutService.submitManualWorkout(
         user.id,
         publicUrlData.publicUrl,
@@ -106,7 +99,6 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
         throw new Error(result.error || 'Erro ao registrar treino');
       }
       
-      // Clear form and notify parent
       setDescription('');
       setActivityType('');
       setImageFile(null);

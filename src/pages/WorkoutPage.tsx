@@ -14,7 +14,8 @@ import { AlertCircle } from 'lucide-react';
 import { RoutineWithExercises } from '@/components/workout/types/Workout';
 import ManualWorkoutDialog from '@/components/workout/manual/ManualWorkoutDialog';
 import ManualWorkoutsList from '@/components/workout/manual/ManualWorkoutsList';
-import { ManualWorkout, ManualWorkoutService } from '@/services/workout/ManualWorkoutService';
+import { ManualWorkout } from '@/types/manualWorkoutTypes';
+import { ManualWorkoutService } from '@/services/workout/manual/ManualWorkoutService';
 import { useAuth } from '@/hooks/useAuth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
