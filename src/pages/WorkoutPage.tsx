@@ -29,11 +29,13 @@ const WorkoutPage = () => {
     loadMoreWorkouts
   } = useWorkoutData();
   
-  // Use the new unified workouts hook
+  // Use the unified workouts hook
   const {
     unifiedWorkouts,
     isLoadingManual,
     loadManualWorkouts,
+    deleteManualWorkout,
+    isDeletingManualWorkout,
     hasMoreWorkouts: hasMoreUnifiedWorkouts,
     isLoadingMoreTracked,
     loadMoreWorkouts: loadMoreUnifiedWorkouts
@@ -60,14 +62,25 @@ const WorkoutPage = () => {
     await deleteRoutine(id);
   };
   
+  // Handle workout deletion (unified for both tracked and manual)
+  const handleDeleteWorkout = async (id: string): Promise<void> => {
+    // Try to determine if it's a manual workout from the unifiedWorkouts list
+    const workout = unifiedWorkouts.find(w => w.id === id);
+    
+    if (workout?.type === 'manual') {
+      await deleteManualWorkout(id);
+    } else {
+      await deleteWorkout(id);
+    }
+  };
+  
   // Create a proper Record for isDeletingItem
-  const isDeletingItemRecord: Record<string, boolean> = {};
-  savedRoutines.forEach(routine => {
-    isDeletingItemRecord[routine.id] = isDeletingItem(routine.id);
-  });
-  recentWorkouts.forEach(workout => {
-    isDeletingItemRecord[workout.id] = isDeletingItem(workout.id);
-  });
+  const isDeletingItemRecord = (id: string): boolean => {
+    if (workout.type === 'manual') {
+      return isDeletingManualWorkout(id);
+    }
+    return isDeletingItem(id);
+  };
   
   // Handle successful manual workout submission
   const handleManualWorkoutSuccess = () => {
@@ -121,8 +134,8 @@ const WorkoutPage = () => {
             onRetry={handleRetry}
             error={error}
             hasAttemptedLoad={hasAttemptedLoad}
-            onDeleteWorkout={deleteWorkout}
-            isDeletingItem={isDeletingItem}
+            onDeleteWorkout={handleDeleteWorkout}
+            isDeletingItem={isDeletingItemRecord}
             hasMoreWorkouts={hasMoreUnifiedWorkouts}
             isLoadingMore={isLoadingMoreTracked}
             onLoadMore={loadMoreUnifiedWorkouts}

@@ -66,19 +66,6 @@ const UnifiedWorkoutItem: React.FC<UnifiedWorkoutItemProps> = ({
       >
         <Card className={`p-4 bg-midnight-elevated border-valor-30/30 mb-4 ${isDeleting ? 'opacity-50' : ''}`}>
           <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-shrink-0">
-              <div className="w-20 h-20 rounded-md overflow-hidden">
-                <img 
-                  src={workout.photoUrl} 
-                  alt="Workout" 
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/placeholder.svg';
-                  }}
-                />
-              </div>
-            </div>
-            
             <div className="flex-grow">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

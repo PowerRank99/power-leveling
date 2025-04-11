@@ -4,6 +4,7 @@ import { RecentWorkout } from '../types/workoutDataTypes';
 import { ManualWorkout } from '@/types/manualWorkoutTypes';
 import { UnifiedWorkout, TrackedWorkout, ManualWorkout as UnifiedManualWorkout } from '@/types/unifiedWorkoutTypes';
 import { ManualWorkoutService } from '@/services/workout/manual/ManualWorkoutService';
+import { toast } from 'sonner';
 
 export const useUnifiedWorkouts = (
   userId: string | undefined,
@@ -16,6 +17,7 @@ export const useUnifiedWorkouts = (
   const [unifiedWorkouts, setUnifiedWorkouts] = useState<UnifiedWorkout[]>([]);
   const [isLoadingManual, setIsLoadingManual] = useState(false);
   const [hasMoreWorkouts, setHasMoreWorkouts] = useState(hasMoreTrackedWorkouts);
+  const [deletingManualWorkouts, setDeletingManualWorkouts] = useState<{[key: string]: boolean}>({});
 
   // Convert tracked workouts to unified format
   const convertTrackedToUnified = useCallback((tracked: RecentWorkout[]): TrackedWorkout[] => {
@@ -62,6 +64,39 @@ export const useUnifiedWorkouts = (
     }
   }, [userId]);
 
+  // Delete manual workout
+  const deleteManualWorkout = useCallback(async (workoutId: string) => {
+    if (!userId || deletingManualWorkouts[workoutId]) {
+      return false;
+    }
+    
+    try {
+      setDeletingManualWorkouts(prev => ({ ...prev, [workoutId]: true }));
+      
+      const result = await ManualWorkoutService.deleteManualWorkout(userId, workoutId);
+      
+      if (result.success) {
+        // Update local state
+        setManualWorkouts(prevWorkouts => 
+          prevWorkouts.filter(workout => workout.id !== workoutId)
+        );
+        
+        toast.success('Treino manual excluído com sucesso');
+        return true;
+      } else {
+        throw new Error(result.error || 'Erro desconhecido');
+      }
+    } catch (error: any) {
+      console.error('Error deleting manual workout:', error);
+      toast.error('Erro ao excluir treino', {
+        description: error.message || 'Não foi possível excluir o treino'
+      });
+      return false;
+    } finally {
+      setDeletingManualWorkouts(prev => ({ ...prev, [workoutId]: false }));
+    }
+  }, [userId, deletingManualWorkouts]);
+
   // Combine and sort workouts chronologically
   useEffect(() => {
     const trackedUnified = convertTrackedToUnified(trackedWorkouts);
@@ -85,10 +120,17 @@ export const useUnifiedWorkouts = (
     await loadMoreTrackedWorkouts();
   };
 
+  // Check if a manual workout is being deleted
+  const isDeletingManualWorkout = useCallback((id: string) => {
+    return deletingManualWorkouts[id] || false;
+  }, [deletingManualWorkouts]);
+
   return {
     unifiedWorkouts,
     isLoadingManual,
     loadManualWorkouts,
+    deleteManualWorkout,
+    isDeletingManualWorkout,
     hasMoreWorkouts,
     isLoadingMoreTracked,
     loadMoreWorkouts
