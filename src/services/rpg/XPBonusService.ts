@@ -1,6 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { XP_CONSTANTS } from './constants/xpConstants';
 import { XPCalculationService } from './XPCalculationService';
 import { PersonalRecord } from './PersonalRecordService';
 import { PersonalRecordService } from './PersonalRecordService';
@@ -12,6 +12,7 @@ interface XPBreakdown {
   recordBonus: number;
   weeklyBonus: number;
   monthlyBonus: number;
+  bonusDetails: { skill: string, amount: number, description: string }[];
 }
 
 /**
@@ -21,6 +22,8 @@ export class XPBonusService {
   // Weekly and monthly completion bonus constants
   static readonly WEEKLY_COMPLETION_BONUS = 100;
   static readonly MONTHLY_COMPLETION_BONUS = 300;
+  // One week in milliseconds for cooldown checks
+  private static readonly ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
   /**
    * Awards XP to a user and updates their level if necessary
@@ -28,7 +31,8 @@ export class XPBonusService {
   static async awardXP(
     userId: string, 
     baseXP: number, 
-    personalRecords: PersonalRecord[] = []
+    personalRecords: PersonalRecord[] = [],
+    bonusDetails: { skill: string, amount: number, description: string }[] = []
   ): Promise<boolean> {
     try {
       if (!userId) {
@@ -57,12 +61,9 @@ export class XPBonusService {
         streakBonus: 0,
         recordBonus: 0,
         weeklyBonus: 0,
-        monthlyBonus: 0
+        monthlyBonus: 0,
+        bonusDetails: bonusDetails
       };
-      
-      // Apply class bonuses if user has selected a class
-      await this.applyClassBonuses(profile.class, baseXP, xpBreakdown);
-      totalXP += xpBreakdown.classBonus;
       
       // Apply streak bonus
       if (profile.streak && profile.streak > 1) {
@@ -104,7 +105,7 @@ export class XPBonusService {
       
       // Apply daily XP cap (default 300 XP per day from regular workout XP)
       // PR bonuses are exempt from the cap
-      const cappedWorkoutXP = Math.min(totalXP, XPCalculationService.DAILY_XP_CAP);
+      const cappedWorkoutXP = Math.min(totalXP, XP_CONSTANTS.DAILY_XP_CAP);
       const totalXPWithBonuses = cappedWorkoutXP + recordBonusXP;
       
       // Update profile and check for level up
@@ -116,6 +117,49 @@ export class XPBonusService {
       return true;
     } catch (error) {
       console.error('Error in awardXP:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check if Bruxo's Folga Mística passive should preserve streak
+   */
+  static async checkStreakPreservation(userId: string, userClass: string | null): Promise<boolean> {
+    if (!userId || userClass !== 'Bruxo') return false;
+    
+    try {
+      // Check if the player has used this ability in the last week
+      const oneWeekAgo = new Date(Date.now() - this.ONE_WEEK_MS);
+      
+      const { data, error } = await supabase
+        .from('passive_skill_usage')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('skill_name', 'Folga Mística')
+        .gte('used_at', oneWeekAgo.toISOString())
+        .maybeSingle();
+      
+      // If player hasn't used it in the last week, they can use it now
+      if (error || !data) {
+        // Record the usage
+        await supabase
+          .from('passive_skill_usage')
+          .insert({
+            user_id: userId,
+            skill_name: 'Folga Mística',
+            used_at: new Date().toISOString()
+          });
+          
+        toast.success('Folga Mística Ativada!', {
+          description: 'Seu Bruxo usou magia para preservar sua sequência'
+        });
+        
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error checking streak preservation:', error);
       return false;
     }
   }

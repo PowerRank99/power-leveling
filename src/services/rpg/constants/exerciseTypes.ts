@@ -10,3 +10,27 @@ export const EXERCISE_TYPES = {
   RECOVERY: ['foam roll', 'massage', 'recovery', 'recuperação', 'massagem', 'mobilidade'],
   SPORTS: ['soccer', 'basketball', 'volleyball', 'tennis', 'futebol', 'basquete', 'vôlei', 'tênis', 'esporte']
 };
+
+// Class passive skill names
+export const CLASS_PASSIVE_SKILLS = {
+  GUERREIRO: {
+    PRIMARY: 'Força Bruta',
+    SECONDARY: 'Saindo da Jaula'
+  },
+  MONGE: {
+    PRIMARY: 'Força Interior',
+    SECONDARY: 'Discípulo do Algoritmo'
+  },
+  NINJA: {
+    PRIMARY: 'Forrest Gump',
+    SECONDARY: 'HIIT & Run'
+  },
+  BRUXO: {
+    PRIMARY: 'Fluxo Arcano',
+    SECONDARY: 'Folga Mística'
+  },
+  PALADINO: {
+    PRIMARY: 'Caminho do Herói',
+    SECONDARY: 'Camisa 10'
+  }
+};

@@ -8,6 +8,7 @@ interface ClassBonus {
   bonus_value: number;
   description: string;
   formattedText: string;
+  skill_name?: string;
 }
 
 interface ClassBonusSectionProps {

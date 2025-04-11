@@ -1,5 +1,6 @@
 
 import { ClassMetadata } from '../types/classTypes';
+import { CLASS_PASSIVE_SKILLS } from '../constants/exerciseTypes';
 
 /**
  * Utility functions for class system
@@ -40,6 +41,24 @@ export class ClassUtils {
       color: 'from-blue-600 to-blue-800'
     }
   };
+  
+  /**
+   * Get passive skills for a class
+   */
+  static getClassPassiveSkills(className: string | null): { primary: string, secondary: string } {
+    if (!className) return { primary: '', secondary: '' };
+    
+    const upperClassName = className.toUpperCase() as keyof typeof CLASS_PASSIVE_SKILLS;
+    
+    if (upperClassName in CLASS_PASSIVE_SKILLS) {
+      return {
+        primary: CLASS_PASSIVE_SKILLS[upperClassName].PRIMARY,
+        secondary: CLASS_PASSIVE_SKILLS[upperClassName].SECONDARY
+      };
+    }
+    
+    return { primary: '', secondary: '' };
+  }
   
   /**
    * Format a cooldown duration into a readable string

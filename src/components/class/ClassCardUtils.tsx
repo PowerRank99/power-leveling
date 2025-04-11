@@ -86,10 +86,12 @@ export const formatBonuses = (bonuses: Array<{
   bonus_type: string;
   bonus_value: number;
   description: string;
+  skill_name?: string;
 }> | undefined): Array<{
   bonus_type: string;
   bonus_value: number;
   description: string;
+  skill_name?: string;
   formattedText: string;
 }> => {
   if (!bonuses || bonuses.length === 0) return [];

@@ -6,6 +6,7 @@ export interface ClassBonus {
   bonus_type: string;
   bonus_value: number;
   description: string;
+  skill_name: string;
 }
 
 export interface ClassInfo {
@@ -27,4 +28,18 @@ export interface ClassMetadata {
   icon: string;
   description: string;
   color: string;
+}
+
+export interface PassiveSkill {
+  name: string;
+  description: string;
+  bonus_value: number;
+  bonus_type: string;
+  cooldown_days?: number;
+}
+
+export interface ClassBonusBreakdown {
+  skill: string;
+  amount: number;
+  description: string;
 }

@@ -9,17 +9,19 @@ import { ClassService } from '@/services/rpg/ClassService';
 import ClassIconSelector from './ClassIconSelector';
 import { getBonusTypeIcon } from '../class/ClassIconUtils';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { CLASS_PASSIVE_SKILLS } from '@/services/rpg/constants/exerciseTypes';
 
 interface ClassBonus {
   description: string;
   value: string;
+  skillName?: string;
 }
 
 interface ClassSectionProps {
   className: string;
   classDescription?: string;
   icon?: React.ReactNode;
-  bonuses?: { description: string; value: string }[];
+  bonuses?: { description: string; value: string; skillName?: string }[];
 }
 
 const ClassSection: React.FC<ClassSectionProps> = ({
@@ -34,6 +36,24 @@ const ClassSection: React.FC<ClassSectionProps> = ({
   // Use the class from context if available
   const activeClass = userClass || className;
   const description = classDescription || ClassService.getClassDescription(activeClass);
+  
+  // Get passive skill names
+  const getPassiveSkills = () => {
+    if (!activeClass) return { primary: '', secondary: '' };
+    
+    const upperClassName = activeClass.toUpperCase() as keyof typeof CLASS_PASSIVE_SKILLS;
+    
+    if (upperClassName in CLASS_PASSIVE_SKILLS) {
+      return {
+        primary: CLASS_PASSIVE_SKILLS[upperClassName].PRIMARY,
+        secondary: CLASS_PASSIVE_SKILLS[upperClassName].SECONDARY
+      };
+    }
+    
+    return { primary: '', secondary: '' };
+  };
+  
+  const passiveSkills = getPassiveSkills();
   
   // Get styling based on class
   const getClassStyling = () => {
@@ -83,13 +103,14 @@ const ClassSection: React.FC<ClassSectionProps> = ({
     }
   };
 
-  // Process bonuses
+  // Process bonuses - add skill names and limit to maximum 2
   const processedBonuses = bonuses && bonuses.length > 0 
-    ? bonuses.slice(0, 2).map(bonus => ({
+    ? bonuses.slice(0, 2).map((bonus, index) => ({
         ...bonus,
         description: typeof bonus.description === 'string' && bonus.value
           ? `${bonus.value} ${bonus.description.replace(/^\+\d+% /, '')}`
           : bonus.description,
+        skillName: index === 0 ? passiveSkills.primary : passiveSkills.secondary
       }))
     : [{ description: activeClass ? 'Carregando bônus...' : 'Selecione uma classe para ver os bônus', value: '' }];
 
@@ -144,22 +165,29 @@ const ClassSection: React.FC<ClassSectionProps> = ({
               <TooltipProvider key={index}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className={`flex items-center bg-midnight-elevated/80 backdrop-blur-sm rounded-lg p-3 border ${styling.border} transition-all hover:scale-[1.01]`}>
+                    <div className={`flex flex-col bg-midnight-elevated/80 backdrop-blur-sm rounded-lg p-3 border ${styling.border} transition-all hover:scale-[1.01]`}>
                       {typeof bonus.description === 'string' && bonus.description.includes('Carregando') ? (
                         <div className="animate-pulse w-full h-5 bg-gray-700/50 rounded"></div>
                       ) : (
                         <>
-                          <div className={`flex-shrink-0 mr-3 ${styling.accent} p-1.5 rounded-full border ${styling.border}`}>
-                            {typeof bonus.description === 'string' && bonus.description.toLowerCase().includes('força') ? 
-                              getBonusTypeIcon('strength') : 
-                              typeof bonus.description === 'string' && bonus.description.toLowerCase().includes('corpo') ? 
-                                getBonusTypeIcon('bodyweight') : 
-                                <Search className={`h-4 w-4 ${styling.text}`} />
-                            }
+                          {bonus.skillName && (
+                            <span className={`text-xs font-orbitron font-semibold mb-1.5 ${styling.text} border-b border-white/10 pb-1`}>
+                              {bonus.skillName}
+                            </span>
+                          )}
+                          <div className="flex items-center">
+                            <div className={`flex-shrink-0 mr-3 ${styling.accent} p-1.5 rounded-full border ${styling.border}`}>
+                              {typeof bonus.description === 'string' && bonus.description.toLowerCase().includes('força') ? 
+                                getBonusTypeIcon('strength') : 
+                                typeof bonus.description === 'string' && bonus.description.toLowerCase().includes('corpo') ? 
+                                  getBonusTypeIcon('bodyweight') : 
+                                  <Search className={`h-4 w-4 ${styling.text}`} />
+                              }
+                            </div>
+                            <p className="text-sm font-sora text-text-secondary">
+                              {bonus.description}
+                            </p>
                           </div>
-                          <p className="text-sm font-sora text-text-secondary">
-                            {bonus.description}
-                          </p>
                         </>
                       )}
                     </div>

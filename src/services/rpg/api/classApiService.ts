@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ClassBonus, ClassInfo, CooldownInfo } from '../types/classTypes';
 import { ClassUtils } from '../utils/classUtils';
 import { toast } from 'sonner';
+import { CLASS_PASSIVE_SKILLS } from '../constants/exerciseTypes';
 
 /**
  * Service for class API operations
@@ -19,30 +20,43 @@ export class ClassApiService {
       
       for (const className of classes) {
         // Use proper typing with explicit any to handle RPC function call
-        const { data, error } = await supabase.rpc(
-          'get_class_bonuses' as any,
-          { p_class_name: className }
-        );
+        const { data, error } = await supabase
+          .from('class_bonuses')
+          .select('*')
+          .eq('class_name', className);
         
         if (error) {
           console.error('Error fetching class bonuses:', error);
           continue;
         }
         
-        // Safe type conversion with proper checks
-        const classData = data as unknown;
-        let bonuses: ClassBonus[] = [];
+        // Process bonuses and add skill names
+        const processedBonuses: ClassBonus[] = [];
+        const upperClassName = className.toUpperCase() as keyof typeof CLASS_PASSIVE_SKILLS;
         
-        // Check if data has the expected structure
-        if (classData && typeof classData === 'object' && 'bonuses' in classData) {
-          // Cast to any first to access bonuses property
-          bonuses = (classData as any).bonuses || [];
+        if (data && data.length > 0) {
+          for (let i = 0; i < data.length; i++) {
+            const bonus = data[i];
+            let skillName = '';
+            
+            // Assign skill names based on bonus types and index
+            if (i === 0 && upperClassName in CLASS_PASSIVE_SKILLS) {
+              skillName = CLASS_PASSIVE_SKILLS[upperClassName].PRIMARY;
+            } else if (i === 1 && upperClassName in CLASS_PASSIVE_SKILLS) {
+              skillName = CLASS_PASSIVE_SKILLS[upperClassName].SECONDARY;
+            }
+            
+            processedBonuses.push({
+              ...bonus,
+              skill_name: skillName
+            });
+          }
         }
         
         // Combine database bonuses with UI metadata
         classInfos.push({
           ...ClassUtils.CLASS_METADATA[className],
-          bonuses
+          bonuses: processedBonuses
         });
       }
       

@@ -1,7 +1,8 @@
 
-import { ClassInfo, ClassBonus, CooldownInfo } from './types/classTypes';
+import { ClassInfo, ClassBonus, CooldownInfo, ClassBonusBreakdown } from './types/classTypes';
 import { ClassUtils } from './utils/classUtils';
 import { ClassApiService } from './api/classApiService';
+import { CLASS_PASSIVE_SKILLS } from './constants/exerciseTypes';
 
 /**
  * Service for class system operations
@@ -9,6 +10,7 @@ import { ClassApiService } from './api/classApiService';
 export class ClassService {
   // Re-export the class utils methods
   static readonly CLASS_INFO = ClassUtils.CLASS_METADATA;
+  static readonly CLASS_PASSIVE_SKILLS = CLASS_PASSIVE_SKILLS;
   
   /**
    * Get the list of available class options with metadata
@@ -58,7 +60,25 @@ export class ClassService {
   static getClassColor(className: string | null): string {
     return ClassUtils.getClassColor(className);
   }
+  
+  /**
+   * Get passive skill names for a class
+   */
+  static getPassiveSkillNames(className: string | null): { primary: string, secondary: string } {
+    return ClassUtils.getClassPassiveSkills(className);
+  }
+  
+  /**
+   * Format passive bonuses for display
+   */
+  static formatClassBonuses(bonuses: ClassBonusBreakdown[]): { description: string; value: string; skillName?: string }[] {
+    return bonuses.map(bonus => ({
+      description: bonus.description,
+      value: `+${bonus.amount}`,
+      skillName: bonus.skill
+    }));
+  }
 }
 
 // Re-export the types using 'export type' syntax for TypeScript's isolatedModules mode
-export type { ClassBonus, ClassInfo, CooldownInfo };
+export type { ClassBonus, ClassInfo, CooldownInfo, ClassBonusBreakdown };

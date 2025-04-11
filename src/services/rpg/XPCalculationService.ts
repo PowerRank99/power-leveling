@@ -1,7 +1,7 @@
 
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { XP_CONSTANTS } from './constants/xpConstants';
-import { EXERCISE_TYPES } from './constants/exerciseTypes';
+import { EXERCISE_TYPES, CLASS_PASSIVE_SKILLS } from './constants/exerciseTypes';
 import { BaseXPCalculator } from './calculations/BaseXPCalculator';
 import { ClassBonusCalculator } from './calculations/ClassBonusCalculator';
 
@@ -17,6 +17,7 @@ export class XPCalculationService {
   static readonly DIFFICULTY_MULTIPLIERS = XP_CONSTANTS.DIFFICULTY_MULTIPLIERS;
   static readonly TIME_XP_TIERS = XP_CONSTANTS.TIME_XP_TIERS;
   static readonly EXERCISE_TYPES = EXERCISE_TYPES;
+  static readonly CLASS_PASSIVE_SKILLS = CLASS_PASSIVE_SKILLS;
   
   /**
    * Calculate the streak multiplier (5% per day up to 35% at 7 days)
@@ -33,23 +34,24 @@ export class XPCalculationService {
   }
   
   /**
-   * Calculate XP for a completed workout
-   * @param workout Workout data
-   * @param userClass User's selected class
-   * @param streak Current workout streak
-   * @param difficulty Workout difficulty level
+   * Calculate XP for a completed workout with bonus breakdown
    */
   static calculateWorkoutXP(
     workout: {
       id: string;
       exercises: WorkoutExercise[];
       durationSeconds: number;
-      difficulty?: 'iniciante' | 'intermediario' | 'avancado'
+      difficulty?: 'iniciante' | 'intermediario' | 'avancado';
+      hasPR?: boolean;
     },
     userClass?: string | null,
     streak: number = 0,
     difficulty: 'iniciante' | 'intermediario' | 'avancado' = 'intermediario'
-  ): number {
+  ): {
+    totalXP: number;
+    baseXP: number;
+    bonusBreakdown: { skill: string, amount: number, description: string }[];
+  } {
     try {
       // Calculate time-based XP with diminishing returns
       const timeMinutes = Math.floor((workout.durationSeconds || 0) / 60);
@@ -65,22 +67,51 @@ export class XPCalculationService {
       const setsXP = completedSets * this.BASE_SET_XP; // 2 XP per completed set
       
       // Sum base XP
-      let totalXP = timeXP + exerciseXP + setsXP;
+      let baseXP = timeXP + exerciseXP + setsXP;
       
       // Apply difficulty modifier if available
       const workoutDifficulty = workout.difficulty || difficulty;
       if (workoutDifficulty in this.DIFFICULTY_MULTIPLIERS) {
-        totalXP = Math.round(totalXP * this.DIFFICULTY_MULTIPLIERS[workoutDifficulty as keyof typeof this.DIFFICULTY_MULTIPLIERS]);
+        baseXP = Math.round(baseXP * this.DIFFICULTY_MULTIPLIERS[workoutDifficulty as keyof typeof this.DIFFICULTY_MULTIPLIERS]);
       }
       
-      // Apply class-specific bonuses
-      totalXP = ClassBonusCalculator.applyClassBonuses(totalXP, workout, userClass, streak);
+      // Apply class-specific bonuses with breakdown
+      const { totalXP, bonusBreakdown } = ClassBonusCalculator.applyClassBonuses(
+        baseXP, 
+        workout, 
+        userClass, 
+        streak
+      );
       
       // Cap at daily maximum
-      return Math.min(totalXP, this.DAILY_XP_CAP);
+      const cappedXP = Math.min(totalXP, this.DAILY_XP_CAP);
+      
+      return {
+        totalXP: cappedXP,
+        baseXP,
+        bonusBreakdown
+      };
     } catch (error) {
       console.error('Error calculating workout XP:', error);
-      return 50; // Default XP on error
+      return {
+        totalXP: 50, // Default XP on error
+        baseXP: 50,
+        bonusBreakdown: []
+      };
     }
+  }
+  
+  /**
+   * Should preserve streak (Bruxo passive skill)
+   */
+  static shouldPreserveStreak(userId: string, userClass: string | null): boolean {
+    return ClassBonusCalculator.shouldPreserveStreak(userId, userClass);
+  }
+  
+  /**
+   * Get guild contribution bonus multiplier (Paladino passive skill)
+   */
+  static getGuildContributionBonus(userId: string, userClass: string | null, contribution: number): number {
+    return ClassBonusCalculator.getPaladinoGuildBonus(userId, userClass, contribution);
   }
 }
