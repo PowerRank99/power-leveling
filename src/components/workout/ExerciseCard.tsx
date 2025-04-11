@@ -60,10 +60,10 @@ const ExerciseCard: React.FC<ExerciseCardProps> = memo(({
   // Simplified card for search results in manual workout context
   if (disableExpand) {
     return (
-      <Card className="mb-3 premium-card hover:premium-card-elevated transition-all duration-300">
+      <Card className="mb-3 premium-card transition-all duration-200">
         <CardContent className="p-0">
           <div className="p-4 flex items-center">
-            <div className="h-12 w-12 overflow-hidden rounded-md mr-3 border border-divider shadow-subtle">
+            <div className="h-12 w-12 overflow-hidden rounded-md mr-3 border border-divider">
               <img src={image} alt={name} className="h-full w-full object-cover" loading="lazy" />
             </div>
             
@@ -72,9 +72,6 @@ const ExerciseCard: React.FC<ExerciseCardProps> = memo(({
               <div className="flex flex-wrap gap-1 mt-1">
                 <span className={`text-xs px-2 py-0.5 rounded-full border ${getLevelClass()}`}>
                   {level}
-                </span>
-                <span className={`text-xs px-2 py-0.5 rounded-full border ${getTypeClass()}`}>
-                  {type}
                 </span>
               </div>
             </div>
@@ -86,13 +83,13 @@ const ExerciseCard: React.FC<ExerciseCardProps> = memo(({
   
   // Full card with expansion capability for other contexts
   return (
-    <Card className="mb-3 premium-card hover:premium-card-elevated transition-all duration-300">
+    <Card className="mb-3 premium-card transition-all duration-200">
       <CardContent className="p-0">
         <div 
           className="p-4 flex items-center cursor-pointer"
           onClick={handleToggleExpand}
         >
-          <div className="h-12 w-12 overflow-hidden rounded-md mr-3 border border-divider shadow-subtle">
+          <div className="h-12 w-12 overflow-hidden rounded-md mr-3 border border-divider">
             <img src={image} alt={name} className="h-full w-full object-cover" loading="lazy" />
           </div>
           
