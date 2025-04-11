@@ -1,4 +1,5 @@
 
+
 import { supabase } from '@/integrations/supabase/client';
 import { XPService as RPGXPService } from '@/services/rpg/XPService';
 
