@@ -1,9 +1,8 @@
-
 import { useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from 'react-router-dom';
-import { useRoutines } from './workout-data/routines/useRoutines';
-import { useWorkouts } from './workout-data/useWorkouts';
+import { useRoutines } from './workout-data/routines';
+import { useWorkouts } from './workout-data/workouts';
 import { useWorkoutDataFetch } from './workout-data/useWorkoutDataFetch';
 import { Routine, RecentWorkout } from './types/workoutDataTypes';
 
