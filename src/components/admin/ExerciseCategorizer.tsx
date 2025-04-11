@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -77,7 +76,7 @@ const ExerciseCategorizer = () => {
     // Count current distribution
     exerciseData.forEach(exercise => {
       // For muscle groups
-      const muscleGroup = exercise.muscle_group || exercise.category || 'Não especificado';
+      const muscleGroup = exercise.muscle_group || 'Não especificado';
       if (categoryCount[muscleGroup] !== undefined) {
         categoryCount[muscleGroup]++;
       } else {
@@ -85,7 +84,7 @@ const ExerciseCategorizer = () => {
       }
       
       // For equipment types
-      const equipmentType = exercise.equipment_type || exercise.equipment || 'Não especificado';
+      const equipmentType = exercise.equipment_type || 'Não especificado';
       if (equipmentCount[equipmentType] !== undefined) {
         equipmentCount[equipmentType]++;
       } else {
@@ -106,12 +105,12 @@ const ExerciseCategorizer = () => {
     exercises.forEach(exercise => {
       const newCategory = categorizeExercise(
         exercise.name, 
-        exercise.category, 
-        exercise.muscle_group
+        exercise.muscle_group || '',
+        exercise.muscle_group || ''
       );
       
       // Only update if category is different
-      if (newCategory !== (exercise.muscle_group || exercise.category)) {
+      if (newCategory !== exercise.muscle_group) {
         updates.push({
           ...exercise,
           muscle_group: newCategory

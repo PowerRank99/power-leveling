@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,7 +26,6 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   
-  // Set default date to current date
   const today = new Date().toISOString().slice(0, 10);
   const [workoutDate, setWorkoutDate] = useState<string>(today);
   
@@ -66,7 +64,6 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
       return;
     }
     
-    // Validate date is not in the future
     const selectedDate = new Date(workoutDate);
     const now = new Date();
     if (selectedDate > now) {
@@ -76,7 +73,6 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
       return;
     }
     
-    // Validate date is not more than 24 hours in the past
     const timeDiff = now.getTime() - selectedDate.getTime();
     const hoursDiff = timeDiff / (1000 * 3600);
     
@@ -117,7 +113,7 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
         description,
         selectedExercise.id,
         selectedExercise.name,
-        selectedExercise.category,
+        selectedExercise.muscle_group || 'Não especificado',
         parsedDate
       );
       

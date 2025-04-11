@@ -54,7 +54,7 @@ export const useExerciseFetch = (selectedExerciseIds: string[]) => {
       // Process exercises to normalize values for comparison
       const processedExercises = filteredExercises.map(ex => ({
         ...ex,
-        muscle_group: ex.muscle_group || ex.category || 'Não especificado',
+        muscle_group: ex.muscle_group || 'Não especificado',
         equipment_type: ex.equipment_type || 'Não especificado'
       }));
       

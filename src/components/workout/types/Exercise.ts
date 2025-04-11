@@ -8,4 +8,7 @@ export interface Exercise {
   image_url?: string;
   description?: string;
   equipment_type?: string;
+  // Legacy fields - these will eventually be removed but kept for backward compatibility
+  category?: string; 
+  equipment?: string;
 }

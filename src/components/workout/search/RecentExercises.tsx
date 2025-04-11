@@ -22,14 +22,14 @@ const RecentExercises: React.FC<RecentExercisesProps> = ({ exercises, onSelectEx
         >
           <ExerciseCard
             name={exercise.name}
-            category={exercise.category}
+            category={exercise.muscle_group || 'Não especificado'}
             level={exercise.level as any}
             type="Força" // Add default type
             image={exercise.image_url || '/placeholder.svg'}
             description={exercise.description}
-            equipment={exercise.equipment}
-            muscleGroup={exercise.muscle_group}
-            equipmentType={exercise.equipment_type}
+            equipment={exercise.equipment_type || 'Não especificado'}
+            muscleGroup={exercise.muscle_group || 'Não especificado'}
+            equipmentType={exercise.equipment_type || 'Não especificado'}
           />
         </div>
       ))}

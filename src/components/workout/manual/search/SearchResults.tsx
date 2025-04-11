@@ -36,7 +36,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
               >
                 <div className="p-2 bg-midnight-card rounded-lg hover:bg-arcane-15 transition-colors">
                   <p className="font-orbitron font-semibold text-text-primary text-sm">{exercise.name}</p>
-                  <p className="text-xs text-text-secondary">{exercise.category}</p>
+                  <p className="text-xs text-text-secondary">{exercise.muscle_group || 'Não especificado'}</p>
                 </div>
               </div>
             ))}

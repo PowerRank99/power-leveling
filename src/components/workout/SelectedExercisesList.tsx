@@ -23,14 +23,14 @@ const SelectedExercisesList: React.FC<SelectedExercisesListProps> = ({ exercises
           <div key={exercise.id} className="relative mb-3">
             <ExerciseCard
               name={exercise.name}
-              category={exercise.category}
+              category={exercise.muscle_group || 'Não especificado'}
               level={exercise.level as any}
               type="Força" // Add default type
               image={exercise.image_url || '/placeholder.svg'}
               description={exercise.description}
-              equipment={exercise.equipment}
-              muscleGroup={exercise.muscle_group}
-              equipmentType={exercise.equipment_type}
+              equipment={exercise.equipment_type || 'Não especificado'}
+              muscleGroup={exercise.muscle_group || 'Não especificado'}
+              equipmentType={exercise.equipment_type || 'Não especificado'}
             />
             <button 
               className="absolute top-3 right-3 bg-red-100 text-red-600 p-2 rounded-full"

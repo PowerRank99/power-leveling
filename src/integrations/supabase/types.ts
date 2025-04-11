@@ -890,6 +890,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      migrate_exercise_columns: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       migrate_exercise_history: {
         Args: Record<PropertyKey, never>
         Returns: number
