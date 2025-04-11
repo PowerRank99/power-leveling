@@ -74,7 +74,7 @@ const WorkoutPage = () => {
     }
   };
   
-  // Create a proper Record for isDeletingItem
+  // Create function that returns boolean for workout deletion status
   const isDeletingItemRecord = (id: string): boolean => {
     const workout = unifiedWorkouts.find(w => w.id === id);
     if (workout?.type === 'manual') {
@@ -83,7 +83,7 @@ const WorkoutPage = () => {
     return isDeletingItem(id);
   };
 
-  // Convert the function to a Record object that matches the expected type
+  // Create a proper Record object for routines deletion status
   const isDeletingItemAsRecord: Record<string, boolean> = {};
   savedRoutines.forEach(routine => {
     isDeletingItemAsRecord[routine.id] = isDeletingItem(routine.id);

@@ -1,14 +1,21 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { XPService as RPGXPService } from '@/services/rpg/XPService';
 
+/**
+ * XP Service for awarding experience points to users
+ * 
+ * This is a lightweight wrapper around the more complex RPGXPService
+ * to maintain backward compatibility
+ */
 export class XPService {
   // Daily XP cap for regular workouts
-  static readonly DAILY_XP_CAP = 300;
+  static readonly DAILY_XP_CAP = RPGXPService.DAILY_XP_CAP;
   
   // Base XP values
-  static readonly PR_BONUS_XP = 50;
-  static readonly BASE_EXERCISE_XP = 10;
-  static readonly BASE_SET_XP = 2;
+  static readonly PR_BONUS_XP = RPGXPService.PR_BONUS_XP;
+  static readonly BASE_EXERCISE_XP = RPGXPService.BASE_EXERCISE_XP;
+  static readonly BASE_SET_XP = RPGXPService.BASE_SET_XP;
   
   // Manual workout XP values
   static readonly MANUAL_WORKOUT_BASE_XP = 50;
@@ -16,6 +23,7 @@ export class XPService {
   
   /**
    * Add XP to a user's profile
+   * Uses the awardXP method from the RPGXPService for implementation
    */
   static async addXP(
     userId: string, 
@@ -23,19 +31,8 @@ export class XPService {
     source: string
   ): Promise<boolean> {
     try {
-      // Call RPC function to add XP (assumes this function exists in the database)
-      const { error } = await supabase.rpc('add_xp_to_user', {
-        p_user_id: userId,
-        p_xp_amount: amount,
-        p_xp_source: source
-      });
-      
-      if (error) {
-        console.error('Error adding XP:', error);
-        return false;
-      }
-      
-      return true;
+      // Use the existing RPGXPService to award XP
+      return await RPGXPService.awardXP(userId, amount);
     } catch (error) {
       console.error('Exception in addXP:', error);
       return false;
