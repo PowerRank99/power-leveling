@@ -96,12 +96,12 @@ export class XPService {
       const currentWeek = XPBonusService.getCurrentWeek();
       const currentYear = now.getFullYear();
       
-      // Check power day usage directly
-      const data = await XPBonusService.getPowerDayUsage(userId, currentWeek, currentYear);
+      // Check power day usage using XPBonusService
+      const powerDayData = await XPBonusService.getPowerDayUsage(userId, currentWeek, currentYear);
       
       return {
-        available: data.count < 2,
-        used: data.count,
+        available: powerDayData.count < 2,
+        used: powerDayData.count,
         max: 2,
         week: currentWeek,
         year: currentYear

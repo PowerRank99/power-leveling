@@ -52,21 +52,25 @@ export class ManualWorkoutService {
       }
       
       // Check if user can submit a manual workout (less than 24 hours since last submission)
-      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      
-      // Use raw SQL to check recent submissions to avoid type issues
-      const { data: recentSubmissions, error: recentError, count } = await supabase
-        .rpc('check_recent_manual_workouts', {
+      const { data: recentSubmissions, error: recentError } = await supabase.rpc(
+        'check_recent_manual_workouts',
+        {
           p_user_id: userId,
           p_hours: 24
-        });
-        
+        }
+      );
+      
       if (recentError) {
         console.error('Error checking recent submissions:', recentError);
         throw new Error('Erro ao verificar submissões recentes');
       }
       
-      const recentCount = recentSubmissions?.[0]?.count || 0;
+      // Safely parse the count
+      let recentCount = 0;
+      if (Array.isArray(recentSubmissions) && recentSubmissions.length > 0) {
+        recentCount = parseInt(recentSubmissions[0]?.count || '0');
+      }
+      
       if (recentCount > 0) {
         throw new Error('Você já registrou um treino manual nas últimas 24 horas');
       }
@@ -110,18 +114,11 @@ export class ManualWorkoutService {
       
       if (isPowerDay) {
         // Check power day usage for current week
-        const currentWeek = XPBonusService.getCurrentWeek();
-        const currentYear = new Date().getFullYear();
+        const powerDayData = await XPBonusService.checkPowerDayAvailability(userId);
         
-        const powerDayData = await XPBonusService.getPowerDayUsage(
-          userId,
-          currentWeek,
-          currentYear
-        );
-        
-        powerDayAvailable = powerDayData.count < 2;
-        powerDayWeek = currentWeek;
-        powerDayYear = currentYear;
+        powerDayAvailable = powerDayData.available;
+        powerDayWeek = powerDayData.week;
+        powerDayYear = powerDayData.year;
         
         if (!powerDayAvailable) {
           // This is still a power day, but user won't get the higher XP cap
@@ -129,7 +126,11 @@ export class ManualWorkoutService {
           toast.info('Você atingiu o limite semanal de Power Days');
         } else if (powerDayAvailable) {
           // Record power day usage
-          await XPBonusService.recordPowerDayUsage(userId, powerDayWeek, powerDayYear);
+          await XPBonusService.recordPowerDayUsage(
+            userId, 
+            powerDayWeek, 
+            powerDayYear
+          );
         }
       }
       
@@ -159,9 +160,10 @@ export class ManualWorkoutService {
         cappedXP = Math.min(totalXP, this.POWER_DAY_CAP);
       }
       
-      // Insert manual workout record using raw SQL to avoid type issues
-      const { data: insertData, error: insertError } = await supabase
-        .rpc('create_manual_workout', {
+      // Insert manual workout record using RPC
+      const { data: insertData, error: insertError } = await supabase.rpc(
+        'create_manual_workout',
+        {
           p_user_id: userId,
           p_description: description || null,
           p_activity_type: activityType || null,
@@ -169,8 +171,9 @@ export class ManualWorkoutService {
           p_xp_awarded: cappedXP,
           p_workout_date: submissionDate.toISOString(),
           p_is_power_day: isPowerDay && powerDayAvailable
-        });
-        
+        }
+      );
+      
       if (insertError) {
         console.error('Error inserting manual workout:', insertError);
         throw new Error('Erro ao salvar treino manual');
@@ -212,19 +215,26 @@ export class ManualWorkoutService {
    */
   static async getUserManualWorkouts(userId: string): Promise<ManualWorkout[]> {
     try {
-      // Use raw SQL to fetch manual workouts
-      const { data, error } = await supabase
-        .rpc('get_user_manual_workouts', {
+      // Use RPC to fetch manual workouts
+      const { data, error } = await supabase.rpc(
+        'get_user_manual_workouts',
+        {
           p_user_id: userId
-        });
-        
+        }
+      );
+      
       if (error) {
         console.error('Error fetching manual workouts:', error);
         return [];
       }
       
-      // Map the raw data to our ManualWorkout interface
-      return (data || []).map((workout: any) => ({
+      // Safely handle the response data
+      if (!data || !Array.isArray(data)) {
+        return [];
+      }
+      
+      // Map the data to our ManualWorkout interface
+      return data.map((workout: any) => ({
         id: workout.id,
         description: workout.description,
         activityType: workout.activity_type,
