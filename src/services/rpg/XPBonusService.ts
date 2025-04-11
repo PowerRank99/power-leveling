@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { XP_CONSTANTS } from './constants/xpConstants';
@@ -25,6 +24,8 @@ export class XPBonusService {
   static readonly MONTHLY_COMPLETION_BONUS = 300;
   // One week in milliseconds for cooldown checks
   private static readonly ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  // Power Day cap (when user exceeds normal daily cap)
+  static readonly POWER_DAY_CAP = 500;
 
   /**
    * Awards XP to a user and updates their level if necessary
@@ -104,16 +105,46 @@ export class XPBonusService {
       }
       xpBreakdown.recordBonus = recordBonusXP;
       
+      // Check if this is a Power Day (user already has a workout today)
+      let isPowerDay = false;
+      let powerDayAvailable = false;
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      // Check for Power Day eligibility (has both manual and tracked workout today)
+      const { data: powerDayEligibility } = await supabase
+        .rpc('check_power_day_availability', { p_user_id: userId });
+      
+      if (powerDayEligibility?.available) {
+        powerDayAvailable = true;
+      }
+      
       // Apply daily XP cap (default 300 XP per day from regular workout XP)
-      // PR bonuses are exempt from the cap
-      const cappedWorkoutXP = Math.min(totalXP, XP_CONSTANTS.DAILY_XP_CAP);
+      // Power Day can increase the cap to 500 XP
+      // PR bonuses are always exempt from the cap
+      let cappedWorkoutXP = Math.min(totalXP, XP_CONSTANTS.DAILY_XP_CAP);
+      
+      // If user has Power Day available and would exceed the cap, apply higher cap
+      if (powerDayAvailable && totalXP > XP_CONSTANTS.DAILY_XP_CAP) {
+        cappedWorkoutXP = Math.min(totalXP, this.POWER_DAY_CAP);
+        
+        // Record power day usage
+        isPowerDay = true;
+        await this.recordPowerDayUsage(
+          userId, 
+          powerDayEligibility.week, 
+          powerDayEligibility.year
+        );
+      }
+      
       const totalXPWithBonuses = cappedWorkoutXP + recordBonusXP;
       
       // Update profile and check for level up
       await this.updateProfileXP(userId, profile, totalXPWithBonuses);
       
       // Show toast with XP breakdown
-      this.showXPToast(totalXPWithBonuses, xpBreakdown);
+      this.showXPToast(totalXPWithBonuses, xpBreakdown, isPowerDay);
       
       return true;
     } catch (error) {
@@ -297,9 +328,46 @@ export class XPBonusService {
   }
 
   /**
+   * Check power day availability
+   */
+  static async checkPowerDayAvailability(userId: string): Promise<any> {
+    try {
+      return await supabase.rpc('check_power_day_availability', { p_user_id: userId });
+    } catch (error) {
+      console.error('Error checking power day availability:', error);
+      return { error };
+    }
+  }
+  
+  /**
+   * Record a power day usage
+   */
+  static async recordPowerDayUsage(userId: string, week: number, year: number): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('power_day_usage')
+        .insert({
+          user_id: userId,
+          week_number: week,
+          year: year
+        });
+      
+      if (error) {
+        console.error('Error recording power day usage:', error);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error recording power day usage:', error);
+      return false;
+    }
+  }
+
+  /**
    * Show toast notification with XP breakdown
    */
-  private static showXPToast(totalXP: number, xpBreakdown: XPBreakdown): void {
+  private static showXPToast(totalXP: number, xpBreakdown: XPBreakdown, isPowerDay: boolean = false): void {
     let toastDesc = 'Treino completo!';
     
     const bonuses = [];
@@ -311,6 +379,10 @@ export class XPBonusService {
     
     if (bonuses.length > 0) {
       toastDesc = `Base: ${xpBreakdown.base} | ${bonuses.join(' | ')}`;
+    }
+    
+    if (isPowerDay) {
+      toastDesc += ' | Power Day Ativado!';
     }
     
     toast.success(`+${totalXP} XP`, {

@@ -16,6 +16,10 @@ export class XPService {
   static readonly DIFFICULTY_MULTIPLIERS = XPCalculationService.DIFFICULTY_MULTIPLIERS;
   static readonly TIME_XP_TIERS = XPCalculationService.TIME_XP_TIERS;
   
+  // Power Day constants (2x/week can exceed 300 XP cap up to 500 XP)
+  static readonly POWER_DAY_CAP = 500;
+  static readonly MANUAL_WORKOUT_BASE_XP = 100;
+  
   /**
    * Calculate XP for a completed workout
    * Returns a number instead of an object
@@ -73,5 +77,56 @@ export class XPService {
    */
   static getStreakMultiplier(streak: number): number {
     return XPCalculationService.getStreakMultiplier(streak);
+  }
+  
+  /**
+   * Check if a user has Power Day availability
+   * Returns information about power day usage for the current week
+   */
+  static async checkPowerDayAvailability(userId: string): Promise<{
+    available: boolean;
+    used: number;
+    max: number;
+    week: number;
+    year: number;
+  }> {
+    try {
+      const { data, error } = await XPBonusService.checkPowerDayAvailability(userId);
+      
+      if (error) {
+        console.error('Error checking power day availability:', error);
+        return {
+          available: false,
+          used: 0,
+          max: 2,
+          week: 0,
+          year: 0
+        };
+      }
+      
+      return {
+        available: data?.available || false,
+        used: data?.count || 0,
+        max: data?.max || 2,
+        week: data?.week || 0,
+        year: data?.year || 0
+      };
+    } catch (error) {
+      console.error('Error in checkPowerDayAvailability:', error);
+      return {
+        available: false,
+        used: 0,
+        max: 2,
+        week: 0,
+        year: 0
+      };
+    }
+  }
+  
+  /**
+   * Record a power day usage
+   */
+  static async recordPowerDayUsage(userId: string, week: number, year: number): Promise<boolean> {
+    return XPBonusService.recordPowerDayUsage(userId, week, year);
   }
 }
