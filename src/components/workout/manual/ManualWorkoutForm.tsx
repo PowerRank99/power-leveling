@@ -11,6 +11,7 @@ import DateSelector from './DateSelector';
 import FormActions from './FormActions';
 import ExerciseSelector from './ExerciseSelector';
 import { Exercise } from '@/components/workout/types/Exercise';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type ManualWorkoutFormProps = {
   onSuccess: () => void;
@@ -19,6 +20,7 @@ type ManualWorkoutFormProps = {
 
 const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCancel }) => {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [description, setDescription] = useState('');
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
@@ -138,7 +140,7 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
   };
   
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 pb-16 md:pb-4">
+    <form onSubmit={handleSubmit} className={`space-y-4 ${isMobile ? 'pb-24' : 'pb-4'}`}>
       <h2 className="text-xl font-orbitron font-bold text-text-primary mb-4">
         Registrar Treino Manualmente
       </h2>
@@ -171,7 +173,7 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
         />
       </div>
       
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-midnight-base border-t border-divider md:static md:p-0 md:border-0 md:bg-transparent">
+      <div className={`${isMobile ? 'fixed bottom-0 left-0 right-0 p-4 bg-midnight-base border-t border-divider z-10' : ''}`}>
         <FormActions 
           isSubmitting={isSubmitting} 
           isSubmitDisabled={!imageFile || !selectedExercise} 

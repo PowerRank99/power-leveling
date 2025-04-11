@@ -2,6 +2,7 @@
 import React, { useState, memo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ExerciseCardProps {
   name: string;
@@ -31,6 +32,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = memo(({
   disableExpand = false
 }) => {
   const [expanded, setExpanded] = useState(initialExpanded);
+  const isMobile = useIsMobile();
   
   const getLevelClass = () => {
     switch (level) {
@@ -82,19 +84,20 @@ const ExerciseCard: React.FC<ExerciseCardProps> = memo(({
   }
   
   // Full card with expansion capability for other contexts
+  // More compact design on mobile
   return (
     <Card className="mb-3 premium-card transition-all duration-200">
       <CardContent className="p-0">
         <div 
-          className="p-4 flex items-center cursor-pointer"
+          className={`${isMobile ? 'p-3' : 'p-4'} flex items-center cursor-pointer`}
           onClick={handleToggleExpand}
         >
-          <div className="h-12 w-12 overflow-hidden rounded-md mr-3 border border-divider">
+          <div className={`${isMobile ? 'h-10 w-10' : 'h-12 w-12'} overflow-hidden rounded-md mr-3 border border-divider`}>
             <img src={image} alt={name} className="h-full w-full object-cover" loading="lazy" />
           </div>
           
           <div className="flex-1">
-            <h3 className="font-orbitron font-semibold text-text-primary">{name}</h3>
+            <h3 className={`font-orbitron font-semibold text-text-primary ${isMobile ? 'text-sm' : ''}`}>{name}</h3>
             <div className="flex flex-wrap gap-1 mt-1">
               <span className={`text-xs px-2 py-0.5 rounded-full border ${getLevelClass()}`}>
                 {level}

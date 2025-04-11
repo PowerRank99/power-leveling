@@ -27,7 +27,7 @@ const FormActions: React.FC<FormActionsProps> = ({
       <Button
         type="submit"
         disabled={isSubmitting || isSubmitDisabled}
-        className="bg-arcane hover:bg-arcane/80"
+        className="bg-arcane hover:bg-arcane/80 text-text-primary"
       >
         {isSubmitting ? (
           <>

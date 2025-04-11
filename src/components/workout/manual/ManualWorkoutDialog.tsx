@@ -8,6 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import ManualWorkoutForm from './ManualWorkoutForm';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type ManualWorkoutDialogProps = {
   onSuccess?: () => void;
@@ -15,6 +16,7 @@ type ManualWorkoutDialogProps = {
 
 const ManualWorkoutDialog: React.FC<ManualWorkoutDialogProps> = ({ onSuccess }) => {
   const [open, setOpen] = React.useState(false);
+  const isMobile = useIsMobile();
   
   const handleSuccess = () => {
     setOpen(false);
@@ -34,7 +36,9 @@ const ManualWorkoutDialog: React.FC<ManualWorkoutDialogProps> = ({ onSuccess }) 
           Registrar Treino Manualmente
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] bg-midnight-card border-arcane/30">
+      <DialogContent 
+        className={`${isMobile ? 'w-full h-[90vh] p-4 max-w-none mt-[5vh]' : 'sm:max-w-[500px]'} bg-midnight-card border-arcane/30 overflow-auto`}
+      >
         <ManualWorkoutForm
           onSuccess={handleSuccess}
           onCancel={() => setOpen(false)}

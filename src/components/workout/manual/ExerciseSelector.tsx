@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Search, X, ChevronDown, ChevronUp } from 'lucide-react';
@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ExerciseSelectorProps {
   selectedExercise: Exercise | null;
@@ -25,11 +26,13 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
   onExerciseSelect,
 }) => {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [results, setResults] = useState<Exercise[]>([]);
   const [isFocused, setIsFocused] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   
   // Direct search function with minimal processing
   const searchExercises = async (query: string) => {
@@ -53,7 +56,7 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
         .from('exercises')
         .select('*')
         .ilike('name', `%${query}%`)
-        .limit(5);
+        .limit(10);
         
       if (error) throw error;
       
@@ -75,16 +78,29 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
     }
   };
   
-  // Debounced search with focus protection
+  // Focus the search input when the collapsible is opened
   useEffect(() => {
-    if (!isOpen || !isFocused) return;
+    if (isOpen && searchInputRef.current) {
+      // Small delay to ensure the collapsible has fully opened
+      const timer = setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+  
+  // Debounced search
+  useEffect(() => {
+    if (!isOpen) return;
     
     const timer = setTimeout(() => {
-      searchExercises(searchInput);
-    }, 400); // Increased debounce time to reduce UI stuttering
+      if (searchInput) {
+        searchExercises(searchInput);
+      }
+    }, 400);
     
     return () => clearTimeout(timer);
-  }, [searchInput, isOpen, isFocused]);
+  }, [searchInput, isOpen]);
   
   const handleClearSelection = () => {
     onExerciseSelect(null);
@@ -94,7 +110,6 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
     onExerciseSelect(exercise);
     setIsOpen(false);
     setSearchInput('');
-    setIsFocused(false);
   };
   
   return (
@@ -140,21 +155,17 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
               <div className="relative flex items-center mb-4">
                 <Search className="absolute left-3 text-gray-400 h-4 w-4" />
                 <Input
+                  ref={searchInputRef}
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   placeholder="Buscar exercícios..."
                   className="pl-10 bg-midnight-elevated border-arcane/30"
                   disabled={isLoading}
-                  onFocus={() => setIsFocused(true)}
-                  onBlur={() => {
-                    // Use a short delay to allow click events to complete
-                    setTimeout(() => setIsFocused(false), 150);
-                  }}
                 />
               </div>
               
-              <div className="max-h-[180px] overflow-hidden">
-                <ScrollArea className="h-[180px] rounded-md border border-divider/20 bg-midnight-elevated">
+              <div className={`max-h-[${isMobile ? '150px' : '180px'}] overflow-hidden`}>
+                <ScrollArea className={`h-[${isMobile ? '150px' : '180px'}] rounded-md border border-divider/20 bg-midnight-elevated`}>
                   {isLoading ? (
                     <div className="space-y-3 p-2">
                       <p className="text-center text-sm text-gray-400 mb-2">Carregando exercícios...</p>
@@ -188,7 +199,7 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
                 <Button 
                   type="button" 
                   variant="arcane" 
-                  className="w-full"
+                  className="w-full text-text-primary"
                   onClick={() => setIsOpen(false)}
                 >
                   Fechar

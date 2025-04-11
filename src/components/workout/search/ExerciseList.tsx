@@ -35,13 +35,11 @@ const ExerciseList: React.FC<ExerciseListProps> = ({
     );
   }
 
-  // If there are more than 6 exercises, wrap them in a ScrollArea
-  const shouldUseScrollArea = exercises.length > 6;
-  
+  // Always use ScrollArea for better mobile experience
   const exerciseList = (
     <>
       {hasActiveFilters && (
-        <h3 className="text-sm font-medium text-gray-500 mb-2">
+        <h3 className="text-sm font-medium text-text-secondary mb-2">
           {exercises.length} resultado{exercises.length !== 1 ? 's' : ''}
         </h3>
       )}
@@ -67,17 +65,13 @@ const ExerciseList: React.FC<ExerciseListProps> = ({
     </>
   );
 
-  if (shouldUseScrollArea) {
-    return (
-      <div>
-        <ScrollArea className="h-[450px]">
-          {exerciseList}
-        </ScrollArea>
-      </div>
-    );
-  }
-
-  return <div>{exerciseList}</div>;
+  return (
+    <div>
+      <ScrollArea className="h-[450px]">
+        {exerciseList}
+      </ScrollArea>
+    </div>
+  );
 };
 
 export default ExerciseList;
