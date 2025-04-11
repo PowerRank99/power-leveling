@@ -66,7 +66,7 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
       // Process the exercises to ensure correct typing
       const exercises = (data || []).map(exercise => ({
         ...exercise,
-        type: (exercise.type || 'Força') as ExerciseType
+        type: (exercise.type || 'Musculação') as ExerciseType
       })) as Exercise[];
       
       // Update cache and results

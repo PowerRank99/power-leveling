@@ -42,7 +42,7 @@ export const useExerciseFetch = (selectedExerciseIds: string[]) => {
         // Process data to ensure type property is a valid ExerciseType
         exercises = (data || []).map(exercise => ({
           ...exercise,
-          type: (exercise.type || 'Força') as ExerciseType
+          type: (exercise.type || 'Musculação') as ExerciseType
         })) as Exercise[];
         
         // Update cache

@@ -8,7 +8,7 @@ interface ExerciseCardProps {
   name: string;
   category: string;
   level: 'Iniciante' | 'Intermediário' | 'Avançado';
-  type?: 'Força' | 'Cardio' | 'Flexibilidade' | 'Equilíbrio';
+  type?: 'Musculação' | 'Calistenia' | 'Cardio' | 'Esportes' | 'Flexibilidade & Mobilidade';
   image: string;
   description?: string;
   equipment?: string;
@@ -22,7 +22,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = memo(({
   name,
   category,
   level,
-  type = 'Força',
+  type = 'Musculação',
   image,
   description,
   equipment,
@@ -45,10 +45,11 @@ const ExerciseCard: React.FC<ExerciseCardProps> = memo(({
   
   const getTypeClass = () => {
     switch (type) {
-      case 'Força': return 'bg-arcane-15 text-arcane border-arcane-30';
+      case 'Musculação': return 'bg-arcane-15 text-arcane border-arcane-30';
+      case 'Calistenia': return 'bg-achievement-15 text-achievement border-achievement-30';
       case 'Cardio': return 'bg-valor-15 text-valor border-valor-30';
-      case 'Flexibilidade': return 'bg-achievement-15 text-achievement border-achievement-30';
-      case 'Equilíbrio': return 'bg-arcane-15 text-arcane border-arcane-30';
+      case 'Esportes': return 'bg-arcane-15 text-arcane-60 border-arcane-30';
+      case 'Flexibilidade & Mobilidade': return 'bg-achievement-15 text-achievement-60 border-achievement-30';
       default: return 'bg-arcane-15 text-arcane border-arcane-30';
     }
   };

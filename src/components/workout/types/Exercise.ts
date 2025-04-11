@@ -1,5 +1,5 @@
 
-export type ExerciseType = 'Força' | 'Cardio' | 'Flexibilidade' | 'Equilíbrio';
+export type ExerciseType = 'Musculação' | 'Calistenia' | 'Cardio' | 'Esportes' | 'Flexibilidade & Mobilidade';
 
 export interface Exercise {
   id: string;

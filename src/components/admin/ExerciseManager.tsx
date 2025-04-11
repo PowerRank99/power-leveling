@@ -32,7 +32,7 @@ const ExerciseManager = () => {
       // Ensure all exercises have a valid type
       const processedData = (data || []).map(exercise => ({
         ...exercise,
-        type: (exercise.type || 'Força') as ExerciseType
+        type: (exercise.type || 'Musculação') as ExerciseType
       }));
       
       setExercises(processedData as Exercise[]);
@@ -98,7 +98,7 @@ const ExerciseManager = () => {
                 name={exercise.name}
                 category={exercise.muscle_group || 'Não especificado'}
                 level={exercise.level as any}
-                type={(exercise.type || 'Força') as ExerciseType}
+                type={exercise.type as ExerciseType}
                 image={exercise.image_url || '/placeholder.svg'}
                 description={exercise.description}
                 equipment={exercise.equipment_type || 'Não especificado'}

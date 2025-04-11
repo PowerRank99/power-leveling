@@ -65,7 +65,7 @@ const ExerciseLibraryPage = () => {
         // Process data to ensure type property is a valid ExerciseType
         const processedData = (data || []).map(exercise => ({
           ...exercise,
-          type: (exercise.type || 'Força') as ExerciseType
+          type: (exercise.type || 'Musculação') as ExerciseType
         })) as Exercise[];
         
         // Apply category filter if not 'Todos'
