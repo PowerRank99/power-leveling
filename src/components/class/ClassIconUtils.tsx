@@ -1,5 +1,5 @@
 
-import { Dumbbell, Fire, Timer, Flame, Star, Activity, Zap, Lightbulb, Heart, PlayCircle } from 'lucide-react';
+import { Dumbbell, Flame, Timer, Star, Activity, Zap, Lightbulb, Heart, PlayCircle } from 'lucide-react';
 import React from 'react';
 
 /**
@@ -11,7 +11,7 @@ export const getBonusTypeIcon = (bonusType: string): React.ReactNode => {
   if (lowerType.includes('compound') || lowerType.includes('compost')) {
     return <Dumbbell className="h-4 w-4 text-white" />;
   } else if (lowerType.includes('strength') || lowerType.includes('força')) {
-    return <Fire className="h-4 w-4 text-white" />;
+    return <Flame className="h-4 w-4 text-white" />; // Changed from Fire to Flame
   } else if (lowerType.includes('bodyweight') || lowerType.includes('corpo')) {
     return <Activity className="h-4 w-4 text-white" />;
   } else if (lowerType.includes('cardio') || lowerType.includes('hiit')) {
