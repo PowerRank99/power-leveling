@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Search, X, ChevronDown, ChevronUp } from 'lucide-react';
@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useSearchWithFocus } from '@/hooks/useSearchWithFocus';
 
 interface ExerciseSelectorProps {
   selectedExercise: Exercise | null;
@@ -29,13 +30,17 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [searchInput, setSearchInput] = useState('');
   const [results, setResults] = useState<Exercise[]>([]);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const [lastFocusTime, setLastFocusTime] = useState(0);
-  const focusTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Direct search function with minimal processing
+  // Use our custom search hook
+  const { 
+    searchTerm: searchInput,
+    inputRef,
+    handleSearchChange,
+    focusInput
+  } = useSearchWithFocus<Exercise>({});
+  
+  // Search exercises function with focus maintenance
   const searchExercises = async (query: string) => {
     if (!query.trim()) {
       setResults([]);
@@ -46,6 +51,7 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
     const cacheKey = query.toLowerCase().trim();
     if (exerciseCache[cacheKey]) {
       setResults(exerciseCache[cacheKey]);
+      focusInput(); // Maintain focus after updating results
       return;
     }
     
@@ -76,24 +82,16 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
       setResults([]);
     } finally {
       setIsLoading(false);
-      // We'll handle focus in the effect
+      // Focus will be maintained by the useEffect
+      focusInput();
     }
   };
-  
-  // Clean up any pending focus timeouts when component unmounts
-  useEffect(() => {
-    return () => {
-      if (focusTimeoutRef.current) {
-        clearTimeout(focusTimeoutRef.current);
-      }
-    };
-  }, []);
   
   // Focus management when opening/closing the collapsible
   useEffect(() => {
     if (isOpen) {
       const timer = setTimeout(() => {
-        requestFocus();
+        focusInput();
       }, 100);
       
       return () => clearTimeout(timer);
@@ -113,27 +111,6 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
     return () => clearTimeout(timer);
   }, [searchInput, isOpen]);
   
-  // Robust focus management
-  const requestFocus = () => {
-    const now = Date.now();
-    if (now - lastFocusTime < 100) return;
-    
-    setLastFocusTime(now);
-    
-    // Clear any existing timeout
-    if (focusTimeoutRef.current) {
-      clearTimeout(focusTimeoutRef.current);
-    }
-    
-    // Set a new timeout
-    focusTimeoutRef.current = setTimeout(() => {
-      if (isOpen && searchInputRef.current && document.activeElement !== searchInputRef.current) {
-        searchInputRef.current.focus();
-        console.log('Focus applied to search input');
-      }
-    }, 50);
-  };
-  
   const handleClearSelection = () => {
     onExerciseSelect(null);
   };
@@ -141,12 +118,6 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
   const handleSelectExercise = (exercise: Exercise) => {
     onExerciseSelect(exercise);
     setIsOpen(false);
-    setSearchInput('');
-  };
-  
-  // Handle input change without losing focus
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchInput(e.target.value);
   };
 
   return (
@@ -192,20 +163,15 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
               <div className="relative flex items-center mb-4">
                 <Search className="absolute left-3 text-gray-400 h-4 w-4" />
                 <Input
-                  ref={searchInputRef}
+                  ref={inputRef}
                   value={searchInput}
-                  onChange={handleInputChange}
+                  onChange={handleSearchChange}
                   placeholder="Buscar exercícios..."
                   className="pl-10 bg-midnight-elevated border-arcane/30"
                   disabled={isLoading}
-                  onFocus={() => console.log('Search input focused')}
-                  onBlur={(e) => {
-                    // Delay to allow click events to complete before refocusing
-                    setTimeout(() => requestFocus(), 50);
-                  }}
-                  onClick={(e) => {
+                  onClick={e => {
                     e.stopPropagation();
-                    requestFocus();
+                    focusInput();
                   }}
                 />
               </div>
