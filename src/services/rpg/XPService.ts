@@ -10,11 +10,11 @@ import { XPBonusService } from './XPBonusService';
 export class XPService {
   // Re-export constants for backward compatibility
   static readonly DAILY_XP_CAP = XPCalculationService.DAILY_XP_CAP;
-  static readonly BASE_TIME_XP_RATE = XPCalculationService.BASE_TIME_XP_RATE;
+  static readonly PR_BONUS_XP = XPCalculationService.PR_BONUS_XP;
   static readonly BASE_EXERCISE_XP = XPCalculationService.BASE_EXERCISE_XP;
   static readonly BASE_SET_XP = XPCalculationService.BASE_SET_XP;
-  static readonly PR_BONUS_XP = XPCalculationService.PR_BONUS_XP;
   static readonly DIFFICULTY_MULTIPLIERS = XPCalculationService.DIFFICULTY_MULTIPLIERS;
+  static readonly TIME_XP_TIERS = XPCalculationService.TIME_XP_TIERS;
   
   /**
    * Calculate XP for a completed workout
@@ -31,6 +31,13 @@ export class XPService {
     difficulty: 'iniciante' | 'intermediario' | 'avancado' = 'intermediario'
   ): number {
     return XPCalculationService.calculateWorkoutXP(workout, userClass, streak, difficulty);
+  }
+  
+  /**
+   * Calculate time-based XP with diminishing returns
+   */
+  static calculateTimeXP(durationMinutes: number): number {
+    return XPCalculationService.calculateTimeXP(durationMinutes);
   }
   
   /**

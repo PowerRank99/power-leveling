@@ -7,16 +7,23 @@ import { WorkoutExercise } from '@/types/workoutTypes';
 export class XPCalculationService {
   // XP system constants
   static readonly DAILY_XP_CAP = 300;
-  static readonly BASE_TIME_XP_RATE = 10; // XP per 10 minutes
+  static readonly PR_BONUS_XP = 50; // Bonus XP for personal records
   static readonly BASE_EXERCISE_XP = 5; // XP per exercise
   static readonly BASE_SET_XP = 2; // XP per set
-  static readonly PR_BONUS_XP = 50; // Bonus XP for personal records
+  
+  // Time-based XP with diminishing returns
+  static readonly TIME_XP_TIERS = [
+    { minutes: 30, xp: 40 },  // First 30 minutes: 40 XP
+    { minutes: 60, xp: 30 },  // 31-60 minutes: +30 XP
+    { minutes: 90, xp: 20 },  // 61-90 minutes: +20 XP
+    { minutes: Infinity, xp: 0 } // Beyond 90 minutes: +0 XP (no additional XP)
+  ];
   
   // Difficulty multipliers
   static readonly DIFFICULTY_MULTIPLIERS = {
     iniciante: 0.8,
     intermediario: 1.0,
-    avancado: 1.5,
+    avancado: 1.2,
   };
   
   // Exercise types for class bonus calculations
@@ -40,6 +47,33 @@ export class XPCalculationService {
   }
   
   /**
+   * Calculate time-based XP with diminishing returns
+   * First 30 minutes: 40 XP
+   * 30-60 minutes: +30 XP
+   * 60-90 minutes: +20 XP
+   * Beyond 90 minutes: no additional XP
+   */
+  static calculateTimeXP(durationMinutes: number): number {
+    let totalXP = 0;
+    let remainingMinutes = durationMinutes;
+    
+    for (const tier of this.TIME_XP_TIERS) {
+      if (remainingMinutes <= 0) break;
+      
+      const minutesInTier = Math.min(remainingMinutes, tier.minutes);
+      const previousTierMinutes = remainingMinutes - minutesInTier;
+      const tierMinutes = minutesInTier - previousTierMinutes;
+      
+      if (tierMinutes > 0) {
+        totalXP += tier.xp;
+        remainingMinutes -= tierMinutes;
+      }
+    }
+    
+    return totalXP;
+  }
+  
+  /**
    * Calculate XP for a completed workout
    * @param workout Workout data
    * @param userClass User's selected class
@@ -58,19 +92,21 @@ export class XPCalculationService {
     difficulty: 'iniciante' | 'intermediario' | 'avancado' = 'intermediario'
   ): number {
     try {
-      // Base XP calculation
+      // Calculate time-based XP with diminishing returns
       const timeMinutes = Math.floor((workout.durationSeconds || 0) / 60);
-      const baseTimeXP = Math.floor(timeMinutes / 10) * this.BASE_TIME_XP_RATE; // 10 XP per 10 minutes
+      const timeXP = this.calculateTimeXP(timeMinutes);
+      
+      // Exercise completion XP
       const exerciseXP = workout.exercises.length * this.BASE_EXERCISE_XP; // 5 XP per exercise
       
-      // Calculate sets XP
+      // Set completion XP
       const completedSets = workout.exercises.reduce((sum, ex) => {
         return sum + ex.sets.filter(set => set.completed).length;
       }, 0);
       const setsXP = completedSets * this.BASE_SET_XP; // 2 XP per completed set
       
       // Sum base XP
-      let totalXP = baseTimeXP + exerciseXP + setsXP;
+      let totalXP = timeXP + exerciseXP + setsXP;
       
       // Apply difficulty modifier if available
       const workoutDifficulty = workout.difficulty || difficulty;

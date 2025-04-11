@@ -10,12 +10,18 @@ interface XPBreakdown {
   classBonus: number;
   streakBonus: number;
   recordBonus: number;
+  weeklyBonus: number;
+  monthlyBonus: number;
 }
 
 /**
  * Service for handling XP bonuses and updates
  */
 export class XPBonusService {
+  // Weekly and monthly completion bonus constants
+  static readonly WEEKLY_COMPLETION_BONUS = 100;
+  static readonly MONTHLY_COMPLETION_BONUS = 300;
+
   /**
    * Awards XP to a user and updates their level if necessary
    */
@@ -35,7 +41,7 @@ export class XPBonusService {
       // Get user profile and class bonuses (if any)
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('xp, level, class, workouts_count, streak')
+        .select('xp, level, class, workouts_count, streak, last_workout_at')
         .eq('id', userId)
         .single();
       
@@ -45,11 +51,13 @@ export class XPBonusService {
       }
       
       let totalXP = baseXP;
-      let xpBreakdown = {
+      let xpBreakdown: XPBreakdown = {
         base: baseXP,
         classBonus: 0,
         streakBonus: 0,
-        recordBonus: 0
+        recordBonus: 0,
+        weeklyBonus: 0,
+        monthlyBonus: 0
       };
       
       // Apply class bonuses if user has selected a class
@@ -64,6 +72,16 @@ export class XPBonusService {
         totalXP += streakBonus;
         console.log(`Applied streak bonus (${profile.streak} days): +${streakBonus} XP`);
       }
+      
+      // Check for weekly and monthly completion bonuses
+      const weeklyMonthlyBonuses = await this.calculateCompletionBonuses(
+        userId, 
+        profile.last_workout_at
+      );
+      
+      xpBreakdown.weeklyBonus = weeklyMonthlyBonuses.weeklyBonus;
+      xpBreakdown.monthlyBonus = weeklyMonthlyBonuses.monthlyBonus;
+      totalXP += weeklyMonthlyBonuses.weeklyBonus + weeklyMonthlyBonuses.monthlyBonus;
       
       // Apply personal record bonuses (not subject to daily cap)
       let recordBonusXP = 0;
@@ -99,6 +117,60 @@ export class XPBonusService {
     } catch (error) {
       console.error('Error in awardXP:', error);
       return false;
+    }
+  }
+
+  /**
+   * Calculate weekly and monthly completion bonuses
+   */
+  private static async calculateCompletionBonuses(
+    userId: string,
+    lastWorkoutAt: string | null
+  ): Promise<{ weeklyBonus: number; monthlyBonus: number }> {
+    try {
+      const now = new Date();
+      const result = { weeklyBonus: 0, monthlyBonus: 0 };
+      
+      if (!lastWorkoutAt) return result;
+      
+      const lastWorkout = new Date(lastWorkoutAt);
+      
+      // Check for weekly completion (at least 3 workouts in the past 7 days)
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - 7);
+      
+      const { count: weeklyWorkouts, error: weeklyError } = await supabase
+        .from('workouts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('completed_at', weekStart.toISOString())
+        .lt('completed_at', now.toISOString());
+        
+      if (!weeklyError && weeklyWorkouts !== null && weeklyWorkouts >= 3) {
+        result.weeklyBonus = this.WEEKLY_COMPLETION_BONUS;
+        console.log(`Applied weekly completion bonus: +${this.WEEKLY_COMPLETION_BONUS} XP`);
+      }
+      
+      // Check for monthly completion (at least 12 workouts in the past 30 days)
+      const monthStart = new Date(now);
+      monthStart.setDate(now.getDate() - 30);
+      
+      const { count: monthlyWorkouts, error: monthlyError } = await supabase
+        .from('workouts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('completed_at', monthStart.toISOString())
+        .lt('completed_at', now.toISOString());
+        
+      if (!monthlyError && monthlyWorkouts !== null && monthlyWorkouts >= 12) {
+        result.monthlyBonus = this.MONTHLY_COMPLETION_BONUS;
+        console.log(`Applied monthly completion bonus: +${this.MONTHLY_COMPLETION_BONUS} XP`);
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error calculating completion bonuses:', error);
+      return { weeklyBonus: 0, monthlyBonus: 0 };
     }
   }
 
@@ -182,11 +254,14 @@ export class XPBonusService {
   private static showXPToast(totalXP: number, xpBreakdown: XPBreakdown): void {
     let toastDesc = 'Treino completo!';
     
-    if (xpBreakdown.classBonus > 0 || xpBreakdown.streakBonus > 0 || xpBreakdown.recordBonus > 0) {
-      const bonuses = [];
-      if (xpBreakdown.classBonus > 0) bonuses.push(`Classe: +${xpBreakdown.classBonus}`);
-      if (xpBreakdown.streakBonus > 0) bonuses.push(`Streak: +${xpBreakdown.streakBonus}`);
-      if (xpBreakdown.recordBonus > 0) bonuses.push(`Recorde: +${xpBreakdown.recordBonus}`);
+    const bonuses = [];
+    if (xpBreakdown.classBonus > 0) bonuses.push(`Classe: +${xpBreakdown.classBonus}`);
+    if (xpBreakdown.streakBonus > 0) bonuses.push(`Streak: +${xpBreakdown.streakBonus}`);
+    if (xpBreakdown.recordBonus > 0) bonuses.push(`Recorde: +${xpBreakdown.recordBonus}`);
+    if (xpBreakdown.weeklyBonus > 0) bonuses.push(`Semanal: +${xpBreakdown.weeklyBonus}`);
+    if (xpBreakdown.monthlyBonus > 0) bonuses.push(`Mensal: +${xpBreakdown.monthlyBonus}`);
+    
+    if (bonuses.length > 0) {
       toastDesc = `Base: ${xpBreakdown.base} | ${bonuses.join(' | ')}`;
     }
     

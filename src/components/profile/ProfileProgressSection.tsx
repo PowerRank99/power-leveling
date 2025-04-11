@@ -11,6 +11,8 @@ interface ProfileProgressSectionProps {
   lastActivity: string;
   xpGain: string;
   streak?: number;
+  weeklyBonus?: number;
+  monthlyBonus?: number;
 }
 
 const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
@@ -18,7 +20,9 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
   dailyXPCap,
   lastActivity,
   xpGain,
-  streak = 0
+  streak = 0,
+  weeklyBonus = 0,
+  monthlyBonus = 0
 }) => {
   // Check if milestone are achieved for display purposes only
   const silverAchieved = dailyXP >= 200;
@@ -72,6 +76,24 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
                   Ouro
                 </span>
               )}
+            </div>
+          )}
+          
+          {/* Display weekly/monthly bonuses if available */}
+          {(weeklyBonus > 0 || monthlyBonus > 0) && (
+            <div className="mt-3 text-sm text-text-secondary">
+              <div className="flex justify-between font-sora">
+                {weeklyBonus > 0 && (
+                  <div className="flex items-center text-arcane-60">
+                    <span>Bônus Semanal: +{weeklyBonus} XP</span>
+                  </div>
+                )}
+                {monthlyBonus > 0 && (
+                  <div className="flex items-center text-valor-crimson">
+                    <span>Bônus Mensal: +{monthlyBonus} XP</span>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

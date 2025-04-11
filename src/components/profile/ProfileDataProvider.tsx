@@ -3,6 +3,7 @@ import React, { ReactNode } from 'react';
 import { User } from '@supabase/supabase-js';
 import { ClassService } from '@/services/rpg/ClassService';
 import { Profile } from './UserDataFormatter';
+import { XPBonusService } from '@/services/rpg/XPBonusService';
 
 export interface ProfileData {
   level: number;
@@ -11,6 +12,8 @@ export interface ProfileData {
   dailyXP: number;
   dailyXPCap: number;
   streak: number;
+  weeklyBonus: number;
+  monthlyBonus: number;
   achievements: {
     unlocked: number;
     total: number;
@@ -40,6 +43,8 @@ const ProfileDataProvider: React.FC<ProfileDataProviderProps> = ({
     dailyXP: 150, // Mock data - could be calculated based on today's workouts
     dailyXPCap: 300,
     streak: profile?.streak || 0,
+    weeklyBonus: 0, // Will be populated from actual database in a real implementation
+    monthlyBonus: 0, // Will be populated from actual database in a real implementation
     achievements: {
       unlocked: profile?.achievements_count || 0,
       total: 50 // Mock total achievements

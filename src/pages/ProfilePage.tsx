@@ -14,11 +14,14 @@ import ProfileDataProvider from '@/components/profile/ProfileDataProvider';
 import UserDataFormatter from '@/components/profile/UserDataFormatter';
 import { getMockAchievements } from '@/components/profile/MockAchievements';
 import { supabase } from '@/integrations/supabase/client';
+import { XPBonusService } from '@/services/rpg/XPBonusService';
 
 const ProfilePage = () => {
   const { user, profile, signOut } = useAuth();
   const { userClass } = useClass();
   const [classBonuses, setClassBonuses] = useState<{description: string; value: string}[]>([]);
+  const [weeklyBonus, setWeeklyBonus] = useState(0);
+  const [monthlyBonus, setMonthlyBonus] = useState(0);
   
   useEffect(() => {
     const fetchClassBonuses = async () => {
@@ -41,8 +44,18 @@ const ProfilePage = () => {
       }
     };
     
+    // Calculate weekly/monthly bonuses (simplified mock for demonstration)
+    const calculateBonuses = async () => {
+      if (user?.id && profile?.last_workout_at) {
+        // In a real implementation, this would fetch actual completion data
+        setWeeklyBonus(XPBonusService.WEEKLY_COMPLETION_BONUS);
+        setMonthlyBonus(0); // Example: User hasn't earned monthly bonus yet
+      }
+    };
+    
     fetchClassBonuses();
-  }, [userClass]);
+    calculateBonuses();
+  }, [userClass, user?.id, profile?.last_workout_at]);
   
   // Mock data for achievements
   const recentAchievements = getMockAchievements();
@@ -78,6 +91,8 @@ const ProfilePage = () => {
                     lastActivity={profileData.lastActivity}
                     xpGain={profileData.xpGain}
                     streak={profileData.streak}
+                    weeklyBonus={weeklyBonus}
+                    monthlyBonus={monthlyBonus}
                   />
                   
                   <ClassSection 
