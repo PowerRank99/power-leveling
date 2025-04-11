@@ -17,6 +17,7 @@ interface ClassSelectionCardProps {
       bonus_type: string;
       bonus_value: number;
       description: string;
+      skill_name?: string;
     }>;
   };
   isCurrentClass: boolean;
