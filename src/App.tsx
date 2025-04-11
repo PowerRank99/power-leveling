@@ -22,7 +22,7 @@ import TimerSettingsPage from './pages/TimerSettingsPage';
 import GuildQuestsPage from './pages/GuildQuestsPage';
 import CreateQuestPage from './pages/CreateQuestPage';
 import AchievementPopup from './components/profile/AchievementPopup';
-import ClassSelectionPage from './pages/ClassSelectionPage';
+import ClassSelectionPage from './pages/class-selection/ClassSelectionPage';
 
 function App() {
   return (
