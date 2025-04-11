@@ -2,7 +2,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { Exercise } from '../../types/Exercise';
+import { Exercise, ExerciseType } from '../../types/Exercise';
 
 // Cache for exercises to prevent redundant fetches
 const exerciseCache: { exercises: Exercise[], timestamp: number } = {
@@ -39,7 +39,11 @@ export const useExerciseFetch = (selectedExerciseIds: string[]) => {
         
         if (error) throw error;
         
-        exercises = data || [];
+        // Process data to ensure type property is a valid ExerciseType
+        exercises = (data || []).map(exercise => ({
+          ...exercise,
+          type: (exercise.type || 'Força') as ExerciseType
+        })) as Exercise[];
         
         // Update cache
         exerciseCache.exercises = exercises;

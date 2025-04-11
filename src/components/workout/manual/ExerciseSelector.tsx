@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { Exercise } from '@/components/workout/types/Exercise';
+import { Exercise, ExerciseType } from '@/components/workout/types/Exercise';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -63,7 +63,11 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
         
       if (error) throw error;
       
-      const exercises = data || [];
+      // Process the exercises to ensure correct typing
+      const exercises = (data || []).map(exercise => ({
+        ...exercise,
+        type: (exercise.type || 'Força') as ExerciseType
+      })) as Exercise[];
       
       // Update cache and results
       exerciseCache[cacheKey] = exercises;

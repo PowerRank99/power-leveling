@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
-import { Exercise } from '@/components/workout/types/Exercise';
+import { Exercise, ExerciseType } from '@/components/workout/types/Exercise';
 import { MUSCLE_GROUP_ALIASES } from '@/components/workout/constants/exerciseFilters';
 
 const ExerciseLibraryPage = () => {
@@ -62,9 +62,15 @@ const ExerciseLibraryPage = () => {
         
         if (error) throw error;
         
-        let filteredData = data as Exercise[];
+        // Process data to ensure type property is a valid ExerciseType
+        const processedData = (data || []).map(exercise => ({
+          ...exercise,
+          type: (exercise.type || 'Força') as ExerciseType
+        })) as Exercise[];
         
         // Apply category filter if not 'Todos'
+        let filteredData = processedData;
+        
         if (activeCategory !== 'Todos') {
           filteredData = filteredData.filter(ex => exerciseMatchesCategory(ex, activeCategory));
         }
