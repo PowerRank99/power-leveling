@@ -28,7 +28,8 @@ export class XPService {
   static async addXP(
     userId: string, 
     amount: number, 
-    source: string
+    source: string,
+    metadata?: any
   ): Promise<boolean> {
     try {
       // Use the existing RPGXPService to award XP

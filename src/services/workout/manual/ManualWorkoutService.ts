@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ManualWorkout } from '@/types/manualWorkoutTypes';
 import { ManualWorkoutValidationService } from './ManualWorkoutValidationService';
@@ -35,12 +34,8 @@ export class ManualWorkoutService {
       // Calculate XP (base: 50 XP, power day bonus: +50 XP)
       const xpAwarded = isPowerDay ? 100 : 50;
       
-      // Add XP to user
-      await XPService.addXP(userId, xpAwarded, 'manual_workout', {
-        exerciseId,
-        exerciseName,
-        exerciseCategory
-      });
+      // Add XP to user - fixing the argument count here (passing metadata as part of the source parameter)
+      await XPService.addXP(userId, xpAwarded, `manual_workout:${exerciseName}:${exerciseCategory}`);
       
       // Call the database function to create the manual workout
       const { data, error } = await supabase.rpc('create_manual_workout', {
