@@ -7,7 +7,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
 import ExerciseCard from '@/components/workout/ExerciseCard';
 import { Trash2, RefreshCcw } from 'lucide-react';
-import { Exercise } from '@/components/workout/types/Exercise';
+import { Exercise, ExerciseType } from '@/components/workout/types/Exercise';
 
 const ExerciseManager = () => {
   const { toast } = useToast();
@@ -28,7 +28,14 @@ const ExerciseManager = () => {
         .order('name');
 
       if (error) throw error;
-      setExercises(data as Exercise[]);
+      
+      // Ensure all exercises have a valid type
+      const processedData = (data || []).map(exercise => ({
+        ...exercise,
+        type: (exercise.type || 'Força') as ExerciseType
+      }));
+      
+      setExercises(processedData as Exercise[]);
     } catch (error) {
       console.error('Error fetching exercises:', error);
       toast({
@@ -91,7 +98,7 @@ const ExerciseManager = () => {
                 name={exercise.name}
                 category={exercise.muscle_group || 'Não especificado'}
                 level={exercise.level as any}
-                type={exercise.type}
+                type={(exercise.type || 'Força') as ExerciseType}
                 image={exercise.image_url || '/placeholder.svg'}
                 description={exercise.description}
                 equipment={exercise.equipment_type || 'Não especificado'}

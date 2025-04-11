@@ -1,7 +1,7 @@
 
 import React from 'react';
 import ExerciseCard from '../ExerciseCard';
-import { Exercise } from '../types/Exercise';
+import { Exercise, ExerciseType } from '../types/Exercise';
 
 interface RecentExercisesProps {
   exercises: Exercise[];
@@ -24,7 +24,7 @@ const RecentExercises: React.FC<RecentExercisesProps> = ({ exercises, onSelectEx
             name={exercise.name}
             category={exercise.muscle_group || 'Não especificado'}
             level={exercise.level as any}
-            type={exercise.type || 'Força'}
+            type={(exercise.type || 'Força') as ExerciseType}
             image={exercise.image_url || '/placeholder.svg'}
             description={exercise.description}
             equipment={exercise.equipment_type || 'Não especificado'}

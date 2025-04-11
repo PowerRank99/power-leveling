@@ -2,7 +2,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import ExerciseCard from '@/components/workout/ExerciseCard';
-import { Exercise } from '@/components/workout/types/Exercise';
+import { Exercise, ExerciseType } from '@/components/workout/types/Exercise';
 
 interface SelectedExerciseDisplayProps {
   exercise: Exercise;
@@ -19,7 +19,7 @@ const SelectedExerciseDisplay: React.FC<SelectedExerciseDisplayProps> = ({
         name={exercise.name}
         category={exercise.muscle_group || 'Não especificado'}
         level={exercise.level as any}
-        type="Força"
+        type={(exercise.type || 'Força') as ExerciseType}
         image={exercise.image_url || '/placeholder.svg'}
         description={exercise.description || ''}
         equipment={exercise.equipment_type || 'Não especificado'}
