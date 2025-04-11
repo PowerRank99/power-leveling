@@ -143,33 +143,6 @@ const WorkoutPage = () => {
       />
     </div>
   );
-  
-  // Render workouts tab content
-  const renderWorkoutsTabContent = () => (
-    <>
-      <TabsContent value="tracked" className="mt-0">
-        <WorkoutsList 
-          workouts={recentWorkouts} 
-          isLoading={isLoading}
-          onRetry={handleRetry}
-          error={error}
-          hasAttemptedLoad={hasAttemptedLoad}
-          onDeleteWorkout={deleteWorkout}
-          isDeletingItem={isDeletingItem}
-          hasMoreWorkouts={hasMoreWorkouts}
-          isLoadingMore={isLoadingMore}
-          onLoadMore={loadMoreWorkouts}
-        />
-      </TabsContent>
-      
-      <TabsContent value="manual" className="mt-0">
-        <ManualWorkoutsList 
-          workouts={manualWorkouts}
-          isLoading={isLoadingManual}
-        />
-      </TabsContent>
-    </>
-  );
 
   return (
     <AuthRequiredRoute>
@@ -202,10 +175,30 @@ const WorkoutPage = () => {
                     Manuais
                   </TabsTrigger>
                 </TabsList>
+              
+                <TabsContent value="tracked" className="mt-0">
+                  <WorkoutsList 
+                    workouts={recentWorkouts} 
+                    isLoading={isLoading}
+                    onRetry={handleRetry}
+                    error={error}
+                    hasAttemptedLoad={hasAttemptedLoad}
+                    onDeleteWorkout={deleteWorkout}
+                    isDeletingItem={isDeletingItem}
+                    hasMoreWorkouts={hasMoreWorkouts}
+                    isLoadingMore={isLoadingMore}
+                    onLoadMore={loadMoreWorkouts}
+                  />
+                </TabsContent>
+                
+                <TabsContent value="manual" className="mt-0">
+                  <ManualWorkoutsList 
+                    workouts={manualWorkouts}
+                    isLoading={isLoadingManual}
+                  />
+                </TabsContent>
               </Tabs>
             </div>
-            
-            {renderWorkoutsTabContent()}
             
             <div className="mt-4">
               <ManualWorkoutDialog onSuccess={handleManualWorkoutSuccess} />
