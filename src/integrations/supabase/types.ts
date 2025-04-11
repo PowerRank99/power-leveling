@@ -436,6 +436,7 @@ export type Database = {
           activity_type: string | null
           created_at: string
           description: string | null
+          exercise_id: string | null
           id: string
           is_power_day: boolean
           photo_url: string
@@ -447,6 +448,7 @@ export type Database = {
           activity_type?: string | null
           created_at?: string
           description?: string | null
+          exercise_id?: string | null
           id?: string
           is_power_day?: boolean
           photo_url: string
@@ -458,6 +460,7 @@ export type Database = {
           activity_type?: string | null
           created_at?: string
           description?: string | null
+          exercise_id?: string | null
           id?: string
           is_power_day?: boolean
           photo_url?: string
@@ -830,6 +833,7 @@ export type Database = {
           p_user_id: string
           p_description: string
           p_activity_type: string
+          p_exercise_id: string
           p_photo_url: string
           p_xp_awarded: number
           p_workout_date: string
@@ -861,6 +865,7 @@ export type Database = {
           id: string
           description: string
           activity_type: string
+          exercise_id: string
           photo_url: string
           xp_awarded: number
           created_at: string

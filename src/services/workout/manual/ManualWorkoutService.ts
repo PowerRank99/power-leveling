@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ManualWorkout } from '@/types/manualWorkoutTypes';
 import { ManualWorkoutValidationService } from './ManualWorkoutValidationService';
