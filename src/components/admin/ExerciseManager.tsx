@@ -11,12 +11,12 @@ import { Trash2, RefreshCcw } from 'lucide-react';
 interface Exercise {
   id: string;
   name: string;
-  category: string;
+  muscle_group: string;
   level: string;
-  type: string; // Keep this for database compatibility
+  type: string;
   image_url?: string;
   description?: string;
-  equipment?: string;
+  equipment_type?: string;
 }
 
 const ExerciseManager = () => {
@@ -99,12 +99,14 @@ const ExerciseManager = () => {
             <div key={exercise.id} className="relative">
               <ExerciseCard
                 name={exercise.name}
-                category={exercise.category}
+                category={exercise.muscle_group || 'Não especificado'}
                 level={exercise.level as any}
                 type={exercise.type as any}
                 image={exercise.image_url || '/placeholder.svg'}
                 description={exercise.description}
-                equipment={exercise.equipment}
+                equipment={exercise.equipment_type || 'Não especificado'}
+                muscleGroup={exercise.muscle_group || 'Não especificado'}
+                equipmentType={exercise.equipment_type || 'Não especificado'}
               />
               <button 
                 className={`absolute top-3 right-3 bg-red-100 text-red-600 p-2 rounded-full ${isDeleting === exercise.id ? 'opacity-50' : ''}`}

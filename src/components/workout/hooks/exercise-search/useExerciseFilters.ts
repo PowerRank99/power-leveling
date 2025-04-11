@@ -15,8 +15,8 @@ export const matchesFilter = (exercise: Exercise, filterType: 'muscle_group' | '
   if (filterValue === 'Todos') return true;
   
   const exerciseValue = filterType === 'muscle_group' 
-    ? (exercise.muscle_group || exercise.category || '')
-    : (exercise.equipment_type || exercise.equipment || '');
+    ? exercise.muscle_group || ''
+    : exercise.equipment_type || '';
   
   const normalizedExerciseValue = normalizeText(exerciseValue);
   const normalizedFilterValue = normalizeText(filterValue);
@@ -53,11 +53,6 @@ export const matchesFilter = (exercise: Exercise, filterType: 'muscle_group' | '
     if (filterValue === 'Não especificado' && (!exercise.muscle_group || exercise.muscle_group.trim() === '')) {
       return true;
     }
-
-    // Check if category matches (for backward compatibility)
-    if (normalizeText(exercise.category) === normalizedFilterValue) {
-      return true;
-    }
   }
   
   // Check aliases for equipment types
@@ -71,8 +66,7 @@ export const matchesFilter = (exercise: Exercise, filterType: 'muscle_group' | '
     if (matchingAliasKey) return true;
     
     // Special case for 'Nenhum' (bodyweight exercises)
-    if (filterValue === 'Nenhum' && (!exercise.equipment_type || exercise.equipment_type.trim() === '' || 
-        !exercise.equipment || exercise.equipment.trim() === '')) {
+    if (filterValue === 'Nenhum' && (!exercise.equipment_type || exercise.equipment_type.trim() === '')) {
       return true;
     }
     

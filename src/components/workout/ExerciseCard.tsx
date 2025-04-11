@@ -125,19 +125,12 @@ const ExerciseCard: React.FC<ExerciseCardProps> = memo(({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <h4 className="text-xs font-orbitron mb-1 text-text-tertiary">Grupo Muscular</h4>
-                <p className="text-sm text-text-secondary font-sora">{muscleGroup || category}</p>
+                <p className="text-sm text-text-secondary font-sora">{muscleGroup}</p>
               </div>
-              
-              {equipment && (
-                <div>
-                  <h4 className="text-xs font-orbitron mb-1 text-text-tertiary">Equipamento</h4>
-                  <p className="text-sm text-text-secondary font-sora">{equipment}</p>
-                </div>
-              )}
               
               {equipmentType && (
                 <div>
-                  <h4 className="text-xs font-orbitron mb-1 text-text-tertiary">Tipo de Equipamento</h4>
+                  <h4 className="text-xs font-orbitron mb-1 text-text-tertiary">Equipamento</h4>
                   <p className="text-sm text-text-secondary font-sora">{equipmentType}</p>
                 </div>
               )}

@@ -33,17 +33,12 @@ const ExerciseLibraryPage = () => {
   const exerciseMatchesCategory = (exercise: Exercise, category: string): boolean => {
     if (category === 'Todos') return true;
     
-    const muscleGroup = exercise.muscle_group || exercise.category || '';
+    const muscleGroup = exercise.muscle_group || '';
     const normalizedMuscleGroup = normalizeText(muscleGroup);
     const normalizedCategory = normalizeText(category);
     
     // Direct match
     if (normalizedMuscleGroup === normalizedCategory) {
-      return true;
-    }
-    
-    // Check category match
-    if (normalizeText(exercise.category) === normalizedCategory) {
       return true;
     }
     
@@ -69,12 +64,6 @@ const ExerciseLibraryPage = () => {
         
         let filteredData = data as Exercise[];
         
-        // Process the data to ensure muscle_group is set
-        filteredData = filteredData.map(ex => ({
-          ...ex,
-          muscle_group: ex.muscle_group || ex.category || 'Não especificado'
-        }));
-        
         // Apply category filter if not 'Todos'
         if (activeCategory !== 'Todos') {
           filteredData = filteredData.filter(ex => exerciseMatchesCategory(ex, activeCategory));
@@ -88,7 +77,7 @@ const ExerciseLibraryPage = () => {
         // Log distribution by category
         const categoryCount: Record<string, number> = {};
         filteredData.forEach(ex => {
-          const category = ex.muscle_group || ex.category || 'Não especificado';
+          const category = ex.muscle_group || 'Não especificado';
           if (categoryCount[category]) {
             categoryCount[category]++;
           } else {
@@ -148,13 +137,13 @@ const ExerciseLibraryPage = () => {
             <ExerciseCard
               key={exercise.id}
               name={exercise.name}
-              category={exercise.category}
+              category={exercise.muscle_group || 'Não especificado'}
               level={exercise.level as any}
               type={exercise.type as any}
               image={exercise.image_url || '/placeholder.svg'}
               description={exercise.description || ''}
-              equipment={exercise.equipment || ''}
-              muscleGroup={exercise.muscle_group || exercise.category || 'Não especificado'}
+              equipment={exercise.equipment_type || 'Não especificado'}
+              muscleGroup={exercise.muscle_group || 'Não especificado'}
               equipmentType={exercise.equipment_type || 'Não especificado'}
             />
           ))
