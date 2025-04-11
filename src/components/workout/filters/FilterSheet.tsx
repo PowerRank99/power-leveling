@@ -39,9 +39,10 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
       <SheetTrigger asChild>
         <div>
           <FilterButton 
-            isActive={selectedOption !== 'Todos'} 
             icon={icon} 
-            label={selectedOption === 'Todos' ? label : selectedOption}
+            label={label}
+            selectedOption={selectedOption}
+            onClick={() => {}} // Empty function since this is just a trigger
           />
         </div>
       </SheetTrigger>
