@@ -1,17 +1,16 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import PageHeader from '@/components/ui/PageHeader';
 import BottomNavBar from '@/components/navigation/BottomNavBar';
 import AuthRequiredRoute from '@/components/AuthRequiredRoute';
 import { useWorkoutData } from '@/hooks/useWorkoutData';
 import ActionsBar from '@/components/workout/ActionsBar';
 import { RoutineWithExercises } from '@/components/workout/types/Workout';
-import { ManualWorkout } from '@/types/manualWorkoutTypes';
-import { ManualWorkoutService } from '@/services/workout/manual/ManualWorkoutService';
 import { useAuth } from '@/hooks/useAuth';
 import WorkoutErrorAlert from '@/components/workout/WorkoutErrorAlert';
 import RoutinesSection from '@/components/workout/RoutinesSection';
-import WorkoutTabsSection from '@/components/workout/WorkoutTabsSection';
+import WorkoutHistorySection from '@/components/workout/WorkoutHistorySection';
+import { useUnifiedWorkouts } from '@/hooks/workout-data/useUnifiedWorkouts';
 
 const WorkoutPage = () => {
   const { user } = useAuth();
@@ -30,9 +29,21 @@ const WorkoutPage = () => {
     loadMoreWorkouts
   } = useWorkoutData();
   
-  const [manualWorkouts, setManualWorkouts] = useState<ManualWorkout[]>([]);
-  const [isLoadingManual, setIsLoadingManual] = useState(false);
-  const [activeTab, setActiveTab] = useState<'tracked' | 'manual'>('tracked');
+  // Use the new unified workouts hook
+  const {
+    unifiedWorkouts,
+    isLoadingManual,
+    loadManualWorkouts,
+    hasMoreWorkouts: hasMoreUnifiedWorkouts,
+    isLoadingMoreTracked,
+    loadMoreWorkouts: loadMoreUnifiedWorkouts
+  } = useUnifiedWorkouts(
+    user?.id,
+    recentWorkouts,
+    loadMoreWorkouts,
+    hasMoreWorkouts,
+    isLoadingMore
+  );
   
   // Transform Routine[] to RoutineWithExercises[]
   const routinesWithExercises: RoutineWithExercises[] = savedRoutines.map(routine => ({
@@ -58,21 +69,6 @@ const WorkoutPage = () => {
     isDeletingItemRecord[workout.id] = isDeletingItem(workout.id);
   });
   
-  // Load manual workouts
-  const loadManualWorkouts = async () => {
-    if (!user) return;
-    
-    try {
-      setIsLoadingManual(true);
-      const manualWorkoutsData = await ManualWorkoutService.getUserManualWorkouts(user.id);
-      setManualWorkouts(manualWorkoutsData);
-    } catch (error) {
-      console.error('Error loading manual workouts:', error);
-    } finally {
-      setIsLoadingManual(false);
-    }
-  };
-  
   // Handle successful manual workout submission
   const handleManualWorkoutSuccess = () => {
     loadManualWorkouts();
@@ -89,7 +85,7 @@ const WorkoutPage = () => {
     };
     
     initialLoad();
-  }, [refreshData, user]);
+  }, [refreshData, user, loadManualWorkouts]);
   
   const handleRetry = () => {
     console.log("Retrying data load");
@@ -119,22 +115,18 @@ const WorkoutPage = () => {
             isDeletingItem={isDeletingItemRecord}
           />
           
-          <WorkoutTabsSection 
-            recentWorkouts={recentWorkouts}
-            manualWorkouts={manualWorkouts}
-            isLoading={isLoading}
-            isLoadingManual={isLoadingManual}
+          <WorkoutHistorySection 
+            unifiedWorkouts={unifiedWorkouts}
+            isLoading={isLoading || isLoadingManual}
             onRetry={handleRetry}
             error={error}
             hasAttemptedLoad={hasAttemptedLoad}
             onDeleteWorkout={deleteWorkout}
             isDeletingItem={isDeletingItem}
-            hasMoreWorkouts={hasMoreWorkouts}
-            isLoadingMore={isLoadingMore}
-            onLoadMore={loadMoreWorkouts}
+            hasMoreWorkouts={hasMoreUnifiedWorkouts}
+            isLoadingMore={isLoadingMoreTracked}
+            onLoadMore={loadMoreUnifiedWorkouts}
             onManualWorkoutSuccess={handleManualWorkoutSuccess}
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
           />
         </div>
         

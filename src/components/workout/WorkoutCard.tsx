@@ -3,6 +3,8 @@ import React from 'react';
 import { formatDuration } from '@/utils/formatters';
 import SwipeableRow from './set/SwipeableRow';
 import DeleteButton from './set/DeleteButton';
+import { Badge } from '@/components/ui/badge';
+import { ClipboardCheck } from 'lucide-react';
 
 interface WorkoutCardProps {
   id: string;
@@ -14,6 +16,7 @@ interface WorkoutCardProps {
   durationSeconds?: number | null;
   isDeleting?: boolean;
   onDelete?: (id: string) => void;
+  workoutType?: 'tracked' | 'manual';
 }
 
 const WorkoutCard: React.FC<WorkoutCardProps> = ({
@@ -25,7 +28,8 @@ const WorkoutCard: React.FC<WorkoutCardProps> = ({
   prs = 0,
   durationSeconds,
   isDeleting = false,
-  onDelete
+  onDelete,
+  workoutType = 'tracked'
 }) => {
   const handleDelete = () => {
     if (onDelete) {
@@ -45,13 +49,21 @@ const WorkoutCard: React.FC<WorkoutCardProps> = ({
         />
       )}
     >
-      <div className={`bg-midnight-elevated rounded-lg shadow-subtle p-4 mb-4 border border-divider ${isDeleting ? 'opacity-50' : ''}`}>
+      <div className={`bg-midnight-elevated rounded-lg shadow-subtle p-4 mb-4 border border-arcane-30/30 ${isDeleting ? 'opacity-50' : ''}`}>
         <div className="flex justify-between">
           <div>
             <h3 className="font-orbitron font-bold text-lg text-text-primary">{name}</h3>
             <p className="text-text-secondary text-sm font-sora">{date}</p>
           </div>
-          <div className="text-achievement font-bold font-space">+{exercisesCount * 10} XP</div>
+          <div className="flex flex-col items-end gap-2">
+            <div className="text-achievement font-bold font-space">+{exercisesCount * 10} XP</div>
+            {workoutType === 'tracked' && (
+              <Badge variant="outline" className="bg-arcane-15 text-arcane border-arcane-30 flex items-center gap-1">
+                <ClipboardCheck className="h-3 w-3" />
+                Registrado
+              </Badge>
+            )}
+          </div>
         </div>
         
         <div className="flex mt-3 space-x-2">
