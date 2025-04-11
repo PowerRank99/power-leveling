@@ -32,6 +32,7 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
   const [searchInput, setSearchInput] = useState('');
   const [results, setResults] = useState<Exercise[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const [lastFocusTime, setLastFocusTime] = useState(0);
   
   // Direct search function with minimal processing
   const searchExercises = async (query: string) => {
@@ -74,6 +75,10 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
       setResults([]);
     } finally {
       setIsLoading(false);
+      // Re-focus the input after search completes
+      if (isOpen && searchInputRef.current) {
+        searchInputRef.current.focus();
+      }
     }
   };
   
@@ -82,7 +87,9 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
     if (isOpen && searchInputRef.current) {
       // Small delay to ensure the collapsible has fully opened
       const timer = setTimeout(() => {
-        searchInputRef.current?.focus();
+        if (searchInputRef.current) {
+          searchInputRef.current.focus();
+        }
       }, 100);
       return () => clearTimeout(timer);
     }
@@ -116,6 +123,22 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
     setSearchInput(e.target.value);
   };
   
+  // Prevent losing focus and ensure input is focused after any interaction
+  const ensureFocus = () => {
+    // Prevent multiple focus attempts in a short time period
+    const now = Date.now();
+    if (now - lastFocusTime < 100) return;
+    
+    setLastFocusTime(now);
+    
+    // Use setTimeout to ensure this runs after React's updates
+    setTimeout(() => {
+      if (isOpen && searchInputRef.current && document.activeElement !== searchInputRef.current) {
+        searchInputRef.current.focus();
+      }
+    }, 10);
+  };
+
   return (
     <div className="space-y-3">
       <Label htmlFor="exercise">Tipo de Exercício</Label>
@@ -165,14 +188,14 @@ const ExerciseSelector: React.FC<ExerciseSelectorProps> = ({
                   placeholder="Buscar exercícios..."
                   className="pl-10 bg-midnight-elevated border-arcane/30"
                   disabled={isLoading}
+                  onFocus={ensureFocus}
                   onBlur={(e) => {
-                    // Prevent losing focus on mobile when the search is triggered
-                    // Small delay to prevent immediate refocus on touch devices
-                    setTimeout(() => {
-                      if (isOpen && document.activeElement !== e.target) {
-                        e.target.focus();
-                      }
-                    }, 10);
+                    // Delay to allow click events to complete before refocusing
+                    setTimeout(() => ensureFocus(), 50);
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    ensureFocus();
                   }}
                 />
               </div>

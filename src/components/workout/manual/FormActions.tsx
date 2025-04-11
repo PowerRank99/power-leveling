@@ -3,12 +3,14 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 
 interface FormActionsProps {
+  formId?: string;
   isSubmitting: boolean;
   isSubmitDisabled: boolean;
   onCancel: () => void;
 }
 
 const FormActions: React.FC<FormActionsProps> = ({ 
+  formId,
   isSubmitting, 
   isSubmitDisabled, 
   onCancel 
@@ -26,6 +28,7 @@ const FormActions: React.FC<FormActionsProps> = ({
       </Button>
       <Button
         type="submit"
+        form={formId}
         disabled={isSubmitting || isSubmitDisabled}
         className="bg-arcane hover:bg-arcane/80 text-text-primary"
       >

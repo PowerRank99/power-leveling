@@ -146,7 +146,7 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
       </h2>
       
       <div className="flex-grow overflow-y-auto pr-1">
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form id="manualWorkoutForm" onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-3">
             <ExerciseSelector 
               selectedExercise={selectedExercise} 
@@ -179,6 +179,7 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
       
       <div className={`${isMobile ? 'mt-4 border-t border-divider pt-4' : 'mt-4'}`}>
         <FormActions 
+          formId="manualWorkoutForm"
           isSubmitting={isSubmitting} 
           isSubmitDisabled={!imageFile || !selectedExercise} 
           onCancel={onCancel} 

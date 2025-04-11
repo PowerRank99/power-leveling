@@ -37,7 +37,7 @@ const ManualWorkoutDialog: React.FC<ManualWorkoutDialogProps> = ({ onSuccess }) 
         </Button>
       </DialogTrigger>
       <DialogContent 
-        className={`${isMobile ? 'w-full h-[95vh] p-4 max-w-none mt-[2.5vh]' : 'sm:max-w-[500px]'} bg-midnight-card border-arcane/30`}
+        className={`${isMobile ? 'w-full h-[95vh] p-4 max-w-none mt-[2.5vh]' : 'sm:max-w-[500px]'} bg-midnight-card border-arcane/30 overflow-hidden flex flex-col`}
       >
         <ManualWorkoutForm
           onSuccess={handleSuccess}
