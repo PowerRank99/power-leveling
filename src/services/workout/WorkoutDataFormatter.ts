@@ -107,6 +107,7 @@ export class WorkoutDataFormatter {
       return {
         id: exercise.id,
         name: exercise.name,
+        exerciseId: exercise.id,
         sets
       };
     });

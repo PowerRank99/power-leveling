@@ -681,7 +681,7 @@ export class AchievementCheckerService {
     criteria: any
   ): Promise<void> {
     try {
-      await AchievementService.awardAchievement(userId, achievementId, criteria);
+      await AchievementService.awardAchievement(userId, achievementId);
     } catch (error) {
       console.error(`Error checking for achievement ${achievementId}:`, error);
     }

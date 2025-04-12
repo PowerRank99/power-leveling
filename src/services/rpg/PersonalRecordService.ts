@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise, PersonalRecord, DatabaseResult } from '@/types/workout';
 import { toast } from 'sonner';
@@ -84,10 +85,9 @@ export class PersonalRecordService {
             weight: weight,
             previous_weight: previousWeight
           },
-          { onConflict: 'user_id, exercise_id', returning: 'minimal' }
+          { onConflict: 'user_id, exercise_id' }
         )
-        .select()
-        .single();
+        .select();
 
       if (error) {
         console.error('Error recording personal record:', error);
@@ -141,6 +141,3 @@ export class PersonalRecordService {
     }
   }
 }
-
-// Export the PersonalRecord type for external use
-export type { PersonalRecord };
