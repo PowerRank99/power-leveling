@@ -46,7 +46,7 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
     calculatePotentialXP();
   }, [duration, exerciseCount, difficultyLevel, includePersonalRecord, streak, useClassPassives, selectedClass]);
   
-  calculatePotentialXP = () => {
+  const calculatePotentialXP = () => {
     try {
       const workout = {
         id: 'simulation',
@@ -108,7 +108,7 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
     }
   };
   
-  simulateWorkout = async () => {
+  const simulateWorkout = async () => {
     if (!userId) {
       toast.error('Error', {
         description: 'Please select a test user',

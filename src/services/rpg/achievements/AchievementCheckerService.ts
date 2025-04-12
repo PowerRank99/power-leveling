@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Achievement } from '@/types/achievementTypes';
 import { toast } from 'sonner';
@@ -172,41 +173,61 @@ export class AchievementCheckerService {
   /**
    * Check all achievements related to XP milestones
    */
-  static async checkXPMilestoneAchievements(userId: string, totalXP: number): Promise<void> {
+  static async checkXPMilestoneAchievements(userId: string, totalXP?: number): Promise<void> {
     try {
       if (!userId) return;
 
+      // Get user profile to get current XP if not provided
+      let userXP = totalXP;
+      let userLevel = 1;
+      
+      if (!userXP) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('xp, level')
+          .eq('id', userId)
+          .single();
+          
+        if (profileError) {
+          console.error('Error fetching user XP:', profileError);
+          return;
+        }
+        
+        userXP = profile?.xp || 0;
+        userLevel = profile?.level || 1;
+      }
+
       // Award XP milestone achievements
-      if (totalXP >= 1000) {
+      if (userXP >= 1000) {
         await AchievementService.awardAchievement(userId, 'xp-1000');
       }
-      if (totalXP >= 5000) {
+      if (userXP >= 5000) {
         await AchievementService.awardAchievement(userId, 'xp-5000');
       }
-      if (totalXP >= 10000) {
+      if (userXP >= 10000) {
         await AchievementService.awardAchievement(userId, 'xp-10000');
       }
-      if (totalXP >= 50000) {
+      if (userXP >= 50000) {
         await AchievementService.awardAchievement(userId, 'xp-50000');
       }
-      if (totalXP >= 100000) {
+      if (userXP >= 100000) {
         await AchievementService.awardAchievement(userId, 'xp-100000');
       }
 
       // Check level milestone achievements
-      if (level >= 10) {
+      if (userLevel >= 10) {
         await AchievementService.awardAchievement(userId, 'level-10');
       }
-      if (level >= 25) {
+      if (userLevel >= 25) {
         await AchievementService.awardAchievement(userId, 'level-25');
       }
-      if (level >= 50) {
+      if (userLevel >= 50) {
         await AchievementService.awardAchievement(userId, 'level-50');
       }
-      if (level >= 75) {
+      if (userLevel >= 75) {
         await AchievementService.awardAchievement(userId, 'level-75');
       }
-      if (level >= 99) {
+      if (userLevel >= 99) {
         await AchievementService.awardAchievement(userId, 'level-99');
       }
       
@@ -667,7 +688,49 @@ export class AchievementCheckerService {
     criteria: any = {}
   ): Promise<void> {
     try {
-      await AchievementService.awardAchievement(userId, achievementId);
+      // Directly award the achievement without recursive checking
+      const { error } = await supabase
+        .from('user_achievements')
+        .insert({
+          user_id: userId,
+          achievement_id: achievementId,
+          achieved_at: new Date().toISOString()
+        })
+        .onConflict(['user_id', 'achievement_id'])
+        .ignore();
+        
+      if (!error) {
+        // Only update profile counters if the achievement was newly added
+        const { count } = await supabase
+          .from('user_achievements')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .eq('achievement_id', achievementId);
+          
+        if (count === 1) {
+          // Get achievement XP reward
+          const { data: achievement } = await supabase
+            .from('achievements')
+            .select('xp_reward, points')
+            .eq('id', achievementId)
+            .single();
+            
+          if (achievement) {
+            // Award XP (without recursive achievement checking)
+            await supabase.rpc('award_xp_no_check', {
+              user_id_param: userId,
+              xp_amount: achievement.xp_reward
+            });
+            
+            // Update achievement counters
+            await supabase.rpc('increment_profile_counter', {
+              user_id_param: userId,
+              counter_name: 'achievements_count',
+              increment_amount: 1
+            });
+          }
+        }
+      }
     } catch (error) {
       console.error(`Error checking for achievement ${achievementId}:`, error);
     }

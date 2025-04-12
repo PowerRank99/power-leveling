@@ -10,12 +10,12 @@ import { useSetRemover } from './useSetRemover';
  */
 export function useSetPersistence(workoutId: string | null) {
   // Use individual specialized hooks
-  const { updateSet, isProcessing: isUpdateProcessing } = useSetUpdater(workoutId);
+  const { updateSet, isUpdating } = useSetUpdater(workoutId);
   const { addSet, isProcessing: isAddProcessing } = useSetAdder(workoutId);
   const { removeSet, isProcessing: isRemoveProcessing } = useSetRemover(workoutId);
   
   // Combine processing states
-  const isProcessing = isUpdateProcessing || isAddProcessing || isRemoveProcessing;
+  const isProcessing = isUpdating || isAddProcessing || isRemoveProcessing;
   
   return {
     updateSet,

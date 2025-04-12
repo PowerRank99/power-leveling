@@ -88,7 +88,7 @@ export class XPService {
       
       // Check for XP milestone achievements using the unified checker
       if (result) {
-        await AchievementCheckerService.checkXPMilestoneAchievements(userId);
+        await AchievementCheckerService.checkXPMilestoneAchievements(userId, baseXP);
       }
       
       return result;

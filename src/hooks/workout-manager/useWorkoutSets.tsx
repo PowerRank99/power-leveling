@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { WorkoutExercise } from '@/types/workoutTypes';
+import { WorkoutExercise, SetData } from '@/types/workoutTypes';
 import { useSetPersistence } from '../workout/useSetPersistence';
 
 /**
@@ -22,10 +22,26 @@ export const useWorkoutSets = (
     if (isProcessing) return;
     console.log(`[useWorkoutSets] Adding set for exercise index ${exerciseIndex}`);
     
-    const result = await addSet(exerciseIndex, exercises, routineId);
-    if (result) {
-      // Use explicit type casting to resolve the type mismatch
-      setProcessedExercises(result as WorkoutExercise[]);
+    // We need a different approach since the types don't match directly
+    try {
+      const currentExercise = exercises[exerciseIndex];
+      if (!currentExercise) return;
+      
+      // Call the addSet function with proper typing
+      const result = await addSet(exerciseIndex, currentExercise.sets as unknown as SetData[], routineId);
+      
+      if (result) {
+        // Update the exercises array with the new sets
+        const updatedExercises = [...exercises];
+        updatedExercises[exerciseIndex] = {
+          ...updatedExercises[exerciseIndex],
+          sets: result as unknown as WorkoutExercise['sets']
+        };
+        
+        setProcessedExercises(updatedExercises);
+      }
+    } catch (error) {
+      console.error("[useWorkoutSets] Error in handleAddSet:", error);
     }
   };
   
@@ -36,10 +52,25 @@ export const useWorkoutSets = (
     if (isProcessing) return;
     console.log(`[useWorkoutSets] Removing set ${setIndex} from exercise ${exerciseIndex}`);
     
-    const result = await removeSet(exerciseIndex, exercises, setIndex, routineId);
-    if (result) {
-      // Use explicit type casting to resolve the type mismatch
-      setProcessedExercises(result as WorkoutExercise[]);
+    try {
+      const currentExercise = exercises[exerciseIndex];
+      if (!currentExercise) return;
+      
+      // Call the removeSet function with proper typing
+      const result = await removeSet(exerciseIndex, currentExercise.sets as unknown as SetData[], setIndex, routineId);
+      
+      if (result) {
+        // Update the exercises array with the modified sets
+        const updatedExercises = [...exercises];
+        updatedExercises[exerciseIndex] = {
+          ...updatedExercises[exerciseIndex],
+          sets: result as unknown as WorkoutExercise['sets']
+        };
+        
+        setProcessedExercises(updatedExercises);
+      }
+    } catch (error) {
+      console.error("[useWorkoutSets] Error in handleRemoveSet:", error);
     }
   };
   
@@ -49,10 +80,25 @@ export const useWorkoutSets = (
   const handleUpdateSet = async (exerciseIndex: number, setIndex: number, data: { weight?: string; reps?: string; completed?: boolean }) => {
     if (isProcessing) return;
     
-    const result = await updateSet(exerciseIndex, exercises, setIndex, data);
-    if (result) {
-      // Use explicit type casting to resolve the type mismatch
-      setProcessedExercises(result as WorkoutExercise[]);
+    try {
+      const currentExercise = exercises[exerciseIndex];
+      if (!currentExercise) return;
+      
+      // Call the updateSet function with proper typing
+      const result = await updateSet(exerciseIndex, currentExercise.sets as unknown as SetData[], setIndex, data);
+      
+      if (result) {
+        // Update the exercises array with the modified sets
+        const updatedExercises = [...exercises];
+        updatedExercises[exerciseIndex] = {
+          ...updatedExercises[exerciseIndex],
+          sets: result as unknown as WorkoutExercise['sets']
+        };
+        
+        setProcessedExercises(updatedExercises);
+      }
+    } catch (error) {
+      console.error("[useWorkoutSets] Error in handleUpdateSet:", error);
     }
   };
   
@@ -67,14 +113,9 @@ export const useWorkoutSets = (
       const newCompleted = !currentExercise.sets[setIndex].completed;
       console.log(`[useWorkoutSets] Setting complete=${newCompleted} for exercise ${exerciseIndex}, set ${setIndex}`);
       
-      const result = await updateSet(exerciseIndex, exercises, setIndex, { 
+      await handleUpdateSet(exerciseIndex, setIndex, { 
         completed: newCompleted
       });
-      
-      if (result) {
-        // Use explicit type casting to resolve the type mismatch
-        setProcessedExercises(result as WorkoutExercise[]);
-      }
     }
   };
 
