@@ -50,7 +50,7 @@ export class WorkoutCompletionService {
         return false;
       }
       
-      // Award XP
+      // Award XP using the corrected method signature
       await XPService.awardWorkoutXP(userId, workout, durationSeconds);
       
       // Update user streak

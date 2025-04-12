@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Achievement, AchievementStats } from '@/types/achievementTypes';
 import { XPService } from './XPService';
@@ -212,10 +211,7 @@ export class AchievementService {
       if (insertError) throw insertError;
 
       // Award XP to user
-      await XPService.awardXP(userId, achievement.xp_reward, 'achievement', {
-        achievementId,
-        achievementName: achievement.name
-      });
+      await XPService.awardXP(userId, achievement.xp_reward, 'achievement');
 
       // Update achievement count and points
       await supabase.rpc('increment_profile_counter', {

@@ -28,12 +28,12 @@ export class XPService {
   static async addXP(
     userId: string, 
     amount: number, 
-    source: string,
+    source: string = 'workout',
     metadata?: any
   ): Promise<boolean> {
     try {
       // Use the existing RPGXPService to award XP
-      return await RPGXPService.awardXP(userId, amount);
+      return await RPGXPService.awardXP(userId, amount, source, metadata);
     } catch (error) {
       console.error('Exception in addXP:', error);
       return false;

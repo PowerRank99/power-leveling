@@ -68,9 +68,41 @@ export class XPService {
   static async awardXP(
     userId: string, 
     baseXP: number, 
-    personalRecords: PersonalRecord[] = []
+    source: string = 'workout',
+    metadata?: any
   ): Promise<boolean> {
-    return XPBonusService.awardXP(userId, baseXP, personalRecords);
+    return XPBonusService.awardXP(userId, baseXP);
+  }
+
+  /**
+   * Awards XP for a completed workout
+   */
+  static async awardWorkoutXP(
+    userId: string,
+    workout: any,
+    durationSeconds: number
+  ): Promise<boolean> {
+    try {
+      // Calculate base XP from workout
+      let baseXP = 100; // Default XP
+      
+      if (workout && durationSeconds) {
+        const workoutObj = {
+          id: workout.id,
+          exercises: [],
+          durationSeconds: durationSeconds,
+          difficulty: workout.difficulty || 'intermediario'
+        };
+        
+        baseXP = this.calculateWorkoutXP(workoutObj, null, 0);
+      }
+      
+      // Award the XP
+      return await this.awardXP(userId, baseXP, 'workout');
+    } catch (error) {
+      console.error('Error in awardWorkoutXP:', error);
+      return false;
+    }
   }
   
   /**

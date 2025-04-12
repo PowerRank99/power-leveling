@@ -21,20 +21,27 @@ export class ProfileService {
       }
       
       // Update profile with workout stats
-      const { error } = await supabase
+      const { error } = await supabase.rpc('increment_profile_counter', { 
+        user_id_param: userId, 
+        counter_name: 'workouts_count', 
+        increment_amount: 1 
+      });
+
+      if (error) {
+        console.error('Error updating profile stats:', error);
+        return false;
+      }
+
+      // Update last workout timestamp
+      const { error: timestampError } = await supabase
         .from('profiles')
         .update({
-          workouts_count: supabase.rpc('increment_profile_counter', { 
-            user_id_param: userId, 
-            counter_name: 'workouts_count', 
-            increment_amount: 1 
-          }),
           last_workout_at: new Date().toISOString()
         })
         .eq('id', userId);
         
-      if (error) {
-        console.error('Error updating profile stats:', error);
+      if (timestampError) {
+        console.error('Error updating last workout timestamp:', timestampError);
         return false;
       }
       
