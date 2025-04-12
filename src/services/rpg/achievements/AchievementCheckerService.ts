@@ -124,7 +124,7 @@ export class AchievementCheckerService {
         .select('streak')
         .eq('id', userId)
         .single();
-
+      
       if (profileError) {
         console.error('Error fetching user streak:', profileError);
         return;
@@ -369,8 +369,8 @@ export class AchievementCheckerService {
       
       // Check for workout count achievements
       await Promise.all([
-        this.checkForAchievement(userId, 'embalo_fitness', { workoutCount: totalWorkouts }),
-        this.checkForAchievement(userId, 'dedicacao_semanal', { workoutCount: totalWorkouts })
+        this.checkForAchievement(userId, 'embalo_fitness', { workoutCount: totalWorkouts }, {}),
+        this.checkForAchievement(userId, 'dedicacao_semanal', { workoutCount: totalWorkouts }, {})
       ]);
       
       // Get workouts per week
@@ -386,7 +386,7 @@ export class AchievementCheckerService {
       
       // Check for weekly workout achievements
       if (weekData && weekData.length >= 3) {
-        await this.checkForAchievement(userId, 'trio_na_semana', {}); 
+        await this.checkForAchievement(userId, 'trio_na_semana', {}, {}); 
       }
       
       // Update achievement points and rank
@@ -684,7 +684,8 @@ export class AchievementCheckerService {
   private static async checkForAchievement(
     userId: string,
     achievementId: string,
-    criteria: any = {}
+    criteria: any = {},
+    options: any = {}
   ): Promise<void> {
     try {
       // Directly award the achievement without recursive checking
@@ -714,9 +715,10 @@ export class AchievementCheckerService {
             
           if (achievement) {
             // Award XP (without recursive achievement checking)
-            await supabase.rpc('award_xp_no_check', {
+            await supabase.rpc('increment_profile_counter', {
               user_id_param: userId,
-              xp_amount: achievement.xp_reward
+              counter_name: 'xp',
+              increment_amount: achievement.xp_reward
             });
             
             // Update achievement counters

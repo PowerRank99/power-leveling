@@ -37,7 +37,7 @@ export interface WorkoutSet {
 export interface WorkoutExercise {
   id: string;
   name: string;
-  exerciseId?: string; // May be needed in some cases
+  exerciseId: string; // Changed from optional to required for compatibility
   sets: WorkoutSet[];
   targetSets?: number; // From workout routine
   targetReps?: string; // From workout routine

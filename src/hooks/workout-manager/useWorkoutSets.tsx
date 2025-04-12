@@ -27,17 +27,26 @@ export const useWorkoutSets = (
       if (!currentExercise) return;
       
       // Extract the sets array from the current exercise
-      const currentSets = currentExercise.sets as unknown as SetData[];
+      const currentSets = currentExercise.sets;
       
-      // Call the addSet function with proper params
-      const result = await addSet(exerciseIndex, currentSets, routineId);
+      // Call the addSet function with proper params - we need to convert to WorkoutExercise[] here
+      const mockExercises: WorkoutExercise[] = [
+        {
+          id: currentExercise.id,
+          name: currentExercise.name,
+          exerciseId: currentExercise.exerciseId,
+          sets: currentSets as any
+        }
+      ];
+      
+      const result = await addSet(exerciseIndex, mockExercises, routineId);
       
       if (result) {
         // Update the exercises array with the new sets
         const updatedExercises = [...exercises];
         updatedExercises[exerciseIndex] = {
           ...updatedExercises[exerciseIndex],
-          sets: result as unknown as WorkoutExercise['sets']
+          sets: result[0].sets as any
         };
         
         setProcessedExercises(updatedExercises);
@@ -59,17 +68,26 @@ export const useWorkoutSets = (
       if (!currentExercise) return;
       
       // Extract the sets array from the current exercise
-      const currentSets = currentExercise.sets as unknown as SetData[];
+      const currentSets = currentExercise.sets;
       
-      // Call the removeSet function with proper params
-      const result = await removeSet(exerciseIndex, currentSets, setIndex, routineId);
+      // Call the removeSet function with proper params - we need to convert to WorkoutExercise[] here
+      const mockExercises: WorkoutExercise[] = [
+        {
+          id: currentExercise.id,
+          name: currentExercise.name,
+          exerciseId: currentExercise.exerciseId,
+          sets: currentSets as any
+        }
+      ];
+      
+      const result = await removeSet(exerciseIndex, mockExercises, setIndex, routineId);
       
       if (result) {
         // Update the exercises array with the modified sets
         const updatedExercises = [...exercises];
         updatedExercises[exerciseIndex] = {
           ...updatedExercises[exerciseIndex],
-          sets: result as unknown as WorkoutExercise['sets']
+          sets: result[0].sets as any
         };
         
         setProcessedExercises(updatedExercises);

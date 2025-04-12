@@ -25,7 +25,8 @@ export const useWorkoutSetManagement = (
       
       const result = await updateSetAction(exerciseIndex, exercises, setIndex, data);
       if (result) {
-        setExercises(result);
+        // Use function form of setState to avoid type issues
+        setExercises(prevExercises => result as WorkoutExercise[]);
         return true;
       }
       return false;
@@ -41,7 +42,8 @@ export const useWorkoutSetManagement = (
       const result = await addSetAction(exerciseIndex, exercises, routineId);
       if (result) {
         console.log(`Set added successfully for exercise ${exerciseIndex}, updating exercises state`);
-        setExercises(result);
+        // Use function form of setState to avoid type issues
+        setExercises(prevExercises => result as WorkoutExercise[]);
         return true;
       } else {
         console.error("Failed to add set, no result returned");
@@ -60,7 +62,8 @@ export const useWorkoutSetManagement = (
     try {
       const result = await removeSetAction(exerciseIndex, exercises, setIndex, routineId);
       if (result) {
-        setExercises(result);
+        // Use function form of setState to avoid type issues
+        setExercises(prevExercises => result as WorkoutExercise[]);
         return true;
       }
       return false;

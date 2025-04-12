@@ -1,39 +1,26 @@
 
 /**
  * Common workout types for the application
+ * Most of these types are now imported from src/types/workout.ts for consistency
  */
 
-export interface WorkoutExercise {
-  id: string;
-  name: string;
-  exerciseId: string; // Making exerciseId required
-  sets: WorkoutSet[];
-  targetSets?: number;
-  targetReps?: string;
-}
+import { 
+  WorkoutExercise as WorkoutExerciseBase,
+  WorkoutSet as WorkoutSetBase,
+  WorkoutExerciseData as WorkoutExerciseDataBase,
+  SetData as SetDataBase,
+  PreviousSetData as PreviousSetDataBase,
+  ExerciseHistory as ExerciseHistoryBase,
+  DatabaseResult as DatabaseResultBase
+} from './workout';
 
-export interface WorkoutSet {
-  id: string;
-  weight: string;
-  reps: string;
-  completed: boolean;
-  set_order?: number;
-  completed_at?: string | null;
-  previous?: {
-    weight: string;
-    reps: string;
-  };
-}
-
-export interface WorkoutExerciseData {
-  id: string; // Making id required
-  exerciseId: string;
-  weight?: number;
-  reps?: number;
-  sets?: number;
-  targetSets?: number;
-  name?: string;
-}
+export type WorkoutExercise = WorkoutExerciseBase;
+export type WorkoutSet = WorkoutSetBase;
+export type WorkoutExerciseData = WorkoutExerciseDataBase;
+export type SetData = SetDataBase;
+export type PreviousSetData = PreviousSetDataBase;
+export type ExerciseHistory = ExerciseHistoryBase;
+export type DatabaseResult<T> = DatabaseResultBase<T>;
 
 export interface Routine {
   id: string;
@@ -51,39 +38,4 @@ export interface RecentWorkout {
   sets_count: number;
   prs: number;
   duration_seconds: number | null;
-}
-
-// Add these additional types that were missing and causing errors
-export interface SetData {
-  id: string;
-  weight: string;
-  reps: string;
-  completed: boolean;
-  previous?: {
-    weight: string;
-    reps: string;
-  };
-  set_order?: number;
-}
-
-export interface ExerciseHistory {
-  id: string;
-  userId: string;
-  exerciseId: string;
-  weight: number;
-  reps: number;
-  sets: number;
-  lastUsedAt: string;
-  createdAt: string;
-}
-
-export interface DatabaseResult<T> {
-  success: boolean;
-  data?: T;
-  error?: any;
-}
-
-export interface PreviousSetData {
-  weight: string;
-  reps: string;
 }
