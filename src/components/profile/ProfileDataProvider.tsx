@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Profile {
@@ -26,9 +26,26 @@ interface ProfileContextProps {
   refetchProfile: () => Promise<void>;
 }
 
+interface ProfileData {
+  level: number;
+  xp: number;
+  className: string;
+  classDescription: string;
+  rank: string;
+  achievementPoints: number;
+  workoutsCount: number;
+  currentXP: number;
+  nextLevelXP: number;
+  dailyXP: number;
+  dailyXPCap: number;
+  lastActivity: string | null;
+  xpGain: number;
+  streak: number;
+}
+
 interface ProfileDataProviderProps {
   userId: string;
-  children: React.ReactNode;
+  children: (profileData: ProfileData) => ReactNode;
 }
 
 const ProfileContext = createContext<ProfileContextProps | undefined>(undefined);
@@ -148,6 +165,28 @@ const ProfileDataProvider: React.FC<ProfileDataProviderProps> = ({
     return 'Unranked';
   };
 
+  // Prepare the profileData object to be passed to children
+  const profileData: ProfileData = {
+    level: profile?.level || 1,
+    xp: profile?.xp || 0,
+    className: profile?.username || 'Novato',
+    classDescription: 'Game description',
+    rank: profile?.rank || 'Unranked',
+    achievementPoints: profile?.achievementPoints || 0,
+    workoutsCount: profile?.workoutsCount || 0,
+    currentXP: profile?.xp || 0,
+    nextLevelXP: (profile?.level || 1) * 100,
+    dailyXP: 0, // Placeholder value
+    dailyXPCap: 300,
+    lastActivity: profile?.lastWorkout,
+    xpGain: 0, // Placeholder value
+    streak: profile?.streak || 0
+  };
+
+  // Convert the functional children to ReactNode
+  const renderedChildren = children(profileData);
+
+  // Value to be provided by the context
   const value: ProfileContextProps = {
     profile,
     isLoading,
@@ -157,7 +196,7 @@ const ProfileDataProvider: React.FC<ProfileDataProviderProps> = ({
 
   return (
     <ProfileContext.Provider value={value}>
-      {children}
+      {renderedChildren}
     </ProfileContext.Provider>
   );
 };

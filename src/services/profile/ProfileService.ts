@@ -24,10 +24,9 @@ export class ProfileService {
       const { error } = await supabase
         .from('profiles')
         .update({
-          workouts_count: supabase.rpc('increment', { 
-            row_id: userId, 
-            table_name: 'profiles', 
-            column_name: 'workouts_count', 
+          workouts_count: supabase.rpc('increment_profile_counter', { 
+            user_id_param: userId, 
+            counter_name: 'workouts_count', 
             increment_amount: 1 
           }),
           last_workout_at: new Date().toISOString()
