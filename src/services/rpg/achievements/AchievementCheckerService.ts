@@ -1,10 +1,10 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Achievement } from '@/types/achievementTypes';
 import { toast } from 'sonner';
 import { AchievementService } from '../AchievementService';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { TransactionService } from '../../common/TransactionService';
+import { AchievementProgressService } from './AchievementProgressService';
 
 /**
  * Centralized service for checking and awarding achievements
@@ -26,16 +26,13 @@ export class AchievementCheckerService {
 
       // Use executeWithRetry for better reliability in checking achievements
       await TransactionService.executeWithRetry(async () => {
-        // Check rank E achievements (basic starter achievements)
+        // Update workout count achievement progress
+        await AchievementProgressService.updateWorkoutCountProgress(userId, workoutStats.totalCount);
+        
+        // Check other achievement types that don't have progress tracking yet
         await this.checkRankEAchievements(userId, workoutStats, userProfile);
-        
-        // Check rank D achievements (moderate difficulty)
         await this.checkRankDAchievements(userId, workoutStats, userProfile);
-        
-        // Check rank C achievements (intermediate difficulty)
         await this.checkRankCAchievements(userId, workoutStats, userProfile);
-        
-        // Check higher rank achievements (B, A, S)
         await this.checkHigherRankAchievements(userId, workoutStats, userProfile);
         
         // Update achievement points and rank
@@ -73,23 +70,9 @@ export class AchievementCheckerService {
 
       // Use transaction service to ensure consistency
       await TransactionService.executeWithRetry(async () => {
-        // Award first PR achievement
-        if (prCount && prCount >= 1) {
-          await AchievementService.awardAchievement(userId, 'pr-first');
-        }
-
-        // Award PR milestone achievements
-        if (prCount && prCount >= 5) {
-          await AchievementService.awardAchievement(userId, 'pr-5');
-        }
-        if (prCount && prCount >= 10) {
-          await AchievementService.awardAchievement(userId, 'pr-10');
-        }
-        if (prCount && prCount >= 25) {
-          await AchievementService.awardAchievement(userId, 'pr-25');
-        }
-        if (prCount && prCount >= 50) {
-          await AchievementService.awardAchievement(userId, 'pr-50');
+        // Update PR count achievement progress
+        if (prCount) {
+          await AchievementProgressService.updatePersonalRecordProgress(userId, prCount);
         }
 
         // Check for impressive PR achievements based on weight increase percentage
@@ -135,35 +118,8 @@ export class AchievementCheckerService {
 
       // Use transaction service for consistency
       await TransactionService.executeWithRetry(async () => {
-        // Rank E - Basic streak achievement
-        if (currentStreak >= 3) {
-          await AchievementService.awardAchievement(userId, 'streak-3');
-        }
-
-        // Rank D - Moderate streak achievements
-        if (currentStreak >= 7) {
-          await AchievementService.awardAchievement(userId, 'streak-7');
-        }
-
-        // Rank C - Intermediate streak achievements
-        if (currentStreak >= 14) {
-          await AchievementService.awardAchievement(userId, 'streak-14');
-        }
-
-        // Rank B - Advanced streak achievements
-        if (currentStreak >= 30) {
-          await AchievementService.awardAchievement(userId, 'streak-30');
-        }
-
-        // Rank A - Expert streak achievements
-        if (currentStreak >= 60) {
-          await AchievementService.awardAchievement(userId, 'streak-60');
-        }
-
-        // Rank S - Legendary streak achievements
-        if (currentStreak >= 100) {
-          await AchievementService.awardAchievement(userId, 'streak-100');
-        }
+        // Update streak achievement progress
+        await AchievementProgressService.updateStreakProgress(userId, currentStreak);
 
         // Update achievement points and rank
         await this.updateAchievementPointsAndRank(userId);

@@ -1,9 +1,9 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Achievement, AchievementStats } from '@/types/achievementTypes';
 import { XPService } from './XPService';
 import { AchievementCheckerService } from './achievements/AchievementCheckerService';
 import { TransactionService } from '../common/TransactionService';
+import { AchievementProgressService } from './achievements/AchievementProgressService';
 
 /**
  * Service for managing achievements
@@ -30,12 +30,18 @@ export class AchievementService {
 
       if (userAchievementsError) throw userAchievementsError;
 
+      // Get achievement progress data
+      const progressMap = await AchievementProgressService.getAllProgress(userId);
+
       // Map and merge the data
       const achievementsWithStatus = achievements.map(achievement => {
         const userAchievement = userAchievements?.find(ua => ua.achievement_id === achievement.id);
         const parsedRequirements = typeof achievement.requirements === 'string' 
           ? JSON.parse(achievement.requirements as string) 
           : achievement.requirements;
+          
+        // Get progress for this achievement
+        const progress = progressMap[achievement.id];
 
         return {
           id: achievement.id,
@@ -49,7 +55,7 @@ export class AchievementService {
           requirements: parsedRequirements as Record<string, any>,
           isUnlocked: !!userAchievement,
           achievedAt: userAchievement?.achieved_at,
-          progress: undefined // Will be filled later if needed
+          progress: progress
         };
       });
 
@@ -228,15 +234,30 @@ export class AchievementService {
           increment_amount: 1
         });
         
-        // 4. Also update achievement_points if the column exists
-        try {
-          await supabase.rpc('increment_profile_counter', {
-            user_id_param: userId,
-            counter_name: 'achievement_points',
-            increment_amount: achievement.points
-          });
-        } catch (e) {
-          console.log('Could not update achievement_points, column might not exist');
+        // 4. Also update achievement_points
+        await supabase.rpc('increment_profile_counter', {
+          user_id_param: userId,
+          counter_name: 'achievement_points',
+          increment_amount: achievement.points
+        });
+        
+        // 5. Mark achievement progress as complete if it exists
+        const { data: progress } = await supabase
+          .from('achievement_progress')
+          .select('id, target_value')
+          .eq('user_id', userId)
+          .eq('achievement_id', achievementId)
+          .maybeSingle();
+          
+        if (progress) {
+          await supabase
+            .from('achievement_progress')
+            .update({
+              current_value: progress.target_value,
+              is_complete: true,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', progress.id);
         }
 
         return true;
@@ -326,6 +347,30 @@ export class AchievementService {
       case 'A': return 1000 - currentPoints;
       case 'S': return null; // Max rank
       default: return 10 - currentPoints;
+    }
+  }
+
+  /**
+   * Initialize progress tracking for incremental achievements
+   * Call this when a user first logs in or when new achievements are added
+   */
+  static async initializeAchievementProgress(userId: string): Promise<void> {
+    try {
+      // Get all achievements that need progress tracking
+      const { data: achievements, error } = await supabase
+        .from('achievements')
+        .select('*')
+        .or('category.eq.workout,category.eq.streak,category.eq.record');
+        
+      if (error) {
+        console.error('Error fetching achievements for initialization:', error);
+        return;
+      }
+      
+      // Initialize progress for each achievement
+      await AchievementProgressService.initializeMultipleProgress(userId, achievements);
+    } catch (error) {
+      console.error('Error initializing achievement progress:', error);
     }
   }
 }

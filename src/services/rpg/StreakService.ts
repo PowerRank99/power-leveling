@@ -1,6 +1,8 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { AchievementCheckerService } from './achievements/AchievementCheckerService';
+import { AchievementProgressService } from './achievements/AchievementProgressService';
 
 export class StreakService {
   /**
@@ -74,8 +76,8 @@ export class StreakService {
           description: 'Continue assim!'
         });
         
-        // Check for streak-based achievements using the unified checker
-        await AchievementCheckerService.checkStreakAchievements(userId);
+        // Update streak achievement progress
+        await AchievementProgressService.updateStreakProgress(userId, newStreak);
       }
       
       return true;

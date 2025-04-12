@@ -4,6 +4,7 @@ import { WorkoutExercise, PersonalRecord, DatabaseResult } from '@/types/workout
 import { toast } from 'sonner';
 import { TransactionService } from '../common/TransactionService';
 import { AchievementCheckerService } from './achievements/AchievementCheckerService';
+import { AchievementProgressService } from './achievements/AchievementProgressService';
 
 /**
  * Service for handling personal records
@@ -89,19 +90,39 @@ export class PersonalRecordService {
               user_id: userId,
               exercise_id: exerciseId,
               weight: weight,
-              previous_weight: previousWeight
+              previous_weight: previousWeight,
+              recorded_at: new Date().toISOString()
             },
             { onConflict: 'user_id, exercise_id' }
           );
 
         if (error) throw error;
 
-        // Check for achievements related to this PR
-        await AchievementCheckerService.checkPersonalRecordAchievements(userId, {
-          exerciseId,
-          weight,
-          previousWeight
-        });
+        // Get total PR count for achievement progress
+        const { count, error: countError } = await supabase
+          .from('personal_records')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId);
+          
+        if (countError) throw countError;
+        
+        // Update achievement progress for PR count
+        if (count) {
+          await AchievementProgressService.updatePersonalRecordProgress(userId, count);
+        }
+        
+        // Calculate weight increase percentage for PR increase achievements
+        if (previousWeight > 0) {
+          const increasePercentage = ((weight - previousWeight) / previousWeight) * 100;
+          
+          if (increasePercentage >= 10) {
+            await AchievementCheckerService.checkPersonalRecordAchievements(userId, {
+              exerciseId,
+              weight,
+              previousWeight
+            });
+          }
+        }
 
         // Return the PR data
         return {

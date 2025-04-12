@@ -8,6 +8,7 @@ import { PersonalRecordService } from '../rpg/PersonalRecordService';
 import { AchievementCheckerService } from '../rpg/achievements/AchievementCheckerService';
 import { WorkoutExerciseService } from './WorkoutExerciseService';
 import { mapToWorkoutExercise, mapToWorkoutExerciseData } from '@/utils/typeMappers';
+import { AchievementProgressService } from '../rpg/achievements/AchievementProgressService';
 
 /**
  * Service for handling workout completion
@@ -112,15 +113,27 @@ export class WorkoutCompletionService {
       
       const xpAwarded = await XPService.awardWorkoutXP(userId, workoutData, duration);
       
-      // 6. Check for workout-related achievements
-      await AchievementCheckerService.checkWorkoutRelatedAchievements(userId, workoutData);
+      // 6. Update workout count for achievements
+      // Get total workout count
+      const { count: workoutCount, error: countError } = await supabase
+        .from('workouts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .filter('completed_at', 'not.is.null');
+        
+      if (!countError && workoutCount) {
+        await AchievementProgressService.updateWorkoutCountProgress(userId, workoutCount);
+      }
       
-      // 7. Save workout notes if any
+      // 7. Check for workout-related achievements
+      await AchievementCheckerService.checkWorkoutRelatedAchievements(userId);
+      
+      // 8. Save workout notes if any
       if (notes && Object.keys(notes).length > 0) {
         // Implement notes saving if needed
       }
       
-      // 8. Show success toast
+      // 9. Show success toast
       toast.success('Treino concluído!', {
         description: 'Seu treino foi registrado com sucesso.'
       });
