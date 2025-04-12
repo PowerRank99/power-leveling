@@ -1,6 +1,5 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { WorkoutExercise } from '@/types/workout';
+import { WorkoutExercise } from '@/types/workoutTypes';
 import { XPCalculationService } from './XPCalculationService';
 import { PersonalRecordService } from './PersonalRecordService';
 import { XPBonusService } from './XPBonusService';
@@ -43,13 +42,8 @@ export class XPService {
     baseXP: number;
     bonusBreakdown: { skill: string, amount: number, description: string }[];
   } {
-    // Convert WorkoutExercise to WorkoutExerciseData for XPCalculationService if needed
-    const workoutData = {
-      ...workout,
-      exercises: workout.exercises.map(ex => mapToWorkoutExerciseData(ex))
-    };
-    
-    return XPCalculationService.calculateWorkoutXP(workoutData, userClass, streak, difficulty);
+    // Pass workout data directly to XPCalculationService without mapping
+    return XPCalculationService.calculateWorkoutXP(workout, userClass, streak, difficulty);
   }
   
   /**

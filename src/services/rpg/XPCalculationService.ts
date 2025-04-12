@@ -1,5 +1,5 @@
 
-import { WorkoutExercise } from '@/types/workout';
+import { WorkoutExercise } from '@/types/workoutTypes';
 import { XP_CONSTANTS } from './constants/xpConstants';
 import { EXERCISE_TYPES, CLASS_PASSIVE_SKILLS } from './constants/exerciseTypes';
 import { BaseXPCalculator } from './calculations/BaseXPCalculator';

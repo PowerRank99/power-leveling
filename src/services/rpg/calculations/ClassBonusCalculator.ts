@@ -1,13 +1,11 @@
-
 import { EXERCISE_TYPES, CLASS_PASSIVE_SKILLS } from '../constants/exerciseTypes';
-import { WorkoutExercise } from '@/types/workout';
+import { WorkoutExercise } from '@/types/workoutTypes';
 import { ClassBonusBreakdown } from '../types/classTypes';
 import { GuerreiroBonus } from './class-bonuses/GuerreiroBonus';
 import { MongeBonus } from './class-bonuses/MongeBonus';
 import { NinjaBonus } from './class-bonuses/NinjaBonus';
 import { BruxoBonus } from './class-bonuses/BruxoBonus';
 import { PaladinoBonus } from './class-bonuses/PaladinoBonus';
-import { mapToWorkoutExerciseData } from '@/utils/typeMappers';
 
 /**
  * Service for calculating class-specific XP bonuses
@@ -33,46 +31,38 @@ export class ClassBonusCalculator {
     let totalXP = baseXP;
     let bonusBreakdown: ClassBonusBreakdown[] = [];
     
-    // Convert WorkoutExercise[] to WorkoutExerciseData[] for class bonus calculators
-    const workoutData = {
-      id: workout.id,
-      exercises: workout.exercises.map(ex => mapToWorkoutExerciseData(ex)),
-      durationSeconds: workout.durationSeconds,
-      hasPR: workout.hasPR
-    };
-    
     // Apply class-specific bonuses by delegating to appropriate class calculator
     switch(userClass) {
       case 'Guerreiro': {
-        const { bonusXP, bonusBreakdown: breakdown } = GuerreiroBonus.applyBonuses(baseXP, workoutData);
+        const { bonusXP, bonusBreakdown: breakdown } = GuerreiroBonus.applyBonuses(baseXP, workout);
         totalXP += bonusXP;
         bonusBreakdown = breakdown;
         break;
       }
         
       case 'Monge': {
-        const { bonusXP, bonusBreakdown: breakdown } = MongeBonus.applyBonuses(baseXP, workoutData, streak);
+        const { bonusXP, bonusBreakdown: breakdown } = MongeBonus.applyBonuses(baseXP, workout, streak);
         totalXP += bonusXP;
         bonusBreakdown = breakdown;
         break;
       }
         
       case 'Ninja': {
-        const { bonusXP, bonusBreakdown: breakdown } = NinjaBonus.applyBonuses(baseXP, workoutData);
+        const { bonusXP, bonusBreakdown: breakdown } = NinjaBonus.applyBonuses(baseXP, workout);
         totalXP += bonusXP;
         bonusBreakdown = breakdown;
         break;
       }
         
       case 'Bruxo': {
-        const { bonusXP, bonusBreakdown: breakdown } = BruxoBonus.applyBonuses(baseXP, workoutData);
+        const { bonusXP, bonusBreakdown: breakdown } = BruxoBonus.applyBonuses(baseXP, workout);
         totalXP += bonusXP;
         bonusBreakdown = breakdown;
         break;
       }
         
       case 'Paladino': {
-        const { bonusXP, bonusBreakdown: breakdown } = PaladinoBonus.applyBonuses(baseXP, workoutData);
+        const { bonusXP, bonusBreakdown: breakdown } = PaladinoBonus.applyBonuses(baseXP, workout);
         totalXP += bonusXP;
         bonusBreakdown = breakdown;
         break;

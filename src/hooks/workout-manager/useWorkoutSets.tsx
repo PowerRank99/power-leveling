@@ -44,7 +44,7 @@ export const useWorkoutSets = (
   /**
    * Handles updating a set's data
    */
-  const handleUpdateSet = async (exerciseIndex: number, setIndex: number, data: { weight?: string; reps?: string }) => {
+  const handleUpdateSet = async (exerciseIndex: number, setIndex: number, data: { weight?: string; reps?: string; completed?: boolean }) => {
     if (isProcessing) return;
     
     const result = await updateSet(exerciseIndex, exercises, setIndex, data);

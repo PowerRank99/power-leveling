@@ -1,8 +1,9 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { Achievement, AchievementCategory, AchievementRank } from '@/types/achievementTypes';
+import { Achievement } from '@/types/achievementTypes';
 import { toast } from 'sonner';
 import { AchievementService } from '../AchievementService';
-import { WorkoutExercise } from '@/types/workout';
+import { WorkoutExercise } from '@/types/workoutTypes';
 
 /**
  * Centralized service for checking and awarding achievements
@@ -478,7 +479,7 @@ export class AchievementCheckerService {
   /**
    * Determine rank based on rank score
    */
-  static determineRank(rankScore: number): AchievementRank {
+  static determineRank(rankScore: number): string {
     if (rankScore >= 198) return 'S';
     if (rankScore >= 160) return 'A';
     if (rankScore >= 120) return 'B';
@@ -679,7 +680,7 @@ export class AchievementCheckerService {
   private static async checkForAchievement(
     userId: string,
     achievementId: string,
-    criteria: any
+    criteria: any = {}
   ): Promise<void> {
     try {
       await AchievementService.awardAchievement(userId, achievementId);

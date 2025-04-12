@@ -26,7 +26,7 @@ export function mapToExerciseHistory(record: any): ExerciseHistory {
  */
 export function mapToWorkoutExercise(data: WorkoutExerciseData, sets: SetData[] = []): WorkoutExercise {
   return {
-    id: data.id || data.exerciseId, // Fallback to exerciseId if id is not available
+    id: data.id || `temp-${data.exerciseId}`, // Ensure id is always available
     name: data.name || `Exercise ${data.exerciseId.slice(0, 8)}`, // Fallback name
     exerciseId: data.exerciseId,
     sets: sets,
@@ -45,12 +45,12 @@ export function mapToWorkoutExerciseData(exercise: WorkoutExercise): WorkoutExer
     : 0;
     
   return {
-    exerciseId: exercise.exerciseId || exercise.id,
+    id: exercise.id,
+    exerciseId: exercise.exerciseId,
     weight: exercise.sets?.[0] ? parseFloat(exercise.sets[0].weight) : undefined,
     reps: exercise.sets?.[0] ? parseInt(exercise.sets[0].reps) : undefined,
     sets: completedSets,
     targetSets: exercise.targetSets,
-    id: exercise.id,
     name: exercise.name
   };
 }
