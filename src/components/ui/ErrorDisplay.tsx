@@ -14,6 +14,7 @@ interface ErrorDisplayProps {
   onRetry?: () => void;
   className?: string;
   showDetails?: boolean;
+  code?: string;
 }
 
 /**
@@ -26,7 +27,8 @@ const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
   category = ErrorCategory.UNKNOWN,
   onRetry,
   className = '',
-  showDetails = true
+  showDetails = true,
+  code
 }) => {
   const [isOpen, setIsOpen] = React.useState(false);
   
@@ -41,6 +43,8 @@ const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
       case ErrorCategory.DATABASE:
       case ErrorCategory.NETWORK:
         return 'bg-valor-15 border-valor-30 text-valor';
+      case ErrorCategory.BUSINESS_LOGIC:
+        return 'bg-arcane-15 border-arcane-30 text-arcane';
       default:
         return 'bg-valor-15 border-valor-30 text-valor';
     }
@@ -77,6 +81,7 @@ const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
                 </div>
                 <CollapsibleContent className="mt-2">
                   <div className="text-xs bg-midnight-card p-2 rounded border border-valor-15 text-text-secondary font-mono whitespace-pre-wrap">
+                    {code && <div className="mb-1 text-valor-60">Code: {code}</div>}
                     {details}
                   </div>
                 </CollapsibleContent>

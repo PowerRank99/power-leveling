@@ -1,6 +1,7 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Achievement } from '@/types/achievementTypes';
-import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
+import { ServiceResponse, ErrorHandlingService, ErrorCategory } from '@/services/common/ErrorHandlingService';
 import { AchievementService } from '../AchievementService';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { TransactionService } from '../../common/TransactionService';
@@ -36,18 +37,23 @@ export class AchievementCheckerService {
         ]);
 
         // Use executeWithRetry for better reliability in checking achievements
-        await TransactionService.executeWithRetry(async () => {
-          // Update workout count achievement progress using optimized batch function
-          if (workoutStats.totalCount > 0) {
-            await AchievementProgressService.updateWorkoutCountProgress(userId, workoutStats.totalCount);
-          }
-          
-          // Check other achievement types that don't have progress tracking yet
-          await this.checkRankEAchievements(userId, workoutStats, userProfile);
-          await this.checkRankDAchievements(userId, workoutStats, userProfile);
-          await this.checkRankCAchievements(userId, workoutStats, userProfile);
-          await this.checkHigherRankAchievements(userId, workoutStats, userProfile);
-        }, 'achievement_checks', 3);
+        await TransactionService.executeWithRetry(
+          async () => {
+            // Update workout count achievement progress using optimized batch function
+            if (workoutStats.totalCount > 0) {
+              await AchievementProgressService.updateWorkoutCountProgress(userId, workoutStats.totalCount);
+            }
+            
+            // Check other achievement types that don't have progress tracking yet
+            await this.checkRankEAchievements(userId, workoutStats, userProfile);
+            await this.checkRankDAchievements(userId, workoutStats, userProfile);
+            await this.checkRankCAchievements(userId, workoutStats, userProfile);
+            await this.checkHigherRankAchievements(userId, workoutStats, userProfile);
+          }, 
+          'achievement_checks', 
+          3,
+          'Failed to check achievements'
+        );
       },
       'CHECK_WORKOUT_ACHIEVEMENTS',
       { showToast: false }
@@ -74,24 +80,29 @@ export class AchievementCheckerService {
         if (prError) throw prError;
 
         // Use transaction service to ensure consistency
-        await TransactionService.executeWithRetry(async () => {
-          // Update PR count achievement progress using optimized batch function
-          if (prCount && prCount > 0) {
-            await AchievementProgressService.updatePersonalRecordProgress(userId, prCount);
-          }
+        await TransactionService.executeWithRetry(
+          async () => {
+            // Update PR count achievement progress using optimized batch function
+            if (prCount && prCount > 0) {
+              await AchievementProgressService.updatePersonalRecordProgress(userId, prCount);
+            }
 
-          // Check for impressive PR achievements based on weight increase percentage
-          if (recordInfo && recordInfo.previousWeight > 0) {
-            const increasePercentage = ((recordInfo.weight - recordInfo.previousWeight) / recordInfo.previousWeight) * 100;
-            
-            if (increasePercentage >= 10) {
-              await AchievementService.awardAchievement(userId, 'pr-increase-10');
+            // Check for impressive PR achievements based on weight increase percentage
+            if (recordInfo && recordInfo.previousWeight > 0) {
+              const increasePercentage = ((recordInfo.weight - recordInfo.previousWeight) / recordInfo.previousWeight) * 100;
+              
+              if (increasePercentage >= 10) {
+                await AchievementService.awardAchievement(userId, 'pr-increase-10');
+              }
+              if (increasePercentage >= 20) {
+                await AchievementService.awardAchievement(userId, 'pr-increase-20');
+              }
             }
-            if (increasePercentage >= 20) {
-              await AchievementService.awardAchievement(userId, 'pr-increase-20');
-            }
-          }
-        }, 'personal_record_achievements', 3);
+          }, 
+          'personal_record_achievements', 
+          3,
+          'Failed to check personal record achievements'
+        );
       },
       'CHECK_PR_ACHIEVEMENTS',
       { showToast: false }
@@ -118,12 +129,17 @@ export class AchievementCheckerService {
         const currentStreak = profile?.streak || 0;
 
         // Use transaction service for consistency
-        await TransactionService.executeWithRetry(async () => {
-          // Update streak achievement progress using optimized batch function
-          if (currentStreak > 0) {
-            await AchievementProgressService.updateStreakProgress(userId, currentStreak);
-          }
-        }, 'streak_achievements', 3);
+        await TransactionService.executeWithRetry(
+          async () => {
+            // Update streak achievement progress using optimized batch function
+            if (currentStreak > 0) {
+              await AchievementProgressService.updateStreakProgress(userId, currentStreak);
+            }
+          }, 
+          'streak_achievements', 
+          3,
+          'Failed to check streak achievements'
+        );
       },
       'CHECK_STREAK_ACHIEVEMENTS',
       { showToast: false }
@@ -159,28 +175,33 @@ export class AchievementCheckerService {
         }
 
         // Use transaction service for consistency
-        await TransactionService.executeWithRetry(async () => {
-          // Award XP milestone achievements
-          const achievementChecks = [];
-          
-          if (userXP >= 1000) achievementChecks.push('xp-1000');
-          if (userXP >= 5000) achievementChecks.push('xp-5000');
-          if (userXP >= 10000) achievementChecks.push('xp-10000');
-          if (userXP >= 50000) achievementChecks.push('xp-50000');
-          if (userXP >= 100000) achievementChecks.push('xp-100000');
+        await TransactionService.executeWithRetry(
+          async () => {
+            // Award XP milestone achievements
+            const achievementChecks = [];
+            
+            if (userXP >= 1000) achievementChecks.push('xp-1000');
+            if (userXP >= 5000) achievementChecks.push('xp-5000');
+            if (userXP >= 10000) achievementChecks.push('xp-10000');
+            if (userXP >= 50000) achievementChecks.push('xp-50000');
+            if (userXP >= 100000) achievementChecks.push('xp-100000');
 
-          // Level milestone achievements
-          if (userLevel >= 10) achievementChecks.push('level-10');
-          if (userLevel >= 25) achievementChecks.push('level-25');
-          if (userLevel >= 50) achievementChecks.push('level-50');
-          if (userLevel >= 75) achievementChecks.push('level-75');
-          if (userLevel >= 99) achievementChecks.push('level-99');
-          
-          // Check all achievements in batch
-          if (achievementChecks.length > 0) {
-            await AchievementService.checkAndAwardAchievements(userId, achievementChecks);
-          }
-        }, 'xp_milestone_achievements', 3);
+            // Level milestone achievements
+            if (userLevel >= 10) achievementChecks.push('level-10');
+            if (userLevel >= 25) achievementChecks.push('level-25');
+            if (userLevel >= 50) achievementChecks.push('level-50');
+            if (userLevel >= 75) achievementChecks.push('level-75');
+            if (userLevel >= 99) achievementChecks.push('level-99');
+            
+            // Check all achievements in batch
+            if (achievementChecks.length > 0) {
+              await AchievementService.checkAndAwardAchievements(userId, achievementChecks);
+            }
+          }, 
+          'xp_milestone_achievements', 
+          3,
+          'Failed to check XP milestone achievements'
+        );
       },
       'CHECK_XP_ACHIEVEMENTS',
       { showToast: false }
@@ -210,19 +231,24 @@ export class AchievementCheckerService {
         const uniqueCount = uniqueTypes.size;
 
         // Use transaction service for consistency
-        await TransactionService.executeWithRetry(async () => {
-          // Award activity variety achievements
-          const achievementChecks = [];
-          
-          if (uniqueCount >= 3) achievementChecks.push('variety-3');
-          if (uniqueCount >= 5) achievementChecks.push('variety-5');
-          if (uniqueCount >= 10) achievementChecks.push('variety-10');
-          
-          // Check all achievements in batch
-          if (achievementChecks.length > 0) {
-            await AchievementService.checkAndAwardAchievements(userId, achievementChecks);
-          }
-        }, 'activity_variety_achievements', 3);
+        await TransactionService.executeWithRetry(
+          async () => {
+            // Award activity variety achievements
+            const achievementChecks = [];
+            
+            if (uniqueCount >= 3) achievementChecks.push('variety-3');
+            if (uniqueCount >= 5) achievementChecks.push('variety-5');
+            if (uniqueCount >= 10) achievementChecks.push('variety-10');
+            
+            // Check all achievements in batch
+            if (achievementChecks.length > 0) {
+              await AchievementService.checkAndAwardAchievements(userId, achievementChecks);
+            }
+          }, 
+          'activity_variety_achievements', 
+          3,
+          'Failed to check activity variety achievements'
+        );
       },
       'CHECK_VARIETY_ACHIEVEMENTS',
       { showToast: false }

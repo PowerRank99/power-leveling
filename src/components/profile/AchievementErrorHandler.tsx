@@ -1,9 +1,7 @@
 
 import React from 'react';
-import { ServiceErrorResponse } from '@/services/common/ErrorHandlingService';
+import { ServiceErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 import ErrorDisplay from '@/components/ui/ErrorDisplay';
-import { Button } from '@/components/ui/button';
-import { RefreshCw } from 'lucide-react';
 
 interface AchievementErrorHandlerProps {
   error: ServiceErrorResponse | null;
@@ -26,6 +24,8 @@ const AchievementErrorHandler: React.FC<AchievementErrorHandlerProps> = ({
       title="Erro ao carregar conquistas"
       message={error.error.message}
       details={error.error.technical}
+      category={error.error.category || ErrorCategory.UNKNOWN}
+      code={error.error.code}
       onRetry={onRetry}
       className={className}
     />

@@ -1,35 +1,31 @@
 
 import React from 'react';
-import { AlertCircle, RefreshCw } from 'lucide-react';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import ErrorDisplay from '@/components/ui/ErrorDisplay';
+import { ErrorCategory } from '@/services/common/ErrorHandlingService';
 
 interface WorkoutErrorAlertProps {
   error: string;
   onRetry: () => void;
+  category?: ErrorCategory;
 }
 
-const WorkoutErrorAlert: React.FC<WorkoutErrorAlertProps> = ({ error, onRetry }) => {
+/**
+ * Standardized error display for workout-related errors
+ */
+const WorkoutErrorAlert: React.FC<WorkoutErrorAlertProps> = ({ 
+  error, 
+  onRetry,
+  category = ErrorCategory.UNKNOWN 
+}) => {
   if (!error) return null;
   
   return (
-    <Alert variant="destructive" className="mb-4 bg-valor-15 border-valor-30 text-valor shadow-subtle">
-      <AlertCircle className="h-4 w-4" />
-      <AlertTitle className="font-orbitron">Erro ao carregar dados</AlertTitle>
-      <AlertDescription className="font-sora">
-        {error}
-        <div className="mt-2">
-          <Button 
-            variant="outline" 
-            onClick={onRetry}
-            className="w-full bg-midnight-elevated border-valor-30 text-text-primary hover:bg-valor-15"
-            size="sm"
-          >
-            <RefreshCw className="w-4 h-4 mr-2" /> Tentar novamente
-          </Button>
-        </div>
-      </AlertDescription>
-    </Alert>
+    <ErrorDisplay
+      title="Erro ao carregar dados"
+      message={error}
+      category={category}
+      onRetry={onRetry}
+    />
   );
 };
 

@@ -12,7 +12,8 @@ export enum ErrorCategory {
   VALIDATION = 'VALIDATION',
   DATABASE = 'DATABASE',
   NETWORK = 'NETWORK',
-  UNKNOWN = 'UNKNOWN'
+  UNKNOWN = 'UNKNOWN',
+  BUSINESS_LOGIC = 'BUSINESS_LOGIC'
 }
 
 /**
@@ -27,6 +28,7 @@ export interface ServiceResponse<T> {
     message: string;
     technical: string;
     category?: ErrorCategory;
+    code?: string;
   };
 }
 
@@ -49,6 +51,7 @@ export interface ServiceErrorResponse extends ServiceResponse<never> {
     message: string;
     technical: string;
     category?: ErrorCategory;
+    code?: string;
   };
 }
 
@@ -60,6 +63,39 @@ interface ErrorHandlingOptions {
   userMessage?: string;
   errorCode?: string;
   errorCategory?: ErrorCategory;
+  logLevel?: 'error' | 'warn' | 'info';
+}
+
+/**
+ * Create a success response
+ */
+export function createSuccessResponse<T>(data: T, message?: string): ServiceSuccessResponse<T> {
+  return {
+    success: true,
+    data,
+    message
+  };
+}
+
+/**
+ * Create an error response
+ */
+export function createErrorResponse(
+  message: string, 
+  technical: string,
+  category: ErrorCategory = ErrorCategory.UNKNOWN,
+  code?: string
+): ServiceErrorResponse {
+  return {
+    success: false,
+    message,
+    error: {
+      message,
+      technical,
+      category,
+      code
+    }
+  };
 }
 
 /**
@@ -76,12 +112,13 @@ export class ErrorHandlingService {
   ): Promise<ServiceResponse<T>> {
     try {
       const result = await fn();
-      return {
-        success: true,
-        data: result
-      };
+      return createSuccessResponse(result);
     } catch (error) {
-      console.error(`Error in ${errorCode}:`, error);
+      if (options.logLevel === 'warn') {
+        console.warn(`[${errorCode}]:`, error);
+      } else {
+        console.error(`[${errorCode}]:`, error);
+      }
       
       return {
         success: false,
@@ -90,7 +127,35 @@ export class ErrorHandlingService {
         error: {
           message: options.userMessage || 'An error occurred',
           technical: error instanceof Error ? error.message : String(error),
-          category: options.errorCategory || ErrorCategory.UNKNOWN
+          category: options.errorCategory || ErrorCategory.UNKNOWN,
+          code: options.errorCode || errorCode
+        }
+      };
+    }
+  }
+  
+  /**
+   * Execute a function with standardized error handling and predefined error response
+   */
+  static async executeWithPredefinedErrorHandling<T>(
+    fn: () => Promise<T>,
+    errorResponse: ServiceErrorResponse,
+    errorCode: string
+  ): Promise<ServiceResponse<T>> {
+    try {
+      const result = await fn();
+      return createSuccessResponse(result);
+    } catch (error) {
+      console.error(`[${errorCode}]:`, error);
+      
+      // Add technical details to predefined error response
+      return {
+        ...errorResponse,
+        details: error instanceof Error ? error.message : String(error),
+        error: {
+          ...errorResponse.error,
+          technical: error instanceof Error ? error.message : String(error),
+          code: errorResponse.error.code || errorCode
         }
       };
     }
