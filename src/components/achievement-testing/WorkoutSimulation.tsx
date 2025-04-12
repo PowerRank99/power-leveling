@@ -32,7 +32,15 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
   const [useClassPassives, setUseClassPassives] = useState(false);
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
   const [totalXP, setTotalXP] = useState(0);
-  const [baseXP, setBaseXP] = useState(0);
+  const [xpBreakdown, setXpBreakdown] = useState({
+    timeXP: 0,
+    exerciseXP: 0,
+    setXP: 0,
+    difficultyMultiplier: 1,
+    streakMultiplier: 1,
+    prBonus: 0,
+    baseXP: 0
+  });
   const [bonusBreakdown, setBonusBreakdown] = useState<Array<{skill: string, amount: number, description: string}>>([]);
   
   // Calculate XP whenever relevant inputs change
@@ -55,6 +63,26 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
         hasPR: includePersonalRecord
       };
       
+      // Calculate time-based XP
+      const timeMinutes = Math.floor(workout.durationSeconds / 60);
+      const timeXP = XPCalculationService.calculateTimeXP(timeMinutes);
+      
+      // Exercise and set XP
+      const exerciseXP = exerciseCount * XPService.BASE_EXERCISE_XP;
+      const totalSets = exerciseCount * 3;
+      const cappedSets = Math.min(totalSets, XPCalculationService.MAX_XP_CONTRIBUTING_SETS);
+      const setXP = cappedSets * XPService.BASE_SET_XP;
+      
+      // Multipliers
+      const difficultyMultiplier = XPCalculationService.DIFFICULTY_MULTIPLIERS[difficultyLevel as keyof typeof XPCalculationService.DIFFICULTY_MULTIPLIERS];
+      const streakMultiplier = XPCalculationService.getStreakMultiplier(streak);
+      
+      // PR bonus if applicable
+      const prBonus = includePersonalRecord ? XPService.PR_BONUS_XP : 0;
+      
+      // Base XP before class bonuses
+      const baseCalculatedXP = Math.round((timeXP + exerciseXP + setXP) * difficultyMultiplier);
+      
       // Calculate XP using the service that provides breakdown
       const result = XPCalculationService.calculateWorkoutXP(
         workout,
@@ -63,7 +91,17 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
         difficultyLevel as any
       );
       
-      setBaseXP(result.baseXP);
+      // Store breakdown for display
+      setXpBreakdown({
+        timeXP,
+        exerciseXP,
+        setXP,
+        difficultyMultiplier,
+        streakMultiplier,
+        prBonus,
+        baseXP: baseCalculatedXP
+      });
+      
       setTotalXP(result.totalXP);
       setBonusBreakdown(result.bonusBreakdown);
       
@@ -276,37 +314,77 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
           
           <div className="space-y-4 flex flex-col">
             <div className="bg-midnight-card rounded-lg p-4 border border-divider/30 flex-grow">
-              <h3 className="text-md font-orbitron mb-2 text-text-primary">Simulation Preview</h3>
+              <h3 className="text-md font-orbitron mb-2 text-text-primary">XP Breakdown</h3>
               
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-text-secondary">Base XP:</span>
-                  <motion.span 
-                    className="font-space text-arcane"
-                    key={`base-${baseXP}`}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    {baseXP} XP
-                  </motion.span>
+                <div className="border-b border-divider/20 pb-2">
+                  <p className="text-sm font-semibold text-text-secondary mb-2">Base Calculations:</p>
+                  <div className="grid grid-cols-2 gap-1 text-sm">
+                    <div className="text-text-secondary">Time XP:</div>
+                    <div className="text-right font-space text-arcane">{xpBreakdown.timeXP} XP</div>
+                    
+                    <div className="text-text-secondary">Exercise XP:</div>
+                    <div className="text-right font-space text-arcane">
+                      {exerciseCount} × {XPService.BASE_EXERCISE_XP} = {xpBreakdown.exerciseXP} XP
+                    </div>
+                    
+                    <div className="text-text-secondary">Set XP:</div>
+                    <div className="text-right font-space text-arcane">
+                      {Math.min(exerciseCount * 3, XPCalculationService.MAX_XP_CONTRIBUTING_SETS)} × {XPService.BASE_SET_XP} = {xpBreakdown.setXP} XP
+                    </div>
+                  </div>
                 </div>
                 
+                <div className="border-b border-divider/20 pb-2">
+                  <p className="text-sm font-semibold text-text-secondary mb-2">Multipliers:</p>
+                  <div className="grid grid-cols-2 gap-1 text-sm">
+                    <div className="text-text-secondary">Base Subtotal:</div>
+                    <div className="text-right font-space text-arcane">
+                      {xpBreakdown.timeXP + xpBreakdown.exerciseXP + xpBreakdown.setXP} XP
+                    </div>
+                    
+                    <div className="text-text-secondary">Difficulty:</div>
+                    <div className="text-right font-space text-arcane-60">
+                      {xpBreakdown.difficultyMultiplier.toFixed(1)}×
+                    </div>
+                    
+                    <div className="text-text-secondary">Base XP:</div>
+                    <div className="text-right font-space text-arcane-60 font-bold">
+                      {xpBreakdown.baseXP} XP
+                    </div>
+                    
+                    <div className="text-text-secondary">Streak:</div>
+                    <div className="text-right font-space text-arcane-60">
+                      {xpBreakdown.streakMultiplier.toFixed(2)}×
+                    </div>
+                  </div>
+                </div>
+                
+                {includePersonalRecord && (
+                  <div className="border-b border-divider/20 pb-2">
+                    <p className="text-sm font-semibold text-text-secondary mb-2">Bonuses:</p>
+                    <div className="grid grid-cols-2 gap-1 text-sm">
+                      <div className="text-text-secondary">Personal Record:</div>
+                      <div className="text-right font-space text-achievement">+{xpBreakdown.prBonus} XP</div>
+                    </div>
+                  </div>
+                )}
+                
                 {bonusBreakdown.length > 0 && (
-                  <div className="border-t border-divider/20 pt-2 mt-2">
-                    <p className="text-sm text-text-secondary mb-2">Class Bonuses:</p>
+                  <div className="border-b border-divider/20 pb-2">
+                    <p className="text-sm font-semibold text-text-secondary mb-2">Class Bonuses:</p>
                     {bonusBreakdown.map((bonus, idx) => (
-                      <div key={idx} className="flex justify-between items-center text-sm">
-                        <span className="text-text-secondary">{bonus.description}:</span>
-                        <span className={`font-space ${bonus.amount >= 0 ? 'text-arcane' : 'text-red-500'}`}>
+                      <div key={idx} className="grid grid-cols-2 gap-1 text-sm">
+                        <div className="text-text-secondary">{bonus.description}:</div>
+                        <div className={`text-right font-space ${bonus.amount >= 0 ? 'text-arcane' : 'text-red-500'}`}>
                           {bonus.amount >= 0 ? '+' : ''}{bonus.amount} XP
-                        </span>
+                        </div>
                       </div>
                     ))}
                   </div>
                 )}
                 
-                <div className="flex justify-between items-center border-t border-divider/20 pt-3 mt-2">
+                <div className="flex justify-between items-center pt-2">
                   <span className="text-text-secondary font-semibold">Total XP:</span>
                   <motion.span 
                     className="font-space text-lg text-arcane font-bold"
@@ -317,45 +395,6 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
                   >
                     {totalXP} XP
                   </motion.span>
-                </div>
-                
-                <div className="space-y-2 mt-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-text-secondary">Workout time:</span>
-                    <span className="font-space">{duration} minutes</span>
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <span className="text-text-secondary">Exercise count:</span>
-                    <span className="font-space">{exerciseCount}</span>
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <span className="text-text-secondary">Set count:</span>
-                    <span className="font-space">{exerciseCount * 3} (est.)</span>
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <span className="text-text-secondary">Difficulty multiplier:</span>
-                    <span className="font-space">
-                      {difficultyLevel === 'iniciante' ? '0.8x' : 
-                       difficultyLevel === 'intermediario' ? '1.0x' : '1.5x'}
-                    </span>
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <span className="text-text-secondary">Streak multiplier:</span>
-                    <span className="font-space">
-                      {XPCalculationService.getStreakMultiplier(streak).toFixed(2)}x
-                    </span>
-                  </div>
-                  
-                  {includePersonalRecord && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-text-secondary">PR bonus:</span>
-                      <span className="font-space text-achievement">+{XPService.PR_BONUS_XP} XP</span>
-                    </div>
-                  )}
                 </div>
                 
                 <div className="text-xs text-text-tertiary mt-4">

@@ -10,9 +10,8 @@ import { Switch } from '@/components/ui/switch';
 import { XPService } from '@/services/rpg/XPService';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { ImagePlus, Upload, Dumbbell, Camera } from 'lucide-react';
+import { Upload, Dumbbell, Camera } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import TestingExerciseSelector from './common/TestingExerciseSelector';
 import ClassPassivesToggle from './common/ClassPassivesToggle';
 
 interface ManualWorkoutSimulationProps {
@@ -23,9 +22,8 @@ interface ManualWorkoutSimulationProps {
 const POWER_DAY_BONUS_XP = 50;
 
 const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userId, addLogEntry }) => {
-  const [activityType, setActivityType] = useState('gym');
+  const [activityType, setActivityType] = useState('strength');
   const [description, setDescription] = useState('');
-  const [selectedExerciseId, setSelectedExerciseId] = useState('');
   const [duration, setDuration] = useState(45);
   const [isPowerDay, setIsPowerDay] = useState(false);
   const [photoUrl, setPhotoUrl] = useState('https://frzgnszosqvcgycjtntz.supabase.co/storage/v1/object/public/workout-photos/default.jpg');
@@ -37,7 +35,7 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
   // Update XP calculation when inputs change
   useEffect(() => {
     setTotalXP(calculateXP());
-  }, [isPowerDay, useClassPassives, selectedClass]);
+  }, [isPowerDay, useClassPassives, selectedClass, activityType]);
   
   const calculateXP = () => {
     // Base XP for manual workouts
@@ -51,16 +49,16 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
     // Apply class bonuses if enabled
     if (useClassPassives && selectedClass) {
       // Simple simulation of class bonuses for manual workouts
-      if (activityType === 'gym' && selectedClass === 'Guerreiro') {
-        // Guerreiro gets bonus for gym workouts
+      if ((activityType === 'strength' || activityType === 'bodyweight') && selectedClass === 'Guerreiro') {
+        // Guerreiro gets bonus for strength workouts
         baseXP = Math.round(baseXP * 1.1);
-      } else if (activityType === 'run' && selectedClass === 'Ninja') {
+      } else if ((activityType === 'cardio' || activityType === 'running') && selectedClass === 'Ninja') {
         // Ninja gets bonus for cardio
         baseXP = Math.round(baseXP * 1.2);
       } else if (activityType === 'yoga' && selectedClass === 'Bruxo') {
         // Bruxo gets bonus for yoga
         baseXP = Math.round(baseXP * 1.2);
-      } else if ((activityType === 'sport' || activityType === 'swim') && selectedClass === 'Paladino') {
+      } else if ((activityType === 'sports' || activityType === 'swimming') && selectedClass === 'Paladino') {
         // Paladino gets bonus for sports
         baseXP = Math.round(baseXP * 1.15);
       }
@@ -70,9 +68,9 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
   };
   
   const submitManualWorkout = async () => {
-    if (!userId || !selectedExerciseId) {
+    if (!userId) {
       toast.error('Error', {
-        description: 'Please select a user and exercise',
+        description: 'Please select a user',
       });
       return;
     }
@@ -90,7 +88,7 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
         p_user_id: userId,
         p_description: description,
         p_activity_type: activityType,
-        p_exercise_id: selectedExerciseId,
+        p_exercise_id: null,
         p_photo_url: photoUrl,
         p_xp_awarded: xpAwarded,
         p_workout_date: new Date().toISOString(),
@@ -99,20 +97,9 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
       
       if (error) throw error;
       
-      // Get exercise name for the log
-      const { data: exerciseData } = await supabase
-        .from('exercises')
-        .select('name')
-        .eq('id', selectedExerciseId)
-        .single();
-      
-      const exerciseName = exerciseData?.name || 'Unknown exercise';
-      
       // Award XP
       await XPService.awardXP(userId, xpAwarded, 'manual_workout', {
         activityType,
-        exerciseId: selectedExerciseId,
-        exerciseName,
         isPowerDay,
         ...(useClassPassives ? { class: selectedClass } : {})
       });
@@ -121,7 +108,7 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
       const classInfo = useClassPassives ? `, Class: ${selectedClass}` : '';
       addLogEntry(
         'Manual Workout Submitted', 
-        `Type: ${activityType}, Exercise: ${exerciseName}, XP: ${xpAwarded}${isPowerDay ? ' (Power Day)' : ''}${classInfo}`
+        `Type: ${activityType}, XP: ${xpAwarded}${isPowerDay ? ' (Power Day)' : ''}${classInfo}`
       );
       
       toast.success('Manual Workout Submitted!', {
@@ -153,31 +140,27 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="activityType">Activity Type</Label>
+              <Label htmlFor="activityType">Tipo de Atividade</Label>
               <Select value={activityType} onValueChange={setActivityType}>
                 <SelectTrigger id="activityType" className="bg-midnight-elevated border-divider">
-                  <SelectValue placeholder="Select activity type" />
+                  <SelectValue placeholder="Escolha o tipo de atividade" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="gym">Gym Workout</SelectItem>
-                  <SelectItem value="run">Running</SelectItem>
-                  <SelectItem value="cycle">Cycling</SelectItem>
-                  <SelectItem value="swim">Swimming</SelectItem>
+                  <SelectItem value="strength">Musculação</SelectItem>
+                  <SelectItem value="cardio">Cardio</SelectItem>
+                  <SelectItem value="running">Corrida</SelectItem>
                   <SelectItem value="yoga">Yoga</SelectItem>
-                  <SelectItem value="sport">Sports</SelectItem>
-                  <SelectItem value="other">Other Activity</SelectItem>
+                  <SelectItem value="sports">Esportes</SelectItem>
+                  <SelectItem value="bodyweight">Calistenia</SelectItem>
+                  <SelectItem value="flexibility">Flexibilidade</SelectItem>
+                  <SelectItem value="swimming">Natação</SelectItem>
+                  <SelectItem value="other">Outro</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
-            <TestingExerciseSelector
-              selectedExerciseId={selectedExerciseId}
-              onSelect={setSelectedExerciseId}
-              label="Select Exercise"
-            />
-            
             <div className="space-y-2">
-              <Label htmlFor="duration">Duration (minutes)</Label>
+              <Label htmlFor="duration">Duração (minutos)</Label>
               <Input
                 id="duration"
                 type="number"
@@ -190,11 +173,11 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Descrição</Label>
               <Textarea
                 id="description"
                 className="bg-midnight-elevated border-divider min-h-[120px]"
-                placeholder="Describe your workout..."
+                placeholder="Descreva seu treino..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
@@ -227,11 +210,6 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
                   <p className="text-text-secondary font-sora">Test Photo (Simulated)</p>
                 </div>
               </div>
-              
-              <Button variant="outline" className="w-full bg-midnight-elevated mb-4" disabled>
-                <ImagePlus className="mr-2 h-4 w-4" />
-                Upload Photo (Simulated)
-              </Button>
               
               <div className="space-y-3 z-20 relative">
                 <div className="flex justify-between items-center">
@@ -282,7 +260,7 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
             
             <Button 
               onClick={submitManualWorkout} 
-              disabled={isLoading || !userId || !selectedExerciseId}
+              disabled={isLoading || !userId}
               className="w-full mt-auto bg-arcane-60 hover:bg-arcane transition-colors"
             >
               {isLoading ? (

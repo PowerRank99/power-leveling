@@ -11,6 +11,7 @@ import PersonalRecordSimulation from '@/components/achievement-testing/PersonalR
 import ManualWorkoutSimulation from '@/components/achievement-testing/ManualWorkoutSimulation';
 import PowerDaySimulation from '@/components/achievement-testing/PowerDaySimulation';
 import AchievementVerification from '@/components/achievement-testing/AchievementVerification';
+import AchievementsList from '@/components/achievement-testing/AchievementsList';
 import UserContextSimulation from '@/components/achievement-testing/UserContextSimulation';
 import LoggingPanel from '@/components/achievement-testing/LoggingPanel';
 import AchievementNotificationTesterSection from '@/components/achievement-testing/AchievementNotificationTesterSection';
@@ -69,12 +70,13 @@ const AchievementTestingPage: React.FC = () => {
           <AchievementNotificationTesterSection />
           
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full mb-4 bg-midnight-card border border-divider/30 shadow-subtle">
+            <TabsList className="w-full mb-4 bg-midnight-card border border-divider/30 shadow-subtle overflow-x-auto flex-nowrap">
               <TabsTrigger value="workout" className="flex-1">Workout</TabsTrigger>
               <TabsTrigger value="pr" className="flex-1">Personal Record</TabsTrigger>
               <TabsTrigger value="manual" className="flex-1">Manual Workout</TabsTrigger>
               <TabsTrigger value="powerday" className="flex-1">Power Day</TabsTrigger>
               <TabsTrigger value="verify" className="flex-1">Verification</TabsTrigger>
+              <TabsTrigger value="list" className="flex-1">List</TabsTrigger>
               <TabsTrigger value="logs" className="flex-1">Logs</TabsTrigger>
             </TabsList>
             
@@ -110,6 +112,12 @@ const AchievementTestingPage: React.FC = () => {
               <AchievementVerification 
                 userId={testUser} 
                 addLogEntry={addLogEntry} 
+              />
+            </TabsContent>
+            
+            <TabsContent value="list">
+              <AchievementsList 
+                userId={testUser} 
               />
             </TabsContent>
             
