@@ -27,6 +27,24 @@ const ClassPassivesToggle: React.FC<ClassPassivesToggleProps> = ({
     }
   }, [enabled, selectedClass, onClassChange]);
 
+  // Helper function to get passive skills for a class
+  const getPassiveSkills = (className: string): string[] => {
+    if (!className) return [];
+    
+    const upperClassName = className.toUpperCase() as keyof typeof CLASS_PASSIVE_SKILLS;
+    
+    if (upperClassName in CLASS_PASSIVE_SKILLS) {
+      const skills = CLASS_PASSIVE_SKILLS[upperClassName];
+      // Convert the PRIMARY and SECONDARY properties to an array of strings
+      return [
+        `${skills.PRIMARY}: +20% XP from class-specific exercises`,
+        `${skills.SECONDARY}: +10% additional bonus from special activities`
+      ];
+    }
+    
+    return [];
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex items-center space-x-2">
@@ -61,7 +79,7 @@ const ClassPassivesToggle: React.FC<ClassPassivesToggleProps> = ({
             <div className="mt-2 text-xs text-text-secondary p-2 bg-midnight-card rounded border border-divider/30">
               <p className="font-semibold text-arcane-60 mb-1">Class bonuses:</p>
               <ul className="space-y-1">
-                {CLASS_PASSIVE_SKILLS[selectedClass as keyof typeof CLASS_PASSIVE_SKILLS]?.map((bonus, index) => (
+                {getPassiveSkills(selectedClass).map((bonus, index) => (
                   <li key={index}>{bonus}</li>
                 ))}
               </ul>

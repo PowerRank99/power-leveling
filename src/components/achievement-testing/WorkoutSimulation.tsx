@@ -47,6 +47,7 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
         id: 'simulation',
         exercises: Array(exerciseCount).fill({}).map((_, i) => ({
           id: `sim-ex-${i}`,
+          name: `Simulated Exercise ${i + 1}`, // Add the name property to match WorkoutExercise type
           sets: Array(3).fill({completed: true})
         })),
         durationSeconds: duration * 60,
