@@ -1,11 +1,12 @@
+
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Profile {
   id: string;
-  username: string;
-  fullName: string;
-  avatarUrl: string;
+  username: string | null;
+  fullName: string | null;
+  avatarUrl: string | null;
   xp: number;
   level: number;
   achievementPoints: number;
@@ -63,22 +64,22 @@ const ProfileDataProvider: React.FC<ProfileDataProviderProps> = ({
           setError(error.message);
         } else {
           // Calculate rank based on points
-          const rank = calculateProfileRank(data?.achievement_points || 0);
+          const rank = calculateProfileRank(data?.achievements_count || 0);
 
           setProfile({
             id: data.id,
-            username: data.username,
-            fullName: data.full_name,
+            username: data.name, // Using name instead of username
+            fullName: data.name, // Using name instead of full_name
             avatarUrl: data.avatar_url,
-            xp: data.xp,
-            level: data.level,
-            achievementPoints: data.achievement_points,
-            achievementsCount: data.achievements_count,
-            workoutsCount: data.workouts_count,
-            streak: data.streak,
-            lastWorkout: data.last_workout,
-            isPremium: data.is_premium,
-            premiumExpiresAt: data.premium_expires_at,
+            xp: data.xp || 0,
+            level: data.level || 1,
+            achievementPoints: data.achievements_count || 0, // Using achievements_count instead of achievement_points
+            achievementsCount: data.achievements_count || 0,
+            workoutsCount: data.workouts_count || 0,
+            streak: data.streak || 0,
+            lastWorkout: data.last_workout_at, // Using last_workout_at instead of last_workout
+            isPremium: false, // Hardcoded since is_premium doesn't exist
+            premiumExpiresAt: null, // Hardcoded since premium_expires_at doesn't exist
             rank: rank
           });
         }
@@ -110,22 +111,22 @@ const ProfileDataProvider: React.FC<ProfileDataProviderProps> = ({
         setError(error.message);
       } else {
         // Calculate rank based on points
-        const rank = calculateProfileRank(data?.achievement_points || 0);
+        const rank = calculateProfileRank(data?.achievements_count || 0);
 
         setProfile({
           id: data.id,
-          username: data.username,
-          fullName: data.full_name,
+          username: data.name, // Using name instead of username
+          fullName: data.name, // Using name instead of full_name
           avatarUrl: data.avatar_url,
-          xp: data.xp,
-          level: data.level,
-          achievementPoints: data.achievement_points,
-          achievementsCount: data.achievements_count,
-          workoutsCount: data.workouts_count,
-          streak: data.streak,
-          lastWorkout: data.last_workout,
-          isPremium: data.is_premium,
-          premiumExpiresAt: data.premium_expires_at,
+          xp: data.xp || 0,
+          level: data.level || 1,
+          achievementPoints: data.achievements_count || 0, // Using achievements_count instead of achievement_points
+          achievementsCount: data.achievements_count || 0,
+          workoutsCount: data.workouts_count || 0,
+          streak: data.streak || 0,
+          lastWorkout: data.last_workout_at, // Using last_workout_at instead of last_workout
+          isPremium: false, // Hardcoded since is_premium doesn't exist
+          premiumExpiresAt: null, // Hardcoded since premium_expires_at doesn't exist
           rank: rank
         });
       }

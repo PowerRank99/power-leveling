@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useClass } from '@/contexts/ClassContext';
@@ -66,7 +67,7 @@ const ProfilePage = () => {
       <div className="px-4">
         <UserDataFormatter user={user} profile={profile}>
           {({ avatar, name, username, workoutsCount }) => (
-            <ProfileDataProvider profile={profile} userClass={userClass}>
+            <ProfileDataProvider userId={user?.id || ""}>
               {(profileData) => (
                 <>
                   <ProfileHeader 
