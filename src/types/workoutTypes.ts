@@ -11,7 +11,8 @@ import {
   SetData as SetDataBase,
   PreviousSetData as PreviousSetDataBase,
   ExerciseHistory as ExerciseHistoryBase,
-  DatabaseResult as DatabaseResultBase
+  DatabaseResult as DatabaseResultBase,
+  PersonalRecord as PersonalRecordBase
 } from './workout';
 
 export type WorkoutExercise = WorkoutExerciseBase;
@@ -21,6 +22,7 @@ export type SetData = SetDataBase;
 export type PreviousSetData = PreviousSetDataBase;
 export type ExerciseHistory = ExerciseHistoryBase;
 export type DatabaseResult<T> = DatabaseResultBase<T>;
+export type PersonalRecord = PersonalRecordBase;
 
 export interface Routine {
   id: string;

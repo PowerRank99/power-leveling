@@ -6,6 +6,7 @@ import { XPBonusService } from './XPBonusService';
 import { PowerDayService } from './bonus/PowerDayService';
 import { AchievementCheckerService } from './achievements/AchievementCheckerService';
 import { mapToWorkoutExerciseData } from '@/utils/typeMappers';
+import { ServiceResponse } from '@/services/common/ErrorHandlingService';
 
 /**
  * Main XP Service that coordinates XP calculations and awards
@@ -69,8 +70,12 @@ export class XPService {
       durationSeconds: number;
       difficulty?: 'iniciante' | 'intermediario' | 'avancado'
     }
-  ): Promise<any[]> {
-    return PersonalRecordService.checkForPersonalRecords(userId, workout);
+  ): Promise<PersonalRecord[]> {
+    const result = await PersonalRecordService.checkForPersonalRecords(userId, workout);
+    if (result.success) {
+      return result.data;
+    }
+    return [];
   }
   
   /**

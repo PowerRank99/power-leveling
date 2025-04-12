@@ -71,6 +71,8 @@ export class WorkoutCompletionService {
           PersonalRecordService.checkForPersonalRecords(userId, {
             id: workoutId,
             exercises: workout.workout_sets.map(set => ({
+              id: set.id,
+              name: 'Exercise',
               exerciseId: set.exercise_id,
               sets: [{
                 weight: set.weight?.toString() || '0',
@@ -78,10 +80,10 @@ export class WorkoutCompletionService {
               }]
             })),
             durationSeconds
-          }).then(async ({ success, data }) => {
-            if (success && data && data.length > 0) {
+          }).then(async (result) => {
+            if (result.success && result.data && result.data.length > 0) {
               // Record personal records
-              for (const record of data) {
+              for (const record of result.data) {
                 await PersonalRecordService.recordPersonalRecord(
                   userId,
                   record.exerciseId,
@@ -108,5 +110,78 @@ export class WorkoutCompletionService {
         userMessage: 'Erro ao finalizar treino'
       }
     );
+  }
+
+  /**
+   * Finish a workout
+   * @param workoutId ID of the workout to finish
+   * @param durationSeconds Duration of the workout in seconds
+   * @returns Success status
+   */
+  static async finishWorkout(workoutId: string, durationSeconds: number): Promise<boolean> {
+    try {
+      // Get user ID from workout
+      const { data: workout, error: fetchError } = await supabase
+        .from('workouts')
+        .select('user_id')
+        .eq('id', workoutId)
+        .single();
+        
+      if (fetchError || !workout) {
+        console.error('Error fetching workout for finishWorkout:', fetchError);
+        return false;
+      }
+      
+      const userId = workout.user_id;
+      
+      // Use completeWorkout method to handle all the logic
+      const result = await this.completeWorkout(userId, workoutId, durationSeconds);
+      
+      return result.success;
+    } catch (error) {
+      console.error('Error in finishWorkout:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Discard a workout
+   * @param workoutId ID of the workout to discard
+   * @returns Success status
+   */
+  static async discardWorkout(workoutId: string): Promise<boolean> {
+    try {
+      if (!workoutId) {
+        console.error('No workout ID provided to discardWorkout');
+        return false;
+      }
+      
+      // Delete all workout sets first
+      const { error: setsError } = await supabase
+        .from('workout_sets')
+        .delete()
+        .eq('workout_id', workoutId);
+        
+      if (setsError) {
+        console.error('Error deleting workout sets:', setsError);
+        return false;
+      }
+      
+      // Delete the workout
+      const { error: workoutError } = await supabase
+        .from('workouts')
+        .delete()
+        .eq('id', workoutId);
+        
+      if (workoutError) {
+        console.error('Error deleting workout:', workoutError);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error in discardWorkout:', error);
+      return false;
+    }
   }
 }

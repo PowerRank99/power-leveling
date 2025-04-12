@@ -159,13 +159,23 @@ export class AchievementService {
           };
         }
         
+        // Type assertion to handle complex JSON response
+        const statsData = data as {
+          total: number;
+          unlocked: number;
+          points: number;
+          rank: string;
+          nextRank: string;
+          pointsToNextRank: number;
+        };
+        
         return {
-          total: data.total || 0,
-          unlocked: data.unlocked || 0,
-          points: data.points || 0,
-          rank: data.rank || 'Unranked',
-          nextRank: data.nextRank,
-          pointsToNextRank: data.pointsToNextRank
+          total: statsData.total || 0,
+          unlocked: statsData.unlocked || 0,
+          points: statsData.points || 0,
+          rank: statsData.rank || 'Unranked',
+          nextRank: statsData.nextRank,
+          pointsToNextRank: statsData.pointsToNextRank
         };
       },
       'GET_ACHIEVEMENT_STATS'
@@ -380,8 +390,23 @@ export class AchievementService {
           return;
         }
         
+        // Map the DB achievements to the Achievement type
+        const mappedAchievements = achievements.map(a => ({
+          id: a.id,
+          name: a.name,
+          description: a.description,
+          category: a.category,
+          rank: a.rank,
+          points: a.points,
+          xpReward: a.xp_reward,
+          iconName: a.icon_name,
+          requirements: typeof a.requirements === 'string' 
+            ? JSON.parse(a.requirements) 
+            : a.requirements
+        })) as Achievement[];
+        
         // Initialize progress for each achievement
-        await AchievementProgressService.initializeMultipleProgress(userId, achievements);
+        await AchievementProgressService.initializeMultipleProgress(userId, mappedAchievements);
       },
       'INITIALIZE_ACHIEVEMENT_PROGRESS',
       {

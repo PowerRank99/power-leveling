@@ -38,7 +38,7 @@ export class AchievementCheckerService {
           await this.checkRankDAchievements(userId, workoutStats, userProfile);
           await this.checkRankCAchievements(userId, workoutStats, userProfile);
           await this.checkHigherRankAchievements(userId, workoutStats, userProfile);
-        });
+        }, 'achievement_checks', 3);
       },
       'CHECK_WORKOUT_ACHIEVEMENTS',
       { showToast: false }
@@ -217,7 +217,7 @@ export class AchievementCheckerService {
           if (achievementChecks.length > 0) {
             await AchievementService.checkAndAwardAchievements(userId, achievementChecks);
           }
-        });
+        }, 'activity_variety_achievements', 3);
       },
       'CHECK_VARIETY_ACHIEVEMENTS',
       { showToast: false }

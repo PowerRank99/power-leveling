@@ -1,11 +1,20 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { WorkoutExercise, PersonalRecord } from '@/types/workoutTypes';
+import { WorkoutExercise } from '@/types/workoutTypes';
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { TransactionService } from '../common/TransactionService';
 import { AchievementCheckerService } from './achievements/AchievementCheckerService';
 import { AchievementProgressService } from './achievements/AchievementProgressService';
 import { toast } from 'sonner';
+
+/**
+ * Interface for personal record data
+ */
+export interface PersonalRecord {
+  exerciseId: string;
+  weight: number;
+  previousWeight: number;
+}
 
 /**
  * Service for handling personal records
