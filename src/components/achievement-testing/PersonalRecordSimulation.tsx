@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,14 +27,12 @@ const PersonalRecordSimulation: React.FC<PersonalRecordSimulationProps> = ({ use
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
   const [potentialXp, setPotentialXp] = useState(XPService.PR_BONUS_XP);
   
-  // Fetch the selected exercise name whenever it changes
   useEffect(() => {
     if (selectedExerciseId) {
       fetchExerciseName();
     }
   }, [selectedExerciseId]);
   
-  // Update XP calculation when class settings change
   useEffect(() => {
     calculatePotentialXp();
   }, [useClassPassives, selectedClass]);
@@ -66,11 +63,8 @@ const PersonalRecordSimulation: React.FC<PersonalRecordSimulationProps> = ({ use
   const calculatePotentialXp = () => {
     let xp = XPService.PR_BONUS_XP;
     
-    // Apply class bonuses if enabled
     if (useClassPassives && selectedClass) {
-      // Simple class bonus simulation
       if (selectedClass === 'Guerreiro') {
-        // Guerreiro gets bonus for strength exercises
         xp = Math.round(xp * 1.2);
       }
     }
@@ -87,9 +81,15 @@ const PersonalRecordSimulation: React.FC<PersonalRecordSimulationProps> = ({ use
       return;
     }
     
+    if (currentWeight <= previousWeight) {
+      toast.error('Invalid Personal Record', {
+        description: 'Current weight must be greater than previous best weight.'
+      });
+      return;
+    }
+    
     setIsLoading(true);
     try {
-      // Record personal record in the database
       await PersonalRecordService.recordPersonalRecord(
         userId,
         selectedExerciseId,
@@ -97,10 +97,8 @@ const PersonalRecordSimulation: React.FC<PersonalRecordSimulationProps> = ({ use
         previousWeight
       );
       
-      // Calculate XP with class bonuses if enabled
       const xpToAward = calculatePotentialXp();
       
-      // Award XP for PR
       await XPService.awardXP(userId, xpToAward, 'personal_record', {
         exerciseId: selectedExerciseId,
         weight: currentWeight,
@@ -109,10 +107,8 @@ const PersonalRecordSimulation: React.FC<PersonalRecordSimulationProps> = ({ use
         ...(useClassPassives ? { class: selectedClass } : {})
       });
       
-      // Find exercise name for log
       const exerciseName = exercises.find(ex => ex.id === selectedExerciseId)?.name || 'Unknown exercise';
       
-      // Record successful simulation
       const classInfo = useClassPassives ? `, Class: ${selectedClass}` : '';
       addLogEntry(
         'Personal Record Logged', 

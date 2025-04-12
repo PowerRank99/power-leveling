@@ -25,7 +25,7 @@ export class XPService {
   
   /**
    * Calculate XP for a completed workout
-   * Returns a number instead of an object
+   * Now returns the full breakdown object instead of just the total XP number
    */
   static calculateWorkoutXP(
     workout: {
@@ -37,9 +37,12 @@ export class XPService {
     userClass?: string | null,
     streak: number = 0,
     difficulty: 'iniciante' | 'intermediario' | 'avancado' = 'intermediario'
-  ): number {
-    const result = XPCalculationService.calculateWorkoutXP(workout, userClass, streak, difficulty);
-    return result.totalXP; // Return just the totalXP number instead of the full object
+  ): {
+    totalXP: number;
+    baseXP: number;
+    bonusBreakdown: { skill: string, amount: number, description: string }[];
+  } {
+    return XPCalculationService.calculateWorkoutXP(workout, userClass, streak, difficulty);
   }
   
   /**
@@ -73,15 +76,25 @@ export class XPService {
     source: string = 'workout',
     metadata?: any
   ): Promise<boolean> {
-    const isAchievementXP = source === 'achievement';
-    const result = await XPBonusService.awardXP(userId, baseXP, isAchievementXP);
-    
-    // Check for XP milestone achievements
-    if (result) {
-      await XPService.checkXPMilestoneAchievements(userId);
+    try {
+      if (!userId) {
+        console.error('awardXP: No userId provided');
+        return false;
+      }
+      
+      const isAchievementXP = source === 'achievement';
+      const result = await XPBonusService.awardXP(userId, baseXP, isAchievementXP);
+      
+      // Check for XP milestone achievements
+      if (result) {
+        await XPService.checkXPMilestoneAchievements(userId);
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error in awardXP:', error);
+      return false;
     }
-    
-    return result;
   }
   
   /**
@@ -145,7 +158,9 @@ export class XPService {
           difficulty: workout.difficulty || 'intermediario'
         };
         
-        baseXP = this.calculateWorkoutXP(workoutObj, null, 0);
+        // Get the full breakdown now
+        const xpData = this.calculateWorkoutXP(workoutObj, null, 0);
+        baseXP = xpData.totalXP;
       }
       
       // Award the XP
@@ -174,18 +189,7 @@ export class XPService {
     week: number;
     year: number;
   }> {
-    try {
-      return await PowerDayService.checkPowerDayAvailability(userId);
-    } catch (error) {
-      console.error('Error in checkPowerDayAvailability:', error);
-      return {
-        available: false,
-        used: 0,
-        max: 2,
-        week: 0,
-        year: 0
-      };
-    }
+    return PowerDayService.checkPowerDayAvailability(userId);
   }
   
   /**

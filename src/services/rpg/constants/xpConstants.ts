@@ -10,12 +10,13 @@ export const XP_CONSTANTS = {
   BASE_SET_XP: 2, // XP per set
   MAX_XP_CONTRIBUTING_SETS: 10, // Maximum number of sets that contribute to XP
   
-  // Time-based XP with diminishing returns
+  // Time-based XP tiers
+  // These represent the maximum minutes for each tier and the XP for completing that entire tier
   TIME_XP_TIERS: [
-    { minutes: 30, xp: 40 },  // First 30 minutes: 40 XP
-    { minutes: 60, xp: 30 },  // 31-60 minutes: +30 XP
-    { minutes: 90, xp: 20 },  // 61-90 minutes: +20 XP
-    { minutes: Infinity, xp: 0 } // Beyond 90 minutes: +0 XP (no additional XP)
+    { minutes: 30, xp: 40 },  // 0-30 minutes: 40 XP total
+    { minutes: 60, xp: 30 },  // 31-60 minutes: 30 XP additional
+    { minutes: 90, xp: 20 },  // 61-90 minutes: 20 XP additional
+    { minutes: Infinity, xp: 0 } // Beyond 90 minutes: 0 XP additional
   ],
   
   // Difficulty multipliers

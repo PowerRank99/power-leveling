@@ -24,21 +24,32 @@ export class BaseXPCalculator {
    */
   static calculateTimeXP(durationMinutes: number): number {
     let totalXP = 0;
-    let remainingMinutes = durationMinutes;
     
-    for (const tier of XP_CONSTANTS.TIME_XP_TIERS) {
-      if (remainingMinutes <= 0) break;
+    // Create time brackets for a more readable approach
+    const brackets = XP_CONSTANTS.TIME_XP_TIERS;
+    
+    let remainingMinutes = durationMinutes;
+    let previousBracketEnd = 0;
+    
+    for (const bracket of brackets) {
+      // Calculate how many minutes fit in this bracket
+      const minutesInBracket = Math.min(
+        Math.max(0, remainingMinutes), 
+        bracket.minutes - previousBracketEnd
+      );
       
-      const minutesInTier = Math.min(remainingMinutes, tier.minutes);
-      const previousTierMinutes = remainingMinutes - minutesInTier;
-      const tierMinutes = minutesInTier - previousTierMinutes;
-      
-      if (tierMinutes > 0) {
-        totalXP += tier.xp;
-        remainingMinutes -= tierMinutes;
+      if (minutesInBracket > 0) {
+        // Apply proportional XP based on how many minutes in this bracket
+        const bracketXP = (minutesInBracket / (bracket.minutes - previousBracketEnd)) * bracket.xp;
+        totalXP += bracketXP;
       }
+      
+      remainingMinutes -= (bracket.minutes - previousBracketEnd);
+      previousBracketEnd = bracket.minutes;
+      
+      if (remainingMinutes <= 0 || bracket.minutes === Infinity) break;
     }
     
-    return totalXP;
+    return Math.round(totalXP);
   }
 }

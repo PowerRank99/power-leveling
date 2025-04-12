@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,36 +31,61 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
   const [totalXP, setTotalXP] = useState(0);
   
-  // Update XP calculation when inputs change
   useEffect(() => {
     setTotalXP(calculateXP());
   }, [isPowerDay, useClassPassives, selectedClass, activityType]);
   
   const calculateXP = () => {
-    // Base XP for manual workouts
     let baseXP = XPService.MANUAL_WORKOUT_BASE_XP;
     
-    // Add bonus for power day if selected
     if (isPowerDay) {
       baseXP += POWER_DAY_BONUS_XP;
     }
     
-    // Apply class bonuses if enabled
     if (useClassPassives && selectedClass) {
-      // Simple simulation of class bonuses for manual workouts
-      if ((activityType === 'strength' || activityType === 'bodyweight') && selectedClass === 'Guerreiro') {
-        // Guerreiro gets bonus for strength workouts
-        baseXP = Math.round(baseXP * 1.1);
-      } else if ((activityType === 'cardio' || activityType === 'running') && selectedClass === 'Ninja') {
-        // Ninja gets bonus for cardio
-        baseXP = Math.round(baseXP * 1.2);
-      } else if (activityType === 'yoga' && selectedClass === 'Bruxo') {
-        // Bruxo gets bonus for yoga
-        baseXP = Math.round(baseXP * 1.2);
-      } else if ((activityType === 'sports' || activityType === 'swimming') && selectedClass === 'Paladino') {
-        // Paladino gets bonus for sports
-        baseXP = Math.round(baseXP * 1.15);
+      let classBonus = 0;
+      let bonusDescription = "";
+      
+      switch(selectedClass) {
+        case 'Guerreiro':
+          if (['strength', 'bodyweight'].includes(activityType)) {
+            classBonus = Math.round(baseXP * 0.1);
+            bonusDescription = "Guerreiro: +10% para treinos de força";
+          }
+          break;
+          
+        case 'Ninja':
+          if (['cardio', 'running', 'hiit'].includes(activityType)) {
+            classBonus = Math.round(baseXP * 0.2);
+            bonusDescription = "Ninja: +20% para cardio/HIIT";
+          }
+          break;
+          
+        case 'Bruxo':
+          if (['yoga', 'flexibility', 'stretching'].includes(activityType)) {
+            classBonus = Math.round(baseXP * 0.2);
+            bonusDescription = "Bruxo: +20% para yoga/flexibilidade";
+          }
+          break;
+          
+        case 'Monge':
+          if (['bodyweight', 'calisthenics'].includes(activityType)) {
+            classBonus = Math.round(baseXP * 0.15);
+            bonusDescription = "Monge: +15% para exercícios com peso corporal";
+          }
+          break;
+          
+        case 'Paladino':
+          if (['sports', 'swimming', 'team_sports'].includes(activityType)) {
+            classBonus = Math.round(baseXP * 0.15);
+            bonusDescription = "Paladino: +15% para atividades esportivas";
+          }
+          break;
       }
+      
+      baseXP += classBonus;
+      
+      console.log(`Applied ${selectedClass} bonus: ${bonusDescription} (+${classBonus} XP)`);
     }
     
     return baseXP;
@@ -77,13 +101,10 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
     
     setIsLoading(true);
     try {
-      // Calculate XP (uses state that's already been calculated)
       const xpAwarded = totalXP;
       
-      // Create a unique filename
       const fileName = `test-manual-workout-${Date.now()}`;
       
-      // Record manual workout in the database
       const { error } = await supabase.rpc('create_manual_workout', {
         p_user_id: userId,
         p_description: description,
@@ -97,14 +118,12 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
       
       if (error) throw error;
       
-      // Award XP
       await XPService.awardXP(userId, xpAwarded, 'manual_workout', {
         activityType,
         isPowerDay,
         ...(useClassPassives ? { class: selectedClass } : {})
       });
       
-      // Record successful simulation
       const classInfo = useClassPassives ? `, Class: ${selectedClass}` : '';
       addLogEntry(
         'Manual Workout Submitted', 
@@ -115,7 +134,6 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
         description: `${xpAwarded} XP has been awarded.`,
       });
       
-      // Reset form
       setDescription('');
       
     } catch (error) {

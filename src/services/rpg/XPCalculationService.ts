@@ -70,8 +70,11 @@ export class XPCalculationService {
       const cappedCompletedSets = Math.min(completedSets, this.MAX_XP_CONTRIBUTING_SETS);
       const setsXP = cappedCompletedSets * this.BASE_SET_XP; // 2 XP per completed set, max 10 sets
       
+      // Personal Record bonus if applicable
+      const prBonus = workout.hasPR ? this.PR_BONUS_XP : 0;
+      
       // Sum base XP
-      let baseXP = timeXP + exerciseXP + setsXP;
+      let baseXP = timeXP + exerciseXP + setsXP + prBonus;
       
       // Apply difficulty modifier if available
       const workoutDifficulty = workout.difficulty || difficulty;
@@ -79,13 +82,37 @@ export class XPCalculationService {
         baseXP = Math.round(baseXP * this.DIFFICULTY_MULTIPLIERS[workoutDifficulty as keyof typeof this.DIFFICULTY_MULTIPLIERS]);
       }
       
+      // Apply streak multiplier - this was missing!
+      const streakMultiplier = this.getStreakMultiplier(streak);
+      let streakBonusXP = 0;
+      
+      if (streak > 0) {
+        streakBonusXP = Math.round(baseXP * (streakMultiplier - 1));
+        baseXP += streakBonusXP;
+      }
+      
+      // Create a bonusBreakdown array to track all bonuses
+      let bonusBreakdown: { skill: string, amount: number, description: string }[] = [];
+      
+      // Add streak bonus to breakdown if applicable
+      if (streakBonusXP > 0) {
+        bonusBreakdown.push({
+          skill: 'Streak',
+          amount: streakBonusXP,
+          description: `+${(streakMultiplier - 1) * 100}% XP (${streak}-day streak)`
+        });
+      }
+      
       // Apply class-specific bonuses with breakdown
-      const { totalXP, bonusBreakdown } = ClassBonusCalculator.applyClassBonuses(
+      const { totalXP, bonusBreakdown: classBonusBreakdown } = ClassBonusCalculator.applyClassBonuses(
         baseXP, 
         workout, 
         userClass, 
         streak
       );
+      
+      // Combine the bonusBreakdown arrays
+      bonusBreakdown = [...bonusBreakdown, ...classBonusBreakdown];
       
       // Cap at daily maximum
       const cappedXP = Math.min(totalXP, this.DAILY_XP_CAP);

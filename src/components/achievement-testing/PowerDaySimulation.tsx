@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -72,14 +71,22 @@ const PowerDaySimulation: React.FC<PowerDaySimulationProps> = ({ userId, addLogE
       const year = now.getFullYear();
       
       // Record power day usage
-      await XPService.recordPowerDayUsage(userId, week, year);
+      const recordSuccess = await XPService.recordPowerDayUsage(userId, week, year);
+      
+      if (!recordSuccess) {
+        throw new Error('Failed to record power day usage');
+      }
       
       // Award custom XP
-      await XPService.awardXP(userId, customXP, 'power_day', {
+      const xpSuccess = await XPService.awardXP(userId, customXP, 'power_day', {
         week,
         year,
         isPowerDay: true
       });
+      
+      if (!xpSuccess) {
+        throw new Error('Failed to award XP');
+      }
       
       // Update status
       await checkPowerDayStatus();
@@ -96,7 +103,7 @@ const PowerDaySimulation: React.FC<PowerDaySimulationProps> = ({ userId, addLogE
     } catch (error) {
       console.error('Error activating power day:', error);
       toast.error('Error', {
-        description: 'Failed to activate power day',
+        description: 'Failed to activate power day: ' + (error instanceof Error ? error.message : 'Unknown error'),
       });
     } finally {
       setIsActivating(false);
