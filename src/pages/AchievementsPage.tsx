@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dumbbell, Flame, Users, Award, BookOpen, Target, Zap, Medal, Trophy, Clock } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
@@ -9,19 +9,8 @@ import { useAuth } from '@/hooks/useAuth';
 import AchievementGrid from '@/components/achievements/AchievementGrid';
 import AchievementStats from '@/components/achievements/AchievementStats';
 import AchievementSearch from '@/components/achievements/AchievementSearch';
-
-// Achievement item interface
-interface AchievementItem {
-  id: string;
-  title: string;
-  description: string;
-  xpReward: number;
-  icon: React.ReactNode;
-  iconBg: string;
-  status: 'locked' | 'unlocked';
-  category: string;
-  rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
-}
+import { Achievement } from '@/types/achievementTypes';
+import { AchievementService } from '@/services/rpg/AchievementService';
 
 const AchievementsPage = () => {
   const navigate = useNavigate();
@@ -29,182 +18,47 @@ const AchievementsPage = () => {
   const [filter, setFilter] = useState<'all' | 'unlocked' | 'locked'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({ total: 0, unlocked: 0 });
   
-  // Enhanced mock achievements data
-  const achievements: AchievementItem[] = [
-    // Treino category
-    {
-      id: 'first_workout',
-      title: 'Primeiro Treino',
-      description: 'Complete seu primeiro treino',
-      xpReward: 50,
-      icon: <Dumbbell className="h-6 w-6 text-arcane" />,
-      iconBg: 'bg-arcane-15',
-      status: 'unlocked',
-      category: 'treino',
-      rarity: 'common'
-    },
-    {
-      id: 'streak_7',
-      title: 'Chama do Iniciante',
-      description: 'Complete 7 treinos seguidos',
-      xpReward: 75,
-      icon: <Flame className="h-6 w-6 text-valor" />,
-      iconBg: 'bg-valor-15',
-      status: 'unlocked',
-      category: 'treino',
-      rarity: 'uncommon'
-    },
-    {
-      id: 'streak_30',
-      title: 'Mestre do Fogo',
-      description: 'Complete 30 treinos seguidos',
-      xpReward: 150,
-      icon: <Flame className="h-6 w-6 text-valor" />,
-      iconBg: 'bg-valor-15',
-      status: 'locked',
-      category: 'treino',
-      rarity: 'rare'
-    },
-    {
-      id: 'workout_50',
-      title: 'Meio Centenário',
-      description: 'Complete 50 treinos no total',
-      xpReward: 100,
-      icon: <Target className="h-6 w-6 text-arcane" />,
-      iconBg: 'bg-arcane-15',
-      status: 'locked',
-      category: 'treino',
-      rarity: 'uncommon'
-    },
-    {
-      id: 'workout_100',
-      title: 'Centenário',
-      description: 'Complete 100 treinos no total',
-      xpReward: 200,
-      icon: <Target className="h-6 w-6 text-arcane-60" />,
-      iconBg: 'bg-arcane-15',
-      status: 'locked',
-      category: 'treino',
-      rarity: 'epic'
-    },
+  // Fetch achievements on component mount
+  useEffect(() => {
+    const fetchAchievements = async () => {
+      if (profile?.id) {
+        setIsLoading(true);
+        
+        try {
+          // Fetch achievements from the service
+          const data = await AchievementService.getAchievements(profile.id);
+          setAchievements(data);
+          
+          // Fetch achievement stats
+          const achievementStats = await AchievementService.getAchievementStats(profile.id);
+          setStats({
+            total: achievementStats.total,
+            unlocked: achievementStats.unlocked
+          });
+        } catch (error) {
+          console.error('Error fetching achievements:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
     
-    // Guildas category
-    {
-      id: 'first_guild',
-      title: 'Primeira Guilda',
-      description: 'Entre em sua primeira guilda',
-      xpReward: 75,
-      icon: <Users className="h-6 w-6 text-arcane" />,
-      iconBg: 'bg-arcane-15',
-      status: 'unlocked',
-      category: 'guildas',
-      rarity: 'common'
-    },
-    {
-      id: 'guild_leader',
-      title: 'Líder Supremo',
-      description: 'Crie uma guilda com 50+ membros',
-      xpReward: 300,
-      icon: <Trophy className="h-6 w-6 text-achievement" />,
-      iconBg: 'bg-achievement-15',
-      status: 'locked',
-      category: 'guildas',
-      rarity: 'legendary'
-    },
-    {
-      id: 'guild_quest_10',
-      title: 'Cumpridor de Missões',
-      description: 'Complete 10 missões da guilda',
-      xpReward: 100,
-      icon: <BookOpen className="h-6 w-6 text-arcane" />,
-      iconBg: 'bg-arcane-15',
-      status: 'locked',
-      category: 'guildas',
-      rarity: 'uncommon'
-    },
-    
-    // Social category
-    {
-      id: 'first_friend',
-      title: 'Socialite',
-      description: 'Adicione seu primeiro amigo',
-      xpReward: 50,
-      icon: <Users className="h-6 w-6 text-arcane" />,
-      iconBg: 'bg-arcane-15',
-      status: 'unlocked',
-      category: 'social',
-      rarity: 'common'
-    },
-    {
-      id: 'popular',
-      title: 'Popular',
-      description: 'Tenha 20 amigos na plataforma',
-      xpReward: 150,
-      icon: <Users className="h-6 w-6 text-arcane" />,
-      iconBg: 'bg-arcane-15',
-      status: 'locked',
-      category: 'social',
-      rarity: 'rare'
-    },
-    
-    // Desafios category
-    {
-      id: 'first_challenge',
-      title: 'Desafiante',
-      description: 'Complete seu primeiro desafio',
-      xpReward: 100,
-      icon: <Zap className="h-6 w-6 text-achievement" />,
-      iconBg: 'bg-achievement-15',
-      status: 'unlocked',
-      category: 'desafios',
-      rarity: 'uncommon'
-    },
-    {
-      id: 'challenge_master',
-      title: 'Mestre dos Desafios',
-      description: 'Complete 50 desafios',
-      xpReward: 300,
-      icon: <Medal className="h-6 w-6 text-achievement" />,
-      iconBg: 'bg-achievement-15',
-      status: 'locked',
-      category: 'desafios',
-      rarity: 'legendary'
-    },
-    
-    // Tempo category
-    {
-      id: 'one_month',
-      title: 'Um Mês na Jornada',
-      description: 'Complete 1 mês usando o aplicativo',
-      xpReward: 50,
-      icon: <Clock className="h-6 w-6 text-arcane" />,
-      iconBg: 'bg-arcane-15',
-      status: 'unlocked',
-      category: 'tempo',
-      rarity: 'common'
-    },
-    {
-      id: 'one_year',
-      title: 'Um Ano de Evolução',
-      description: 'Complete 1 ano usando o aplicativo',
-      xpReward: 500,
-      icon: <Award className="h-6 w-6 text-achievement" />,
-      iconBg: 'bg-achievement-15',
-      status: 'locked',
-      category: 'tempo',
-      rarity: 'epic'
-    }
-  ];
+    fetchAchievements();
+  }, [profile?.id]);
   
   // Filter achievements based on selected filter and search term
   const filteredAchievements = useMemo(() => {
     return achievements.filter(achievement => {
       // Filter by status
-      if (filter !== 'all' && achievement.status !== filter) return false;
+      if (filter === 'unlocked' && !achievement.isUnlocked) return false;
+      if (filter === 'locked' && achievement.isUnlocked) return false;
       
       // Filter by search term
-      if (searchTerm && !achievement.title.toLowerCase().includes(searchTerm.toLowerCase()) && 
+      if (searchTerm && !achievement.name.toLowerCase().includes(searchTerm.toLowerCase()) && 
           !achievement.description.toLowerCase().includes(searchTerm.toLowerCase())) {
         return false;
       }
@@ -218,20 +72,25 @@ const AchievementsPage = () => {
   
   // Group achievements by category for display
   const achievementsByCategory = useMemo(() => {
-    const categories = {
-      treino: filteredAchievements.filter(a => a.category === 'treino'),
-      guildas: filteredAchievements.filter(a => a.category === 'guildas'),
-      social: filteredAchievements.filter(a => a.category === 'social'),
-      desafios: filteredAchievements.filter(a => a.category === 'desafios'),
-      tempo: filteredAchievements.filter(a => a.category === 'tempo')
-    };
+    const categories: Record<string, Achievement[]> = {};
+    
+    filteredAchievements.forEach(achievement => {
+      const category = achievement.category;
+      if (!categories[category]) {
+        categories[category] = [];
+      }
+      categories[category].push(achievement);
+    });
     
     return categories;
   }, [filteredAchievements]);
   
-  // Count achievements stats
-  const totalAchievements = achievements.length;
-  const unlockedAchievements = achievements.filter(a => a.status === 'unlocked').length;
+  // Handle achievement click
+  const handleAchievementClick = (achievement: Achievement) => {
+    // Show achievement details or progress
+    console.log('Achievement clicked:', achievement);
+    // Could implement a modal or detail view here
+  };
   
   return (
     <div className="pb-20 min-h-screen bg-midnight-base">
@@ -243,8 +102,8 @@ const AchievementsPage = () => {
       <div className="px-4 pt-2 pb-4">
         {/* Achievement Stats */}
         <AchievementStats 
-          totalCount={totalAchievements}
-          unlockedCount={unlockedAchievements}
+          totalCount={stats.total}
+          unlockedCount={stats.unlocked}
         />
         
         {/* Search */}
@@ -354,8 +213,19 @@ const AchievementsPage = () => {
           </div>
         </div>
         
+        {/* Loading state */}
+        {isLoading && (
+          <div className="premium-card p-8 text-center">
+            <div className="animate-pulse flex flex-col items-center">
+              <div className="rounded-full bg-midnight-elevated h-12 w-12 mb-4"></div>
+              <div className="h-4 bg-midnight-elevated rounded w-3/4 mb-2"></div>
+              <div className="h-4 bg-midnight-elevated rounded w-1/2"></div>
+            </div>
+          </div>
+        )}
+        
         {/* Empty state when no achievements match filters */}
-        {filteredAchievements.length === 0 && (
+        {!isLoading && filteredAchievements.length === 0 && (
           <div className="premium-card p-8 text-center">
             <Award className="h-12 w-12 text-text-tertiary mx-auto mb-2" />
             <h3 className="text-lg font-semibold text-text-primary font-orbitron">Nenhuma conquista encontrada</h3>
@@ -366,7 +236,7 @@ const AchievementsPage = () => {
         )}
         
         {/* Achievement grids by category */}
-        {activeCategory === 'all' ? (
+        {!isLoading && activeCategory === 'all' ? (
           <>
             {Object.entries(achievementsByCategory).map(([category, items]) => 
               items.length > 0 && (
@@ -374,16 +244,18 @@ const AchievementsPage = () => {
                   key={category} 
                   achievements={items} 
                   title={category.charAt(0).toUpperCase() + category.slice(1)}
+                  onAchievementClick={handleAchievementClick}
                 />
               )
             )}
           </>
         ) : (
           <>
-            {filteredAchievements.length > 0 && (
+            {!isLoading && filteredAchievements.length > 0 && (
               <AchievementGrid 
                 achievements={filteredAchievements}
                 title={activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)}
+                onAchievementClick={handleAchievementClick}
               />
             )}
           </>

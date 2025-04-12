@@ -177,7 +177,7 @@ export class AchievementService {
         .from('achievements')
         .select('*')
         .not('id', 'in', `(${unlockedIds.length > 0 ? unlockedIds.join(',') : 'null'})`)
-        .or('requirements->workouts_count.gte.0,requirements->long_workouts_count.gte.0');
+        .or('requirements->workouts_count.gte.0,requirements->long_workouts_count.gte.0,requirements->exercise_types.neq.null');
         
       if (!achievements || achievements.length === 0) return;
       
@@ -221,11 +221,80 @@ export class AchievementService {
           }
         }
         
-        // Check workout type variety achievements
-        // Implementation depends on how workout types are stored
+        // Check for specific exercise types in workout
+        if (requirements.exercise_types && workout.exercises.length > 0) {
+          const exerciseTypeMap = await this.getExerciseTypesFromWorkout(workout.exercises);
+          const requiredTypes = requirements.exercise_types.split(',');
+          
+          // Check if all required types are in the workout
+          const hasAllTypes = requiredTypes.every(type => exerciseTypeMap[type.trim()]);
+          
+          if (hasAllTypes) {
+            await this.awardAchievement(
+              userId, 
+              achievement.id, 
+              achievement.name, 
+              achievement.description, 
+              achievement.xp_reward,
+              achievement.points
+            );
+          }
+        }
+        
+        // Check for time of day achievements (early morning workouts)
+        if (requirements.workout_time_range) {
+          const now = new Date();
+          const hour = now.getHours();
+          const [startHour, endHour] = requirements.workout_time_range.split('-').map(Number);
+          
+          if (hour >= startHour && hour <= endHour) {
+            // Count workouts in this time range
+            const { count } = await supabase.rpc('count_workouts_in_time_range', {
+              p_user_id: userId,
+              p_start_hour: startHour,
+              p_end_hour: endHour
+            });
+            
+            if (count && count >= (requirements.workout_time_count || 1)) {
+              await this.awardAchievement(
+                userId, 
+                achievement.id, 
+                achievement.name, 
+                achievement.description, 
+                achievement.xp_reward,
+                achievement.points
+              );
+            }
+          }
+        }
       }
     } catch (error) {
       console.error('Error checking workout achievements:', error);
+    }
+  }
+  
+  /**
+   * Helper method to get exercise types from a workout
+   */
+  private static async getExerciseTypesFromWorkout(exercises: WorkoutExercise[]): Promise<Record<string, boolean>> {
+    try {
+      const exerciseIds = exercises.map(e => e.id);
+      const { data } = await supabase
+        .from('exercises')
+        .select('id, type')
+        .in('id', exerciseIds);
+        
+      const typeMap: Record<string, boolean> = {};
+      data?.forEach(exercise => {
+        if (exercise.type) {
+          typeMap[exercise.type] = true;
+        }
+      });
+      
+      return typeMap;
+    } catch (error) {
+      console.error('Error getting exercise types:', error);
+      return {};
     }
   }
   
@@ -249,7 +318,7 @@ export class AchievementService {
         .from('achievements')
         .select('*')
         .not('id', 'in', `(${unlockedIds.length > 0 ? unlockedIds.join(',') : 'null'})`)
-        .containedBy('requirements', JSON.stringify({streak_days: currentStreak}));
+        .or('requirements->streak_days.lte.' + currentStreak);
         
       if (!achievements || achievements.length === 0) return;
       
@@ -309,7 +378,7 @@ export class AchievementService {
         .from('achievements')
         .select('*')
         .not('id', 'in', `(${unlockedIds.length > 0 ? unlockedIds.join(',') : 'null'})`)
-        .or('requirements->quests_completed.gte.0,requirements->active_guilds.gte.0');
+        .or('requirements->quests_completed.gte.0,requirements->active_guilds.gte.0,requirements->guild_xp_contributed.gte.0');
         
       if (!achievements || achievements.length === 0) return;
       
@@ -356,6 +425,12 @@ export class AchievementService {
             );
           }
         }
+        
+        // Check guild XP contribution achievements
+        if (requirements.guild_xp_contributed) {
+          // This would require tracking XP contributions to guilds
+          // Implement based on how guild XP contributions are tracked
+        }
       }
     } catch (error) {
       console.error('Error checking guild achievements:', error);
@@ -391,7 +466,7 @@ export class AchievementService {
         .from('achievements')
         .select('*')
         .not('id', 'in', `(${unlockedIds.length > 0 ? unlockedIds.join(',') : 'null'})`)
-        .containedBy('requirements', JSON.stringify({records_count: profile.records_count}));
+        .or('requirements->records_count.lte.' + profile.records_count);
         
       if (!achievements || achievements.length === 0) return;
       
@@ -416,6 +491,113 @@ export class AchievementService {
   }
   
   /**
+   * Check power day achievements
+   */
+  static async checkPowerDayAchievements(userId: string): Promise<void> {
+    try {
+      if (!userId) return;
+      
+      // Get power day usage count
+      const { data: powerDayUsage } = await supabase
+        .from('power_day_usage')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+        
+      const powerDayCount = powerDayUsage?.length || 0;
+      
+      // Get unlocked achievements
+      const { data: unlockedAchievements } = await supabase
+        .from('user_achievements')
+        .select('achievement_id')
+        .eq('user_id', userId);
+        
+      const unlockedIds = unlockedAchievements?.map(a => a.achievement_id) || [];
+      
+      // Get eligible power day achievements
+      const { data: achievements } = await supabase
+        .from('achievements')
+        .select('*')
+        .not('id', 'in', `(${unlockedIds.length > 0 ? unlockedIds.join(',') : 'null'})`)
+        .or('requirements->power_days_used.lte.' + powerDayCount);
+        
+      if (!achievements || achievements.length === 0) return;
+      
+      // Check each achievement
+      for (const achievement of achievements) {
+        const requirements = parseRequirements(achievement.requirements);
+        
+        if (requirements.power_days_used && powerDayCount >= requirements.power_days_used) {
+          await this.awardAchievement(
+            userId, 
+            achievement.id, 
+            achievement.name, 
+            achievement.description, 
+            achievement.xp_reward,
+            achievement.points
+          );
+        }
+      }
+    } catch (error) {
+      console.error('Error checking power day achievements:', error);
+    }
+  }
+  
+  /**
+   * Check variety achievements (different workout types)
+   */
+  static async checkVarietyAchievements(userId: string): Promise<void> {
+    try {
+      if (!userId) return;
+      
+      // Get distinct exercise types used in the last 30 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const { data: exerciseTypes } = await supabase.rpc('get_distinct_exercise_types', {
+        p_user_id: userId,
+        p_start_date: thirtyDaysAgo.toISOString()
+      });
+      
+      const distinctTypes = exerciseTypes?.length || 0;
+      
+      // Get unlocked achievements
+      const { data: unlockedAchievements } = await supabase
+        .from('user_achievements')
+        .select('achievement_id')
+        .eq('user_id', userId);
+        
+      const unlockedIds = unlockedAchievements?.map(a => a.achievement_id) || [];
+      
+      // Get eligible variety achievements
+      const { data: achievements } = await supabase
+        .from('achievements')
+        .select('*')
+        .not('id', 'in', `(${unlockedIds.length > 0 ? unlockedIds.join(',') : 'null'})`)
+        .or('requirements->distinct_exercise_types.lte.' + distinctTypes);
+        
+      if (!achievements || achievements.length === 0) return;
+      
+      // Check each achievement
+      for (const achievement of achievements) {
+        const requirements = parseRequirements(achievement.requirements);
+        
+        if (requirements.distinct_exercise_types && distinctTypes >= requirements.distinct_exercise_types) {
+          await this.awardAchievement(
+            userId, 
+            achievement.id, 
+            achievement.name, 
+            achievement.description, 
+            achievement.xp_reward,
+            achievement.points
+          );
+        }
+      }
+    } catch (error) {
+      console.error('Error checking variety achievements:', error);
+    }
+  }
+  
+  /**
    * Check manual workout achievements
    */
   static async checkManualWorkoutAchievements(userId: string): Promise<void> {
@@ -423,13 +605,12 @@ export class AchievementService {
       if (!userId) return;
       
       // Count manual workouts
-      const { data: countResult } = await supabase
-        .rpc('check_recent_manual_workouts', { 
-          p_user_id: userId,
-          p_hours: 24 * 365 // Get all manual workouts within a year (essentially all)
-        });
+      const { data: countData } = await supabase
+        .from('manual_workouts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
         
-      const count = countResult?.[0]?.count || 0;
+      const count = countData?.length || 0;
       
       // Get unlocked achievements
       const { data: unlockedAchievements } = await supabase
@@ -444,7 +625,7 @@ export class AchievementService {
         .from('achievements')
         .select('*')
         .not('id', 'in', `(${unlockedIds.length > 0 ? unlockedIds.join(',') : 'null'})`)
-        .or('requirements->manual_workouts_count.gte.0');
+        .or('requirements->manual_workouts_count.lte.' + count);
         
       if (!achievements || achievements.length === 0) return;
       
@@ -739,23 +920,19 @@ export class AchievementService {
       }
 
       // Get total number of achievements
-      const { data: countResult, error: countError } = await supabase
+      const { count: totalCount, error: countError } = await supabase
         .from('achievements')
         .select('*', { count: 'exact', head: true });
-      
-      const totalCount = countResult?.length || 0;
       
       if (countError) {
         throw countError;
       }
 
       // Get count of unlocked achievements
-      const { data: unlockedResult, error: unlockedError } = await supabase
+      const { count: unlockedCount, error: unlockedError } = await supabase
         .from('user_achievements')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId);
-      
-      const unlockedCount = unlockedResult?.length || 0;
       
       if (unlockedError) {
         throw unlockedError;
@@ -781,8 +958,8 @@ export class AchievementService {
       }
 
       return {
-        total: totalCount,
-        unlocked: unlockedCount,
+        total: totalCount || 0,
+        unlocked: unlockedCount || 0,
         points: profile.achievements_count || 0,
         rank: currentRank,
         nextRank,
@@ -859,14 +1036,32 @@ export class AchievementService {
         total = requirements.level;
       } else if ('manual_workouts_count' in requirements) {
         // Get count of manual workouts
-        const { data: countResult } = await supabase
-          .rpc('check_recent_manual_workouts', { 
-            p_user_id: userId,
-            p_hours: 24 * 365 // Get all manual workouts within a year (essentially all)
-          });
+        const { count } = await supabase
+          .from('manual_workouts')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId);
         
-        current = countResult?.[0]?.count || 0;
+        current = count || 0;
         total = requirements.manual_workouts_count;
+      } else if ('power_days_used' in requirements) {
+        // Get count of power days used
+        const { count } = await supabase
+          .from('power_day_usage')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId);
+        
+        current = count || 0;
+        total = requirements.power_days_used;
+      } else if ('quests_completed' in requirements) {
+        // Get count of completed quests
+        const { count } = await supabase
+          .from('guild_raid_participants')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .eq('completed', true);
+        
+        current = count || 0;
+        total = requirements.quests_completed;
       }
 
       // Ensure current doesn't exceed total for display purposes
