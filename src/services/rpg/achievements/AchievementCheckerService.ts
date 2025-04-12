@@ -367,14 +367,16 @@ export class AchievementCheckerService {
       // Combined count
       const totalWorkouts = (workoutCount || 0) + (manualWorkoutCount || 0);
       
-      // Check for workout count achievements - Fixed: Added required empty options object as third parameter
-      await Promise.all([
-        this.checkForAchievement(userId, 'embalo_fitness', { workoutCount: totalWorkouts }),
-        this.checkForAchievement(userId, 'dedicacao_semanal', { workoutCount: totalWorkouts })
-      ]);
+      // Check for workout count achievements - Use direct achievement awarding to avoid recursion
+      if (totalWorkouts >= 7) {
+        await AchievementService.awardAchievement(userId, 'embalo_fitness');
+      }
       
-      // Get workouts per week
-      // Use a simple SQL query instead of RPC to avoid recursion issues
+      if (totalWorkouts >= 10) {
+        await AchievementService.awardAchievement(userId, 'dedicacao_semanal');
+      }
+      
+      // Get workouts per week - Use a simple SQL query instead of RPC to avoid recursion issues
       const { data: weekData, error: weekError } = await supabase
         .from('workouts')
         .select('started_at, count')
@@ -384,9 +386,9 @@ export class AchievementCheckerService {
         
       if (weekError) throw weekError;
       
-      // Check for weekly workout achievements - Fixed: Added required empty options object as third parameter
+      // Check for weekly workout achievements - Use direct achievement awarding
       if (weekData && weekData.length >= 3) {
-        await this.checkForAchievement(userId, 'trio_na_semana', {}); 
+        await AchievementService.awardAchievement(userId, 'trio_na_semana');
       }
       
       // Update achievement points and rank
@@ -679,59 +681,17 @@ export class AchievementCheckerService {
   }
 
   /**
-   * Check for a specific achievement based on criteria
-   * Updated to always include options parameter (empty object as default)
+   * Simplified direct achievement check method
+   * Removed in favor of direct AchievementService.awardAchievement calls to avoid recursion
    */
-  private static async checkForAchievement(
+  private static async awardSimpleAchievement(
     userId: string,
-    achievementId: string,
-    criteria: any = {}
+    achievementId: string
   ): Promise<void> {
     try {
-      // Directly award the achievement without recursive checking
-      const { error } = await supabase
-        .from('user_achievements')
-        .insert({
-          user_id: userId,
-          achievement_id: achievementId,
-          achieved_at: new Date().toISOString()
-        });
-        
-      if (!error) {
-        // Only update profile counters if the achievement was newly added
-        const { count } = await supabase
-          .from('user_achievements')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId)
-          .eq('achievement_id', achievementId);
-          
-        if (count === 1) {
-          // Get achievement XP reward
-          const { data: achievement } = await supabase
-            .from('achievements')
-            .select('xp_reward, points')
-            .eq('id', achievementId)
-            .single();
-            
-          if (achievement) {
-            // Award XP (without recursive achievement checking)
-            await supabase.rpc('increment_profile_counter', {
-              user_id_param: userId,
-              counter_name: 'xp',
-              increment_amount: achievement.xp_reward
-            });
-            
-            // Update achievement counters
-            await supabase.rpc('increment_profile_counter', {
-              user_id_param: userId,
-              counter_name: 'achievements_count',
-              increment_amount: 1
-            });
-          }
-        }
-      }
+      await AchievementService.awardAchievement(userId, achievementId);
     } catch (error) {
-      console.error(`Error checking for achievement ${achievementId}:`, error);
+      console.error(`Error awarding achievement ${achievementId}:`, error);
     }
   }
 }
