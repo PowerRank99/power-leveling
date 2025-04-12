@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useClass } from '@/contexts/ClassContext';
@@ -44,12 +43,10 @@ const ProfilePage = () => {
       }
     };
     
-    // Calculate weekly/monthly bonuses (simplified mock for demonstration)
     const calculateBonuses = async () => {
       if (user?.id && profile?.last_workout_at) {
-        // In a real implementation, this would fetch actual completion data
         setWeeklyBonus(XPBonusService.WEEKLY_COMPLETION_BONUS);
-        setMonthlyBonus(0); // Example: User hasn't earned monthly bonus yet
+        setMonthlyBonus(0);
       }
     };
     
@@ -57,7 +54,6 @@ const ProfilePage = () => {
     calculateBonuses();
   }, [userClass, user?.id, profile?.last_workout_at]);
   
-  // Mock data for achievements
   const recentAchievements = getMockAchievements();
   
   return (
@@ -83,6 +79,8 @@ const ProfilePage = () => {
                     ranking={42}
                     currentXP={profileData.currentXP}
                     nextLevelXP={profileData.nextLevelXP}
+                    rank={profileData.rank}
+                    achievementPoints={profileData.achievementPoints}
                   />
                   
                   <ProfileProgressSection 
