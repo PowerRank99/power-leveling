@@ -44,7 +44,7 @@ const ProfileDataProvider: React.FC<ProfileDataProviderProps> = ({ userId, child
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
-        // Get profile data
+        // Get profile data using a single efficient query
         const { data, error } = await supabase
           .from('profiles')
           .select('level, xp, class, daily_xp, daily_xp_cap, last_workout_at, streak, achievements_count, rank, achievement_points')

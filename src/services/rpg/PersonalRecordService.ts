@@ -23,23 +23,28 @@ export class PersonalRecordService {
   ): Promise<PersonalRecord[]> {
     const newRecords: PersonalRecord[] = [];
 
+    // Optimize by fetching all current records in a single query
+    const { data: currentRecords, error: recordsError } = await supabase
+      .from('personal_records')
+      .select('exercise_id, weight')
+      .eq('user_id', userId)
+      .in('exercise_id', workout.exercises.map(e => e.exerciseId).filter(Boolean));
+
+    if (recordsError) {
+      console.error('Error fetching personal records:', recordsError);
+      return [];
+    }
+
+    // Create a map for faster lookups
+    const recordsMap = new Map();
+    currentRecords?.forEach(record => {
+      recordsMap.set(record.exercise_id, record.weight);
+    });
+
     for (const exercise of workout.exercises) {
       if (!exercise.exerciseId) continue;
 
       try {
-        // Get the user's current personal record for this exercise
-        const { data: currentRecord, error: recordError } = await supabase
-          .from('personal_records')
-          .select('weight')
-          .eq('user_id', userId)
-          .eq('exercise_id', exercise.exerciseId)
-          .single();
-
-        if (recordError && recordError.code !== '404') {
-          console.error('Error fetching personal record:', recordError);
-          continue;
-        }
-
         // Get the maximum weight lifted in this workout for the exercise
         let maxWeight = 0;
         if (Array.isArray(exercise.sets)) {
@@ -53,12 +58,14 @@ export class PersonalRecordService {
 
         if (maxWeight === 0) continue;
 
-        // Compare with current personal record
-        if (!currentRecord || maxWeight > currentRecord.weight) {
+        // Compare with current personal record using the map
+        const currentWeight = recordsMap.get(exercise.exerciseId) || 0;
+        
+        if (maxWeight > currentWeight) {
           newRecords.push({
             exerciseId: exercise.exerciseId,
             weight: maxWeight,
-            previousWeight: currentRecord ? currentRecord.weight : 0
+            previousWeight: currentWeight
           });
         }
       } catch (error) {
@@ -98,7 +105,7 @@ export class PersonalRecordService {
 
         if (error) throw error;
 
-        // Get total PR count for achievement progress
+        // Get total PR count for achievement progress in a single query
         const { count, error: countError } = await supabase
           .from('personal_records')
           .select('*', { count: 'exact', head: true })

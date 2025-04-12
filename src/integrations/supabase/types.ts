@@ -9,6 +9,51 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      achievement_progress: {
+        Row: {
+          achievement_id: string | null
+          current_value: number | null
+          id: string
+          is_complete: boolean | null
+          target_value: number
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          achievement_id?: string | null
+          current_value?: number | null
+          id?: string
+          is_complete?: boolean | null
+          target_value: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          achievement_id?: string | null
+          current_value?: number | null
+          id?: string
+          is_complete?: boolean | null
+          target_value?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "achievement_progress_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "achievement_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       achievements: {
         Row: {
           category: string
@@ -830,9 +875,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      batch_update_achievement_progress: {
+        Args: { p_user_id: string; p_achievements: Json }
+        Returns: {
+          achievement_id: string | null
+          current_value: number | null
+          id: string
+          is_complete: boolean | null
+          target_value: number
+          updated_at: string | null
+          user_id: string | null
+        }[]
+      }
       begin_transaction: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      check_achievement_batch: {
+        Args: { p_user_id: string; p_achievement_ids: string[] }
+        Returns: {
+          achievement_id: string
+          awarded: boolean
+        }[]
       }
       check_personal_record_cooldown: {
         Args: { p_user_id: string; p_exercise_id: string; p_days?: number }
@@ -864,6 +928,14 @@ export type Database = {
       create_power_day_usage: {
         Args: { p_user_id: string; p_week_number: number; p_year: number }
         Returns: boolean
+      }
+      get_achievement_stats: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
+      get_all_achievement_progress: {
+        Args: { p_user_id: string }
+        Returns: Json
       }
       get_class_bonuses: {
         Args: { p_class_name: string }

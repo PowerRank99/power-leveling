@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { AchievementCheckerService } from './achievements/AchievementCheckerService';
@@ -76,7 +75,7 @@ export class StreakService {
           description: 'Continue assim!'
         });
         
-        // Update streak achievement progress
+        // Update streak achievement progress - use the optimized version now
         await AchievementProgressService.updateStreakProgress(userId, newStreak);
       }
       

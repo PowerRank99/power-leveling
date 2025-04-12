@@ -20,52 +20,56 @@ export class AchievementProgressService {
     targetValue: number
   ): Promise<AchievementProgress | null> {
     try {
-      // Check if progress entry already exists
-      const { data: existingProgress, error: checkError } = await supabase
-        .from('achievement_progress')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('achievement_id', achievementId)
-        .single();
+      // Check if progress entry already exists using proper RPC function
+      const { data: existing, error: checkError } = await supabase.rpc(
+        'get_achievement_progress_by_id',
+        { 
+          p_user_id: userId,
+          p_achievement_id: achievementId 
+        }
+      );
         
-      if (checkError && checkError.code !== 'PGRST116') { // Not found error code
+      if (checkError) {
         console.error('Error checking achievement progress:', checkError);
         return null;
       }
       
       // If progress entry already exists, return it
-      if (existingProgress) {
+      if (existing && existing.length > 0) {
+        const progressData = existing[0];
         return {
-          id: existingProgress.id,
-          current: existingProgress.current_value,
-          total: existingProgress.target_value,
-          isComplete: existingProgress.is_complete
+          id: progressData.id,
+          current: progressData.current_value,
+          total: progressData.target_value,
+          isComplete: progressData.is_complete
         };
       }
       
       // Create new progress entry
-      const { data: newProgress, error: insertError } = await supabase
+      const progressData = {
+        user_id: userId,
+        achievement_id: achievementId,
+        current_value: 0,
+        target_value: targetValue,
+        is_complete: false
+      };
+      
+      const { data, error } = await supabase
         .from('achievement_progress')
-        .insert({
-          user_id: userId,
-          achievement_id: achievementId,
-          current_value: 0,
-          target_value: targetValue,
-          is_complete: false
-        })
+        .insert(progressData)
         .select('*')
         .single();
         
-      if (insertError) {
-        console.error('Error initializing achievement progress:', insertError);
+      if (error) {
+        console.error('Error initializing achievement progress:', error);
         return null;
       }
       
       return {
-        id: newProgress.id,
-        current: newProgress.current_value,
-        total: newProgress.target_value,
-        isComplete: newProgress.is_complete
+        id: data.id,
+        current: data.current_value,
+        total: data.target_value,
+        isComplete: data.is_complete
       };
     } catch (error) {
       console.error('Error in initializeProgress:', error);
@@ -81,25 +85,27 @@ export class AchievementProgressService {
     achievementId: string
   ): Promise<AchievementProgress | null> {
     try {
-      const { data, error } = await supabase
-        .from('achievement_progress')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('achievement_id', achievementId)
-        .maybeSingle();
+      const { data, error } = await supabase.rpc(
+        'get_achievement_progress_by_id',
+        { 
+          p_user_id: userId,
+          p_achievement_id: achievementId 
+        }
+      );
         
       if (error) {
         console.error('Error fetching achievement progress:', error);
         return null;
       }
       
-      if (!data) return null;
+      if (!data || data.length === 0) return null;
       
+      const progressData = data[0];
       return {
-        id: data.id,
-        current: data.current_value,
-        total: data.target_value,
-        isComplete: data.is_complete
+        id: progressData.id,
+        current: progressData.current_value,
+        total: progressData.target_value,
+        isComplete: progressData.is_complete
       };
     } catch (error) {
       console.error('Error in getProgress:', error);
@@ -109,29 +115,33 @@ export class AchievementProgressService {
   
   /**
    * Get progress for all achievements of a user
+   * Uses the optimized database function
    */
   static async getAllProgress(userId: string): Promise<Record<string, AchievementProgress>> {
     try {
-      const { data, error } = await supabase
-        .from('achievement_progress')
-        .select('*')
-        .eq('user_id', userId);
+      const { data, error } = await supabase.rpc(
+        'get_all_achievement_progress',
+        { p_user_id: userId }
+      );
         
       if (error) {
         console.error('Error fetching all achievement progress:', error);
         return {};
       }
       
+      // Parse the JSON result into our expected format
       const progressMap: Record<string, AchievementProgress> = {};
       
-      data.forEach(item => {
-        progressMap[item.achievement_id] = {
-          id: item.id,
-          current: item.current_value,
-          total: item.target_value,
-          isComplete: item.is_complete
-        };
-      });
+      if (data) {
+        Object.entries(data).forEach(([achievementId, progressData]: [string, any]) => {
+          progressMap[achievementId] = {
+            id: progressData.id,
+            current: progressData.current,
+            total: progressData.total,
+            isComplete: progressData.isComplete
+          };
+        });
+      }
       
       return progressMap;
     } catch (error) {
@@ -155,13 +165,13 @@ export class AchievementProgressService {
   ): Promise<boolean> {
     try {
       // Get the achievement to check target value
-      const { data: achievements } = await supabase
+      const { data: achievement } = await supabase
         .from('achievements')
         .select('*')
         .eq('id', achievementId)
         .maybeSingle();
         
-      if (!achievements) {
+      if (!achievement) {
         console.error(`Achievement ${achievementId} not found`);
         return false;
       }
@@ -169,16 +179,19 @@ export class AchievementProgressService {
       // Execute with transaction support for reliability
       const { data: wasCompleted, error } = await TransactionService.executeTransaction(async () => {
         // Get current progress
-        const { data: progress, error: progressError } = await supabase
-          .from('achievement_progress')
-          .select('*')
-          .eq('user_id', userId)
-          .eq('achievement_id', achievementId)
-          .maybeSingle();
+        const { data: progressResults, error: progressError } = await supabase.rpc(
+          'get_achievement_progress_by_id',
+          { 
+            p_user_id: userId,
+            p_achievement_id: achievementId 
+          }
+        );
           
-        if (progressError && progressError.code !== 'PGRST116') { // Not found error code
+        if (progressError) {
           throw progressError;
         }
+        
+        const progress = progressResults && progressResults.length > 0 ? progressResults[0] : null;
         
         // Calculate new value
         let updatedValue: number;
@@ -194,9 +207,9 @@ export class AchievementProgressService {
           }
         } else {
           // Extract target value from achievement requirements
-          const requirements = typeof achievements.requirements === 'string' 
-            ? JSON.parse(achievements.requirements) 
-            : achievements.requirements;
+          const requirements = typeof achievement.requirements === 'string' 
+            ? JSON.parse(achievement.requirements) 
+            : achievement.requirements;
             
           targetValue = requirements.count || requirements.target || 10; // Default to 10 if not specified
           updatedValue = options.increment ? newValue : newValue;
@@ -261,6 +274,26 @@ export class AchievementProgressService {
     achievementId: string
   ): Promise<boolean> {
     try {
+      const { data: progressResults, error: progressError } = await supabase.rpc(
+        'get_achievement_progress_by_id',
+        { 
+          p_user_id: userId,
+          p_achievement_id: achievementId 
+        }
+      );
+      
+      if (progressError) {
+        console.error('Error finding achievement progress:', progressError);
+        return false;
+      }
+      
+      if (!progressResults || progressResults.length === 0) {
+        // No progress to reset
+        return true;
+      }
+      
+      const progress = progressResults[0];
+      
       const { error } = await supabase
         .from('achievement_progress')
         .update({
@@ -268,8 +301,7 @@ export class AchievementProgressService {
           is_complete: false,
           updated_at: new Date().toISOString()
         })
-        .eq('user_id', userId)
-        .eq('achievement_id', achievementId);
+        .eq('id', progress.id);
         
       if (error) {
         console.error('Error resetting achievement progress:', error);
@@ -300,20 +332,50 @@ export class AchievementProgressService {
   
   /**
    * Initialize progress for multiple achievements
+   * Uses batching for better performance
    */
   static async initializeMultipleProgress(
     userId: string,
     achievements: Achievement[]
   ): Promise<void> {
     try {
-      for (const achievement of achievements) {
-        const requirements = typeof achievement.requirements === 'string' 
-          ? JSON.parse(achievement.requirements) 
-          : achievement.requirements;
+      // Create batches of 10 achievements each
+      const batchSize = 10;
+      const batches = [];
+      
+      for (let i = 0; i < achievements.length; i += batchSize) {
+        batches.push(achievements.slice(i, i + batchSize));
+      }
+      
+      // Process each batch
+      for (const batch of batches) {
+        const progressUpdates = batch.map(achievement => {
+          const requirements = typeof achievement.requirements === 'string'
+            ? JSON.parse(achievement.requirements)
+            : achievement.requirements;
+            
+          const targetValue = requirements.count || requirements.target || 10;
           
-        const targetValue = requirements.count || requirements.target || 10;
+          return {
+            user_id: userId,
+            achievement_id: achievement.id,
+            current_value: 0,
+            target_value: targetValue,
+            is_complete: false
+          };
+        });
         
-        await this.initializeProgress(userId, achievement.id, targetValue);
+        // Use a batch insert with conflict handling
+        const { error } = await supabase
+          .from('achievement_progress')
+          .upsert(progressUpdates, { 
+            onConflict: 'user_id,achievement_id',
+            ignoreDuplicates: true
+          });
+          
+        if (error) {
+          console.error('Error in batch initialization:', error);
+        }
       }
     } catch (error) {
       console.error('Error initializing multiple achievement progress:', error);
@@ -322,6 +384,7 @@ export class AchievementProgressService {
   
   /**
    * Update workout count achievement progress
+   * Uses a single database call to check all workout count achievements
    */
   static async updateWorkoutCountProgress(userId: string, totalCount: number): Promise<void> {
     try {
@@ -336,11 +399,27 @@ export class AchievementProgressService {
         { id: 'total-200', target: 200 }
       ];
       
-      for (const achievement of workoutAchievements) {
-        await this.updateProgress(userId, achievement.id, totalCount, {
-          increment: false,
-          checkCompletion: true
-        });
+      // Prepare batch update data
+      const progressUpdates = workoutAchievements.map(achievement => ({
+        achievement_id: achievement.id,
+        current_value: totalCount,
+        target_value: achievement.target,
+        is_complete: totalCount >= achievement.target
+      }));
+      
+      // Use the batch update function
+      await supabase.rpc('batch_update_achievement_progress', {
+        p_user_id: userId,
+        p_achievements: progressUpdates
+      });
+      
+      // Check which achievements are now complete
+      const completedAchievements = workoutAchievements
+        .filter(achievement => totalCount >= achievement.target)
+        .map(achievement => achievement.id);
+        
+      if (completedAchievements.length > 0) {
+        await AchievementService.checkAndAwardAchievements(userId, completedAchievements);
       }
     } catch (error) {
       console.error('Error updating workout count achievements:', error);
@@ -349,6 +428,7 @@ export class AchievementProgressService {
   
   /**
    * Update personal record achievement progress
+   * Uses a single database call to check all PR count achievements
    */
   static async updatePersonalRecordProgress(userId: string, totalCount: number): Promise<void> {
     try {
@@ -361,11 +441,27 @@ export class AchievementProgressService {
         { id: 'pr-50', target: 50 }
       ];
       
-      for (const achievement of prAchievements) {
-        await this.updateProgress(userId, achievement.id, totalCount, {
-          increment: false,
-          checkCompletion: true
-        });
+      // Prepare batch update data
+      const progressUpdates = prAchievements.map(achievement => ({
+        achievement_id: achievement.id,
+        current_value: totalCount,
+        target_value: achievement.target,
+        is_complete: totalCount >= achievement.target
+      }));
+      
+      // Use the batch update function
+      await supabase.rpc('batch_update_achievement_progress', {
+        p_user_id: userId,
+        p_achievements: progressUpdates
+      });
+      
+      // Check which achievements are now complete
+      const completedAchievements = prAchievements
+        .filter(achievement => totalCount >= achievement.target)
+        .map(achievement => achievement.id);
+        
+      if (completedAchievements.length > 0) {
+        await AchievementService.checkAndAwardAchievements(userId, completedAchievements);
       }
     } catch (error) {
       console.error('Error updating PR count achievements:', error);
@@ -374,6 +470,7 @@ export class AchievementProgressService {
   
   /**
    * Update streak achievement progress
+   * Uses a single database call to check all streak achievements
    */
   static async updateStreakProgress(userId: string, currentStreak: number): Promise<void> {
     try {
@@ -388,11 +485,27 @@ export class AchievementProgressService {
         { id: 'streak-365', target: 365 }
       ];
       
-      for (const achievement of streakAchievements) {
-        await this.updateProgress(userId, achievement.id, currentStreak, {
-          increment: false,
-          checkCompletion: true
-        });
+      // Prepare batch update data
+      const progressUpdates = streakAchievements.map(achievement => ({
+        achievement_id: achievement.id,
+        current_value: currentStreak,
+        target_value: achievement.target,
+        is_complete: currentStreak >= achievement.target
+      }));
+      
+      // Use the batch update function
+      await supabase.rpc('batch_update_achievement_progress', {
+        p_user_id: userId,
+        p_achievements: progressUpdates
+      });
+      
+      // Check which achievements are now complete
+      const completedAchievements = streakAchievements
+        .filter(achievement => currentStreak >= achievement.target)
+        .map(achievement => achievement.id);
+        
+      if (completedAchievements.length > 0) {
+        await AchievementService.checkAndAwardAchievements(userId, completedAchievements);
       }
     } catch (error) {
       console.error('Error updating streak achievements:', error);

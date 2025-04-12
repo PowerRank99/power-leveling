@@ -20,7 +20,7 @@ $$ LANGUAGE plpgsql;
 CREATE TABLE IF NOT EXISTS public.achievement_progress (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-  achievement_id TEXT REFERENCES public.achievements(id) ON DELETE CASCADE,
+  achievement_id UUID REFERENCES public.achievements(id) ON DELETE CASCADE,
   current_value INTEGER DEFAULT 0,
   target_value INTEGER NOT NULL,
   is_complete BOOLEAN DEFAULT false,
