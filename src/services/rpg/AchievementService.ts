@@ -18,7 +18,7 @@ export class AchievementService {
       // Get user profile data
       const { data: profile } = await supabase
         .from('profiles')
-        .select('workouts_count, streak, records_count, level, achievement_points')
+        .select('workouts_count, streak, records_count, level, achievements_count')
         .eq('id', userId)
         .single();
         
@@ -64,7 +64,7 @@ export class AchievementService {
             achievement.name, 
             achievement.description, 
             achievement.xp_reward,
-            achievement.points
+            achievement.points || 1 // Default to 1 if points not specified
           );
           achievementUnlocked = true;
         }
@@ -80,7 +80,7 @@ export class AchievementService {
             achievement.name, 
             achievement.description, 
             achievement.xp_reward,
-            achievement.points
+            achievement.points || 1 // Default to 1 if points not specified
           );
           achievementUnlocked = true;
         }
@@ -96,7 +96,7 @@ export class AchievementService {
             achievement.name, 
             achievement.description, 
             achievement.xp_reward,
-            achievement.points
+            achievement.points || 1 // Default to 1 if points not specified
           );
           achievementUnlocked = true;
         }
@@ -112,7 +112,7 @@ export class AchievementService {
             achievement.name, 
             achievement.description, 
             achievement.xp_reward,
-            achievement.points
+            achievement.points || 1 // Default to 1 if points not specified
           );
           achievementUnlocked = true;
         }
@@ -152,15 +152,24 @@ export class AchievementService {
         return;
       }
       
-      // Update the achievements count, XP, and achievement points
-      await supabase.rpc(
-        'increment_achievement_and_xp', 
-        {
-          user_id: userId,
-          xp_amount: xpReward,
-          points_amount: points
-        }
-      );
+      // Update the achievements count and XP
+      // Since the 'increment_achievement_and_xp' function doesn't exist yet, let's use separate updates
+      // First, increment the achievements count
+      await supabase
+        .from('profiles')
+        .update({ 
+          achievements_count: supabase.rpc('increment_profile_counter', {
+            user_id_param: userId,
+            counter_name: 'achievements_count',
+            increment_amount: 1
+          }),
+          xp: supabase.rpc('increment_profile_counter', {
+            user_id_param: userId,
+            counter_name: 'xp',
+            increment_amount: xpReward
+          })
+        })
+        .eq('id', userId);
       
       // Show achievement popup - fixed to properly use the Zustand store
       const { showAchievement } = achievementPopupStore.getState();
@@ -204,7 +213,17 @@ export class AchievementService {
 
       // If no user ID, just return all achievements
       if (!userId) {
-        return data || [];
+        return data.map(item => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          category: item.category,
+          rank: item.rank,
+          points: item.points,
+          xpReward: item.xp_reward,
+          iconName: item.icon_name,
+          requirements: item.requirements
+        }));
       }
 
       // Get user's achievements to mark which ones are unlocked
@@ -216,9 +235,17 @@ export class AchievementService {
       const unlockedAchievementIds = new Set(userAchievements?.map(a => a.achievement_id) || []);
 
       // Return achievements with unlocked status
-      return data.map(achievement => ({
-        ...achievement,
-        isUnlocked: unlockedAchievementIds.has(achievement.id)
+      return data.map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        category: item.category,
+        rank: item.rank,
+        points: item.points,
+        xpReward: item.xp_reward,
+        iconName: item.icon_name,
+        requirements: item.requirements,
+        isUnlocked: unlockedAchievementIds.has(item.id)
       }));
     } catch (error) {
       console.error('Error fetching achievements:', error);
@@ -246,7 +273,15 @@ export class AchievementService {
       }
 
       return data.map(item => ({
-        ...item.achievements,
+        id: item.achievements.id,
+        name: item.achievements.name,
+        description: item.achievements.description,
+        category: item.achievements.category,
+        rank: item.achievements.rank,
+        points: item.achievements.points,
+        xpReward: item.achievements.xp_reward,
+        iconName: item.achievements.icon_name,
+        requirements: item.achievements.requirements,
         achievedAt: item.achieved_at
       }));
     } catch (error) {
@@ -260,10 +295,10 @@ export class AchievementService {
    */
   static async getAchievementStats(userId: string): Promise<AchievementStats> {
     try {
-      // Get user profile with level and achievement points
+      // Get user profile with level and achievements count
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('level, achievement_points')
+        .select('level, achievements_count')
         .eq('id', userId)
         .single();
       
@@ -290,16 +325,8 @@ export class AchievementService {
         throw unlockedError;
       }
 
-      // Calculate current rank
-      const { data: rankData, error: rankError } = await supabase.rpc(
-        'calculate_rank',
-        {
-          player_level: profile.level,
-          achievement_points: profile.achievement_points
-        }
-      );
-      
-      const currentRank = rankData || 'Unranked';
+      // Calculate current rank manually instead of using the DB function
+      const currentRank = calculateRank(profile.level, profile.achievements_count);
       
       // Define the rank progression
       const ranks = ['Unranked', 'E', 'D', 'C', 'B', 'A', 'S'];
@@ -324,7 +351,7 @@ export class AchievementService {
           'S': 198
         };
         
-        const currentScore = (1.5 * profile.level) + (2 * profile.achievement_points);
+        const currentScore = (1.5 * profile.level) + (2 * profile.achievements_count);
         pointsToNextRank = Math.ceil((rankScores[nextRank] - currentScore) / 2);
         if (pointsToNextRank < 0) pointsToNextRank = 0;
       }
@@ -332,7 +359,7 @@ export class AchievementService {
       return {
         total: totalCount || 0,
         unlocked: unlockedCount || 0,
-        points: profile.achievement_points || 0,
+        points: profile.achievements_count || 0,
         rank: currentRank,
         nextRank,
         pointsToNextRank
@@ -424,4 +451,17 @@ export class AchievementService {
       return null;
     }
   }
+}
+
+// Helper function to calculate rank (client-side version)
+function calculateRank(level: number, achievementPoints: number): string {
+  const rankScore = (1.5 * level) + (2 * achievementPoints);
+  
+  if (rankScore < 20) return 'Unranked';
+  if (rankScore >= 20 && rankScore < 50) return 'E';
+  if (rankScore >= 50 && rankScore < 80) return 'D';
+  if (rankScore >= 80 && rankScore < 120) return 'C';
+  if (rankScore >= 120 && rankScore < 160) return 'B';
+  if (rankScore >= 160 && rankScore < 198) return 'A';
+  return 'S';
 }

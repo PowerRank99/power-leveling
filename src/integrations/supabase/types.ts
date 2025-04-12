@@ -16,6 +16,8 @@ export type Database = {
           icon_name: string
           id: string
           name: string
+          points: number
+          rank: string
           requirements: Json
           xp_reward: number
         }
@@ -25,6 +27,8 @@ export type Database = {
           icon_name: string
           id?: string
           name: string
+          points?: number
+          rank?: string
           requirements: Json
           xp_reward: number
         }
@@ -34,6 +38,8 @@ export type Database = {
           icon_name?: string
           id?: string
           name?: string
+          points?: number
+          rank?: string
           requirements?: Json
           xp_reward?: number
         }

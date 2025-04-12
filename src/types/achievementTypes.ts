@@ -13,6 +13,8 @@ export interface Achievement {
   xpReward: number;
   iconName: string;
   requirements: Record<string, any>;
+  isUnlocked?: boolean;
+  achievedAt?: string;
 }
 
 export interface UserAchievement {

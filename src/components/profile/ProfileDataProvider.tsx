@@ -1,3 +1,4 @@
+
 import React, { ReactNode } from 'react';
 import { User } from '@supabase/supabase-js';
 import { ClassService } from '@/services/rpg/ClassService';
@@ -54,10 +55,10 @@ const ProfileDataProvider: React.FC<ProfileDataProviderProps> = ({
     classDescription: ClassService.getClassDescription(userClass),
     lastActivity: profile?.last_workout_at ? '8h 45min' : 'Nunca',
     xpGain: '+25 EXP',
-    rank: profile?.achievement_points 
-      ? calculateRank(profile.level, profile.achievement_points)
+    rank: profile?.achievements_count 
+      ? calculateRank(profile.level, profile.achievements_count)
       : 'Unranked',
-    achievementPoints: profile?.achievement_points || 0,
+    achievementPoints: profile?.achievements_count || 0,
   };
 
   return <>{children(profileData)}</>;
