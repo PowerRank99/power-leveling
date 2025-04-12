@@ -93,4 +93,25 @@ export class ActivityBonusService {
     const activityDesc = activityDescriptions[normalizedActivity] || activityType;
     return `+${Math.round(bonusPercentage * 100)}% para ${activityDesc}`;
   }
+
+  /**
+   * Get activity-specific XP amount
+   * @param activityType The type of activity
+   * @returns The base XP amount for this activity type
+   */
+  static getActivityXP(activityType: string): number {
+    // Base XP is 100 for all manual workouts
+    const baseXP = 100;
+    
+    // For some specific activities we might want to adjust the base XP
+    const activityXPModifiers: Record<string, number> = {
+      // Example: 'marathon': 1.5, // 150 XP for marathon
+      // 'competition': 1.2, // 120 XP for competitions
+    };
+    
+    const normalizedActivity = this.normalizeActivityType(activityType.toLowerCase());
+    const modifier = activityXPModifiers[normalizedActivity] || 1;
+    
+    return Math.round(baseXP * modifier);
+  }
 }

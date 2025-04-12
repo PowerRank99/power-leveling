@@ -241,15 +241,21 @@ export class AchievementCheckerService {
       if (!userId) return;
 
       // Get unique exercise types in the last 7 days
-      const { data: typeCount, error: typeError } = await supabase
-        .rpc('count_distinct_exercise_types', { user_id: userId, days_back: 7 });
+      // We'll use a direct database query instead of RPC for now
+      const { data: exerciseTypes, error: typesError } = await supabase
+        .from('workout_sets')
+        .select('exercise_id')
+        .eq('user_id', userId)
+        .gte('completed_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+        .is('completed', true);
         
-      if (typeError) {
-        console.error('Error counting distinct exercise types:', typeError);
+      if (typesError) {
+        console.error('Error counting distinct exercise types:', typesError);
         return;
       }
 
-      const uniqueTypes = typeCount && typeCount.length > 0 ? typeCount[0].type_count : 0;
+      // Count unique exercise IDs
+      const uniqueTypes = new Set((exerciseTypes || []).map(et => et.exercise_id).filter(Boolean)).size;
 
       // Award activity variety achievements
       if (uniqueTypes >= 3) {
@@ -301,16 +307,21 @@ export class AchievementCheckerService {
         await AchievementService.awardAchievement(userId, 'manual-25');
       }
 
-      // Check activity type variety
-      const { data: activityTypes, error: activityError } = await supabase
-        .rpc('get_distinct_activity_types', { user_id: userId });
+      // Check for distinct activity types
+      const { data: activityData, error: activityError } = await supabase
+        .from('manual_workouts')
+        .select('activity_type')
+        .eq('user_id', userId);
         
       if (activityError) {
         console.error('Error getting distinct activity types:', activityError);
         return;
       }
 
-      const uniqueActivities = activityTypes ? activityTypes.length : 0;
+      // Count distinct activity types
+      const uniqueActivities = new Set((activityData || [])
+        .map(workout => workout.activity_type)
+        .filter(Boolean)).size;
 
       // Award activity variety achievements
       if (uniqueActivities >= 3) {
