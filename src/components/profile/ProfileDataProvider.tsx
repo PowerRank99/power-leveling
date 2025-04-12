@@ -1,68 +1,164 @@
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
-import React, { ReactNode } from 'react';
-import { User } from '@supabase/supabase-js';
-import { ClassService } from '@/services/rpg/ClassService';
-import { Profile } from './UserDataFormatter';
-import { XPBonusService } from '@/services/rpg/XPBonusService';
-import { AchievementService } from '@/services/rpg/AchievementService';
-
-export interface ProfileData {
+interface Profile {
+  id: string;
+  username: string;
+  fullName: string;
+  avatarUrl: string;
+  xp: number;
   level: number;
-  currentXP: number;
-  nextLevelXP: number;
-  dailyXP: number;
-  dailyXPCap: number;
-  streak: number;
-  weeklyBonus: number;
-  monthlyBonus: number;
-  achievements: {
-    unlocked: number;
-    total: number;
-  };
-  className: string;
-  classDescription: string;
-  lastActivity: string;
-  xpGain: string;
-  rank: string;
   achievementPoints: number;
+  achievementsCount: number;
+  workoutsCount: number;
+  streak: number;
+  lastWorkout: string | null;
+  isPremium: boolean;
+  premiumExpiresAt: string | null;
+  rank: string;
+}
+
+interface ProfileContextProps {
+  profile: Profile | null;
+  isLoading: boolean;
+  error: string | null;
+  refetchProfile: () => Promise<void>;
 }
 
 interface ProfileDataProviderProps {
-  profile: Profile | null;
-  userClass: string | null;
-  children: (data: ProfileData) => ReactNode;
+  userId: string;
+  children: React.ReactNode;
 }
 
+const ProfileContext = createContext<ProfileContextProps | undefined>(undefined);
+
+export const useProfile = () => {
+  const context = useContext(ProfileContext);
+  if (!context) {
+    throw new Error('useProfile must be used within a ProfileDataProvider');
+  }
+  return context;
+};
+
 const ProfileDataProvider: React.FC<ProfileDataProviderProps> = ({ 
-  profile, 
-  userClass, 
-  children 
+  children,
+  userId
 }) => {
-  // Prepare RPG data for profile display
-  const profileData: ProfileData = {
-    level: profile?.level || 1,
-    currentXP: profile?.xp || 0,
-    nextLevelXP: (profile?.level || 1) * 100,
-    dailyXP: 150, // Mock data - could be calculated based on today's workouts
-    dailyXPCap: 300,
-    streak: profile?.streak || 0,
-    weeklyBonus: 0, // Will be populated from actual database in a real implementation
-    monthlyBonus: 0, // Will be populated from actual database in a real implementation
-    achievements: {
-      unlocked: profile?.achievements_count || 0,
-      total: 50 // Mock total achievements
-    },
-    className: userClass || 'Sem Classe',
-    classDescription: ClassService.getClassDescription(userClass),
-    lastActivity: profile?.last_workout_at ? '8h 45min' : 'Nunca',
-    xpGain: '+25 EXP',
-    rank: profile?.achievements_count 
-      ? AchievementService.calculateRank(profile.level, profile.achievements_count)
-      : 'Unranked',
-    achievementPoints: profile?.achievements_count || 0,
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+
+        if (error) {
+          setError(error.message);
+        } else {
+          // Calculate rank based on points
+          const rank = calculateProfileRank(data?.achievement_points || 0);
+
+          setProfile({
+            id: data.id,
+            username: data.username,
+            fullName: data.full_name,
+            avatarUrl: data.avatar_url,
+            xp: data.xp,
+            level: data.level,
+            achievementPoints: data.achievement_points,
+            achievementsCount: data.achievements_count,
+            workoutsCount: data.workouts_count,
+            streak: data.streak,
+            lastWorkout: data.last_workout,
+            isPremium: data.is_premium,
+            premiumExpiresAt: data.premium_expires_at,
+            rank: rank
+          });
+        }
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [userId]);
+
+  const refetchProfile = async () => {
+    await fetchProfileData(userId);
   };
 
-  return <>{children(profileData)}</>;
+  const fetchProfileData = async (userId: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        setError(error.message);
+      } else {
+        // Calculate rank based on points
+        const rank = calculateProfileRank(data?.achievement_points || 0);
+
+        setProfile({
+          id: data.id,
+          username: data.username,
+          fullName: data.full_name,
+          avatarUrl: data.avatar_url,
+          xp: data.xp,
+          level: data.level,
+          achievementPoints: data.achievement_points,
+          achievementsCount: data.achievements_count,
+          workoutsCount: data.workouts_count,
+          streak: data.streak,
+          lastWorkout: data.last_workout,
+          isPremium: data.is_premium,
+          premiumExpiresAt: data.premium_expires_at,
+          rank: rank
+        });
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Helper function to calculate rank
+  const calculateProfileRank = (points: number): string => {
+    if (points >= 1000) return 'S';
+    if (points >= 500) return 'A';
+    if (points >= 250) return 'B';
+    if (points >= 100) return 'C';
+    if (points >= 50) return 'D';
+    if (points >= 10) return 'E';
+    return 'Unranked';
+  };
+
+  const value: ProfileContextProps = {
+    profile,
+    isLoading,
+    error,
+    refetchProfile,
+  };
+
+  return (
+    <ProfileContext.Provider value={value}>
+      {children}
+    </ProfileContext.Provider>
+  );
 };
 
 export default ProfileDataProvider;

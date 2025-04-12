@@ -57,3 +57,15 @@ export interface AchievementFilter {
   category: string;
   searchTerm: string;
 }
+
+export interface AchievementNotification {
+  id: string;
+  title: string;
+  description: string;
+  xpReward: number;
+  rank: string;
+  bonusText?: string;
+  points: number;
+  iconName: string;
+  timestamp: string;
+}

@@ -1,8 +1,8 @@
-
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/hooks/useAuth';
 import { ClassProvider } from '@/contexts/ClassContext';
 import { Toaster } from 'sonner';
+import AchievementNotificationSystem from './components/achievements/AchievementNotificationSystem';
 
 // Pages
 import Index from './pages/Index';
@@ -48,8 +48,9 @@ function App() {
           <Route path="/classes" element={<ClassSelectionPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-        <Toaster position="top-center" richColors />
+        <Toaster />
         <AchievementPopup />
+        <AchievementNotificationSystem />
       </ClassProvider>
     </AuthProvider>
   );

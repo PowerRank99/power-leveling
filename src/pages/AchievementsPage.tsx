@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Award, HelpCircle, Calendar, Star, ChevronUp, ChevronDown, Crown } from 'lucide-react';
+import { Award, HelpCircle, Calendar, Star, ChevronUp, ChevronDown } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
 import BottomNavBar from '@/components/navigation/BottomNavBar';
 import { useAuth } from '@/hooks/useAuth';
@@ -12,6 +11,7 @@ import { Achievement } from '@/types/achievementTypes';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import AchievementNotificationTester from '@/components/achievements/AchievementNotificationTester';
 
 const ranks = ['S', 'A', 'B', 'C', 'D', 'E'] as const;
 
@@ -24,18 +24,15 @@ const AchievementsPage = () => {
   const [expandedRank, setExpandedRank] = useState<string | null>('S');
   const [showHint, setShowHint] = useState(false);
 
-  // Fetch achievements on component mount
   useEffect(() => {
     const fetchAchievements = async () => {
       if (profile?.id) {
         setIsLoading(true);
         
         try {
-          // Only fetch unlocked achievements
           const data = await AchievementService.getUnlockedAchievements(profile.id);
           setAchievements(data);
           
-          // Fetch achievement stats
           const achievementStats = await AchievementService.getAchievementStats(profile.id);
           setStats({
             total: achievementStats.total,
@@ -44,7 +41,6 @@ const AchievementsPage = () => {
             totalXp: data.reduce((sum, a) => sum + a.xpReward, 0)
           });
 
-          // Play sound based on highest rank if they have achievements
           if (data.length > 0) {
             playAchievementSound(getHighestRank(data));
           }
@@ -64,7 +60,6 @@ const AchievementsPage = () => {
     fetchAchievements();
   }, [profile?.id, toast]);
   
-  // Get highest rank from achievements
   const getHighestRank = (achievements: Achievement[]): string => {
     for (const rank of ranks) {
       if (achievements.some(a => a.rank === rank)) {
@@ -74,13 +69,10 @@ const AchievementsPage = () => {
     return 'E';
   };
   
-  // Play sound based on rank
   const playAchievementSound = (rank: string) => {
-    // This would be implemented with actual sound effects
     console.log(`Playing ${rank} rank sound effect`);
   };
   
-  // Group achievements by rank
   const achievementsByRank = useCallback(() => {
     const grouped: Record<string, Achievement[]> = {};
     
@@ -94,7 +86,6 @@ const AchievementsPage = () => {
     return grouped;
   }, [achievements]);
   
-  // Get rank color class for styling
   const getRankColorClass = (rank: string) => {
     switch(rank) {
       case 'S': return 'bg-gradient-to-r from-achievement to-achievement-60 text-text-primary shadow-glow-gold';
@@ -107,7 +98,6 @@ const AchievementsPage = () => {
     }
   };
   
-  // Get icon background class based on rank
   const getIconBgClass = (rank: string) => {
     switch(rank) {
       case 'S': return 'bg-achievement-15 text-achievement shadow-glow-gold';
@@ -120,7 +110,6 @@ const AchievementsPage = () => {
     }
   };
   
-  // Get animation settings based on rank
   const getAnimationSettings = (rank: string) => {
     switch(rank) {
       case 'S': return { delay: 0.05, duration: 0.7, type: 'spring', stiffness: 300 };
@@ -130,12 +119,10 @@ const AchievementsPage = () => {
     }
   };
   
-  // Toggles a rank section open/closed
   const toggleRank = (rank: string) => {
     setExpandedRank(expandedRank === rank ? null : rank);
   };
   
-  // Random hints for different achievement types
   const getRandomHint = () => {
     const hints = [
       "A constância forja a verdadeira força.",
@@ -149,7 +136,6 @@ const AchievementsPage = () => {
     return hints[Math.floor(Math.random() * hints.length)];
   };
   
-  // Handler for hint button
   const handleHintClick = () => {
     setShowHint(true);
     toast({
@@ -158,13 +144,10 @@ const AchievementsPage = () => {
       duration: 5000,
     });
     
-    // Hide hint after 5 seconds
     setTimeout(() => setShowHint(false), 5000);
   };
   
-  // Render achievement icon
   const renderAchievementIcon = (iconName: string, rank: string) => {
-    // This would be expanded with more icons based on the achievement type
     return (
       <Award className={`h-6 w-6 ${rank === 'S' || rank === 'A' ? 'text-achievement' : 
         rank === 'B' ? 'text-valor' : 'text-arcane'}`} />
@@ -190,7 +173,6 @@ const AchievementsPage = () => {
       />
       
       <div className="px-4 pt-2 pb-4">
-        {/* Achievement Stats */}
         <motion.div 
           className="premium-card mb-6 bg-midnight-card border border-divider/30 shadow-glow-subtle overflow-hidden"
           initial={{ opacity: 0, y: 20 }}
@@ -222,7 +204,6 @@ const AchievementsPage = () => {
           </div>
         </motion.div>
         
-        {/* Loading state */}
         {isLoading && (
           <motion.div 
             className="premium-card p-8 text-center bg-midnight-card"
@@ -237,7 +218,6 @@ const AchievementsPage = () => {
           </motion.div>
         )}
         
-        {/* Empty state when no achievements */}
         {!isLoading && achievements.length === 0 && (
           <motion.div 
             className="premium-card p-8 text-center bg-midnight-card border border-divider/30"
@@ -261,7 +241,6 @@ const AchievementsPage = () => {
           </motion.div>
         )}
         
-        {/* Achievement sections by rank */}
         {!isLoading && Object.entries(achievementsByRank()).map(([rank, items]) => (
           <motion.div 
             key={rank}
@@ -270,7 +249,6 @@ const AchievementsPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: ranks.indexOf(rank as any) * 0.1 }}
           >
-            {/* Rank header */}
             <motion.div 
               className={`p-4 flex justify-between items-center cursor-pointer ${getRankColorClass(rank)}`}
               onClick={() => toggleRank(rank)}
@@ -294,7 +272,6 @@ const AchievementsPage = () => {
               }
             </motion.div>
             
-            {/* Achievement items */}
             <AnimatePresence>
               {expandedRank === rank && (
                 <motion.div
@@ -322,17 +299,14 @@ const AchievementsPage = () => {
                         }}
                       >
                         <div className="flex items-start">
-                          {/* Icon */}
                           <div className={`${getIconBgClass(rank)} rounded-full w-12 h-12 flex items-center justify-center flex-shrink-0`}>
                             {renderAchievementIcon(achievement.iconName, rank)}
                           </div>
                           
-                          {/* Content */}
                           <div className="ml-4 flex-1">
                             <h4 className="font-orbitron font-bold text-text-primary">{achievement.name}</h4>
                             <p className="text-sm text-text-secondary mt-1 font-sora">{achievement.description}</p>
                             
-                            {/* Achievement date */}
                             {achievement.achievedAt && (
                               <div className="flex items-center mt-2 text-xs text-text-tertiary">
                                 <Calendar className="h-3 w-3 mr-1" />
@@ -340,7 +314,6 @@ const AchievementsPage = () => {
                               </div>
                             )}
                             
-                            {/* Reward */}
                             <div className="flex justify-between items-center mt-3">
                               <Badge 
                                 className={rank === 'S' || rank === 'A' 
@@ -377,7 +350,6 @@ const AchievementsPage = () => {
           </motion.div>
         ))}
         
-        {/* Mysterious message at the bottom */}
         {!isLoading && achievements.length > 0 && (
           <motion.div 
             className="text-center mt-8 mb-4 px-4"
@@ -389,6 +361,12 @@ const AchievementsPage = () => {
               "Muitas conquistas ainda permanecem ocultas, aguardando para serem reveladas..."
             </p>
           </motion.div>
+        )}
+        
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-8 border border-divider rounded-lg">
+            <AchievementNotificationTester />
+          </div>
         )}
       </div>
       

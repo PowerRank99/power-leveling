@@ -84,4 +84,32 @@ export class StreakService {
       return false;
     }
   }
+
+  /**
+   * Check for streak achievements when streak is updated
+   */
+  public static async checkStreakAchievements(userId: string): Promise<void> {
+    try {
+      // First fetch the user's current streak
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('streak')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching user streak:', error);
+        return;
+      }
+      
+      const streak = profile?.streak || 0;
+      
+      // Check for achievements based on streak length
+      if (streak >= 3) {
+        await AchievementService.checkStreakAchievements(userId);
+      }
+    } catch (error) {
+      console.error('Error checking streak achievements:', error);
+    }
+  }
 }
