@@ -1,14 +1,20 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
-import { UserProfileData, UserWorkoutStats } from './AchievementCheckerInterface';
+import { AchievementChecker, UserProfileData, UserWorkoutStats } from './AchievementCheckerInterface';
 import { TransactionService } from '../../common/TransactionService';
 import { AchievementService } from '../AchievementService';
 
 /**
  * Base class for achievement checkers with common utility methods
  */
-export abstract class BaseAchievementChecker {
+export abstract class BaseAchievementChecker implements AchievementChecker {
+  /**
+   * Abstract method that all achievement checkers must implement
+   * This ensures the interface is properly satisfied
+   */
+  abstract checkAchievements(userId: string, data?: any): Promise<ServiceResponse<void>>;
+
   /**
    * Get workout statistics for a user
    */
@@ -106,13 +112,14 @@ export abstract class BaseAchievementChecker {
   protected static async executeChecks(
     userId: string,
     checkFn: () => Promise<string[]>,
-    operationName: string
+    operationName: string,
+    retryCount: number = 3
   ): Promise<void> {
     try {
       const achievementIds = await TransactionService.executeWithRetry(
         checkFn,
         operationName,
-        3,
+        retryCount,
         `Failed to check ${operationName}`
       );
       

@@ -29,7 +29,8 @@ export class ActivityAchievementChecker extends BaseAchievementChecker implement
         if (typesError) throw typesError;
 
         // Count unique exercise IDs
-        const uniqueTypes = new Set(exerciseTypes?.map(et => et.exercise_id).filter(Boolean) || []);
+        const uniqueExerciseIds = exerciseTypes?.map(et => et.exercise_id).filter(Boolean) || [];
+        const uniqueTypes = new Set(uniqueExerciseIds);
         const uniqueCount = uniqueTypes.size;
 
         // Use transaction service for consistency
@@ -97,9 +98,10 @@ export class ActivityAchievementChecker extends BaseAchievementChecker implement
           if (activityError) throw activityError;
 
           // Count distinct activity types
-          const uniqueActivities = new Set((activityData || [])
+          const activityTypes = (activityData || [])
             .map(workout => workout.activity_type)
-            .filter(Boolean));
+            .filter(Boolean);
+          const uniqueActivities = new Set(activityTypes);
           const uniqueCount = uniqueActivities.size;
 
           // Award activity variety achievements

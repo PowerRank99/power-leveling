@@ -1,18 +1,26 @@
 
 import { ServiceResponse } from '@/services/common/ErrorHandlingService';
-import { PersonalRecordData } from './AchievementCheckerInterface';
 import { WorkoutAchievementChecker } from './WorkoutAchievementChecker';
 import { RecordAchievementChecker } from './RecordAchievementChecker';
 import { StreakAchievementChecker } from './StreakAchievementChecker';
 import { ActivityAchievementChecker } from './ActivityAchievementChecker';
 import { XPAchievementChecker } from './XPAchievementChecker';
 import { BaseAchievementChecker } from './BaseAchievementChecker';
+import type { PersonalRecordData } from './AchievementCheckerInterface';
 
 /**
  * Centralized service for checking and awarding achievements
  * Acts as a facade to delegate to specialized checkers
  */
 export class AchievementCheckerService extends BaseAchievementChecker {
+  /**
+   * Implementation of abstract method from BaseAchievementChecker
+   * This service doesn't directly check achievements but delegates to other checkers
+   */
+  async checkAchievements(userId: string, data?: any): Promise<ServiceResponse<void>> {
+    return this.checkWorkoutRelatedAchievements(userId);
+  }
+
   /**
    * Check all achievements relevant to workout completion
    */
@@ -70,4 +78,4 @@ export class AchievementCheckerService extends BaseAchievementChecker {
 }
 
 // Re-export the PersonalRecordData interface to avoid circular dependencies
-export { PersonalRecordData };
+export type { PersonalRecordData };

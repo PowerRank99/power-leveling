@@ -151,7 +151,8 @@ export class WorkoutAchievementChecker extends BaseAchievementChecker implements
         
         return achievementChecks;
       },
-      'rank_e_achievements'
+      'rank_e_achievements',
+      3
     );
   }
 
@@ -185,7 +186,8 @@ export class WorkoutAchievementChecker extends BaseAchievementChecker implements
         
         return achievementChecks;
       },
-      'rank_d_achievements'
+      'rank_d_achievements',
+      3
     );
   }
 
@@ -209,7 +211,8 @@ export class WorkoutAchievementChecker extends BaseAchievementChecker implements
         
         return achievementChecks;
       },
-      'rank_c_achievements'
+      'rank_c_achievements',
+      3
     );
   }
 
@@ -251,7 +254,8 @@ export class WorkoutAchievementChecker extends BaseAchievementChecker implements
         
         return achievementChecks;
       },
-      'higher_rank_achievements'
+      'higher_rank_achievements',
+      3
     );
   }
 }
