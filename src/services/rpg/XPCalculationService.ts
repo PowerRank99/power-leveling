@@ -18,6 +18,7 @@ export class XPCalculationService {
   static readonly TIME_XP_TIERS = XP_CONSTANTS.TIME_XP_TIERS;
   static readonly EXERCISE_TYPES = EXERCISE_TYPES;
   static readonly CLASS_PASSIVE_SKILLS = CLASS_PASSIVE_SKILLS;
+  static readonly MAX_XP_CONTRIBUTING_SETS = XP_CONSTANTS.MAX_XP_CONTRIBUTING_SETS;
   
   /**
    * Calculate the streak multiplier (5% per day up to 35% at 7 days)
@@ -60,11 +61,14 @@ export class XPCalculationService {
       // Exercise completion XP
       const exerciseXP = workout.exercises.length * this.BASE_EXERCISE_XP; // 5 XP per exercise
       
-      // Set completion XP
+      // Set completion XP - capped at MAX_XP_CONTRIBUTING_SETS sets (10 by default)
       const completedSets = workout.exercises.reduce((sum, ex) => {
         return sum + ex.sets.filter(set => set.completed).length;
       }, 0);
-      const setsXP = completedSets * this.BASE_SET_XP; // 2 XP per completed set
+      
+      // Cap the number of sets that contribute to XP
+      const cappedCompletedSets = Math.min(completedSets, this.MAX_XP_CONTRIBUTING_SETS);
+      const setsXP = cappedCompletedSets * this.BASE_SET_XP; // 2 XP per completed set, max 10 sets
       
       // Sum base XP
       let baseXP = timeXP + exerciseXP + setsXP;

@@ -57,27 +57,37 @@ export class PersonalRecordService {
   
   /**
    * Check if an exercise is on cooldown for PR bonuses
-   * (1 PR bonus per exercise per week)
+   * (1 PR bonus per exercise per calendar week)
    */
   static async checkPersonalRecordCooldown(
     userId: string, 
     exerciseId: string
   ): Promise<boolean> {
     try {
-      // Use RPC function to check cooldown
-      const { data, error } = await supabase.rpc('check_personal_record_cooldown', {
-        p_user_id: userId,
-        p_exercise_id: exerciseId,
-        p_days: 7
-      });
+      // Get current calendar week start (Monday of current week)
+      const now = new Date();
+      const dayOfWeek = now.getDay() || 7; // Convert Sunday (0) to 7
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - (dayOfWeek - 1)); // Set to Monday
+      weekStart.setHours(0, 0, 0, 0);
       
+      // Check if a PR was recorded for this exercise in the current calendar week
+      const { data, error } = await supabase
+        .from('personal_records')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('exercise_id', exerciseId)
+        .gte('recorded_at', weekStart.toISOString())
+        .limit(1);
+        
       if (error) {
         console.error('Error checking PR cooldown:', error);
         return false;
       }
       
-      // The function returns a boolean value
-      return !!data;
+      // If no records found for this exercise this week, then it's not on cooldown
+      // (true means the user CAN earn a PR bonus)
+      return data.length === 0;
     } catch (error) {
       console.error('Error checking personal record cooldown:', error);
       return false; // Default to not allowing PR bonus on error
@@ -131,7 +141,7 @@ export class PersonalRecordService {
         
         // If a new PR was set, add it to the list
         if (highestWeight > previousBest && highestWeight > 0) {
-          // Check for cooldown period (1 PR per exercise per week)
+          // Check for cooldown period (1 PR per exercise per calendar week)
           const canEarnPR = await this.checkPersonalRecordCooldown(userId, exerciseId);
           
           if (canEarnPR) {

@@ -8,6 +8,7 @@ export const XP_CONSTANTS = {
   PR_BONUS_XP: 50, // Bonus XP for personal records
   BASE_EXERCISE_XP: 5, // XP per exercise
   BASE_SET_XP: 2, // XP per set
+  MAX_XP_CONTRIBUTING_SETS: 10, // Maximum number of sets that contribute to XP
   
   // Time-based XP with diminishing returns
   TIME_XP_TIERS: [

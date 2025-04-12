@@ -173,8 +173,13 @@ export class XPBonusService {
    */
   static getCurrentWeek(): number {
     const now = new Date();
-    const janFirst = new Date(now.getFullYear(), 0, 1);
-    return Math.ceil((((now.getTime() - janFirst.getTime()) / 86400000) + janFirst.getDay() + 1) / 7);
+    const firstDayOfYear = new Date(now.getFullYear(), 0, 1);
+    const pastDaysOfYear = (now.getTime() - firstDayOfYear.getTime()) / 86400000;
+    
+    // Calculate current week number based on ISO week definition (weeks start on Monday)
+    const weekNum = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+    
+    return weekNum;
   }
 
   /**
@@ -249,23 +254,30 @@ export class XPBonusService {
 
   /**
    * Calculate weekly and monthly completion bonuses
+   * Updated to use calendar week/month boundaries
    */
   private static async calculateCompletionBonuses(
     userId: string,
     lastWorkoutAt: string | null
   ): Promise<{ weeklyBonus: number; monthlyBonus: number }> {
     try {
-      const now = new Date();
       const result = { weeklyBonus: 0, monthlyBonus: 0 };
       
       if (!lastWorkoutAt) return result;
       
-      const lastWorkout = new Date(lastWorkoutAt);
+      const now = new Date();
       
-      // Check for weekly completion (at least 3 workouts in the past 7 days)
+      // Get calendar week start (Monday of this week)
       const weekStart = new Date(now);
-      weekStart.setDate(now.getDate() - 7);
+      const dayOfWeek = weekStart.getDay() || 7; // Convert Sunday (0) to 7
+      weekStart.setDate(weekStart.getDate() - (dayOfWeek - 1)); // Set to Monday
+      weekStart.setHours(0, 0, 0, 0);
       
+      // Get calendar month start (1st of the month)
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      monthStart.setHours(0, 0, 0, 0);
+      
+      // Check for weekly completion (at least 3 workouts in the current calendar week)
       const { count: weeklyWorkouts, error: weeklyError } = await supabase
         .from('workouts')
         .select('*', { count: 'exact', head: true })
@@ -278,10 +290,7 @@ export class XPBonusService {
         console.log(`Applied weekly completion bonus: +${this.WEEKLY_COMPLETION_BONUS} XP`);
       }
       
-      // Check for monthly completion (at least 12 workouts in the past 30 days)
-      const monthStart = new Date(now);
-      monthStart.setDate(now.getDate() - 30);
-      
+      // Check for monthly completion (at least 12 workouts in the current calendar month)
       const { count: monthlyWorkouts, error: monthlyError } = await supabase
         .from('workouts')
         .select('*', { count: 'exact', head: true })
