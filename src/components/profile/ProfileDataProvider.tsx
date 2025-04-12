@@ -16,7 +16,7 @@ export interface ProfileData {
   streak: number;
   achievementPoints: number;
   rank: string;
-  ranking?: number; // Added this property to resolve the error
+  ranking: number; // Changed from optional to required with default value
 }
 
 interface ProfileDataProviderProps {

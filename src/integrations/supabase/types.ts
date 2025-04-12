@@ -558,6 +558,8 @@ export type Database = {
           class: string | null
           class_selected_at: string | null
           created_at: string | null
+          daily_xp: number | null
+          daily_xp_cap: number | null
           default_rest_timer_seconds: number
           equipped_items: Json | null
           id: string
@@ -581,6 +583,8 @@ export type Database = {
           class?: string | null
           class_selected_at?: string | null
           created_at?: string | null
+          daily_xp?: number | null
+          daily_xp_cap?: number | null
           default_rest_timer_seconds?: number
           equipped_items?: Json | null
           id: string
@@ -604,6 +608,8 @@ export type Database = {
           class?: string | null
           class_selected_at?: string | null
           created_at?: string | null
+          daily_xp?: number | null
+          daily_xp_cap?: number | null
           default_rest_timer_seconds?: number
           equipped_items?: Json | null
           id?: string

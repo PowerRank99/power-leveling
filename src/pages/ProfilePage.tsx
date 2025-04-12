@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useClass } from '@/contexts/ClassContext';
@@ -77,7 +76,7 @@ const ProfilePage = () => {
                     level={profileData.level}
                     className={profileData.className}
                     workoutsCount={workoutsCount}
-                    ranking={profileData.ranking?.toString() || '42'}
+                    ranking={profileData.ranking.toString()}
                     currentXP={profileData.currentXP}
                     nextLevelXP={profileData.nextLevelXP}
                     rank={profileData.rank}

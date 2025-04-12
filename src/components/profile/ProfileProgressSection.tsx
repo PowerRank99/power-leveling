@@ -9,7 +9,7 @@ interface ProfileProgressSectionProps {
   dailyXP: number;
   dailyXPCap: number;
   lastActivity: string;
-  xpGain: string;
+  xpGain: number;
   streak?: number;
   weeklyBonus?: number;
   monthlyBonus?: number;
@@ -46,7 +46,7 @@ const ProfileProgressSection: React.FC<ProfileProgressSectionProps> = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="xp-value animate-pulse-subtle flex items-center" style={{ color: 'rgba(250, 204, 21, 0.85)' }}>
-                    {xpGain.replace('EEXP', 'EXP')}
+                    {`+${xpGain} XP`}
                     <Info className="w-3 h-3 ml-1" style={{ color: 'rgba(250, 204, 21, 0.6)' }} />
                   </div>
                 </TooltipTrigger>
