@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
@@ -126,7 +127,7 @@ export class PersonalRecordService {
           if (count) {
             const progressResult = await AchievementProgressService.updatePersonalRecordProgress(userId, count);
             if (!progressResult.success) {
-              console.warn('Failed to update PR achievement progress', progressResult.error);
+              console.warn('Failed to update PR achievement progress', progressResult.message);
             }
           }
           

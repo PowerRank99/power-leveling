@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Achievement } from '@/types/achievementTypes';
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
@@ -5,6 +6,7 @@ import { AchievementService } from '../AchievementService';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { TransactionService } from '../../common/TransactionService';
 import { AchievementProgressService } from './AchievementProgressService';
+import { PersonalRecord } from '../PersonalRecordService';
 
 /**
  * Centralized service for checking and awarding achievements
@@ -49,11 +51,7 @@ export class AchievementCheckerService {
    */
   static async checkPersonalRecordAchievements(
     userId: string,
-    recordInfo?: {
-      exerciseId: string;
-      weight: number;
-      previousWeight: number;
-    }
+    recordInfo?: PersonalRecord
   ): Promise<ServiceResponse<void>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
@@ -85,7 +83,7 @@ export class AchievementCheckerService {
               await AchievementService.awardAchievement(userId, 'pr-increase-20');
             }
           }
-        });
+        }, 'personal_record_achievements', 3);
       },
       'CHECK_PR_ACHIEVEMENTS',
       { showToast: false }
@@ -174,7 +172,7 @@ export class AchievementCheckerService {
           if (achievementChecks.length > 0) {
             await AchievementService.checkAndAwardAchievements(userId, achievementChecks);
           }
-        });
+        }, 'xp_milestone_achievements', 3);
       },
       'CHECK_XP_ACHIEVEMENTS',
       { showToast: false }
@@ -278,7 +276,7 @@ export class AchievementCheckerService {
           if (varietyChecks.length > 0) {
             await AchievementService.checkAndAwardAchievements(userId, varietyChecks);
           }
-        });
+        }, 'manual_workout_achievements', 3);
       },
       'CHECK_MANUAL_WORKOUT_ACHIEVEMENTS',
       { showToast: false }

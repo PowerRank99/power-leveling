@@ -4,6 +4,18 @@
  */
 
 /**
+ * Error category enum for classifying errors
+ */
+export enum ErrorCategory {
+  AUTHENTICATION = 'AUTHENTICATION',
+  AUTHORIZATION = 'AUTHORIZATION',
+  VALIDATION = 'VALIDATION',
+  DATABASE = 'DATABASE',
+  NETWORK = 'NETWORK',
+  UNKNOWN = 'UNKNOWN'
+}
+
+/**
  * Base service response interface
  */
 export interface ServiceResponse<T> {
