@@ -49,11 +49,13 @@ export class TransactionService {
    * Useful for non-transactional operations that still need reliability
    * 
    * @param operation Function containing database operations
+   * @param contextName Name of the operation for logging purposes
    * @param maxRetries Maximum number of retry attempts
    * @returns Result of the operation or error
    */
   static async executeWithRetry<T>(
     operation: () => Promise<T>,
+    contextName: string = 'database_operation',
     maxRetries: number = 3
   ): Promise<{ data: T | null; error: Error | null }> {
     let attempts = 0;
@@ -65,7 +67,7 @@ export class TransactionService {
         return { data: result, error: null };
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('Unknown error during retry operation');
-        console.error(`Operation failed (attempt ${attempts + 1}/${maxRetries}):`, error);
+        console.error(`[${contextName}] Operation failed (attempt ${attempts + 1}/${maxRetries}):`, error);
         attempts++;
         
         // Add exponential backoff delay
