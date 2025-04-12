@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { CreateGuildParams, CreateRaidParams, GuildRole } from './types';
+import { AchievementService } from '@/services/rpg/AchievementService';
 
 export class GuildService {
   /**
@@ -44,6 +45,9 @@ export class GuildService {
         await supabase.from('guilds').delete().eq('id', guild.id);
         throw memberError;
       }
+      
+      // Award guild creation achievement
+      await AchievementService.awardAchievement(userId, 'guild-creator');
       
       toast.success('Guilda Criada!', {
         description: `Sua guilda "${params.name}" foi criada com sucesso.`
@@ -97,6 +101,25 @@ export class GuildService {
       if (joinError) {
         console.error('Error joining guild:', joinError);
         throw joinError;
+      }
+      
+      // Award guild joining achievement
+      await AchievementService.awardAchievement(userId, 'guild-joiner');
+      
+      // Check how many guilds the user has joined
+      const { count: guildCount, error: countError } = await supabase
+        .from('guild_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+        
+      if (!countError && guildCount) {
+        // Award achievement for joining multiple guilds
+        if (guildCount >= 3) {
+          await AchievementService.awardAchievement(userId, 'guild-networker');
+        }
+        if (guildCount >= 5) {
+          await AchievementService.awardAchievement(userId, 'guild-socializer');
+        }
       }
       
       toast.success('Guilda Ingressada!', {

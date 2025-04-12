@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ManualWorkout } from '@/types/manualWorkoutTypes';
 import { ManualWorkoutValidationService } from './ManualWorkoutValidationService';
 import { XPService } from '@/services/xp/XPService';
+import { AchievementService } from '@/services/rpg/AchievementService';
 
 export class ManualWorkoutService {
   /**
@@ -65,11 +66,73 @@ export class ManualWorkoutService {
         return { success: false, error: error.message };
       }
       
+      // Check for manual workout achievement - first manual workout
+      await AchievementService.awardAchievement(userId, 'manual-workout-first');
+      
+      // Get count of manual workouts by this user
+      const { count, error: countError } = await supabase
+        .from('manual_workouts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+        
+      if (!countError && count) {
+        // Check for milestone achievements
+        if (count >= 5) {
+          await AchievementService.awardAchievement(userId, 'manual-workout-5');
+        }
+        if (count >= 10) {
+          await AchievementService.awardAchievement(userId, 'manual-workout-10');
+        }
+        if (count >= 25) {
+          await AchievementService.awardAchievement(userId, 'manual-workout-25');
+        }
+      }
+      
+      // Check for activity diversity achievements
+      await ManualWorkoutService.checkActivityDiversityAchievements(userId);
+      
       return { success: true, data };
       
     } catch (error: any) {
       console.error('Error in submitManualWorkout:', error);
       return { success: false, error: error.message || 'Unknown error occurred' };
+    }
+  }
+  
+  /**
+   * Check for achievements related to activity diversity
+   */
+  private static async checkActivityDiversityAchievements(userId: string): Promise<void> {
+    try {
+      // Get distinct activity types for this user
+      const { data, error } = await supabase
+        .from('manual_workouts')
+        .select('activity_type')
+        .eq('user_id', userId)
+        .not('activity_type', 'is', null);
+        
+      if (error) {
+        console.error('Error fetching activity types:', error);
+        return;
+      }
+      
+      // Count unique activity types
+      const uniqueActivities = new Set(data.map(item => item.activity_type));
+      const activityCount = uniqueActivities.size;
+      
+      // Award achievements based on unique activity count
+      if (activityCount >= 3) {
+        await AchievementService.awardAchievement(userId, 'activity-diversity-3');
+      }
+      if (activityCount >= 5) {
+        await AchievementService.awardAchievement(userId, 'activity-diversity-5');
+      }
+      if (activityCount >= 10) {
+        await AchievementService.awardAchievement(userId, 'activity-diversity-10');
+      }
+      
+    } catch (error) {
+      console.error('Error checking activity diversity achievements:', error);
     }
   }
   

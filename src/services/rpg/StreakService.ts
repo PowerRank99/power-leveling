@@ -107,7 +107,22 @@ export class StreakService {
       
       // Check for achievements based on streak length
       if (streak >= 3) {
-        await AchievementService.checkStreakAchievements(userId);
+        await AchievementService.awardAchievement(userId, 'streak-3');
+      }
+      if (streak >= 7) {
+        await AchievementService.awardAchievement(userId, 'streak-7');
+      }
+      if (streak >= 14) {
+        await AchievementService.awardAchievement(userId, 'streak-14');
+      }
+      if (streak >= 30) {
+        await AchievementService.awardAchievement(userId, 'streak-30');
+      }
+      if (streak >= 60) {
+        await AchievementService.awardAchievement(userId, 'streak-60');
+      }
+      if (streak >= 100) {
+        await AchievementService.awardAchievement(userId, 'streak-100');
       }
     } catch (error) {
       console.error('Error checking streak achievements:', error);

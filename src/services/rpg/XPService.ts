@@ -1,9 +1,11 @@
 
+import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { XPCalculationService } from './XPCalculationService';
 import { PersonalRecordService, PersonalRecord } from './PersonalRecordService';
 import { XPBonusService } from './XPBonusService';
 import { PowerDayService } from './bonus/PowerDayService';
+import { AchievementService } from './AchievementService';
 
 /**
  * Main XP Service that coordinates XP calculations and awards
@@ -71,7 +73,56 @@ export class XPService {
     source: string = 'workout',
     metadata?: any
   ): Promise<boolean> {
-    return XPBonusService.awardXP(userId, baseXP);
+    const isAchievementXP = source === 'achievement';
+    const result = await XPBonusService.awardXP(userId, baseXP, isAchievementXP);
+    
+    // Check for XP milestone achievements
+    if (result) {
+      await XPService.checkXPMilestoneAchievements(userId);
+    }
+    
+    return result;
+  }
+  
+  /**
+   * Check for XP milestone achievements
+   */
+  private static async checkXPMilestoneAchievements(userId: string): Promise<void> {
+    try {
+      // Get user's current XP
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('xp')
+        .eq('id', userId)
+        .single();
+        
+      if (error || !data) {
+        console.error('Error fetching user XP:', error);
+        return;
+      }
+      
+      const totalXP = data.xp || 0;
+      
+      // Award XP milestone achievements
+      if (totalXP >= 1000) {
+        await AchievementService.awardAchievement(userId, 'xp-1000');
+      }
+      if (totalXP >= 5000) {
+        await AchievementService.awardAchievement(userId, 'xp-5000');
+      }
+      if (totalXP >= 10000) {
+        await AchievementService.awardAchievement(userId, 'xp-10000');
+      }
+      if (totalXP >= 50000) {
+        await AchievementService.awardAchievement(userId, 'xp-50000');
+      }
+      if (totalXP >= 100000) {
+        await AchievementService.awardAchievement(userId, 'xp-100000');
+      }
+      
+    } catch (error) {
+      console.error('Error checking XP milestone achievements:', error);
+    }
   }
 
   /**

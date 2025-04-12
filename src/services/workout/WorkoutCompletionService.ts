@@ -65,6 +65,17 @@ export class WorkoutCompletionService {
       // Check for achievements
       await AchievementService.checkWorkoutAchievements(userId, workoutId);
       
+      // Check for specific achievements based on workout duration
+      if (durationSeconds >= 3600) { // 1 hour workout
+        await AchievementService.awardAchievement(userId, 'workout-duration-60');
+      }
+      if (durationSeconds >= 5400) { // 1.5 hour workout
+        await AchievementService.awardAchievement(userId, 'workout-duration-90');
+      }
+      
+      // Check for workout count achievements
+      await AchievementService.checkWorkoutCountAchievements(userId);
+      
       return true;
     } catch (error) {
       console.error('Error in finishWorkout:', error);
