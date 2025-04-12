@@ -1,14 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { XPToastService } from './bonus/XPToastService';
-
-// Define XPBreakdown interface for proper typing
-export interface XPBreakdown {
-  baseXP: number;
-  classBonus?: number;
-  streakBonus?: number;
-  totalXP: number;
-}
+import { XPBreakdown, XPToastService } from './bonus/XPToastService';
 
 /**
  * Service for handling XP bonuses
@@ -64,8 +56,19 @@ export class XPBonusService {
         return false;
       }
       
+      // Create a default XP breakdown
+      const xpBreakdown: XPBreakdown = {
+        base: amount,
+        classBonus: 0,
+        streakBonus: 0,
+        recordBonus: 0,
+        weeklyBonus: 0,
+        monthlyBonus: 0,
+        bonusDetails: []
+      };
+      
       // Show XP toast notification
-      XPToastService.showXPToast(amount, newLevel > currentLevel);
+      XPToastService.showXPToast(amount, xpBreakdown, newLevel > currentLevel);
       
       return true;
     } catch (error) {

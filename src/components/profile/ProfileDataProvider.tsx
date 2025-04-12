@@ -16,7 +16,7 @@ export interface ProfileData {
   streak: number;
   achievementPoints: number;
   rank: string;
-  ranking: number; // Changed from optional to required with default value
+  ranking: number;
 }
 
 interface ProfileDataProviderProps {
@@ -38,7 +38,7 @@ const ProfileDataProvider: React.FC<ProfileDataProviderProps> = ({ userId, child
     streak: 0,
     achievementPoints: 0,
     rank: 'Unranked',
-    ranking: 42, // Default value
+    ranking: 42,
   });
 
   useEffect(() => {
@@ -96,7 +96,7 @@ const ProfileDataProvider: React.FC<ProfileDataProviderProps> = ({ userId, child
             streak: data.streak || 0,
             achievementPoints: data.achievement_points || 0,
             rank: data.rank || 'Unranked',
-            ranking: 42, // Default value
+            ranking: 42, // Default value as a number
           });
         }
       } catch (error) {
