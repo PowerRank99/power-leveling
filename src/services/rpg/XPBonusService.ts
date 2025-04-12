@@ -1,36 +1,24 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { XP_CONSTANTS } from './constants/xpConstants';
 import { XPCalculationService } from './XPCalculationService';
-import { PersonalRecord } from './PersonalRecordService';
-import { PersonalRecordService } from './PersonalRecordService';
-
-interface XPBreakdown {
-  base: number;
-  classBonus: number;
-  streakBonus: number;
-  recordBonus: number;
-  weeklyBonus: number;
-  monthlyBonus: number;
-  bonusDetails: { skill: string, amount: number, description: string }[];
-}
-
-interface PowerDayUsage {
-  count: number;
-}
+import { PersonalRecord, PersonalRecordService } from './PersonalRecordService';
+import { PowerDayService } from './bonus/PowerDayService';
+import { CompletionBonusService } from './bonus/CompletionBonusService';
+import { PassiveSkillService } from './bonus/PassiveSkillService';
+import { ProfileXPService } from './bonus/ProfileXPService';
+import { XPToastService, XPBreakdown } from './bonus/XPToastService';
 
 /**
- * Service for handling XP bonuses and updates
+ * Main service for handling XP bonuses and updates
+ * Coordinates the various specialized bonus services
  */
 export class XPBonusService {
   // Weekly and monthly completion bonus constants
-  static readonly WEEKLY_COMPLETION_BONUS = 100;
-  static readonly MONTHLY_COMPLETION_BONUS = 300;
-  // One week in milliseconds for cooldown checks
-  private static readonly ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  static readonly WEEKLY_COMPLETION_BONUS = CompletionBonusService.WEEKLY_COMPLETION_BONUS;
+  static readonly MONTHLY_COMPLETION_BONUS = CompletionBonusService.MONTHLY_COMPLETION_BONUS;
   // Power Day cap (when user exceeds normal daily cap)
-  static readonly POWER_DAY_CAP = 500;
+  static readonly POWER_DAY_CAP = PowerDayService.POWER_DAY_CAP;
 
   /**
    * Awards XP to a user and updates their level if necessary
@@ -82,7 +70,7 @@ export class XPBonusService {
       }
       
       // Check for weekly and monthly completion bonuses
-      const weeklyMonthlyBonuses = await this.calculateCompletionBonuses(
+      const weeklyMonthlyBonuses = await CompletionBonusService.calculateCompletionBonuses(
         userId, 
         profile.last_workout_at
       );
@@ -118,7 +106,7 @@ export class XPBonusService {
       today.setHours(0, 0, 0, 0);
       
       // Check for Power Day eligibility
-      const currentWeek = this.getCurrentWeek();
+      const currentWeek = PowerDayService.getCurrentWeek();
       const currentYear = today.getFullYear();
       
       // Get power day usage for the current week
@@ -144,22 +132,16 @@ export class XPBonusService {
         
         // Record power day usage
         isPowerDay = true;
-        await supabase
-          .from('power_day_usage')
-          .insert({
-            user_id: userId,
-            week_number: currentWeek,
-            year: currentYear
-          });
+        await PowerDayService.recordPowerDayUsage(userId, currentWeek, currentYear);
       }
       
       const totalXPWithBonuses = cappedWorkoutXP + recordBonusXP;
       
       // Update profile and check for level up
-      await this.updateProfileXP(userId, profile, totalXPWithBonuses);
+      await ProfileXPService.updateProfileXP(userId, profile, totalXPWithBonuses);
       
       // Show toast with XP breakdown
-      this.showXPToast(totalXPWithBonuses, xpBreakdown, isPowerDay);
+      XPToastService.showXPToast(totalXPWithBonuses, xpBreakdown, isPowerDay);
       
       return true;
     } catch (error) {
@@ -169,223 +151,28 @@ export class XPBonusService {
   }
 
   /**
-   * Get the current ISO week number
+   * Get the current ISO week number - delegated to PowerDayService
    */
   static getCurrentWeek(): number {
-    const now = new Date();
-    const firstDayOfYear = new Date(now.getFullYear(), 0, 1);
-    const pastDaysOfYear = (now.getTime() - firstDayOfYear.getTime()) / 86400000;
-    
-    // Calculate current week number based on ISO week definition (weeks start on Monday)
-    const weekNum = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
-    
-    return weekNum;
+    return PowerDayService.getCurrentWeek();
   }
 
   /**
-   * Get power day usage for a user in a specific week
+   * Get power day usage for a user in a specific week - delegated to PowerDayService
    */
-  static async getPowerDayUsage(userId: string, week: number, year: number): Promise<PowerDayUsage> {
-    try {
-      const { data, error } = await supabase
-        .from('power_day_usage')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('week_number', week)
-        .eq('year', year);
-      
-      if (error) {
-        console.error('Error checking power day usage:', error);
-        return { count: 0 };
-      }
-      
-      return { count: data?.length || 0 };
-    } catch (error) {
-      console.error('Error checking power day usage:', error);
-      return { count: 0 };
-    }
+  static async getPowerDayUsage(userId: string, week: number, year: number): Promise<{count: number}> {
+    return PowerDayService.getPowerDayUsage(userId, week, year);
   }
 
   /**
-   * Check if Bruxo's Folga Mística passive should preserve streak
+   * Check if Bruxo's Folga Mística passive should preserve streak - delegated to PassiveSkillService
    */
   static async checkStreakPreservation(userId: string, userClass: string | null): Promise<boolean> {
-    if (!userId || userClass !== 'Bruxo') return false;
-    
-    try {
-      // Use regular query to check for passive skill usage
-      const { data, error } = await supabase
-        .from('passive_skill_usage')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('skill_name', 'Folga Mística')
-        .gte('used_at', new Date(Date.now() - this.ONE_WEEK_MS).toISOString())
-        .maybeSingle();
-      
-      // If there's no data and no error, the player hasn't used it recently
-      if (!data && !error) {
-        // Record the usage using regular insert
-        const { error: insertError } = await supabase
-          .from('passive_skill_usage')
-          .insert({
-            user_id: userId,
-            skill_name: 'Folga Mística',
-            used_at: new Date().toISOString()
-          });
-        
-        if (insertError) {
-          console.error('Error recording passive skill usage:', insertError);
-          return false;
-        }
-          
-        toast.success('Folga Mística Ativada!', {
-          description: 'Seu Bruxo usou magia para preservar sua sequência'
-        });
-        
-        return true;
-      }
-      
-      return false;
-    } catch (error) {
-      console.error('Error checking streak preservation:', error);
-      return false;
-    }
+    return PassiveSkillService.checkStreakPreservation(userId, userClass);
   }
 
   /**
-   * Calculate weekly and monthly completion bonuses
-   * Updated to use calendar week/month boundaries
-   */
-  private static async calculateCompletionBonuses(
-    userId: string,
-    lastWorkoutAt: string | null
-  ): Promise<{ weeklyBonus: number; monthlyBonus: number }> {
-    try {
-      const result = { weeklyBonus: 0, monthlyBonus: 0 };
-      
-      if (!lastWorkoutAt) return result;
-      
-      const now = new Date();
-      
-      // Get calendar week start (Monday of this week)
-      const weekStart = new Date(now);
-      const dayOfWeek = weekStart.getDay() || 7; // Convert Sunday (0) to 7
-      weekStart.setDate(weekStart.getDate() - (dayOfWeek - 1)); // Set to Monday
-      weekStart.setHours(0, 0, 0, 0);
-      
-      // Get calendar month start (1st of the month)
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      monthStart.setHours(0, 0, 0, 0);
-      
-      // Check for weekly completion (at least 3 workouts in the current calendar week)
-      const { count: weeklyWorkouts, error: weeklyError } = await supabase
-        .from('workouts')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .gte('completed_at', weekStart.toISOString())
-        .lt('completed_at', now.toISOString());
-        
-      if (!weeklyError && weeklyWorkouts !== null && weeklyWorkouts >= 3) {
-        result.weeklyBonus = this.WEEKLY_COMPLETION_BONUS;
-        console.log(`Applied weekly completion bonus: +${this.WEEKLY_COMPLETION_BONUS} XP`);
-      }
-      
-      // Check for monthly completion (at least 12 workouts in the current calendar month)
-      const { count: monthlyWorkouts, error: monthlyError } = await supabase
-        .from('workouts')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .gte('completed_at', monthStart.toISOString())
-        .lt('completed_at', now.toISOString());
-        
-      if (!monthlyError && monthlyWorkouts !== null && monthlyWorkouts >= 12) {
-        result.monthlyBonus = this.MONTHLY_COMPLETION_BONUS;
-        console.log(`Applied monthly completion bonus: +${this.MONTHLY_COMPLETION_BONUS} XP`);
-      }
-      
-      return result;
-    } catch (error) {
-      console.error('Error calculating completion bonuses:', error);
-      return { weeklyBonus: 0, monthlyBonus: 0 };
-    }
-  }
-
-  /**
-   * Apply class-specific bonuses to XP
-   */
-  private static async applyClassBonuses(
-    userClass: string | null | undefined,
-    baseXP: number,
-    xpBreakdown: XPBreakdown
-  ): Promise<void> {
-    try {
-      if (!userClass) return;
-      
-      const { data: bonuses } = await supabase
-        .from('class_bonuses')
-        .select('bonus_type, bonus_value, description')
-        .eq('class_name', userClass)
-        .eq('bonus_type', 'workout_completion');
-        
-      if (bonuses && bonuses.length > 0) {
-        // Apply completion bonus (general class bonus)
-        const completionBonus = bonuses[0];
-        const bonusXP = Math.floor(baseXP * completionBonus.bonus_value);
-        xpBreakdown.classBonus = bonusXP;
-        console.log(`Applied class bonus (${completionBonus.description}): +${bonusXP} XP`);
-      }
-    } catch (error) {
-      console.error('Error applying class bonuses:', error);
-    }
-  }
-
-  /**
-   * Update user profile with new XP and check for level up
-   */
-  private static async updateProfileXP(
-    userId: string,
-    profile: { xp: number; level: number; workouts_count: number },
-    totalXP: number
-  ): Promise<void> {
-    try {
-      // Calculate new XP and level
-      const currentXP = profile.xp || 0;
-      const currentLevel = profile.level || 1;
-      const newXP = currentXP + totalXP;
-      
-      // Check for level up (simple formula: each level needs level*100 XP)
-      const xpForNextLevel = currentLevel * 100;
-      const shouldLevelUp = currentXP < xpForNextLevel && newXP >= xpForNextLevel;
-      const newLevel = shouldLevelUp ? currentLevel + 1 : currentLevel;
-      
-      // Update user profile
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          xp: newXP,
-          level: newLevel,
-          workouts_count: (profile.workouts_count || 0) + 1,
-          last_workout_at: new Date().toISOString()
-        })
-        .eq('id', userId);
-        
-      if (error) {
-        console.error('Error updating user XP:', error);
-        return;
-      }
-      
-      if (shouldLevelUp) {
-        toast.success(`🎉 Nível Aumentado!`, {
-          description: `Parabéns! Você alcançou o nível ${newLevel}!`
-        });
-      }
-    } catch (error) {
-      console.error('Error updating profile XP:', error);
-    }
-  }
-
-  /**
-   * Check power day availability
+   * Check power day availability - delegated to PowerDayService
    */
   static async checkPowerDayAvailability(userId: string): Promise<{ 
     available: boolean;
@@ -394,86 +181,13 @@ export class XPBonusService {
     week: number;
     year: number;
   }> {
-    try {
-      const currentWeek = this.getCurrentWeek();
-      const currentYear = new Date().getFullYear();
-      
-      const { data, error } = await supabase
-        .from('power_day_usage')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('week_number', currentWeek)
-        .eq('year', currentYear);
-      
-      const usedCount = data?.length || 0;
-      
-      return {
-        available: usedCount < 2,
-        used: usedCount,
-        max: 2,
-        week: currentWeek,
-        year: currentYear
-      };
-    } catch (error) {
-      console.error('Error in checkPowerDayAvailability:', error);
-      return {
-        available: false,
-        used: 0,
-        max: 2,
-        week: 0,
-        year: 0
-      };
-    }
+    return PowerDayService.checkPowerDayAvailability(userId);
   }
   
   /**
-   * Record a power day usage
+   * Record a power day usage - delegated to PowerDayService
    */
   static async recordPowerDayUsage(userId: string, week: number, year: number): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from('power_day_usage')
-        .insert({
-          user_id: userId,
-          week_number: week,
-          year: year
-        });
-      
-      if (error) {
-        console.error('Error recording power day usage:', error);
-        return false;
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error recording power day usage:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Show toast notification with XP breakdown
-   */
-  private static showXPToast(totalXP: number, xpBreakdown: XPBreakdown, isPowerDay: boolean = false): void {
-    let toastDesc = 'Treino completo!';
-    
-    const bonuses = [];
-    if (xpBreakdown.classBonus > 0) bonuses.push(`Classe: +${xpBreakdown.classBonus}`);
-    if (xpBreakdown.streakBonus > 0) bonuses.push(`Streak: +${xpBreakdown.streakBonus}`);
-    if (xpBreakdown.recordBonus > 0) bonuses.push(`Recorde: +${xpBreakdown.recordBonus}`);
-    if (xpBreakdown.weeklyBonus > 0) bonuses.push(`Semanal: +${xpBreakdown.weeklyBonus}`);
-    if (xpBreakdown.monthlyBonus > 0) bonuses.push(`Mensal: +${xpBreakdown.monthlyBonus}`);
-    
-    if (bonuses.length > 0) {
-      toastDesc = `Base: ${xpBreakdown.base} | ${bonuses.join(' | ')}`;
-    }
-    
-    if (isPowerDay) {
-      toastDesc += ' | Power Day Ativado!';
-    }
-    
-    toast.success(`+${totalXP} XP`, {
-      description: toastDesc
-    });
+    return PowerDayService.recordPowerDayUsage(userId, week, year);
   }
 }

@@ -1,7 +1,9 @@
+
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { XPCalculationService } from './XPCalculationService';
 import { PersonalRecordService, PersonalRecord } from './PersonalRecordService';
 import { XPBonusService } from './XPBonusService';
+import { PowerDayService } from './bonus/PowerDayService';
 
 /**
  * Main XP Service that coordinates XP calculations and awards
@@ -16,7 +18,7 @@ export class XPService {
   static readonly TIME_XP_TIERS = XPCalculationService.TIME_XP_TIERS;
   
   // Power Day constants (2x/week can exceed 300 XP cap up to 500 XP)
-  static readonly POWER_DAY_CAP = 500;
+  static readonly POWER_DAY_CAP = PowerDayService.POWER_DAY_CAP;
   static readonly MANUAL_WORKOUT_BASE_XP = 100; // Updated to 100
   
   /**
@@ -90,7 +92,7 @@ export class XPService {
     year: number;
   }> {
     try {
-      return await XPBonusService.checkPowerDayAvailability(userId);
+      return await PowerDayService.checkPowerDayAvailability(userId);
     } catch (error) {
       console.error('Error in checkPowerDayAvailability:', error);
       return {
@@ -107,6 +109,6 @@ export class XPService {
    * Record a power day usage
    */
   static async recordPowerDayUsage(userId: string, week: number, year: number): Promise<boolean> {
-    return XPBonusService.recordPowerDayUsage(userId, week, year);
+    return PowerDayService.recordPowerDayUsage(userId, week, year);
   }
 }
