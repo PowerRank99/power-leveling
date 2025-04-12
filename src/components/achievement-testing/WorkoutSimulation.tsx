@@ -1,19 +1,20 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { XPService } from '@/services/rpg/XPService';
+import { XPCalculationService } from '@/services/rpg/XPCalculationService';
 import { AchievementService } from '@/services/rpg/AchievementService';
-import { WorkoutCompletionService } from '@/services/workout/WorkoutCompletionService';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { Dumbbell, Check, Award } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import StreakSlider from './common/StreakSlider';
+import ClassPassivesToggle from './common/ClassPassivesToggle';
 
 interface WorkoutSimulationProps {
   userId: string;
@@ -27,46 +28,49 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
   const [difficultyLevel, setDifficultyLevel] = useState('intermediario');
   const [includePersonalRecord, setIncludePersonalRecord] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [potentialXP, setPotentialXP] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [useClassPassives, setUseClassPassives] = useState(false);
+  const [selectedClass, setSelectedClass] = useState<string | null>(null);
+  const [totalXP, setTotalXP] = useState(0);
+  const [baseXP, setBaseXP] = useState(0);
+  const [bonusBreakdown, setBonusBreakdown] = useState<Array<{skill: string, amount: number, description: string}>>([]);
+  
+  // Calculate XP whenever relevant inputs change
+  useEffect(() => {
+    calculatePotentialXP();
+  }, [duration, exerciseCount, difficultyLevel, includePersonalRecord, streak, useClassPassives, selectedClass]);
   
   const calculatePotentialXP = () => {
-    let baseXP = 0;
-    
-    // Calculate time-based XP
-    baseXP += Math.min(duration / 10 * 10, 100);
-    
-    // Add XP for exercises
-    baseXP += exerciseCount * XPService.BASE_EXERCISE_XP;
-    
-    // Add XP for completed sets (estimating 3 sets per exercise)
-    baseXP += exerciseCount * 3 * XPService.BASE_SET_XP;
-    
-    // Apply difficulty multiplier
-    let multiplier = 1.0;
-    switch (difficultyLevel) {
-      case 'iniciante':
-        multiplier = 0.8;
-        break;
-      case 'intermediario':
-        multiplier = 1.0;
-        break;
-      case 'avancado':
-        multiplier = 1.5;
-        break;
+    try {
+      // Create simulated workout data structure
+      const workout = {
+        id: 'simulation',
+        exercises: Array(exerciseCount).fill({}).map((_, i) => ({
+          id: `sim-ex-${i}`,
+          sets: Array(3).fill({completed: true})
+        })),
+        durationSeconds: duration * 60,
+        difficulty: difficultyLevel as any,
+        hasPR: includePersonalRecord
+      };
+      
+      // Calculate XP using the service that provides breakdown
+      const result = XPCalculationService.calculateWorkoutXP(
+        workout,
+        useClassPassives ? selectedClass : null,
+        streak,
+        difficultyLevel as any
+      );
+      
+      setBaseXP(result.baseXP);
+      setTotalXP(result.totalXP);
+      setBonusBreakdown(result.bonusBreakdown);
+      
+      return result.totalXP;
+    } catch (error) {
+      console.error('Error calculating XP:', error);
+      return 0;
     }
-    
-    baseXP = Math.round(baseXP * multiplier);
-    
-    // Add PR bonus if selected
-    if (includePersonalRecord) {
-      baseXP += XPService.PR_BONUS_XP;
-    }
-    
-    // Cap at daily XP limit
-    baseXP = Math.min(baseXP, XPService.DAILY_XP_CAP);
-    
-    setPotentialXP(baseXP);
-    return baseXP;
   };
   
   const simulateWorkout = async () => {
@@ -79,8 +83,8 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
     
     setIsLoading(true);
     try {
-      // Calculate potential XP again to ensure accuracy
-      const baseXP = calculatePotentialXP();
+      // Use the already calculated XP values
+      const awardedXP = totalXP;
       
       // Create a simulated workout in the database
       const { data: workoutData, error: workoutError } = await supabase
@@ -129,13 +133,16 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
       
       await Promise.all(exercisePromises);
       
-      // Award XP to the user
-      await XPService.awardXP(userId, baseXP, 'workout', {
+      // Award XP to the user, include class info in metadata if enabled
+      const metadata = {
         workoutType,
         exerciseCount,
         difficultyLevel,
-        includePersonalRecord
-      });
+        includePersonalRecord,
+        ...(useClassPassives ? { class: selectedClass } : {})
+      };
+      
+      await XPService.awardXP(userId, awardedXP, 'workout', metadata);
       
       // Add a PR if selected
       if (includePersonalRecord) {
@@ -160,13 +167,14 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
       await AchievementService.checkWorkoutAchievements(userId, workoutId);
       
       // Record successful simulation
+      const classInfo = useClassPassives ? `, Class: ${selectedClass}` : '';
       addLogEntry(
         'Workout Simulated', 
-        `Type: ${workoutType}, Duration: ${duration}min, Exercises: ${exerciseCount}, XP: ${baseXP}`
+        `Type: ${workoutType}, Duration: ${duration}min, Exercises: ${exerciseCount}, XP: ${awardedXP}, Streak: ${streak}${classInfo}`
       );
       
       toast.success('Workout Simulated!', {
-        description: `${baseXP} XP has been awarded to the user.`,
+        description: `${awardedXP} XP has been awarded to the user.`,
       });
       
     } catch (error) {
@@ -230,7 +238,6 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
                 value={[duration]}
                 onValueChange={(values) => setDuration(values[0])}
                 className="py-4"
-                onValueCommit={calculatePotentialXP}
               />
             </div>
             
@@ -244,21 +251,26 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
                 value={[exerciseCount]}
                 onValueChange={(values) => setExerciseCount(values[0])}
                 className="py-4"
-                onValueCommit={calculatePotentialXP}
               />
             </div>
+            
+            <StreakSlider streak={streak} onChange={setStreak} />
             
             <div className="flex items-center space-x-2 pt-2">
               <Switch
                 id="includePersonalRecord"
                 checked={includePersonalRecord}
-                onCheckedChange={(checked) => {
-                  setIncludePersonalRecord(checked);
-                  setTimeout(calculatePotentialXP, 0);
-                }}
+                onCheckedChange={setIncludePersonalRecord}
               />
               <Label htmlFor="includePersonalRecord">Include Personal Record (+{XPService.PR_BONUS_XP} XP)</Label>
             </div>
+            
+            <ClassPassivesToggle 
+              enabled={useClassPassives}
+              onEnabledChange={setUseClassPassives}
+              selectedClass={selectedClass}
+              onClassChange={setSelectedClass}
+            />
           </div>
           
           <div className="space-y-4 flex flex-col">
@@ -270,44 +282,80 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
                   <span className="text-text-secondary">Base XP:</span>
                   <motion.span 
                     className="font-space text-arcane"
-                    key={potentialXP}
+                    key={`base-${baseXP}`}
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    {potentialXP} XP
+                    {baseXP} XP
                   </motion.span>
                 </div>
                 
-                <div className="flex justify-between items-center">
-                  <span className="text-text-secondary">Est. workout time:</span>
-                  <span className="font-space">{duration} minutes</span>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-text-secondary">Exercise count:</span>
-                  <span className="font-space">{exerciseCount}</span>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-text-secondary">Set count:</span>
-                  <span className="font-space">{exerciseCount * 3} (est.)</span>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-text-secondary">Difficulty multiplier:</span>
-                  <span className="font-space">
-                    {difficultyLevel === 'iniciante' ? '0.8x' : 
-                     difficultyLevel === 'intermediario' ? '1.0x' : '1.5x'}
-                  </span>
-                </div>
-                
-                {includePersonalRecord && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-text-secondary">PR bonus:</span>
-                    <span className="font-space text-achievement">+{XPService.PR_BONUS_XP} XP</span>
+                {bonusBreakdown.length > 0 && (
+                  <div className="border-t border-divider/20 pt-2 mt-2">
+                    <p className="text-sm text-text-secondary mb-2">Class Bonuses:</p>
+                    {bonusBreakdown.map((bonus, idx) => (
+                      <div key={idx} className="flex justify-between items-center text-sm">
+                        <span className="text-text-secondary">{bonus.description}:</span>
+                        <span className={`font-space ${bonus.amount >= 0 ? 'text-arcane' : 'text-red-500'}`}>
+                          {bonus.amount >= 0 ? '+' : ''}{bonus.amount} XP
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 )}
+                
+                <div className="flex justify-between items-center border-t border-divider/20 pt-3 mt-2">
+                  <span className="text-text-secondary font-semibold">Total XP:</span>
+                  <motion.span 
+                    className="font-space text-lg text-arcane font-bold"
+                    key={`total-${totalXP}`}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {totalXP} XP
+                  </motion.span>
+                </div>
+                
+                <div className="space-y-2 mt-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-text-secondary">Workout time:</span>
+                    <span className="font-space">{duration} minutes</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-text-secondary">Exercise count:</span>
+                    <span className="font-space">{exerciseCount}</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-text-secondary">Set count:</span>
+                    <span className="font-space">{exerciseCount * 3} (est.)</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-text-secondary">Difficulty multiplier:</span>
+                    <span className="font-space">
+                      {difficultyLevel === 'iniciante' ? '0.8x' : 
+                       difficultyLevel === 'intermediario' ? '1.0x' : '1.5x'}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-text-secondary">Streak multiplier:</span>
+                    <span className="font-space">
+                      {XPCalculationService.getStreakMultiplier(streak).toFixed(2)}x
+                    </span>
+                  </div>
+                  
+                  {includePersonalRecord && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-text-secondary">PR bonus:</span>
+                      <span className="font-space text-achievement">+{XPService.PR_BONUS_XP} XP</span>
+                    </div>
+                  )}
+                </div>
                 
                 <div className="text-xs text-text-tertiary mt-4">
                   <p>Achievements will be unlocked based on:</p>

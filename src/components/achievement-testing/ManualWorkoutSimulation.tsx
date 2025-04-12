@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,16 +12,12 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { ImagePlus, Upload, Dumbbell, Camera } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import TestingExerciseSelector from './common/TestingExerciseSelector';
+import ClassPassivesToggle from './common/ClassPassivesToggle';
 
 interface ManualWorkoutSimulationProps {
   userId: string;
   addLogEntry: (action: string, details: string) => void;
-}
-
-interface Exercise {
-  id: string;
-  name: string;
-  muscle_group?: string;
 }
 
 const POWER_DAY_BONUS_XP = 50;
@@ -28,37 +25,19 @@ const POWER_DAY_BONUS_XP = 50;
 const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userId, addLogEntry }) => {
   const [activityType, setActivityType] = useState('gym');
   const [description, setDescription] = useState('');
-  const [exercises, setExercises] = useState<Exercise[]>([]);
   const [selectedExerciseId, setSelectedExerciseId] = useState('');
   const [duration, setDuration] = useState(45);
   const [isPowerDay, setIsPowerDay] = useState(false);
   const [photoUrl, setPhotoUrl] = useState('https://frzgnszosqvcgycjtntz.supabase.co/storage/v1/object/public/workout-photos/default.jpg');
   const [isLoading, setIsLoading] = useState(false);
+  const [useClassPassives, setUseClassPassives] = useState(false);
+  const [selectedClass, setSelectedClass] = useState<string | null>(null);
+  const [totalXP, setTotalXP] = useState(0);
   
+  // Update XP calculation when inputs change
   useEffect(() => {
-    if (userId) {
-      fetchExercises();
-    }
-  }, [userId]);
-  
-  const fetchExercises = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('exercises')
-        .select('id, name, muscle_group')
-        .order('name')
-        .limit(100);
-      
-      if (error) throw error;
-      
-      setExercises(data || []);
-      if (data && data.length > 0) {
-        setSelectedExerciseId(data[0].id);
-      }
-    } catch (error) {
-      console.error('Error fetching exercises:', error);
-    }
-  };
+    setTotalXP(calculateXP());
+  }, [isPowerDay, useClassPassives, selectedClass]);
   
   const calculateXP = () => {
     // Base XP for manual workouts
@@ -67,6 +46,24 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
     // Add bonus for power day if selected
     if (isPowerDay) {
       baseXP += POWER_DAY_BONUS_XP;
+    }
+    
+    // Apply class bonuses if enabled
+    if (useClassPassives && selectedClass) {
+      // Simple simulation of class bonuses for manual workouts
+      if (activityType === 'gym' && selectedClass === 'Guerreiro') {
+        // Guerreiro gets bonus for gym workouts
+        baseXP = Math.round(baseXP * 1.1);
+      } else if (activityType === 'run' && selectedClass === 'Ninja') {
+        // Ninja gets bonus for cardio
+        baseXP = Math.round(baseXP * 1.2);
+      } else if (activityType === 'yoga' && selectedClass === 'Bruxo') {
+        // Bruxo gets bonus for yoga
+        baseXP = Math.round(baseXP * 1.2);
+      } else if ((activityType === 'sport' || activityType === 'swim') && selectedClass === 'Paladino') {
+        // Paladino gets bonus for sports
+        baseXP = Math.round(baseXP * 1.15);
+      }
     }
     
     return baseXP;
@@ -82,11 +79,8 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
     
     setIsLoading(true);
     try {
-      const selectedExercise = exercises.find(ex => ex.id === selectedExerciseId);
-      if (!selectedExercise) throw new Error('Exercise not found');
-      
-      // Calculate XP
-      const xpAwarded = calculateXP();
+      // Calculate XP (uses state that's already been calculated)
+      const xpAwarded = totalXP;
       
       // Create a unique filename
       const fileName = `test-manual-workout-${Date.now()}`;
@@ -105,18 +99,29 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
       
       if (error) throw error;
       
+      // Get exercise name for the log
+      const { data: exerciseData } = await supabase
+        .from('exercises')
+        .select('name')
+        .eq('id', selectedExerciseId)
+        .single();
+      
+      const exerciseName = exerciseData?.name || 'Unknown exercise';
+      
       // Award XP
       await XPService.awardXP(userId, xpAwarded, 'manual_workout', {
         activityType,
         exerciseId: selectedExerciseId,
-        exerciseName: selectedExercise.name,
-        isPowerDay
+        exerciseName,
+        isPowerDay,
+        ...(useClassPassives ? { class: selectedClass } : {})
       });
       
       // Record successful simulation
+      const classInfo = useClassPassives ? `, Class: ${selectedClass}` : '';
       addLogEntry(
         'Manual Workout Submitted', 
-        `Type: ${activityType}, Exercise: ${selectedExercise.name}, XP: ${xpAwarded}${isPowerDay ? ' (Power Day)' : ''}`
+        `Type: ${activityType}, Exercise: ${exerciseName}, XP: ${xpAwarded}${isPowerDay ? ' (Power Day)' : ''}${classInfo}`
       );
       
       toast.success('Manual Workout Submitted!', {
@@ -135,9 +140,6 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
       setIsLoading(false);
     }
   };
-  
-  const xpAwarded = calculateXP();
-  const selectedExercise = exercises.find(ex => ex.id === selectedExerciseId);
   
   return (
     <Card className="premium-card border-arcane-30 shadow-glow-subtle">
@@ -168,21 +170,11 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
               </Select>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="exerciseSelect">Exercise</Label>
-              <Select value={selectedExerciseId} onValueChange={setSelectedExerciseId}>
-                <SelectTrigger id="exerciseSelect" className="bg-midnight-elevated border-divider">
-                  <SelectValue placeholder="Select an exercise" />
-                </SelectTrigger>
-                <SelectContent>
-                  {exercises.map((exercise) => (
-                    <SelectItem key={exercise.id} value={exercise.id}>
-                      {exercise.name} {exercise.muscle_group ? `(${exercise.muscle_group})` : ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <TestingExerciseSelector
+              selectedExerciseId={selectedExerciseId}
+              onSelect={setSelectedExerciseId}
+              label="Select Exercise"
+            />
             
             <div className="space-y-2">
               <Label htmlFor="duration">Duration (minutes)</Label>
@@ -216,6 +208,13 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
               />
               <Label htmlFor="powerDay">Activate Power Day (+{POWER_DAY_BONUS_XP} XP)</Label>
             </div>
+            
+            <ClassPassivesToggle
+              enabled={useClassPassives}
+              onEnabledChange={setUseClassPassives}
+              selectedClass={selectedClass}
+              onClassChange={setSelectedClass}
+            />
           </div>
           
           <div className="space-y-4 flex flex-col">
@@ -247,23 +246,36 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
                   </div>
                 )}
                 
-                <div className="flex justify-between items-center">
-                  <span className="text-text-secondary">Total XP:</span>
+                {useClassPassives && totalXP !== (XPService.MANUAL_WORKOUT_BASE_XP + (isPowerDay ? POWER_DAY_BONUS_XP : 0)) && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-text-secondary">Class Bonus:</span>
+                    <span className="font-space text-arcane-60">
+                      +{totalXP - (XPService.MANUAL_WORKOUT_BASE_XP + (isPowerDay ? POWER_DAY_BONUS_XP : 0))} XP
+                    </span>
+                  </div>
+                )}
+                
+                <div className="flex justify-between items-center border-t border-divider/20 pt-3 mt-1">
+                  <span className="text-text-secondary font-semibold">Total XP:</span>
                   <motion.span 
-                    className="font-space text-lg text-arcane"
-                    key={xpAwarded}
+                    className="font-space text-lg text-arcane font-bold"
+                    key={totalXP}
                     initial={{ scale: 1 }}
                     animate={{ scale: [1, 1.1, 1] }}
                     transition={{ duration: 0.5 }}
                   >
-                    {xpAwarded} XP
+                    {totalXP} XP
                   </motion.span>
                 </div>
                 
                 <div className="text-xs text-text-tertiary mt-2">
-                  <p>Selected Exercise: {selectedExercise?.name || 'None'}</p>
                   <p>Manual workouts require a photo in real usage.</p>
                   {isPowerDay && <p className="text-achievement-60">Power Day increases XP cap to 500.</p>}
+                  {useClassPassives && selectedClass && (
+                    <p className="text-arcane-60">
+                      {selectedClass} passive affects manual workouts based on activity type.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
