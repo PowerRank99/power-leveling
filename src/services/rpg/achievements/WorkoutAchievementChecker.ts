@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { AchievementChecker } from './AchievementCheckerInterface';
@@ -37,33 +38,10 @@ export class WorkoutAchievementChecker extends BaseAchievementChecker implements
             }
             
             // Check other achievement types that don't have progress tracking yet
-            await this.executeChecks(
-              userId, 
-              () => this.checkRankEAchievements(userId, workoutStats, userProfile),
-              'rank_e_achievements',
-              3
-            );
-            
-            await this.executeChecks(
-              userId, 
-              () => this.checkRankDAchievements(userId, workoutStats, userProfile),
-              'rank_d_achievements',
-              3
-            );
-            
-            await this.executeChecks(
-              userId, 
-              () => this.checkRankCAchievements(userId, workoutStats, userProfile),
-              'rank_c_achievements',
-              3
-            );
-            
-            await this.executeChecks(
-              userId, 
-              () => this.checkHigherRankAchievements(userId, workoutStats, userProfile),
-              'higher_rank_achievements',
-              3
-            );
+            await this.checkRankEAchievements(userId, workoutStats, userProfile);
+            await this.checkRankDAchievements(userId, workoutStats, userProfile);
+            await this.checkRankCAchievements(userId, workoutStats, userProfile);
+            await this.checkHigherRankAchievements(userId, workoutStats, userProfile);
           }, 
           'achievement_checks', 
           3,
@@ -136,7 +114,7 @@ export class WorkoutAchievementChecker extends BaseAchievementChecker implements
           if (achievementChecks.length > 0) {
             await AchievementService.checkAndAwardAchievements(userId, achievementChecks);
           }
-        }, 'workout_history_achievements', 3);
+        }, 'workout_history_achievements', 3, 'Failed to check workout history achievements');
       },
       'CHECK_WORKOUT_HISTORY_ACHIEVEMENTS',
       { showToast: false }
@@ -150,7 +128,7 @@ export class WorkoutAchievementChecker extends BaseAchievementChecker implements
     userId: string,
     workoutStats: UserWorkoutStats,
     userProfile: UserProfileData
-  ): Promise<string[]> {
+  ): Promise<void> {
     const achievementChecks: string[] = [];
     
     // First workout achievement
@@ -178,7 +156,9 @@ export class WorkoutAchievementChecker extends BaseAchievementChecker implements
       achievementChecks.push('first-guild');
     }
     
-    return achievementChecks;
+    if (achievementChecks.length > 0) {
+      await AchievementService.checkAndAwardAchievements(userId, achievementChecks);
+    }
   }
 
   /**
@@ -186,34 +166,29 @@ export class WorkoutAchievementChecker extends BaseAchievementChecker implements
    */
   private static async checkRankDAchievements(
     userId: string,
-    workoutStats: { totalCount: number; weeklyCount: number; monthlyCount: number },
-    userProfile: any
+    workoutStats: UserWorkoutStats,
+    userProfile: UserProfileData
   ): Promise<void> {
-    await this.executeChecks(
-      userId,
-      async () => {
-        const achievementChecks = [];
-        
-        // 10 total workouts
-        if (workoutStats.totalCount >= 10) {
-          achievementChecks.push('total-10');
-        }
-        
-        // Join 3 or more guilds - need to check guilds
-        const { count: guildCount, error: guildError } = await supabase
-          .from('guild_members')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId);
-          
-        if (!guildError && guildCount && guildCount >= 3) {
-          achievementChecks.push('multiple-guilds');
-        }
-        
-        return achievementChecks;
-      },
-      'rank_d_achievements',
-      3
-    );
+    const achievementChecks: string[] = [];
+    
+    // 10 total workouts
+    if (workoutStats.totalCount >= 10) {
+      achievementChecks.push('total-10');
+    }
+    
+    // Join 3 or more guilds - need to check guilds
+    const { count: guildCount, error: guildError } = await supabase
+      .from('guild_members')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+      
+    if (!guildError && guildCount && guildCount >= 3) {
+      achievementChecks.push('multiple-guilds');
+    }
+    
+    if (achievementChecks.length > 0) {
+      await AchievementService.checkAndAwardAchievements(userId, achievementChecks);
+    }
   }
 
   /**
@@ -221,24 +196,19 @@ export class WorkoutAchievementChecker extends BaseAchievementChecker implements
    */
   private static async checkRankCAchievements(
     userId: string,
-    workoutStats: { totalCount: number; weeklyCount: number; monthlyCount: number },
-    userProfile: any
+    workoutStats: UserWorkoutStats,
+    userProfile: UserProfileData
   ): Promise<void> {
-    await this.executeChecks(
-      userId,
-      async () => {
-        const achievementChecks = [];
-        
-        // 25 total workouts
-        if (workoutStats.totalCount >= 25) {
-          achievementChecks.push('total-25');
-        }
-        
-        return achievementChecks;
-      },
-      'rank_c_achievements',
-      3
-    );
+    const achievementChecks: string[] = [];
+    
+    // 25 total workouts
+    if (workoutStats.totalCount >= 25) {
+      achievementChecks.push('total-25');
+    }
+    
+    if (achievementChecks.length > 0) {
+      await AchievementService.checkAndAwardAchievements(userId, achievementChecks);
+    }
   }
 
   /**
@@ -246,41 +216,36 @@ export class WorkoutAchievementChecker extends BaseAchievementChecker implements
    */
   private static async checkHigherRankAchievements(
     userId: string,
-    workoutStats: { totalCount: number; weeklyCount: number; monthlyCount: number },
-    userProfile: any
+    workoutStats: UserWorkoutStats,
+    userProfile: UserProfileData
   ): Promise<void> {
-    await this.executeChecks(
-      userId,
-      async () => {
-        const achievementChecks = [];
-        
-        // Rank B achievements
-        // 50 total workouts
-        if (workoutStats.totalCount >= 50) {
-          achievementChecks.push('total-50');
-        }
-        
-        // Rank A achievements
-        // 100 total workouts
-        if (workoutStats.totalCount >= 100) {
-          achievementChecks.push('total-100');
-        }
-        
-        // Rank S achievements
-        // 200 total workouts
-        if (workoutStats.totalCount >= 200) {
-          achievementChecks.push('total-200');
-        }
-        
-        // 365-day streak (legendary)
-        if (userProfile?.streak >= 365) {
-          achievementChecks.push('streak-365');
-        }
-        
-        return achievementChecks;
-      },
-      'higher_rank_achievements',
-      3
-    );
+    const achievementChecks: string[] = [];
+    
+    // Rank B achievements
+    // 50 total workouts
+    if (workoutStats.totalCount >= 50) {
+      achievementChecks.push('total-50');
+    }
+    
+    // Rank A achievements
+    // 100 total workouts
+    if (workoutStats.totalCount >= 100) {
+      achievementChecks.push('total-100');
+    }
+    
+    // Rank S achievements
+    // 200 total workouts
+    if (workoutStats.totalCount >= 200) {
+      achievementChecks.push('total-200');
+    }
+    
+    // 365-day streak (legendary)
+    if (userProfile?.streak >= 365) {
+      achievementChecks.push('streak-365');
+    }
+    
+    if (achievementChecks.length > 0) {
+      await AchievementService.checkAndAwardAchievements(userId, achievementChecks);
+    }
   }
 }
