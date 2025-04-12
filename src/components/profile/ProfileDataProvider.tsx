@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { XPBonusService } from '@/services/rpg/XPBonusService';
@@ -43,9 +44,10 @@ const ProfileDataProvider: React.FC<ProfileDataProviderProps> = ({ userId, child
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
+        // Get profile data
         const { data, error } = await supabase
           .from('profiles')
-          .select('level, xp, class_name, daily_xp, daily_xp_cap, last_workout_at, streak, achievements_count, rank, achievement_points')
+          .select('level, xp, class, daily_xp, daily_xp_cap, last_workout_at, streak, achievements_count, rank, achievement_points')
           .eq('id', userId)
           .single();
         
@@ -64,23 +66,29 @@ const ProfileDataProvider: React.FC<ProfileDataProviderProps> = ({ userId, child
             ? new Date(data.last_workout_at).toLocaleDateString()
             : 'Nenhuma atividade recente';
           
-          // Get class description
-          const { data: classData, error: classError } = await supabase
-            .from('classes')
-            .select('description')
-            .eq('name', data.class_name)
-            .single();
+          // Get class description - note that we're checking for the 'class' field, not 'class_name'
+          let classDescription = 'Sem especialização';
           
-          if (classError) {
-            console.error('Error fetching class description:', classError);
+          if (data.class) {
+            const { data: classData, error: classError } = await supabase
+              .from('class_bonuses')
+              .select('description')
+              .eq('class_name', data.class)
+              .single();
+            
+            if (!classError && classData) {
+              classDescription = classData.description;
+            } else if (classError) {
+              console.error('Error fetching class description:', classError);
+            }
           }
           
           setProfileData({
             level: data.level || 1,
             currentXP: data.xp || 0,
             nextLevelXP: nextLevelXP,
-            className: data.class_name || 'Aventureiro',
-            classDescription: classData?.description || 'Sem especialização',
+            className: data.class || 'Aventureiro',
+            classDescription: classDescription,
             dailyXP: data.daily_xp || 0,
             dailyXPCap: data.daily_xp_cap || 300,
             lastActivity: lastActivity,
