@@ -12,6 +12,7 @@ import { TransactionService } from '../../common/TransactionService';
 export class ActivityAchievementChecker extends BaseAchievementChecker implements AchievementChecker {
   /**
    * Check activity variety achievements
+   * Implementation of abstract method from BaseAchievementChecker
    */
   static async checkAchievements(userId: string): Promise<ServiceResponse<void>> {
     return ErrorHandlingService.executeWithErrorHandling(
@@ -56,6 +57,14 @@ export class ActivityAchievementChecker extends BaseAchievementChecker implement
       'CHECK_VARIETY_ACHIEVEMENTS',
       { showToast: false }
     );
+  }
+
+  /**
+   * Instance method implementation of the abstract method
+   * Acts as a bridge to the static method for interface conformance
+   */
+  async checkAchievements(userId: string): Promise<ServiceResponse<void>> {
+    return ActivityAchievementChecker.checkAchievements(userId);
   }
 
   /**

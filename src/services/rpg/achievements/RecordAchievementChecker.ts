@@ -13,6 +13,7 @@ import { AchievementProgressService } from './AchievementProgressService';
 export class RecordAchievementChecker extends BaseAchievementChecker implements AchievementChecker {
   /**
    * Check all achievements related to personal records
+   * Implementation of abstract method from BaseAchievementChecker (static version)
    */
   static async checkAchievements(
     userId: string,
@@ -58,5 +59,16 @@ export class RecordAchievementChecker extends BaseAchievementChecker implements 
       'CHECK_PR_ACHIEVEMENTS',
       { showToast: false }
     );
+  }
+
+  /**
+   * Instance method implementation of the abstract method
+   * Acts as a bridge to the static method for interface conformance
+   */
+  async checkAchievements(
+    userId: string,
+    recordInfo?: PersonalRecordData
+  ): Promise<ServiceResponse<void>> {
+    return RecordAchievementChecker.checkAchievements(userId, recordInfo);
   }
 }

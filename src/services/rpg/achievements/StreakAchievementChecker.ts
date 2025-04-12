@@ -12,6 +12,7 @@ import { AchievementProgressService } from './AchievementProgressService';
 export class StreakAchievementChecker extends BaseAchievementChecker implements AchievementChecker {
   /**
    * Check all achievements related to streaks
+   * Implementation of abstract method from BaseAchievementChecker (static version)
    */
   static async checkAchievements(userId: string): Promise<ServiceResponse<void>> {
     return ErrorHandlingService.executeWithErrorHandling(
@@ -45,5 +46,13 @@ export class StreakAchievementChecker extends BaseAchievementChecker implements 
       'CHECK_STREAK_ACHIEVEMENTS',
       { showToast: false }
     );
+  }
+
+  /**
+   * Instance method implementation of the abstract method
+   * Acts as a bridge to the static method for interface conformance
+   */
+  async checkAchievements(userId: string): Promise<ServiceResponse<void>> {
+    return StreakAchievementChecker.checkAchievements(userId);
   }
 }

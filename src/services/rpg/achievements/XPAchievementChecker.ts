@@ -12,6 +12,7 @@ import { TransactionService } from '../../common/TransactionService';
 export class XPAchievementChecker extends BaseAchievementChecker implements AchievementChecker {
   /**
    * Check all achievements related to XP milestones
+   * Implementation of abstract method from BaseAchievementChecker (static version)
    */
   static async checkAchievements(
     userId: string, 
@@ -70,5 +71,16 @@ export class XPAchievementChecker extends BaseAchievementChecker implements Achi
       'CHECK_XP_ACHIEVEMENTS',
       { showToast: false }
     );
+  }
+
+  /**
+   * Instance method implementation of the abstract method
+   * Acts as a bridge to the static method for interface conformance
+   */
+  async checkAchievements(
+    userId: string,
+    totalXP?: number
+  ): Promise<ServiceResponse<void>> {
+    return XPAchievementChecker.checkAchievements(userId, totalXP);
   }
 }

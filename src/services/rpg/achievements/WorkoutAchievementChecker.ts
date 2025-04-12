@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { AchievementChecker } from './AchievementCheckerInterface';
@@ -13,6 +12,7 @@ import { AchievementProgressService } from './AchievementProgressService';
 export class WorkoutAchievementChecker extends BaseAchievementChecker implements AchievementChecker {
   /**
    * Check all achievements relevant to workout completion
+   * Implementation of abstract method from BaseAchievementChecker (static version)
    */
   static async checkAchievements(userId: string): Promise<ServiceResponse<void>> {
     return ErrorHandlingService.executeWithErrorHandling(
@@ -49,6 +49,14 @@ export class WorkoutAchievementChecker extends BaseAchievementChecker implements
       'CHECK_WORKOUT_ACHIEVEMENTS',
       { showToast: false }
     );
+  }
+
+  /**
+   * Instance method implementation of the abstract method
+   * Acts as a bridge to the static method for interface conformance
+   */
+  async checkAchievements(userId: string): Promise<ServiceResponse<void>> {
+    return WorkoutAchievementChecker.checkAchievements(userId);
   }
 
   /**

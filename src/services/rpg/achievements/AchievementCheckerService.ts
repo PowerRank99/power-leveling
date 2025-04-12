@@ -18,7 +18,7 @@ export class AchievementCheckerService extends BaseAchievementChecker {
    * This service doesn't directly check achievements but delegates to other checkers
    */
   async checkAchievements(userId: string, data?: any): Promise<ServiceResponse<void>> {
-    return this.checkWorkoutRelatedAchievements(userId);
+    return AchievementCheckerService.checkWorkoutRelatedAchievements(userId);
   }
 
   /**
