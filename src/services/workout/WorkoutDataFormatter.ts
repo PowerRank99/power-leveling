@@ -1,5 +1,5 @@
 
-import { WorkoutExercise } from '@/types/workoutTypes';
+import { WorkoutExercise, WorkoutSet } from '@/types/workout';
 import { ExerciseHistoryService } from '@/services/ExerciseHistoryService';
 
 /**
@@ -38,7 +38,7 @@ export class WorkoutDataFormatter {
       const previousExerciseData = previousWorkoutData[exercise.id] || [];
       
       // Format sets from database or create defaults
-      let sets = [];
+      let sets: WorkoutSet[] = [];
       
       if (exerciseSets.length > 0) {
         // Use existing sets from database

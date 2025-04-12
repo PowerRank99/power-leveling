@@ -1,12 +1,7 @@
-import { supabase } from '@/integrations/supabase/client';
-import { WorkoutExercise } from '@/types/workoutTypes';
-import { AchievementCheckerService } from './achievements/AchievementCheckerService';
 
-export interface PersonalRecord {
-  exerciseId: string;
-  weight: number;
-  previousWeight: number;
-}
+import { supabase } from '@/integrations/supabase/client';
+import { WorkoutExercise, PersonalRecord } from '@/types/workout';
+import { AchievementCheckerService } from './achievements/AchievementCheckerService';
 
 /**
  * Service for handling personal records
@@ -134,6 +129,11 @@ export class PersonalRecordService {
       
       // Check each exercise in the workout for a PR
       for (const exercise of workout.exercises) {
+        // Make sure we're working with valid exercise data
+        if (!exercise.id || !Array.isArray(exercise.sets)) {
+          continue;
+        }
+        
         const exerciseId = exercise.id;
         const previousBest = historyMap[exerciseId] || 0;
         

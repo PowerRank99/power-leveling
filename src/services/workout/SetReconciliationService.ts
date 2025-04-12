@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { WorkoutExercise } from '@/types/workoutTypes';
+import { WorkoutExercise } from '@/types/workout';
 
 /**
  * Service responsible for reconciling set counts between the database and routine_exercises
@@ -28,6 +28,11 @@ export class SetReconciliationService {
         if (!routineExercise) continue;
         
         // Count real sets (not placeholders)
+        if (!Array.isArray(workoutExercise.sets)) {
+          console.log(`[SetReconciliationService] Exercise ${workoutExercise.name} has no sets array`);
+          continue;
+        }
+        
         const realSets = workoutExercise.sets.filter(
           set => !set.id.startsWith('default-') && !set.id.startsWith('new-')
         );

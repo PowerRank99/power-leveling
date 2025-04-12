@@ -1,5 +1,5 @@
 
-import { WorkoutExercise } from '@/types/workoutTypes';
+import { WorkoutExercise } from '@/types/workout';
 import { XP_CONSTANTS } from './constants/xpConstants';
 import { EXERCISE_TYPES, CLASS_PASSIVE_SKILLS } from './constants/exerciseTypes';
 import { BaseXPCalculator } from './calculations/BaseXPCalculator';
@@ -63,7 +63,11 @@ export class XPCalculationService {
       
       // Set completion XP - capped at MAX_XP_CONTRIBUTING_SETS sets (10 by default)
       const completedSets = workout.exercises.reduce((sum, ex) => {
-        return sum + ex.sets.filter(set => set.completed).length;
+        // Check if sets is an array and has a filter method
+        if (Array.isArray(ex.sets)) {
+          return sum + ex.sets.filter(set => set.completed).length;
+        }
+        return sum;
       }, 0);
       
       // Cap the number of sets that contribute to XP

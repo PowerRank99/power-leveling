@@ -55,8 +55,13 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
         id: 'simulation',
         exercises: Array(exerciseCount).fill({}).map((_, i) => ({
           id: `sim-ex-${i}`,
-          name: `Simulated Exercise ${i + 1}`, // Add the name property to match WorkoutExercise type
-          sets: Array(3).fill({completed: true})
+          name: `Simulated Exercise ${i + 1}`,
+          sets: Array(3).fill({}).map(() => ({
+            id: `sim-set-${Math.random()}`,
+            weight: '20',
+            reps: '10',
+            completed: true
+          }))
         })),
         durationSeconds: duration * 60,
         difficulty: difficultyLevel as any,

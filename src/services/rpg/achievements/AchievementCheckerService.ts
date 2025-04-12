@@ -1,9 +1,8 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Achievement, AchievementCategory, AchievementRank } from '@/types/achievementTypes';
 import { toast } from 'sonner';
 import { AchievementService } from '../AchievementService';
-import { WorkoutExercise } from '@/types/workoutTypes';
+import { WorkoutExercise } from '@/types/workout';
 
 /**
  * Centralized service for checking and awarding achievements
