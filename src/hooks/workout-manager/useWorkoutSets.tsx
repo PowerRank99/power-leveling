@@ -22,13 +22,15 @@ export const useWorkoutSets = (
     if (isProcessing) return;
     console.log(`[useWorkoutSets] Adding set for exercise index ${exerciseIndex}`);
     
-    // We need a different approach since the types don't match directly
     try {
       const currentExercise = exercises[exerciseIndex];
       if (!currentExercise) return;
       
-      // Call the addSet function with proper typing
-      const result = await addSet(exerciseIndex, currentExercise.sets as unknown as SetData[], routineId);
+      // Extract the sets array from the current exercise
+      const currentSets = currentExercise.sets as unknown as SetData[];
+      
+      // Call the addSet function with proper params
+      const result = await addSet(exerciseIndex, currentSets, routineId);
       
       if (result) {
         // Update the exercises array with the new sets
@@ -56,8 +58,11 @@ export const useWorkoutSets = (
       const currentExercise = exercises[exerciseIndex];
       if (!currentExercise) return;
       
-      // Call the removeSet function with proper typing
-      const result = await removeSet(exerciseIndex, currentExercise.sets as unknown as SetData[], setIndex, routineId);
+      // Extract the sets array from the current exercise
+      const currentSets = currentExercise.sets as unknown as SetData[];
+      
+      // Call the removeSet function with proper params
+      const result = await removeSet(exerciseIndex, currentSets, setIndex, routineId);
       
       if (result) {
         // Update the exercises array with the modified sets
@@ -84,8 +89,11 @@ export const useWorkoutSets = (
       const currentExercise = exercises[exerciseIndex];
       if (!currentExercise) return;
       
-      // Call the updateSet function with proper typing
-      const result = await updateSet(exerciseIndex, currentExercise.sets as unknown as SetData[], setIndex, data);
+      // Extract the sets array from the current exercise
+      const currentSets = currentExercise.sets as unknown as SetData[];
+      
+      // Call the updateSet function with proper params
+      const result = await updateSet(exerciseIndex, currentSets, setIndex, data);
       
       if (result) {
         // Update the exercises array with the modified sets

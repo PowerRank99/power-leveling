@@ -42,8 +42,13 @@ export class XPService {
     baseXP: number;
     bonusBreakdown: { skill: string, amount: number, description: string }[];
   } {
-    // Pass workout data directly to XPCalculationService without mapping
-    return XPCalculationService.calculateWorkoutXP(workout, userClass, streak, difficulty);
+    // Pass workout data directly to XPCalculationService using the correct properties
+    return XPCalculationService.calculateWorkoutXP(
+      workout,
+      userClass,
+      streak,
+      workout.difficulty || difficulty
+    );
   }
   
   /**

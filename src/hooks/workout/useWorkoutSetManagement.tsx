@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { WorkoutExercise } from '@/types/workout';
+import { WorkoutExercise } from '@/types/workoutTypes';
 import { useSetManagement } from './useSetManagement';
 import { toast } from 'sonner';
 
@@ -17,12 +17,22 @@ export const useWorkoutSetManagement = (
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
 
   const handleUpdateSet = async (exerciseIndex: number, setIndex: number, data: { weight?: string; reps?: string; completed?: boolean }) => {
-    const result = await updateSetAction(exerciseIndex, exercises, setIndex, data);
-    if (result) {
-      setExercises(result);
-      return true;
+    if (!exercises[exerciseIndex]) return false;
+    
+    try {
+      // Extract the sets array for the type compatibility
+      const currentSets = exercises[exerciseIndex].sets;
+      
+      const result = await updateSetAction(exerciseIndex, exercises, setIndex, data);
+      if (result) {
+        setExercises(result);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error updating set:", error);
+      return false;
     }
-    return false;
   };
   
   const handleAddSet = async (exerciseIndex: number) => {
@@ -47,12 +57,17 @@ export const useWorkoutSetManagement = (
   };
   
   const handleRemoveSet = async (exerciseIndex: number, setIndex: number) => {
-    const result = await removeSetAction(exerciseIndex, exercises, setIndex, routineId);
-    if (result) {
-      setExercises(result);
-      return true;
+    try {
+      const result = await removeSetAction(exerciseIndex, exercises, setIndex, routineId);
+      if (result) {
+        setExercises(result);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error removing set:", error);
+      return false;
     }
-    return false;
   };
   
   const handleCompleteSet = async (exerciseIndex: number, setIndex: number) => {

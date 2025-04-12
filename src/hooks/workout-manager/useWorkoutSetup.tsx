@@ -120,7 +120,8 @@ export const useWorkoutSetup = (routineId: string, navigate: NavigateFunction) =
       
       // Set state with fetched data
       setWorkoutId(currentWorkoutId);
-      setExercises(workoutExercises);
+      // Use type assertion to ensure type compatibility
+      setExercises(workoutExercises as unknown as WorkoutExercise[]);
       setIsInitialized(true);
       
     } catch (error: any) {

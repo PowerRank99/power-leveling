@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Achievement } from '@/types/achievementTypes';
 import { toast } from 'sonner';
@@ -695,9 +694,7 @@ export class AchievementCheckerService {
           user_id: userId,
           achievement_id: achievementId,
           achieved_at: new Date().toISOString()
-        })
-        .onConflict(['user_id', 'achievement_id'])
-        .ignore();
+        });
         
       if (!error) {
         // Only update profile counters if the achievement was newly added
