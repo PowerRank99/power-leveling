@@ -2,6 +2,14 @@
 import { supabase } from '@/integrations/supabase/client';
 import { XPToastService } from './bonus/XPToastService';
 
+// Define XPBreakdown interface for proper typing
+export interface XPBreakdown {
+  baseXP: number;
+  classBonus?: number;
+  streakBonus?: number;
+  totalXP: number;
+}
+
 /**
  * Service for handling XP bonuses
  */

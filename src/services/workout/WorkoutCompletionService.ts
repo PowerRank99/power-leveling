@@ -73,7 +73,7 @@ export class WorkoutCompletionService {
         await AchievementService.awardAchievement(userId, 'workout-duration-90');
       }
       
-      // Check for workout count achievements
+      // Use the now-public method for workout count achievements
       await AchievementService.checkWorkoutCountAchievements(userId);
       
       return true;

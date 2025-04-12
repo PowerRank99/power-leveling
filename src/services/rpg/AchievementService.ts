@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Achievement, AchievementStats } from '@/types/achievementTypes';
 import { XPService } from './XPService';
@@ -321,8 +322,9 @@ export class AchievementService {
 
   /**
    * Check workout count achievements
+   * Changed from private to public to resolve access error
    */
-  private static async checkWorkoutCountAchievements(userId: string): Promise<void> {
+  public static async checkWorkoutCountAchievements(userId: string): Promise<void> {
     try {
       // Get workout count
       const { count, error } = await supabase

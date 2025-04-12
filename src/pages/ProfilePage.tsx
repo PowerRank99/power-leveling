@@ -77,7 +77,7 @@ const ProfilePage = () => {
                     level={profileData.level}
                     className={profileData.className}
                     workoutsCount={workoutsCount}
-                    ranking={profileData.ranking}
+                    ranking={profileData.ranking?.toString() || '42'}
                     currentXP={profileData.currentXP}
                     nextLevelXP={profileData.nextLevelXP}
                     rank={profileData.rank}
