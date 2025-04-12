@@ -47,3 +47,5 @@ export interface AchievementStats {
   nextRank: string | null;
   pointsToNextRank: number | null;
 }
+
+export type AchievementRank = 'Unranked' | 'E' | 'D' | 'C' | 'B' | 'A' | 'S';

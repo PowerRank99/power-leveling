@@ -4,6 +4,7 @@ import { User } from '@supabase/supabase-js';
 import { ClassService } from '@/services/rpg/ClassService';
 import { Profile } from './UserDataFormatter';
 import { XPBonusService } from '@/services/rpg/XPBonusService';
+import { AchievementService } from '@/services/rpg/AchievementService';
 
 export interface ProfileData {
   level: number;
@@ -56,25 +57,12 @@ const ProfileDataProvider: React.FC<ProfileDataProviderProps> = ({
     lastActivity: profile?.last_workout_at ? '8h 45min' : 'Nunca',
     xpGain: '+25 EXP',
     rank: profile?.achievements_count 
-      ? calculateRank(profile.level, profile.achievements_count)
+      ? AchievementService.calculateRank(profile.level, profile.achievements_count)
       : 'Unranked',
     achievementPoints: profile?.achievements_count || 0,
   };
 
   return <>{children(profileData)}</>;
 };
-
-// Helper function to calculate rank (client-side version of the DB function)
-function calculateRank(level: number, achievementPoints: number): string {
-  const rankScore = (1.5 * level) + (2 * achievementPoints);
-  
-  if (rankScore < 20) return 'Unranked';
-  if (rankScore >= 20 && rankScore < 50) return 'E';
-  if (rankScore >= 50 && rankScore < 80) return 'D';
-  if (rankScore >= 80 && rankScore < 120) return 'C';
-  if (rankScore >= 120 && rankScore < 160) return 'B';
-  if (rankScore >= 160 && rankScore < 198) return 'A';
-  return 'S';
-}
 
 export default ProfileDataProvider;
