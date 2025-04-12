@@ -5,6 +5,7 @@ import { BaseAchievementChecker } from './BaseAchievementChecker';
 import { AchievementService } from '../AchievementService';
 import { TransactionService } from '../../common/TransactionService';
 import { AchievementProgressService } from './AchievementProgressService';
+import { UserWorkoutStats, UserProfileData } from './AchievementCheckerInterface';
 
 /**
  * Checker for workout-related achievements
@@ -36,10 +37,33 @@ export class WorkoutAchievementChecker extends BaseAchievementChecker implements
             }
             
             // Check other achievement types that don't have progress tracking yet
-            await this.checkRankEAchievements(userId, workoutStats, userProfile);
-            await this.checkRankDAchievements(userId, workoutStats, userProfile);
-            await this.checkRankCAchievements(userId, workoutStats, userProfile);
-            await this.checkHigherRankAchievements(userId, workoutStats, userProfile);
+            await this.executeChecks(
+              userId, 
+              () => this.checkRankEAchievements(userId, workoutStats, userProfile),
+              'rank_e_achievements',
+              3
+            );
+            
+            await this.executeChecks(
+              userId, 
+              () => this.checkRankDAchievements(userId, workoutStats, userProfile),
+              'rank_d_achievements',
+              3
+            );
+            
+            await this.executeChecks(
+              userId, 
+              () => this.checkRankCAchievements(userId, workoutStats, userProfile),
+              'rank_c_achievements',
+              3
+            );
+            
+            await this.executeChecks(
+              userId, 
+              () => this.checkHigherRankAchievements(userId, workoutStats, userProfile),
+              'higher_rank_achievements',
+              3
+            );
           }, 
           'achievement_checks', 
           3,
@@ -124,44 +148,37 @@ export class WorkoutAchievementChecker extends BaseAchievementChecker implements
    */
   private static async checkRankEAchievements(
     userId: string,
-    workoutStats: { totalCount: number; weeklyCount: number; monthlyCount: number },
-    userProfile: any
-  ): Promise<void> {
-    await this.executeChecks(
-      userId,
-      async () => {
-        const achievementChecks = [];
-        
-        // First workout achievement
-        if (workoutStats.totalCount >= 1) {
-          achievementChecks.push('first-workout');
-        }
-        
-        // 3 workouts in a week
-        if (workoutStats.weeklyCount >= 3) {
-          achievementChecks.push('weekly-3');
-        }
-        
-        // 7 total workouts
-        if (workoutStats.totalCount >= 7) {
-          achievementChecks.push('total-7');
-        }
-        
-        // First guild joined - need to check guilds
-        const { count: guildCount, error: guildError } = await supabase
-          .from('guild_members')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId);
-          
-        if (!guildError && guildCount && guildCount > 0) {
-          achievementChecks.push('first-guild');
-        }
-        
-        return achievementChecks;
-      },
-      'rank_e_achievements',
-      3
-    );
+    workoutStats: UserWorkoutStats,
+    userProfile: UserProfileData
+  ): Promise<string[]> {
+    const achievementChecks: string[] = [];
+    
+    // First workout achievement
+    if (workoutStats.totalCount >= 1) {
+      achievementChecks.push('first-workout');
+    }
+    
+    // 3 workouts in a week
+    if (workoutStats.weeklyCount >= 3) {
+      achievementChecks.push('weekly-3');
+    }
+    
+    // 7 total workouts
+    if (workoutStats.totalCount >= 7) {
+      achievementChecks.push('total-7');
+    }
+    
+    // First guild joined - need to check guilds
+    const { count: guildCount, error: guildError } = await supabase
+      .from('guild_members')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+      
+    if (!guildError && guildCount && guildCount > 0) {
+      achievementChecks.push('first-guild');
+    }
+    
+    return achievementChecks;
   }
 
   /**
