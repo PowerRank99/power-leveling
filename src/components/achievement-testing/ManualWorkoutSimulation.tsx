@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { XPService } from '@/services/rpg/XPService';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { ImagePlus, Upload, Barbell, Camera } from 'lucide-react';
+import { ImagePlus, Upload, Dumbbell, Camera } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ManualWorkoutSimulationProps {
@@ -23,6 +22,8 @@ interface Exercise {
   name: string;
   muscle_group?: string;
 }
+
+const POWER_DAY_BONUS_XP = 50;
 
 const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userId, addLogEntry }) => {
   const [activityType, setActivityType] = useState('gym');
@@ -65,7 +66,7 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
     
     // Add bonus for power day if selected
     if (isPowerDay) {
-      baseXP += XPService.POWER_DAY_BONUS_XP;
+      baseXP += POWER_DAY_BONUS_XP;
     }
     
     return baseXP;
@@ -142,7 +143,7 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
     <Card className="premium-card border-arcane-30 shadow-glow-subtle">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-orbitron flex items-center">
-          <Barbell className="mr-2 h-5 w-5 text-arcane" />
+          <Dumbbell className="mr-2 h-5 w-5 text-arcane" />
           Manual Workout Simulation
         </CardTitle>
       </CardHeader>
@@ -213,12 +214,11 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
                 checked={isPowerDay}
                 onCheckedChange={setIsPowerDay}
               />
-              <Label htmlFor="powerDay">Activate Power Day (+{XPService.POWER_DAY_BONUS_XP} XP)</Label>
+              <Label htmlFor="powerDay">Activate Power Day (+{POWER_DAY_BONUS_XP} XP)</Label>
             </div>
           </div>
           
           <div className="space-y-4 flex flex-col">
-            {/* Photo upload mock */}
             <div className="bg-midnight-card rounded-lg p-4 border border-divider/30 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-t from-midnight-base/80 to-transparent z-10 pointer-events-none"></div>
               
@@ -243,7 +243,7 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
                 {isPowerDay && (
                   <div className="flex justify-between items-center">
                     <span className="text-text-secondary">Power Day Bonus:</span>
-                    <span className="font-space text-achievement">+{XPService.POWER_DAY_BONUS_XP} XP</span>
+                    <span className="font-space text-achievement">+{POWER_DAY_BONUS_XP} XP</span>
                   </div>
                 )}
                 

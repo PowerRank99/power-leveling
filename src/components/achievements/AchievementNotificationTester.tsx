@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useAchievementNotificationStore } from '@/stores/achievementNotificationStore';
 
 const AchievementNotificationTester: React.FC = () => {
-  const { addAchievement } = useAchievementNotificationStore();
+  const { addNotification } = useAchievementNotificationStore();
   
   const testAchievementRanks = ['S', 'A', 'B', 'C', 'D', 'E'];
   
@@ -67,7 +66,7 @@ const AchievementNotificationTester: React.FC = () => {
   const triggerRandomAchievement = () => {
     const randomRank = testAchievementRanks[Math.floor(Math.random() * testAchievementRanks.length)];
     const achievement = generateRandomAchievement(randomRank);
-    addAchievement(achievement);
+    addNotification(achievement);
   };
   
   const triggerMultipleAchievements = () => {
@@ -81,13 +80,13 @@ const AchievementNotificationTester: React.FC = () => {
       
       usedRanks.add(randomRank);
       const achievement = generateRandomAchievement(randomRank);
-      addAchievement(achievement);
+      addNotification(achievement);
     }
   };
   
   const triggerSpecificRank = (rank: string) => {
     const achievement = generateRandomAchievement(rank);
-    addAchievement(achievement);
+    addNotification(achievement);
   };
   
   return (

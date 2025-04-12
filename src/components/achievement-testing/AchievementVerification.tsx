@@ -54,8 +54,8 @@ const AchievementVerification: React.FC<AchievementVerificationProps> = ({ userI
       
       if (error) throw error;
       
-      // Format achievements to match type
-      const formattedAchievements = data.map(a => ({
+      // Format achievements to match type with parsed requirements
+      const formattedAchievements: Achievement[] = data.map(a => ({
         id: a.id || '',
         name: a.name || '',
         description: a.description || '',
@@ -64,7 +64,9 @@ const AchievementVerification: React.FC<AchievementVerificationProps> = ({ userI
         points: a.points || 1,
         xpReward: a.xp_reward || 0,
         iconName: a.icon_name || '',
-        requirements: a.requirements || {}
+        requirements: typeof a.requirements === 'string' 
+          ? JSON.parse(a.requirements) 
+          : (a.requirements as Record<string, any> || {})
       }));
       
       setAchievements(formattedAchievements);
