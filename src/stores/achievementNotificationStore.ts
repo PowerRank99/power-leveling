@@ -1,17 +1,6 @@
 
 import { create } from 'zustand';
-
-export interface AchievementNotification {
-  id: string;
-  title: string;
-  description: string;
-  xpReward: number;
-  rank: 'S' | 'A' | 'B' | 'C' | 'D' | 'E' | 'Unranked';
-  bonusText?: string;
-  points: number;
-  iconName: string;
-  timestamp: string;
-}
+import { AchievementNotification } from '@/types/achievementTypes';
 
 interface AchievementNotificationStore {
   isVisible: boolean;

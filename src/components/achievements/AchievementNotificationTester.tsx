@@ -1,13 +1,15 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useAchievementNotificationStore } from '@/stores/achievementNotificationStore';
+import { AchievementNotification } from '@/types/achievementTypes';
 
 const AchievementNotificationTester: React.FC = () => {
   const { addNotification } = useAchievementNotificationStore();
   
-  const testAchievementRanks = ['S', 'A', 'B', 'C', 'D', 'E'];
+  const testAchievementRanks = ['S', 'A', 'B', 'C', 'D', 'E'] as const;
+  type AchievementRank = typeof testAchievementRanks[number] | 'Unranked';
   
-  const generateRandomAchievement = (rank: string) => {
+  const generateRandomAchievement = (rank: AchievementRank) => {
     const titles = {
       S: ['Lendário', 'Deus Guerreiro', 'Nascido das Sombras', 'Desbravador Supremo'],
       A: ['Mestre Ascendente', 'Soberano da Força', 'Guerreiro Implacável'],
@@ -60,7 +62,7 @@ const AchievementNotificationTester: React.FC = () => {
       bonusText,
       iconName: 'trophy',
       timestamp: new Date().toISOString(),
-    };
+    } as AchievementNotification;
   };
   
   const triggerRandomAchievement = () => {
@@ -71,9 +73,9 @@ const AchievementNotificationTester: React.FC = () => {
   
   const triggerMultipleAchievements = () => {
     // Create 3 random achievements of different ranks
-    const usedRanks = new Set();
+    const usedRanks = new Set<AchievementRank>();
     for (let i = 0; i < 3; i++) {
-      let randomRank;
+      let randomRank: AchievementRank;
       do {
         randomRank = testAchievementRanks[Math.floor(Math.random() * testAchievementRanks.length)];
       } while (usedRanks.has(randomRank));
@@ -85,7 +87,9 @@ const AchievementNotificationTester: React.FC = () => {
   };
   
   const triggerSpecificRank = (rank: string) => {
-    const achievement = generateRandomAchievement(rank);
+    // Make sure rank is a valid AchievementRank
+    const validRank = (testAchievementRanks.includes(rank as any) ? rank : 'E') as AchievementRank;
+    const achievement = generateRandomAchievement(validRank);
     addNotification(achievement);
   };
   

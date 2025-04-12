@@ -63,7 +63,7 @@ export interface AchievementNotification {
   title: string;
   description: string;
   xpReward: number;
-  rank: string;
+  rank: AchievementRank;
   bonusText?: string;
   points: number;
   iconName: string;
