@@ -23,6 +23,7 @@ import GuildQuestsPage from './pages/GuildQuestsPage';
 import CreateQuestPage from './pages/CreateQuestPage';
 import AchievementPopup from './components/profile/AchievementPopup';
 import ClassSelectionPage from './pages/class-selection/ClassSelectionPage';
+import AchievementTestingPage from './pages/AchievementTestingPage';
 
 function App() {
   return (
