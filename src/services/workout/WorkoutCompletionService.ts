@@ -1,13 +1,14 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { WorkoutExercise } from '@/types/workoutTypes';
+import { WorkoutExercise, WorkoutExerciseData } from '@/types/workout';
 import { XPService } from '../rpg/XPService';
 import { StreakService } from '../rpg/StreakService'; 
 import { ExerciseHistoryService } from '../ExerciseHistoryService';
 import { toast } from 'sonner';
-import { PersonalRecordService, PersonalRecord } from '../rpg/PersonalRecordService';
+import { PersonalRecordService } from '../rpg/PersonalRecordService';
 import { AchievementCheckerService } from '../rpg/achievements/AchievementCheckerService';
 import { WorkoutExerciseService } from './WorkoutExerciseService';
+import { mapToWorkoutExercise, mapToWorkoutExerciseData } from '@/utils/typeMappers';
 
 /**
  * Service for handling workout completion
@@ -44,7 +45,34 @@ export class WorkoutCompletionService {
       }
       
       // 2. Save exercise history entries
-      await Promise.all(exercises.map(exercise => 
+      // Convert to compatible format first
+      const exerciseDataList = exercises.map(exercise => {
+        if (Array.isArray(exercise.sets)) {
+          // Get weight and reps from first set (for backwards compatibility)
+          const firstSet = exercise.sets[0];
+          const weight = firstSet ? parseFloat(firstSet.weight) : 0;
+          const reps = firstSet ? parseInt(firstSet.reps) : 0;
+          // Count completed sets
+          const completedSets = exercise.sets.filter(set => set.completed).length;
+          
+          return {
+            exerciseId: exercise.exerciseId || exercise.id,
+            weight,
+            reps,
+            sets: completedSets
+          };
+        } else {
+          // Handle old format if present
+          return {
+            exerciseId: exercise.exerciseId || exercise.id,
+            weight: (exercise as any).weight || 0,
+            reps: (exercise as any).reps || 0,
+            sets: (exercise as any).sets || 0
+          };
+        }
+      });
+      
+      await Promise.all(exerciseDataList.map(exercise => 
         ExerciseHistoryService.updateExerciseHistory(
           exercise.exerciseId,
           exercise.weight || 0,
@@ -76,16 +104,17 @@ export class WorkoutCompletionService {
       }
       
       // 5. Award XP for the workout
-      const workout = {
+      // Convert to compatible format for XP service if needed
+      const workoutData = {
         id: workoutId,
-        exercises,
+        exercises: exercises,
         durationSeconds: duration
       };
       
-      const xpAwarded = await XPService.awardWorkoutXP(userId, workout, duration);
+      const xpAwarded = await XPService.awardWorkoutXP(userId, workoutData, duration);
       
       // 6. Check for workout-related achievements
-      await AchievementCheckerService.checkWorkoutRelatedAchievements(userId, workout);
+      await AchievementCheckerService.checkWorkoutRelatedAchievements(userId, workoutData);
       
       // 7. Save workout notes if any
       if (notes && Object.keys(notes).length > 0) {

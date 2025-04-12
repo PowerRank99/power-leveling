@@ -87,7 +87,7 @@ Here's a list of files that need to be updated to use the new consolidated types
 - `src/hooks/workout/useSetAdder.tsx`
 - `src/hooks/workout/useSetRemover.tsx`
 - `src/hooks/workout/useSetUpdater.tsx`
-- `src/hooks/workout/useWorkoutSetsManagement.tsx`
+- `src/hooks/workout/useSetSetsManagement.tsx`
 - `src/hooks/useWorkoutManager.tsx`
 - `src/hooks/useWorkoutExercises.tsx`
 - `src/hooks/useWorkoutTimerController.tsx`

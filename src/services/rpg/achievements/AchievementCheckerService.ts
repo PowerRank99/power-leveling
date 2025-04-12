@@ -337,6 +337,59 @@ export class AchievementCheckerService {
     }
   }
 
+  /**
+   * Check a user's workout history for achievements
+   */
+  static async checkWorkoutHistoryAchievements(userId: string): Promise<void> {
+    try {
+      // Get total workout count 
+      const { count: workoutCount, error: workoutError } = await supabase
+        .from('workouts')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .is('completed_at', 'not.null');
+        
+      if (workoutError) throw workoutError;
+      
+      // Get total manual workout count
+      const { count: manualWorkoutCount, error: manualError } = await supabase
+        .from('manual_workouts')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId);
+        
+      if (manualError) throw manualError;
+      
+      // Combined count
+      const totalWorkouts = (workoutCount || 0) + (manualWorkoutCount || 0);
+      
+      // Check for workout count achievements
+      await Promise.all([
+        this.checkForAchievement(userId, 'embalo_fitness', { workoutCount: totalWorkouts }),
+        this.checkForAchievement(userId, 'dedicacao_semanal', { workoutCount: totalWorkouts })
+      ]);
+      
+      // Get workouts per week
+      const { data: weekData, error: weekError } = await supabase
+        .rpc('get_workouts_per_week', { p_user_id: userId }) as any; // Use 'as any' to avoid type recursion
+        
+      if (weekError) throw weekError;
+      
+      if (weekData && weekData.length) {
+        const maxWorkoutsInWeek = Math.max(...weekData.map((w: any) => w.count));
+        
+        // Check for weekly workout achievements
+        await this.checkForAchievement(userId, 'trio_na_semana', { 
+          maxWorkoutsInWeek 
+        });
+      }
+      
+      // Update achievement points and rank
+      await this.updateAchievementPointsAndRank(userId);
+    } catch (error) {
+      console.error('Error checking workout history achievements:', error);
+    }
+  }
+
   // Private helper methods
 
   /**
@@ -616,6 +669,21 @@ export class AchievementCheckerService {
       }
     } catch (error) {
       console.error('Error checking higher rank achievements:', error);
+    }
+  }
+
+  /**
+   * Check for a specific achievement based on criteria
+   */
+  private static async checkForAchievement(
+    userId: string,
+    achievementId: string,
+    criteria: any
+  ): Promise<void> {
+    try {
+      await AchievementService.awardAchievement(userId, achievementId, criteria);
+    } catch (error) {
+      console.error(`Error checking for achievement ${achievementId}:`, error);
     }
   }
 }

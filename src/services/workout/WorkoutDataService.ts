@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { WorkoutExercise } from '@/types/workoutTypes';
+import { WorkoutExercise, WorkoutSet } from '@/types/workout';
 
 /**
  * Service for fetching and formatting workout data
@@ -29,6 +29,7 @@ export class WorkoutDataService {
           exerciseMap[exerciseId] = {
             id: exerciseId,
             name: set.exercises?.name || 'Unknown Exercise',
+            exerciseId: exerciseId,
             sets: []
           };
         }

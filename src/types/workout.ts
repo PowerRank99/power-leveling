@@ -53,6 +53,8 @@ export interface WorkoutExerciseData {
   reps?: number;
   sets?: number;
   targetSets?: number;
+  id?: string;
+  name?: string;
 }
 
 /**
