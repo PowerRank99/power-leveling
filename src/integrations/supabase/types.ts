@@ -552,6 +552,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          achievement_points: number | null
           achievements_count: number | null
           avatar_url: string | null
           bio: string | null
@@ -566,6 +567,7 @@ export type Database = {
           last_workout_at: string | null
           level: number | null
           name: string | null
+          rank: string | null
           records_count: number | null
           streak: number | null
           timer_notification_enabled: boolean
@@ -577,6 +579,7 @@ export type Database = {
           xp: number | null
         }
         Insert: {
+          achievement_points?: number | null
           achievements_count?: number | null
           avatar_url?: string | null
           bio?: string | null
@@ -591,6 +594,7 @@ export type Database = {
           last_workout_at?: string | null
           level?: number | null
           name?: string | null
+          rank?: string | null
           records_count?: number | null
           streak?: number | null
           timer_notification_enabled?: boolean
@@ -602,6 +606,7 @@ export type Database = {
           xp?: number | null
         }
         Update: {
+          achievement_points?: number | null
           achievements_count?: number | null
           avatar_url?: string | null
           bio?: string | null
@@ -616,6 +621,7 @@ export type Database = {
           last_workout_at?: string | null
           level?: number | null
           name?: string | null
+          rank?: string | null
           records_count?: number | null
           streak?: number | null
           timer_notification_enabled?: boolean
