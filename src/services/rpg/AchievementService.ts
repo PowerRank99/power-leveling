@@ -314,13 +314,22 @@ export class AchievementService {
           };
 
           for (const achievementId of achievementIds) {
-            const { data: success, error } = await TransactionService.executeWithRetry(
-              async () => await this.awardAchievement(userId, achievementId)
-            );
+            try {
+              const result = await TransactionService.executeWithRetry(
+                async () => {
+                  const awardResult = await this.awardAchievement(userId, achievementId);
+                  return awardResult.success;
+                },
+                'award_achievement_retry',
+                3
+              );
 
-            if (success?.success) {
-              results.successful.push(achievementId);
-            } else {
+              if (result) {
+                results.successful.push(achievementId);
+              } else {
+                results.failed.push(achievementId);
+              }
+            } catch (error) {
               console.error(`Failed to award achievement ${achievementId}:`, error);
               results.failed.push(achievementId);
             }
