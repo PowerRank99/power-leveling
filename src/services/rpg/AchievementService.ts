@@ -1,11 +1,11 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Achievement, AchievementStats } from '@/types/achievementTypes';
-import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
+import { ServiceResponse, ErrorHandlingService, ErrorCategory } from '@/services/common/ErrorHandlingService';
 import { XPService } from './XPService';
 import { AchievementCheckerService } from './achievements/AchievementCheckerService';
 import { TransactionService } from '../common/TransactionService';
 import { AchievementProgressService } from './achievements/AchievementProgressService';
+import { ErrorFactory } from '../common/ErrorFactory';
 
 /**
  * Service for managing achievements
@@ -368,13 +368,14 @@ export class AchievementService {
       async () => {
         // Use the unified achievement checker service with retry support
         await TransactionService.executeWithRetry(
-          async () => await AchievementCheckerService.checkWorkoutRelatedAchievements(userId)
+          async () => await AchievementCheckerService.checkWorkoutRelatedAchievements(userId),
+          'check_workout_achievements',
+          3,
+          'Failed to check workout achievements'
         );
       },
       'CHECK_WORKOUT_ACHIEVEMENTS',
-      {
-        showToast: false
-      }
+      { showToast: false }
     );
   }
 

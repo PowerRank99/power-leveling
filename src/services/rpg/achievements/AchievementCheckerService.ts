@@ -68,3 +68,6 @@ export class AchievementCheckerService extends BaseAchievementChecker {
     return WorkoutAchievementChecker.checkWorkoutHistoryAchievements(userId);
   }
 }
+
+// Re-export the PersonalRecordData interface to avoid circular dependencies
+export { PersonalRecordData };
