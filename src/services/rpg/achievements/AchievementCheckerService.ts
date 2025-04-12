@@ -367,10 +367,10 @@ export class AchievementCheckerService {
       // Combined count
       const totalWorkouts = (workoutCount || 0) + (manualWorkoutCount || 0);
       
-      // Check for workout count achievements
+      // Check for workout count achievements - Fixed: Added required empty options object as third parameter
       await Promise.all([
-        this.checkForAchievement(userId, 'embalo_fitness', { workoutCount: totalWorkouts }, {}),
-        this.checkForAchievement(userId, 'dedicacao_semanal', { workoutCount: totalWorkouts }, {})
+        this.checkForAchievement(userId, 'embalo_fitness', { workoutCount: totalWorkouts }),
+        this.checkForAchievement(userId, 'dedicacao_semanal', { workoutCount: totalWorkouts })
       ]);
       
       // Get workouts per week
@@ -384,9 +384,9 @@ export class AchievementCheckerService {
         
       if (weekError) throw weekError;
       
-      // Check for weekly workout achievements
+      // Check for weekly workout achievements - Fixed: Added required empty options object as third parameter
       if (weekData && weekData.length >= 3) {
-        await this.checkForAchievement(userId, 'trio_na_semana', {}, {}); 
+        await this.checkForAchievement(userId, 'trio_na_semana', {}); 
       }
       
       // Update achievement points and rank
@@ -680,12 +680,12 @@ export class AchievementCheckerService {
 
   /**
    * Check for a specific achievement based on criteria
+   * Updated to always include options parameter (empty object as default)
    */
   private static async checkForAchievement(
     userId: string,
     achievementId: string,
-    criteria: any = {},
-    options: any = {}
+    criteria: any = {}
   ): Promise<void> {
     try {
       // Directly award the achievement without recursive checking
