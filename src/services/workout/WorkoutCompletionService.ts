@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { WorkoutExercise, WorkoutExerciseData } from '@/types/workout';
+import { WorkoutExercise, WorkoutExerciseData } from '@/types/workoutTypes';
 import { XPService } from '../rpg/XPService';
 import { StreakService } from '../rpg/StreakService'; 
 import { ExerciseHistoryService } from '../ExerciseHistoryService';
@@ -90,7 +90,7 @@ export class WorkoutCompletionService {
           id: workoutId,
           exercises,
           durationSeconds: duration
-        }
+        } as { id: string; exercises: WorkoutExercise[]; durationSeconds: number }
       );
       
       for (const record of personalRecords) {

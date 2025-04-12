@@ -1,7 +1,5 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { DatabaseResult, SetData } from '@/types/workoutTypes';
-import { toast } from 'sonner';
 
 /**
  * Service responsible for deleting and reordering workout sets

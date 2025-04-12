@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Achievement } from '@/types/achievementTypes';
 import { toast } from 'sonner';
@@ -17,7 +16,7 @@ export class AchievementCheckerService {
     userId: string,
     workout?: {
       id: string;
-      exercises: WorkoutExercise[];
+      exercises: Array<WorkoutExercise>;
       durationSeconds: number;
     }
   ): Promise<void> {
@@ -173,25 +172,10 @@ export class AchievementCheckerService {
   /**
    * Check all achievements related to XP milestones
    */
-  static async checkXPMilestoneAchievements(userId: string): Promise<void> {
+  static async checkXPMilestoneAchievements(userId: string, totalXP: number): Promise<void> {
     try {
       if (!userId) return;
 
-      // Get user's current XP
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('xp, level')
-        .eq('id', userId)
-        .single();
-        
-      if (error || !data) {
-        console.error('Error fetching user XP:', error);
-        return;
-      }
-      
-      const totalXP = data.xp || 0;
-      const level = data.level || 1;
-      
       // Award XP milestone achievements
       if (totalXP >= 1000) {
         await AchievementService.awardAchievement(userId, 'xp-1000');

@@ -24,7 +24,8 @@ export const useWorkoutSets = (
     
     const result = await addSet(exerciseIndex, exercises, routineId);
     if (result) {
-      setProcessedExercises(result);
+      // Use explicit type casting to resolve the type mismatch
+      setProcessedExercises(result as WorkoutExercise[]);
     }
   };
   
@@ -37,7 +38,8 @@ export const useWorkoutSets = (
     
     const result = await removeSet(exerciseIndex, exercises, setIndex, routineId);
     if (result) {
-      setProcessedExercises(result);
+      // Use explicit type casting to resolve the type mismatch
+      setProcessedExercises(result as WorkoutExercise[]);
     }
   };
   
@@ -49,7 +51,8 @@ export const useWorkoutSets = (
     
     const result = await updateSet(exerciseIndex, exercises, setIndex, data);
     if (result) {
-      setProcessedExercises(result);
+      // Use explicit type casting to resolve the type mismatch
+      setProcessedExercises(result as WorkoutExercise[]);
     }
   };
   
@@ -69,7 +72,8 @@ export const useWorkoutSets = (
       });
       
       if (result) {
-        setProcessedExercises(result);
+        // Use explicit type casting to resolve the type mismatch
+        setProcessedExercises(result as WorkoutExercise[]);
       }
     }
   };

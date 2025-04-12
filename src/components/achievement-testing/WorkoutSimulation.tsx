@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,19 +42,18 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
   });
   const [bonusBreakdown, setBonusBreakdown] = useState<Array<{skill: string, amount: number, description: string}>>([]);
   
-  // Calculate XP whenever relevant inputs change
   useEffect(() => {
     calculatePotentialXP();
   }, [duration, exerciseCount, difficultyLevel, includePersonalRecord, streak, useClassPassives, selectedClass]);
   
-  const calculatePotentialXP = () => {
+  calculatePotentialXP = () => {
     try {
-      // Create simulated workout data structure
       const workout = {
         id: 'simulation',
         exercises: Array(exerciseCount).fill({}).map((_, i) => ({
           id: `sim-ex-${i}`,
           name: `Simulated Exercise ${i + 1}`,
+          exerciseId: `sim-ex-${i}`,
           sets: Array(3).fill({}).map(() => ({
             id: `sim-set-${Math.random()}`,
             weight: '20',
@@ -68,27 +66,21 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
         hasPR: includePersonalRecord
       };
       
-      // Calculate time-based XP
       const timeMinutes = Math.floor(workout.durationSeconds / 60);
       const timeXP = XPCalculationService.calculateTimeXP(timeMinutes);
       
-      // Exercise and set XP
       const exerciseXP = exerciseCount * XPService.BASE_EXERCISE_XP;
       const totalSets = exerciseCount * 3;
       const cappedSets = Math.min(totalSets, XPCalculationService.MAX_XP_CONTRIBUTING_SETS);
       const setXP = cappedSets * XPService.BASE_SET_XP;
       
-      // Multipliers
       const difficultyMultiplier = XPCalculationService.DIFFICULTY_MULTIPLIERS[difficultyLevel as keyof typeof XPCalculationService.DIFFICULTY_MULTIPLIERS];
       const streakMultiplier = XPCalculationService.getStreakMultiplier(streak);
       
-      // PR bonus if applicable
       const prBonus = includePersonalRecord ? XPService.PR_BONUS_XP : 0;
       
-      // Base XP before class bonuses
       const baseCalculatedXP = Math.round((timeXP + exerciseXP + setXP) * difficultyMultiplier);
       
-      // Calculate XP using the service that provides breakdown
       const result = XPCalculationService.calculateWorkoutXP(
         workout,
         useClassPassives ? selectedClass : null,
@@ -96,7 +88,6 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
         difficultyLevel as any
       );
       
-      // Store breakdown for display
       setXpBreakdown({
         timeXP,
         exerciseXP,
@@ -117,7 +108,7 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
     }
   };
   
-  const simulateWorkout = async () => {
+  simulateWorkout = async () => {
     if (!userId) {
       toast.error('Error', {
         description: 'Please select a test user',
@@ -127,10 +118,8 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
     
     setIsLoading(true);
     try {
-      // Use the already calculated XP values
       const awardedXP = totalXP;
       
-      // Create a simulated workout in the database
       const { data: workoutData, error: workoutError } = await supabase
         .from('workouts')
         .insert({
@@ -146,10 +135,8 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
       
       const workoutId = workoutData.id;
       
-      // Add workout exercises for realistic achievement checking
       const exercisePromises = [];
       for (let i = 0; i < exerciseCount; i++) {
-        // Get a random exercise from the database
         const { data: exercises } = await supabase
           .from('exercises')
           .select('id')
@@ -158,7 +145,6 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
         if (exercises && exercises.length > 0) {
           const randomExercise = exercises[Math.floor(Math.random() * exercises.length)];
           
-          // Create workout sets for this exercise
           exercisePromises.push(
             supabase
               .from('workout_sets')
@@ -177,7 +163,6 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
       
       await Promise.all(exercisePromises);
       
-      // Award XP to the user, include class info in metadata if enabled
       const metadata = {
         workoutType,
         exerciseCount,
@@ -188,7 +173,6 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
       
       await XPService.awardXP(userId, awardedXP, 'workout', metadata);
       
-      // Add a PR if selected
       if (includePersonalRecord) {
         const { data: exercises } = await supabase
           .from('exercises')
@@ -207,10 +191,8 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
         }
       }
       
-      // Check for achievements
       await AchievementService.checkWorkoutAchievements(userId, workoutId);
       
-      // Record successful simulation
       const classInfo = useClassPassives ? `, Class: ${selectedClass}` : '';
       addLogEntry(
         'Workout Simulated', 

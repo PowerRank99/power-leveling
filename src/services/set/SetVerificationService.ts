@@ -1,7 +1,5 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { DatabaseResult } from '@/types/workoutTypes';
-import { toast } from 'sonner';
 
 /**
  * Service responsible for verifying and reconciling set counts

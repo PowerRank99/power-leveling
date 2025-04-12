@@ -52,3 +52,38 @@ export interface RecentWorkout {
   prs: number;
   duration_seconds: number | null;
 }
+
+// Add these additional types that were missing and causing errors
+export interface SetData {
+  id: string;
+  weight: string;
+  reps: string;
+  completed: boolean;
+  previous?: {
+    weight: string;
+    reps: string;
+  };
+  set_order?: number;
+}
+
+export interface ExerciseHistory {
+  id: string;
+  userId: string;
+  exerciseId: string;
+  weight: number;
+  reps: number;
+  sets: number;
+  lastUsedAt: string;
+  createdAt: string;
+}
+
+export interface DatabaseResult<T> {
+  success: boolean;
+  data?: T;
+  error?: any;
+}
+
+export interface PreviousSetData {
+  weight: string;
+  reps: string;
+}
