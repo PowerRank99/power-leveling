@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/hooks/useAuth';
 import { ClassProvider } from '@/contexts/ClassContext';
@@ -44,6 +45,7 @@ function App() {
           <Route path="/guilds/:id/quests" element={<GuildQuestsPage />} />
           <Route path="/guilds/:id/quests/criar" element={<CreateQuestPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/achievement-testing" element={<AchievementTestingPage />} />
           <Route path="/configuracoes/timer" element={<TimerSettingsPage />} />
           <Route path="/conquistas" element={<AchievementsPage />} />
           <Route path="/classes" element={<ClassSelectionPage />} />

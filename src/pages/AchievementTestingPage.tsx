@@ -13,6 +13,7 @@ import PowerDaySimulation from '@/components/achievement-testing/PowerDaySimulat
 import AchievementVerification from '@/components/achievement-testing/AchievementVerification';
 import UserContextSimulation from '@/components/achievement-testing/UserContextSimulation';
 import LoggingPanel from '@/components/achievement-testing/LoggingPanel';
+import AchievementNotificationTesterSection from '@/components/achievement-testing/AchievementNotificationTesterSection';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
@@ -64,6 +65,8 @@ const AchievementTestingPage: React.FC = () => {
               />
             </CardContent>
           </Card>
+          
+          <AchievementNotificationTesterSection />
           
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="w-full mb-4 bg-midnight-card border border-divider/30 shadow-subtle">
