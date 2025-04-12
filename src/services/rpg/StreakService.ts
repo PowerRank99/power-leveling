@@ -1,7 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { AchievementService } from './AchievementService';
+import { AchievementCheckerService } from './achievements/AchievementCheckerService';
 
 export class StreakService {
   /**
@@ -75,57 +74,14 @@ export class StreakService {
           description: 'Continue assim!'
         });
         
-        // Check for streak-based achievements
-        await AchievementService.checkStreakAchievements(userId);
+        // Check for streak-based achievements using the unified checker
+        await AchievementCheckerService.checkStreakAchievements(userId);
       }
       
       return true;
     } catch (error) {
       console.error('Error in updateStreak:', error);
       return false;
-    }
-  }
-
-  /**
-   * Check for streak achievements when streak is updated
-   */
-  public static async checkStreakAchievements(userId: string): Promise<void> {
-    try {
-      // First fetch the user's current streak
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('streak')
-        .eq('id', userId)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching user streak:', error);
-        return;
-      }
-      
-      const streak = profile?.streak || 0;
-      
-      // Check for achievements based on streak length
-      if (streak >= 3) {
-        await AchievementService.awardAchievement(userId, 'streak-3');
-      }
-      if (streak >= 7) {
-        await AchievementService.awardAchievement(userId, 'streak-7');
-      }
-      if (streak >= 14) {
-        await AchievementService.awardAchievement(userId, 'streak-14');
-      }
-      if (streak >= 30) {
-        await AchievementService.awardAchievement(userId, 'streak-30');
-      }
-      if (streak >= 60) {
-        await AchievementService.awardAchievement(userId, 'streak-60');
-      }
-      if (streak >= 100) {
-        await AchievementService.awardAchievement(userId, 'streak-100');
-      }
-    } catch (error) {
-      console.error('Error checking streak achievements:', error);
     }
   }
 }

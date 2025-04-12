@@ -1,7 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workoutTypes';
-import { AchievementService } from '@/services/rpg/AchievementService';
+import { AchievementCheckerService } from './achievements/AchievementCheckerService';
 
 export interface PersonalRecord {
   exerciseId: string;
@@ -51,43 +50,12 @@ export class PersonalRecordService {
         console.error('Error incrementing profile counter:', rpcError);
       }
       
-      // Award PR achievement for the first personal record
-      await AchievementService.awardAchievement(userId, 'pr-first');
-      
-      // Get total number of PRs for this user
-      const { count, error: countError } = await supabase
-        .from('personal_records')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId);
-        
-      if (!countError && count) {
-        // Award PR milestone achievements
-        if (count >= 5) {
-          await AchievementService.awardAchievement(userId, 'pr-5');
-        }
-        if (count >= 10) {
-          await AchievementService.awardAchievement(userId, 'pr-10');
-        }
-        if (count >= 25) {
-          await AchievementService.awardAchievement(userId, 'pr-25');
-        }
-        if (count >= 50) {
-          await AchievementService.awardAchievement(userId, 'pr-50');
-        }
-      }
-      
-      // Check for impressive PR achievements based on weight increase percentage
-      if (previousWeight > 0) {
-        const increasePercentage = ((weight - previousWeight) / previousWeight) * 100;
-        
-        if (increasePercentage >= 10) {
-          await AchievementService.awardAchievement(userId, 'pr-increase-10');
-        }
-        if (increasePercentage >= 20) {
-          await AchievementService.awardAchievement(userId, 'pr-increase-20');
-        }
-      }
-        
+      // Use the unified achievement checker for PR achievements
+      await AchievementCheckerService.checkPersonalRecordAchievements(userId, {
+        exerciseId,
+        weight,
+        previousWeight
+      });
     } catch (error) {
       console.error('Error recording personal record:', error);
     }

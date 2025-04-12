@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Achievement, AchievementStats } from '@/types/achievementTypes';
 import { XPService } from './XPService';
+import { AchievementCheckerService } from './achievements/AchievementCheckerService';
 
 /**
  * Service for managing achievements
@@ -134,10 +135,10 @@ export class AchievementService {
 
       if (unlockedError) throw unlockedError;
 
-      // Get user profile for points
+      // Get user profile for points and level
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('achievements_count')
+        .select('achievements_count, level')
         .eq('id', userId)
         .single();
 
@@ -145,9 +146,11 @@ export class AchievementService {
 
       // Use achievements_count as points
       const points = profileData?.achievements_count || 0;
+      const level = profileData?.level || 1;
       
-      // Calculate rank based on points
-      const rank = this.calculateRank(points);
+      // Calculate rank score using the formula: 1.5 × Level + 2 × (Achievement Points)
+      const rankScore = AchievementCheckerService.calculateRankScore(level, points);
+      const rank = AchievementCheckerService.determineRank(rankScore);
       const nextRank = this.getNextRank(rank);
       const pointsToNextRank = this.getPointsToNextRank(points, rank);
 
@@ -244,132 +247,11 @@ export class AchievementService {
    */
   static async checkWorkoutAchievements(userId: string, workoutId: string): Promise<void> {
     try {
-      // Check for first workout achievement
-      await this.checkFirstWorkoutAchievement(userId);
-
-      // Check workout count achievements
-      await this.checkWorkoutCountAchievements(userId);
-
-      // Check workout streak achievements
-      await this.checkStreakAchievements(userId);
+      // Use the unified achievement checker service
+      await AchievementCheckerService.checkWorkoutRelatedAchievements(userId);
     } catch (error) {
       console.error('Error checking workout achievements:', error);
     }
-  }
-
-  /**
-   * Check streak achievements
-   */
-  static async checkStreakAchievements(userId: string): Promise<void> {
-    try {
-      // Get user's current streak
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('streak')
-        .eq('id', userId)
-        .single();
-
-      if (profileError) throw profileError;
-
-      const currentStreak = profile?.streak || 0;
-
-      // Check for streak achievements
-      if (currentStreak >= 7) {
-        await this.awardAchievement(userId, 'streak-7');
-      }
-
-      if (currentStreak >= 14) {
-        await this.awardAchievement(userId, 'streak-14');
-      }
-
-      if (currentStreak >= 30) {
-        await this.awardAchievement(userId, 'streak-30');
-      }
-
-      if (currentStreak >= 60) {
-        await this.awardAchievement(userId, 'streak-60');
-      }
-
-      if (currentStreak >= 100) {
-        await this.awardAchievement(userId, 'streak-100');
-      }
-    } catch (error) {
-      console.error('Error checking streak achievements:', error);
-    }
-  }
-
-  /**
-   * Check first workout achievement
-   */
-  private static async checkFirstWorkoutAchievement(userId: string): Promise<void> {
-    try {
-      // Get workout count
-      const { count, error } = await supabase
-        .from('workouts')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId);
-
-      if (error) throw error;
-
-      // Award achievement for first workout
-      if (count === 1) {
-        await this.awardAchievement(userId, 'first-workout');
-      }
-    } catch (error) {
-      console.error('Error checking first workout achievement:', error);
-    }
-  }
-
-  /**
-   * Check workout count achievements
-   * Changed from private to public to resolve access error
-   */
-  public static async checkWorkoutCountAchievements(userId: string): Promise<void> {
-    try {
-      // Get workout count
-      const { count, error } = await supabase
-        .from('workouts')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId);
-
-      if (error) throw error;
-
-      // Check for workout count achievements
-      if (count >= 5) {
-        await this.awardAchievement(userId, 'workout-5');
-      }
-
-      if (count >= 10) {
-        await this.awardAchievement(userId, 'workout-10');
-      }
-
-      if (count >= 25) {
-        await this.awardAchievement(userId, 'workout-25');
-      }
-
-      if (count >= 50) {
-        await this.awardAchievement(userId, 'workout-50');
-      }
-
-      if (count >= 100) {
-        await this.awardAchievement(userId, 'workout-100');
-      }
-    } catch (error) {
-      console.error('Error checking workout count achievements:', error);
-    }
-  }
-
-  /**
-   * Calculate rank based on points
-   */
-  private static calculateRank(points: number): string {
-    if (points >= 1000) return 'S';
-    if (points >= 500) return 'A';
-    if (points >= 250) return 'B';
-    if (points >= 100) return 'C';
-    if (points >= 50) return 'D';
-    if (points >= 10) return 'E';
-    return 'Unranked';
   }
 
   /**
