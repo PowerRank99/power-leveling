@@ -1,8 +1,8 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Achievement, AchievementStats } from '@/types/achievementTypes';
 import { XPService } from './XPService';
 import { AchievementCheckerService } from './achievements/AchievementCheckerService';
+import { TransactionService } from '../common/TransactionService';
 
 /**
  * Service for managing achievements
@@ -176,11 +176,12 @@ export class AchievementService {
   }
 
   /**
-   * Award an achievement to a user
+   * Award an achievement to a user with transaction support
+   * Ensures achievement and XP are awarded atomically
    */
   static async awardAchievement(userId: string, achievementId: string): Promise<boolean> {
     try {
-      // Check if the user already has this achievement
+      // First check if the user already has this achievement
       const { count, error: checkError } = await supabase
         .from('user_achievements')
         .select('*', { count: 'exact', head: true })
@@ -203,39 +204,49 @@ export class AchievementService {
 
       if (achievementError) throw achievementError;
 
-      // Add achievement to user_achievements
-      const { error: insertError } = await supabase
-        .from('user_achievements')
-        .insert({
-          user_id: userId,
-          achievement_id: achievementId,
-          achieved_at: new Date().toISOString()
-        });
+      // Use transaction service to ensure atomic operation
+      const { data: success, error: transactionError } = await TransactionService.executeTransaction(async () => {
+        // 1. Add achievement to user_achievements
+        const { error: insertError } = await supabase
+          .from('user_achievements')
+          .insert({
+            user_id: userId,
+            achievement_id: achievementId,
+            achieved_at: new Date().toISOString()
+          });
 
-      if (insertError) throw insertError;
+        if (insertError) throw insertError;
 
-      // Award XP to user
-      await XPService.awardXP(userId, achievement.xp_reward, 'achievement');
+        // 2. Award XP to user
+        await XPService.awardXP(userId, achievement.xp_reward, 'achievement');
 
-      // Update achievement count and points
-      await supabase.rpc('increment_profile_counter', {
-        user_id_param: userId,
-        counter_name: 'achievements_count',
-        increment_amount: 1
-      });
-      
-      // Also update achievement_points if the column exists
-      try {
+        // 3. Update achievement count and points
         await supabase.rpc('increment_profile_counter', {
           user_id_param: userId,
-          counter_name: 'achievement_points',
-          increment_amount: achievement.points
+          counter_name: 'achievements_count',
+          increment_amount: 1
         });
-      } catch (e) {
-        console.log('Could not update achievement_points, column might not exist');
+        
+        // 4. Also update achievement_points if the column exists
+        try {
+          await supabase.rpc('increment_profile_counter', {
+            user_id_param: userId,
+            counter_name: 'achievement_points',
+            increment_amount: achievement.points
+          });
+        } catch (e) {
+          console.log('Could not update achievement_points, column might not exist');
+        }
+
+        return true;
+      });
+
+      if (transactionError) {
+        console.error('Error in achievement transaction:', transactionError);
+        return false;
       }
 
-      return true;
+      return success || false;
     } catch (error) {
       console.error('Error awarding achievement:', error);
       return false;
@@ -243,12 +254,43 @@ export class AchievementService {
   }
 
   /**
+   * Check and award multiple achievements with retry support
+   * Uses executeWithRetry for better reliability
+   */
+  static async checkAndAwardAchievements(
+    userId: string, 
+    achievementIds: string[]
+  ): Promise<{ successful: string[], failed: string[] }> {
+    const results = {
+      successful: [] as string[],
+      failed: [] as string[]
+    };
+
+    for (const achievementId of achievementIds) {
+      const { data: success, error } = await TransactionService.executeWithRetry(
+        async () => await this.awardAchievement(userId, achievementId)
+      );
+
+      if (success) {
+        results.successful.push(achievementId);
+      } else {
+        console.error(`Failed to award achievement ${achievementId}:`, error);
+        results.failed.push(achievementId);
+      }
+    }
+
+    return results;
+  }
+
+  /**
    * Check workout achievements
    */
   static async checkWorkoutAchievements(userId: string, workoutId: string): Promise<void> {
     try {
-      // Use the unified achievement checker service
-      await AchievementCheckerService.checkWorkoutRelatedAchievements(userId);
+      // Use the unified achievement checker service with retry support
+      await TransactionService.executeWithRetry(
+        async () => await AchievementCheckerService.checkWorkoutRelatedAchievements(userId)
+      );
     } catch (error) {
       console.error('Error checking workout achievements:', error);
     }

@@ -4,6 +4,7 @@ import { Achievement } from '@/types/achievementTypes';
 import { toast } from 'sonner';
 import { AchievementService } from '../AchievementService';
 import { WorkoutExercise } from '@/types/workoutTypes';
+import { TransactionService } from '../../common/TransactionService';
 
 /**
  * Centralized service for checking and awarding achievements
@@ -30,20 +31,23 @@ export class AchievementCheckerService {
         this.getUserProfile(userId)
       ]);
 
-      // Check rank E achievements (basic starter achievements)
-      await this.checkRankEAchievements(userId, workoutStats, userProfile);
-      
-      // Check rank D achievements (moderate difficulty)
-      await this.checkRankDAchievements(userId, workoutStats, userProfile);
-      
-      // Check rank C achievements (intermediate difficulty)
-      await this.checkRankCAchievements(userId, workoutStats, userProfile);
-      
-      // Check higher rank achievements (B, A, S)
-      await this.checkHigherRankAchievements(userId, workoutStats, userProfile);
-      
-      // Update achievement points and rank
-      await this.updateAchievementPointsAndRank(userId);
+      // Use executeWithRetry for better reliability in checking achievements
+      await TransactionService.executeWithRetry(async () => {
+        // Check rank E achievements (basic starter achievements)
+        await this.checkRankEAchievements(userId, workoutStats, userProfile);
+        
+        // Check rank D achievements (moderate difficulty)
+        await this.checkRankDAchievements(userId, workoutStats, userProfile);
+        
+        // Check rank C achievements (intermediate difficulty)
+        await this.checkRankCAchievements(userId, workoutStats, userProfile);
+        
+        // Check higher rank achievements (B, A, S)
+        await this.checkHigherRankAchievements(userId, workoutStats, userProfile);
+        
+        // Update achievement points and rank
+        await this.updateAchievementPointsAndRank(userId);
+      });
     } catch (error) {
       console.error('Error checking workout achievements:', error);
     }
@@ -74,39 +78,42 @@ export class AchievementCheckerService {
         return;
       }
 
-      // Award first PR achievement
-      if (prCount && prCount >= 1) {
-        await AchievementService.awardAchievement(userId, 'pr-first');
-      }
-
-      // Award PR milestone achievements
-      if (prCount && prCount >= 5) {
-        await AchievementService.awardAchievement(userId, 'pr-5');
-      }
-      if (prCount && prCount >= 10) {
-        await AchievementService.awardAchievement(userId, 'pr-10');
-      }
-      if (prCount && prCount >= 25) {
-        await AchievementService.awardAchievement(userId, 'pr-25');
-      }
-      if (prCount && prCount >= 50) {
-        await AchievementService.awardAchievement(userId, 'pr-50');
-      }
-
-      // Check for impressive PR achievements based on weight increase percentage
-      if (recordInfo && recordInfo.previousWeight > 0) {
-        const increasePercentage = ((recordInfo.weight - recordInfo.previousWeight) / recordInfo.previousWeight) * 100;
-        
-        if (increasePercentage >= 10) {
-          await AchievementService.awardAchievement(userId, 'pr-increase-10');
+      // Use transaction service to ensure consistency
+      await TransactionService.executeWithRetry(async () => {
+        // Award first PR achievement
+        if (prCount && prCount >= 1) {
+          await AchievementService.awardAchievement(userId, 'pr-first');
         }
-        if (increasePercentage >= 20) {
-          await AchievementService.awardAchievement(userId, 'pr-increase-20');
-        }
-      }
 
-      // Update achievement points and rank
-      await this.updateAchievementPointsAndRank(userId);
+        // Award PR milestone achievements
+        if (prCount && prCount >= 5) {
+          await AchievementService.awardAchievement(userId, 'pr-5');
+        }
+        if (prCount && prCount >= 10) {
+          await AchievementService.awardAchievement(userId, 'pr-10');
+        }
+        if (prCount && prCount >= 25) {
+          await AchievementService.awardAchievement(userId, 'pr-25');
+        }
+        if (prCount && prCount >= 50) {
+          await AchievementService.awardAchievement(userId, 'pr-50');
+        }
+
+        // Check for impressive PR achievements based on weight increase percentage
+        if (recordInfo && recordInfo.previousWeight > 0) {
+          const increasePercentage = ((recordInfo.weight - recordInfo.previousWeight) / recordInfo.previousWeight) * 100;
+          
+          if (increasePercentage >= 10) {
+            await AchievementService.awardAchievement(userId, 'pr-increase-10');
+          }
+          if (increasePercentage >= 20) {
+            await AchievementService.awardAchievement(userId, 'pr-increase-20');
+          }
+        }
+
+        // Update achievement points and rank
+        await this.updateAchievementPointsAndRank(userId);
+      });
     } catch (error) {
       console.error('Error checking PR achievements:', error);
     }
@@ -133,38 +140,41 @@ export class AchievementCheckerService {
 
       const currentStreak = profile?.streak || 0;
 
-      // Rank E - Basic streak achievement
-      if (currentStreak >= 3) {
-        await AchievementService.awardAchievement(userId, 'streak-3');
-      }
+      // Use transaction service for consistency
+      await TransactionService.executeWithRetry(async () => {
+        // Rank E - Basic streak achievement
+        if (currentStreak >= 3) {
+          await AchievementService.awardAchievement(userId, 'streak-3');
+        }
 
-      // Rank D - Moderate streak achievements
-      if (currentStreak >= 7) {
-        await AchievementService.awardAchievement(userId, 'streak-7');
-      }
+        // Rank D - Moderate streak achievements
+        if (currentStreak >= 7) {
+          await AchievementService.awardAchievement(userId, 'streak-7');
+        }
 
-      // Rank C - Intermediate streak achievements
-      if (currentStreak >= 14) {
-        await AchievementService.awardAchievement(userId, 'streak-14');
-      }
+        // Rank C - Intermediate streak achievements
+        if (currentStreak >= 14) {
+          await AchievementService.awardAchievement(userId, 'streak-14');
+        }
 
-      // Rank B - Advanced streak achievements
-      if (currentStreak >= 30) {
-        await AchievementService.awardAchievement(userId, 'streak-30');
-      }
+        // Rank B - Advanced streak achievements
+        if (currentStreak >= 30) {
+          await AchievementService.awardAchievement(userId, 'streak-30');
+        }
 
-      // Rank A - Expert streak achievements
-      if (currentStreak >= 60) {
-        await AchievementService.awardAchievement(userId, 'streak-60');
-      }
+        // Rank A - Expert streak achievements
+        if (currentStreak >= 60) {
+          await AchievementService.awardAchievement(userId, 'streak-60');
+        }
 
-      // Rank S - Legendary streak achievements
-      if (currentStreak >= 100) {
-        await AchievementService.awardAchievement(userId, 'streak-100');
-      }
+        // Rank S - Legendary streak achievements
+        if (currentStreak >= 100) {
+          await AchievementService.awardAchievement(userId, 'streak-100');
+        }
 
-      // Update achievement points and rank
-      await this.updateAchievementPointsAndRank(userId);
+        // Update achievement points and rank
+        await this.updateAchievementPointsAndRank(userId);
+      });
     } catch (error) {
       console.error('Error checking streak achievements:', error);
     }
@@ -197,42 +207,45 @@ export class AchievementCheckerService {
         userLevel = profile?.level || 1;
       }
 
-      // Award XP milestone achievements
-      if (userXP >= 1000) {
-        await AchievementService.awardAchievement(userId, 'xp-1000');
-      }
-      if (userXP >= 5000) {
-        await AchievementService.awardAchievement(userId, 'xp-5000');
-      }
-      if (userXP >= 10000) {
-        await AchievementService.awardAchievement(userId, 'xp-10000');
-      }
-      if (userXP >= 50000) {
-        await AchievementService.awardAchievement(userId, 'xp-50000');
-      }
-      if (userXP >= 100000) {
-        await AchievementService.awardAchievement(userId, 'xp-100000');
-      }
+      // Use transaction service for consistency
+      await TransactionService.executeWithRetry(async () => {
+        // Award XP milestone achievements
+        if (userXP >= 1000) {
+          await AchievementService.awardAchievement(userId, 'xp-1000');
+        }
+        if (userXP >= 5000) {
+          await AchievementService.awardAchievement(userId, 'xp-5000');
+        }
+        if (userXP >= 10000) {
+          await AchievementService.awardAchievement(userId, 'xp-10000');
+        }
+        if (userXP >= 50000) {
+          await AchievementService.awardAchievement(userId, 'xp-50000');
+        }
+        if (userXP >= 100000) {
+          await AchievementService.awardAchievement(userId, 'xp-100000');
+        }
 
-      // Check level milestone achievements
-      if (userLevel >= 10) {
-        await AchievementService.awardAchievement(userId, 'level-10');
-      }
-      if (userLevel >= 25) {
-        await AchievementService.awardAchievement(userId, 'level-25');
-      }
-      if (userLevel >= 50) {
-        await AchievementService.awardAchievement(userId, 'level-50');
-      }
-      if (userLevel >= 75) {
-        await AchievementService.awardAchievement(userId, 'level-75');
-      }
-      if (userLevel >= 99) {
-        await AchievementService.awardAchievement(userId, 'level-99');
-      }
-      
-      // Update achievement points and rank
-      await this.updateAchievementPointsAndRank(userId);
+        // Check level milestone achievements
+        if (userLevel >= 10) {
+          await AchievementService.awardAchievement(userId, 'level-10');
+        }
+        if (userLevel >= 25) {
+          await AchievementService.awardAchievement(userId, 'level-25');
+        }
+        if (userLevel >= 50) {
+          await AchievementService.awardAchievement(userId, 'level-50');
+        }
+        if (userLevel >= 75) {
+          await AchievementService.awardAchievement(userId, 'level-75');
+        }
+        if (userLevel >= 99) {
+          await AchievementService.awardAchievement(userId, 'level-99');
+        }
+        
+        // Update achievement points and rank
+        await this.updateAchievementPointsAndRank(userId);
+      });
     } catch (error) {
       console.error('Error checking XP milestone achievements:', error);
     }
@@ -262,19 +275,22 @@ export class AchievementCheckerService {
       // Count unique exercise IDs
       const uniqueTypes = new Set(exerciseTypes?.map(et => et.exercise_id).filter(Boolean) || []).size;
 
-      // Award activity variety achievements
-      if (uniqueTypes >= 3) {
-        await AchievementService.awardAchievement(userId, 'variety-3');
-      }
-      if (uniqueTypes >= 5) {
-        await AchievementService.awardAchievement(userId, 'variety-5');
-      }
-      if (uniqueTypes >= 10) {
-        await AchievementService.awardAchievement(userId, 'variety-10');
-      }
+      // Use transaction service for consistency
+      await TransactionService.executeWithRetry(async () => {
+        // Award activity variety achievements
+        if (uniqueTypes >= 3) {
+          await AchievementService.awardAchievement(userId, 'variety-3');
+        }
+        if (uniqueTypes >= 5) {
+          await AchievementService.awardAchievement(userId, 'variety-5');
+        }
+        if (uniqueTypes >= 10) {
+          await AchievementService.awardAchievement(userId, 'variety-10');
+        }
 
-      // Update achievement points and rank
-      await this.updateAchievementPointsAndRank(userId);
+        // Update achievement points and rank
+        await this.updateAchievementPointsAndRank(userId);
+      });
     } catch (error) {
       console.error('Error checking activity variety achievements:', error);
     }
@@ -298,46 +314,49 @@ export class AchievementCheckerService {
         return;
       }
 
-      // Award manual workout milestone achievements  
-      if (manualCount && manualCount >= 1) {
-        await AchievementService.awardAchievement(userId, 'manual-first');
-      }
-      if (manualCount && manualCount >= 5) {
-        await AchievementService.awardAchievement(userId, 'manual-5');
-      }
-      if (manualCount && manualCount >= 10) {
-        await AchievementService.awardAchievement(userId, 'manual-10');
-      }
-      if (manualCount && manualCount >= 25) {
-        await AchievementService.awardAchievement(userId, 'manual-25');
-      }
+      // Use transaction service for consistency
+      await TransactionService.executeWithRetry(async () => {
+        // Award manual workout milestone achievements  
+        if (manualCount && manualCount >= 1) {
+          await AchievementService.awardAchievement(userId, 'manual-first');
+        }
+        if (manualCount && manualCount >= 5) {
+          await AchievementService.awardAchievement(userId, 'manual-5');
+        }
+        if (manualCount && manualCount >= 10) {
+          await AchievementService.awardAchievement(userId, 'manual-10');
+        }
+        if (manualCount && manualCount >= 25) {
+          await AchievementService.awardAchievement(userId, 'manual-25');
+        }
 
-      // Check for distinct activity types
-      const { data: activityData, error: activityError } = await supabase
-        .from('manual_workouts')
-        .select('activity_type')
-        .eq('user_id', userId);
-        
-      if (activityError) {
-        console.error('Error getting distinct activity types:', activityError);
-        return;
-      }
+        // Check for distinct activity types
+        const { data: activityData, error: activityError } = await supabase
+          .from('manual_workouts')
+          .select('activity_type')
+          .eq('user_id', userId);
+          
+        if (activityError) {
+          console.error('Error getting distinct activity types:', activityError);
+          return;
+        }
 
-      // Count distinct activity types
-      const uniqueActivities = new Set((activityData || [])
-        .map(workout => workout.activity_type)
-        .filter(Boolean)).size;
+        // Count distinct activity types
+        const uniqueActivities = new Set((activityData || [])
+          .map(workout => workout.activity_type)
+          .filter(Boolean)).size;
 
-      // Award activity variety achievements
-      if (uniqueActivities >= 3) {
-        await AchievementService.awardAchievement(userId, 'activity-variety-3');
-      }
-      if (uniqueActivities >= 5) {
-        await AchievementService.awardAchievement(userId, 'activity-variety-5');
-      }
+        // Award activity variety achievements
+        if (uniqueActivities >= 3) {
+          await AchievementService.awardAchievement(userId, 'activity-variety-3');
+        }
+        if (uniqueActivities >= 5) {
+          await AchievementService.awardAchievement(userId, 'activity-variety-5');
+        }
 
-      // Update achievement points and rank
-      await this.updateAchievementPointsAndRank(userId);
+        // Update achievement points and rank
+        await this.updateAchievementPointsAndRank(userId);
+      });
     } catch (error) {
       console.error('Error checking manual workout achievements:', error);
     }
@@ -368,32 +387,35 @@ export class AchievementCheckerService {
       // Combined count
       const totalWorkouts = (workoutCount || 0) + (manualWorkoutCount || 0);
       
-      // Check for workout count achievements - Use direct achievement awarding to avoid recursion
-      if (totalWorkouts >= 7) {
-        await AchievementService.awardAchievement(userId, 'embalo_fitness');
-      }
-      
-      if (totalWorkouts >= 10) {
-        await AchievementService.awardAchievement(userId, 'dedicacao_semanal');
-      }
-      
-      // Get workouts per week - Use a simple SQL query instead of RPC to avoid recursion issues
-      const { data: weekData, error: weekError } = await supabase
-        .from('workouts')
-        .select('started_at, count')
-        .eq('user_id', userId)
-        .filter('completed_at', 'not.is.null')
-        .gte('started_at', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString());
+      // Use transaction service for consistency
+      await TransactionService.executeWithRetry(async () => {
+        // Check for workout count achievements
+        if (totalWorkouts >= 7) {
+          await AchievementService.awardAchievement(userId, 'embalo_fitness');
+        }
         
-      if (weekError) throw weekError;
-      
-      // Check for weekly workout achievements - Use direct achievement awarding
-      if (weekData && weekData.length >= 3) {
-        await AchievementService.awardAchievement(userId, 'trio_na_semana');
-      }
-      
-      // Update achievement points and rank
-      await this.updateAchievementPointsAndRank(userId);
+        if (totalWorkouts >= 10) {
+          await AchievementService.awardAchievement(userId, 'dedicacao_semanal');
+        }
+        
+        // Get workouts per week - Use a simple SQL query instead of RPC to avoid recursion issues
+        const { data: weekData, error: weekError } = await supabase
+          .from('workouts')
+          .select('started_at, count')
+          .eq('user_id', userId)
+          .filter('completed_at', 'not.is.null')
+          .gte('started_at', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString());
+          
+        if (weekError) throw weekError;
+        
+        // Check for weekly workout achievements
+        if (weekData && weekData.length >= 3) {
+          await AchievementService.awardAchievement(userId, 'trio_na_semana');
+        }
+        
+        // Update achievement points and rank
+        await this.updateAchievementPointsAndRank(userId);
+      });
     } catch (error) {
       console.error('Error checking workout history achievements:', error);
     }
@@ -678,21 +700,6 @@ export class AchievementCheckerService {
       }
     } catch (error) {
       console.error('Error checking higher rank achievements:', error);
-    }
-  }
-
-  /**
-   * Simplified direct achievement check method
-   * Removed in favor of direct AchievementService.awardAchievement calls to avoid recursion
-   */
-  private static async awardSimpleAchievement(
-    userId: string,
-    achievementId: string
-  ): Promise<void> {
-    try {
-      await AchievementService.awardAchievement(userId, achievementId);
-    } catch (error) {
-      console.error(`Error awarding achievement ${achievementId}:`, error);
     }
   }
 }

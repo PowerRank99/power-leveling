@@ -1,7 +1,8 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise, PersonalRecord, DatabaseResult } from '@/types/workout';
 import { toast } from 'sonner';
+import { TransactionService } from '../common/TransactionService';
+import { AchievementCheckerService } from './achievements/AchievementCheckerService';
 
 /**
  * Service for handling personal records
@@ -67,7 +68,8 @@ export class PersonalRecordService {
   }
 
   /**
-   * Record a personal record
+   * Record a personal record with transaction support
+   * Ensures personal record is recorded and achievements are updated atomically
    */
   static async recordPersonalRecord(
     userId: string,
@@ -76,25 +78,44 @@ export class PersonalRecordService {
     previousWeight: number
   ): Promise<DatabaseResult<PersonalRecord>> {
     try {
-      const { data, error } = await supabase
-        .from('personal_records')
-        .upsert(
-          {
-            user_id: userId,
-            exercise_id: exerciseId,
-            weight: weight,
-            previous_weight: previousWeight
-          },
-          { onConflict: 'user_id, exercise_id' }
-        )
-        .select();
+      // Use transaction service for atomicity
+      const { data, error } = await TransactionService.executeTransaction(async () => {
+        // Record the personal record
+        const { error } = await supabase
+          .from('personal_records')
+          .upsert(
+            {
+              user_id: userId,
+              exercise_id: exerciseId,
+              weight: weight,
+              previous_weight: previousWeight
+            },
+            { onConflict: 'user_id, exercise_id' }
+          );
+
+        if (error) throw error;
+
+        // Check for achievements related to this PR
+        await AchievementCheckerService.checkPersonalRecordAchievements(userId, {
+          exerciseId,
+          weight,
+          previousWeight
+        });
+
+        // Return the PR data
+        return {
+          exerciseId: exerciseId,
+          weight: weight,
+          previousWeight: previousWeight
+        };
+      });
 
       if (error) {
-        console.error('Error recording personal record:', error);
+        console.error('Error recording personal record in transaction:', error);
         toast.error('Erro ao salvar recorde pessoal', {
           description: 'Não foi possível salvar o novo recorde pessoal.'
         });
-        return { success: false, error: error };
+        return { success: false, error };
       }
 
       toast.success('Novo recorde pessoal!', {
@@ -103,15 +124,11 @@ export class PersonalRecordService {
 
       return {
         success: true,
-        data: {
-          exerciseId: exerciseId,
-          weight: weight,
-          previousWeight: previousWeight
-        }
+        data: data as PersonalRecord
       };
     } catch (error) {
       console.error('Error recording personal record:', error);
-      return { success: false, error: error };
+      return { success: false, error };
     }
   }
 
