@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { TransactionService } from '../common/TransactionService';
-import { AchievementCheckerService } from './achievements/AchievementCheckerService';
+import { AchievementCheckerService, PersonalRecordData } from './achievements/AchievementCheckerService';
 import { AchievementProgressService } from './achievements/AchievementProgressService';
 import { toast } from 'sonner';
 

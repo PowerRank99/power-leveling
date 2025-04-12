@@ -23,17 +23,33 @@ const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
   title = 'Ocorreu um erro',
   message,
   details,
-  category,
+  category = ErrorCategory.UNKNOWN,
   onRetry,
   className = '',
   showDetails = true
 }) => {
   const [isOpen, setIsOpen] = React.useState(false);
   
+  // Get background color classes based on error category
+  const getColorsByCategory = () => {
+    switch (category) {
+      case ErrorCategory.AUTHENTICATION:
+      case ErrorCategory.AUTHORIZATION:
+        return 'bg-valor-15 border-valor-30 text-valor';
+      case ErrorCategory.VALIDATION:
+        return 'bg-amber-50/15 border-amber-300/30 text-amber-500';
+      case ErrorCategory.DATABASE:
+      case ErrorCategory.NETWORK:
+        return 'bg-valor-15 border-valor-30 text-valor';
+      default:
+        return 'bg-valor-15 border-valor-30 text-valor';
+    }
+  };
+  
   return (
     <Alert 
       variant="destructive" 
-      className={`mb-4 bg-valor-15 border-valor-30 text-valor shadow-subtle ${className}`}
+      className={`mb-4 ${getColorsByCategory()} shadow-subtle ${className}`}
     >
       <div className="flex items-start">
         <AlertCircle className="h-4 w-4 mt-0.5" />

@@ -23,6 +23,11 @@ export interface ServiceResponse<T> {
   data?: T;
   message?: string;
   details?: string;
+  error?: {
+    message: string;
+    technical: string;
+    category?: ErrorCategory;
+  };
 }
 
 /**
@@ -43,6 +48,7 @@ export interface ServiceErrorResponse extends ServiceResponse<never> {
   error: {
     message: string;
     technical: string;
+    category?: ErrorCategory;
   };
 }
 
@@ -53,6 +59,7 @@ interface ErrorHandlingOptions {
   showToast?: boolean;
   userMessage?: string;
   errorCode?: string;
+  errorCategory?: ErrorCategory;
 }
 
 /**
@@ -82,7 +89,8 @@ export class ErrorHandlingService {
         details: error instanceof Error ? error.message : String(error),
         error: {
           message: options.userMessage || 'An error occurred',
-          technical: error instanceof Error ? error.message : String(error) 
+          technical: error instanceof Error ? error.message : String(error),
+          category: options.errorCategory || ErrorCategory.UNKNOWN
         }
       };
     }

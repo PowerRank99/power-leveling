@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Achievement } from '@/types/achievementTypes';
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
@@ -6,7 +5,16 @@ import { AchievementService } from '../AchievementService';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { TransactionService } from '../../common/TransactionService';
 import { AchievementProgressService } from './AchievementProgressService';
-import { PersonalRecord } from '../PersonalRecordService';
+
+/**
+ * Interface for personal record data to avoid circular dependency
+ * This duplicates the interface from PersonalRecordService but avoids the circular import
+ */
+export interface PersonalRecordData {
+  exerciseId: string;
+  weight: number;
+  previousWeight: number;
+}
 
 /**
  * Centralized service for checking and awarding achievements
@@ -51,7 +59,7 @@ export class AchievementCheckerService {
    */
   static async checkPersonalRecordAchievements(
     userId: string,
-    recordInfo?: PersonalRecord
+    recordInfo?: PersonalRecordData
   ): Promise<ServiceResponse<void>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
