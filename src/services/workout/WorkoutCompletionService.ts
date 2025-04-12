@@ -6,6 +6,7 @@ import { XPService } from '../rpg/XPService';
 import { PersonalRecordService } from '../rpg/PersonalRecordService';
 import { AchievementCheckerService } from '../rpg/achievements/AchievementCheckerService';
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
+import { WorkoutExercise, WorkoutSet } from '@/types/workoutTypes';
 
 export class WorkoutCompletionService {
   /**
@@ -75,10 +76,12 @@ export class WorkoutCompletionService {
               name: 'Exercise',
               exerciseId: set.exercise_id,
               sets: [{
+                id: set.id,
                 weight: set.weight?.toString() || '0',
-                reps: set.reps?.toString() || '0'
-              }]
-            })),
+                reps: set.reps?.toString() || '0',
+                completed: Boolean(set.completed)
+              }] as WorkoutSet[]
+            })) as WorkoutExercise[],
             durationSeconds
           }).then(async (result) => {
             if (result.success && result.data && result.data.length > 0) {

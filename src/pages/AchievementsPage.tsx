@@ -13,6 +13,7 @@ import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import AchievementNotificationTester from '@/components/achievements/AchievementNotificationTester';
 import AchievementErrorHandler from '@/components/profile/AchievementErrorHandler';
+import { getRankColorClass, getIconBgClass, getAnimationSettings } from '@/utils/achievementUtils';
 
 const ranks = ['S', 'A', 'B', 'C', 'D', 'E'] as const;
 
@@ -36,7 +37,7 @@ const AchievementsPage = () => {
           const achievementsResponse = await AchievementService.getUnlockedAchievements(profile.id);
           
           if (!achievementsResponse.success) {
-            setError(achievementsResponse.error);
+            setError({ error: { message: achievementsResponse.message, technical: achievementsResponse.details } });
             return;
           }
           
@@ -45,7 +46,7 @@ const AchievementsPage = () => {
           const achievementStatsResponse = await AchievementService.getAchievementStats(profile.id);
           
           if (!achievementStatsResponse.success) {
-            setError(achievementStatsResponse.error);
+            setError({ error: { message: achievementStatsResponse.message, technical: achievementStatsResponse.details } });
             return;
           }
           

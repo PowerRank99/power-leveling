@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Achievement } from '@/types/achievementTypes';
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
@@ -118,7 +117,7 @@ export class AchievementCheckerService {
           if (currentStreak > 0) {
             await AchievementProgressService.updateStreakProgress(userId, currentStreak);
           }
-        });
+        }, 'streak_achievements', 3);
       },
       'CHECK_STREAK_ACHIEVEMENTS',
       { showToast: false }
@@ -339,7 +338,7 @@ export class AchievementCheckerService {
           if (achievementChecks.length > 0) {
             await AchievementService.checkAndAwardAchievements(userId, achievementChecks);
           }
-        });
+        }, 'workout_history_achievements', 3);
       },
       'CHECK_WORKOUT_HISTORY_ACHIEVEMENTS',
       { showToast: false }

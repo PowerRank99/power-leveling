@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
@@ -136,11 +135,15 @@ export class PersonalRecordService {
             const increasePercentage = ((weight - previousWeight) / previousWeight) * 100;
             
             if (increasePercentage >= 10) {
-              await AchievementCheckerService.checkPersonalRecordAchievements(userId, {
+              const checkResult = await AchievementCheckerService.checkPersonalRecordAchievements(userId, {
                 exerciseId,
                 weight,
                 previousWeight
               });
+              
+              if (!checkResult.success) {
+                console.warn('Failed to check PR achievements', checkResult.message);
+              }
             }
           }
 
