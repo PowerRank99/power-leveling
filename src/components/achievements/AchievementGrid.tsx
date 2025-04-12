@@ -1,24 +1,20 @@
 
 import React from 'react';
 import AchievementCard from './AchievementCard';
-
-interface AchievementItem {
-  id: string;
-  title: string;
-  description: string;
-  xpReward: number;
-  icon: React.ReactNode;
-  iconBg: string;
-  status: 'locked' | 'unlocked';
-  rarity?: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
-}
+import { Award, Dumbbell, Calendar, Target, Flame, Clock, Users, Zap, Shield, Crown, Star } from 'lucide-react';
+import { Achievement } from '@/types/achievementTypes';
 
 interface AchievementGridProps {
-  achievements: AchievementItem[];
+  achievements: Achievement[];
   title: string;
+  onAchievementClick?: (achievement: Achievement) => void;
 }
 
-const AchievementGrid: React.FC<AchievementGridProps> = ({ achievements, title }) => {
+const AchievementGrid: React.FC<AchievementGridProps> = ({ 
+  achievements, 
+  title,
+  onAchievementClick
+}) => {
   if (achievements.length === 0) {
     return (
       <div className="premium-card mb-6">
@@ -30,6 +26,13 @@ const AchievementGrid: React.FC<AchievementGridProps> = ({ achievements, title }
     );
   }
 
+  // Handle achievement click
+  const handleClick = (achievement: Achievement) => {
+    if (onAchievementClick) {
+      onAchievementClick(achievement);
+    }
+  };
+
   return (
     <div className="premium-card mb-6">
       <h3 className="text-xl font-orbitron font-bold mb-4 p-4 border-b border-divider/30 text-text-primary">{title}</h3>
@@ -37,7 +40,16 @@ const AchievementGrid: React.FC<AchievementGridProps> = ({ achievements, title }
         {achievements.map(achievement => (
           <AchievementCard
             key={achievement.id}
-            {...achievement}
+            id={achievement.id}
+            title={achievement.name}
+            description={achievement.description}
+            xpReward={achievement.xpReward}
+            points={achievement.points}
+            iconName={achievement.iconName}
+            status={achievement.isUnlocked ? 'unlocked' : 'locked'}
+            rank={achievement.rank}
+            category={achievement.category}
+            onClick={() => handleClick(achievement)}
           />
         ))}
       </div>

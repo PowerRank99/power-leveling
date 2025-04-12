@@ -46,12 +46,12 @@ export class AchievementService {
       }
       
       // Get all achievements user doesn't have yet
-      const { data: unlockedAchievements } = await supabase
+      const { data: userAchievements } = await supabase
         .from('user_achievements')
         .select('achievement_id')
         .eq('user_id', userId);
         
-      const unlockedIds = unlockedAchievements?.map(a => a.achievement_id) || [];
+      const unlockedIds = userAchievements?.map(a => a.achievement_id) || [];
       
       // Get all eligible achievements
       const { data: achievements } = await supabase
@@ -423,12 +423,13 @@ export class AchievementService {
       if (!userId) return;
       
       // Count manual workouts
-      const { count } = await supabase
-        .from('manual_workouts')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId);
+      const { data: countResult } = await supabase
+        .rpc('check_recent_manual_workouts', { 
+          p_user_id: userId,
+          p_hours: 24 * 365 // Get all manual workouts within a year (essentially all)
+        });
         
-      if (!count) return;
+      const count = countResult?.[0]?.count || 0;
       
       // Get unlocked achievements
       const { data: unlockedAchievements } = await supabase
@@ -738,19 +739,23 @@ export class AchievementService {
       }
 
       // Get total number of achievements
-      const { count: totalCount, error: totalError } = await supabase
+      const { data: countResult, error: countError } = await supabase
         .from('achievements')
         .select('*', { count: 'exact', head: true });
       
-      if (totalError) {
-        throw totalError;
+      const totalCount = countResult?.length || 0;
+      
+      if (countError) {
+        throw countError;
       }
 
       // Get count of unlocked achievements
-      const { count: unlockedCount, error: unlockedError } = await supabase
+      const { data: unlockedResult, error: unlockedError } = await supabase
         .from('user_achievements')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId);
+      
+      const unlockedCount = unlockedResult?.length || 0;
       
       if (unlockedError) {
         throw unlockedError;
@@ -776,8 +781,8 @@ export class AchievementService {
       }
 
       return {
-        total: totalCount || 0,
-        unlocked: unlockedCount || 0,
+        total: totalCount,
+        unlocked: unlockedCount,
         points: profile.achievements_count || 0,
         rank: currentRank,
         nextRank,
@@ -854,12 +859,13 @@ export class AchievementService {
         total = requirements.level;
       } else if ('manual_workouts_count' in requirements) {
         // Get count of manual workouts
-        const { count } = await supabase
-          .from('manual_workouts')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId);
-          
-        current = count || 0;
+        const { data: countResult } = await supabase
+          .rpc('check_recent_manual_workouts', { 
+            p_user_id: userId,
+            p_hours: 24 * 365 // Get all manual workouts within a year (essentially all)
+          });
+        
+        current = countResult?.[0]?.count || 0;
         total = requirements.manual_workouts_count;
       }
 

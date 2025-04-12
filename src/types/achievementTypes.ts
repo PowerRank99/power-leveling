@@ -15,6 +15,7 @@ export interface Achievement {
   requirements: Record<string, any>;
   isUnlocked?: boolean;
   achievedAt?: string;
+  progress?: AchievementProgress;
 }
 
 export interface UserAchievement {
@@ -49,3 +50,10 @@ export interface AchievementStats {
 }
 
 export type AchievementRank = 'Unranked' | 'E' | 'D' | 'C' | 'B' | 'A' | 'S';
+
+export interface AchievementFilter {
+  status: 'all' | 'unlocked' | 'locked';
+  rank: string;
+  category: string;
+  searchTerm: string;
+}
