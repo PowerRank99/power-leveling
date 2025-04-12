@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise, PersonalRecord, DatabaseResult } from '@/types/workout';
 import { toast } from 'sonner';

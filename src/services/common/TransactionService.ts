@@ -19,28 +19,22 @@ export class TransactionService {
   ): Promise<{ data: T | null; error: PostgrestError | Error | null }> {
     try {
       // Start transaction
-      const { error: beginError } = await supabase.rpc('begin_transaction');
-      if (beginError) throw beginError;
+      await supabase.rpc('begin_transaction');
 
       // Execute the transaction function
       const result = await transactionFunction();
 
       // Commit transaction
-      const { error: commitError } = await supabase.rpc('commit_transaction');
-      if (commitError) {
-        // Attempt rollback if commit fails
-        await supabase.rpc('rollback_transaction').catch(e => 
-          console.error('Failed to rollback after commit error:', e)
-        );
-        throw commitError;
-      }
+      await supabase.rpc('commit_transaction');
 
       return { data: result, error: null };
     } catch (error) {
       // Rollback transaction on error
-      await supabase.rpc('rollback_transaction').catch(e => 
-        console.error('Failed to rollback transaction:', e)
-      );
+      try {
+        await supabase.rpc('rollback_transaction');
+      } catch (rollbackError) {
+        console.error('Failed to rollback transaction:', rollbackError);
+      }
       
       console.error('Transaction error:', error);
       return {

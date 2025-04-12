@@ -830,6 +830,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      begin_transaction: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       check_personal_record_cooldown: {
         Args: { p_user_id: string; p_exercise_id: string; p_days?: number }
         Returns: boolean
@@ -839,6 +843,10 @@ export type Database = {
         Returns: {
           count: number
         }[]
+      }
+      commit_transaction: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       create_manual_workout: {
         Args: {
@@ -909,6 +917,10 @@ export type Database = {
       migrate_exercise_history: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      rollback_transaction: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       select_class: {
         Args: { p_user_id: string; p_class_name: string }

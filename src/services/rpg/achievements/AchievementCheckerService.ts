@@ -14,14 +14,7 @@ export class AchievementCheckerService {
   /**
    * Check all achievements relevant to workout completion
    */
-  static async checkWorkoutRelatedAchievements(
-    userId: string,
-    workout?: {
-      id: string;
-      exercises: Array<WorkoutExercise>;
-      durationSeconds: number;
-    }
-  ): Promise<void> {
+  static async checkWorkoutRelatedAchievements(userId: string): Promise<void> {
     try {
       if (!userId) return;
 

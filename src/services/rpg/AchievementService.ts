@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Achievement, AchievementStats } from '@/types/achievementTypes';
 import { XPService } from './XPService';
