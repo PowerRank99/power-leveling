@@ -1,4 +1,3 @@
-
 export interface PreviousSetData {
   weight: string;
   reps: string;
@@ -14,9 +13,11 @@ export interface SetData {
 }
 
 export interface WorkoutExercise {
-  id: string;
-  name: string;
-  sets: Array<SetData>;
+  exerciseId: string;
+  weight?: number;
+  reps?: number;
+  sets?: number;
+  targetSets?: number;
 }
 
 export interface TimerState {

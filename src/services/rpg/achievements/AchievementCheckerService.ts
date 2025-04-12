@@ -255,7 +255,7 @@ export class AchievementCheckerService {
       }
 
       // Count unique exercise IDs
-      const uniqueTypes = new Set((exerciseTypes || []).map(et => et.exercise_id).filter(Boolean)).size;
+      const uniqueTypes = new Set(exerciseTypes?.map(et => et.exercise_id).filter(Boolean) || []).size;
 
       // Award activity variety achievements
       if (uniqueTypes >= 3) {
