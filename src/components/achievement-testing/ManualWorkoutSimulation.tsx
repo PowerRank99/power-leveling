@@ -12,6 +12,7 @@ import { motion } from 'framer-motion';
 import { Upload, Dumbbell, Camera } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import ClassPassivesToggle from './common/ClassPassivesToggle';
+import { ActivityBonusService } from '@/services/workout/manual/ActivityBonusService';
 
 interface ManualWorkoutSimulationProps {
   userId: string;
@@ -43,52 +44,47 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
     }
     
     if (useClassPassives && selectedClass) {
-      let classBonus = 0;
-      let bonusDescription = "";
+      const bonusPercentage = ActivityBonusService.getClassBonus(selectedClass, activityType);
       
-      switch(selectedClass) {
-        case 'Guerreiro':
-          if (['strength', 'bodyweight'].includes(activityType)) {
-            classBonus = Math.round(baseXP * 0.1);
-            bonusDescription = "Guerreiro: +10% para treinos de força";
-          }
-          break;
-          
-        case 'Ninja':
-          if (['cardio', 'running', 'hiit'].includes(activityType)) {
-            classBonus = Math.round(baseXP * 0.2);
-            bonusDescription = "Ninja: +20% para cardio/HIIT";
-          }
-          break;
-          
-        case 'Bruxo':
-          if (['yoga', 'flexibility', 'stretching'].includes(activityType)) {
-            classBonus = Math.round(baseXP * 0.2);
-            bonusDescription = "Bruxo: +20% para yoga/flexibilidade";
-          }
-          break;
-          
-        case 'Monge':
-          if (['bodyweight', 'calisthenics'].includes(activityType)) {
-            classBonus = Math.round(baseXP * 0.15);
-            bonusDescription = "Monge: +15% para exercícios com peso corporal";
-          }
-          break;
-          
-        case 'Paladino':
-          if (['sports', 'swimming', 'team_sports'].includes(activityType)) {
-            classBonus = Math.round(baseXP * 0.15);
-            bonusDescription = "Paladino: +15% para atividades esportivas";
-          }
-          break;
+      if (bonusPercentage > 0) {
+        const classBonus = Math.round(baseXP * bonusPercentage);
+        baseXP += classBonus;
       }
-      
-      baseXP += classBonus;
-      
-      console.log(`Applied ${selectedClass} bonus: ${bonusDescription} (+${classBonus} XP)`);
     }
     
     return baseXP;
+  };
+  
+  const getClassBonusDescription = () => {
+    if (!useClassPassives || !selectedClass) return null;
+    
+    const bonusPercentage = ActivityBonusService.getClassBonus(selectedClass, activityType);
+    if (bonusPercentage <= 0) return null;
+    
+    const bonusAmount = Math.round(
+      (XPService.MANUAL_WORKOUT_BASE_XP + (isPowerDay ? POWER_DAY_BONUS_XP : 0)) * bonusPercentage
+    );
+    
+    const bonusPercentText = `+${Math.round(bonusPercentage * 100)}%`;
+    
+    const activityDescriptions: Record<string, string> = {
+      'strength': 'treinos de força',
+      'cardio': 'treinos de cardio',
+      'running': 'corrida',
+      'yoga': 'yoga/flexibilidade',
+      'sports': 'atividades esportivas',
+      'bodyweight': 'peso corporal',
+      'flexibility': 'flexibilidade',
+      'swimming': 'natação',
+      'other': 'este tipo de atividade'
+    };
+    
+    const activityDesc = activityDescriptions[activityType] || activityType;
+    
+    return {
+      description: `${selectedClass}: ${bonusPercentText} para ${activityDesc}`,
+      amount: bonusAmount
+    };
   };
   
   const submitManualWorkout = async () => {
@@ -145,6 +141,8 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
       setIsLoading(false);
     }
   };
+  
+  const classBonus = getClassBonusDescription();
   
   return (
     <Card className="premium-card border-arcane-30 shadow-glow-subtle">
@@ -242,12 +240,13 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
                   </div>
                 )}
                 
-                {useClassPassives && totalXP !== (XPService.MANUAL_WORKOUT_BASE_XP + (isPowerDay ? POWER_DAY_BONUS_XP : 0)) && (
+                {classBonus && (
                   <div className="flex justify-between items-center">
                     <span className="text-text-secondary">Class Bonus:</span>
-                    <span className="font-space text-arcane-60">
-                      +{totalXP - (XPService.MANUAL_WORKOUT_BASE_XP + (isPowerDay ? POWER_DAY_BONUS_XP : 0))} XP
-                    </span>
+                    <div className="text-right">
+                      <span className="font-space text-arcane-60">+{classBonus.amount} XP</span>
+                      <div className="text-xs text-arcane-60 mt-1">{classBonus.description}</div>
+                    </div>
                   </div>
                 )}
                 
@@ -267,9 +266,9 @@ const ManualWorkoutSimulation: React.FC<ManualWorkoutSimulationProps> = ({ userI
                 <div className="text-xs text-text-tertiary mt-2">
                   <p>Manual workouts require a photo in real usage.</p>
                   {isPowerDay && <p className="text-achievement-60">Power Day increases XP cap to 500.</p>}
-                  {useClassPassives && selectedClass && (
+                  {classBonus && (
                     <p className="text-arcane-60">
-                      {selectedClass} passive affects manual workouts based on activity type.
+                      Bônus de classe aplicado com base no tipo de atividade selecionado.
                     </p>
                   )}
                 </div>

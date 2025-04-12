@@ -40,17 +40,17 @@ export class MongeBonus {
     }
     
     // Additional streak bonus - Discípulo do Algoritmo
+    // FIX: The Monk gets an additional 10 percentage points to the streak bonus (not 10% of the bonus)
     if (streak > 0) {
-      // Regular streak bonus is 5% per day (capped at 35% for 7 days)
-      // Monge gets additional 10% of that bonus (capped at 3.5% extra)
-      const regularStreakMultiplier = Math.min(streak, XP_CONSTANTS.MAX_STREAK_DAYS) * XP_CONSTANTS.STREAK_BONUS_PER_DAY;
-      const additionalStreakBonus = Math.round(baseXP * regularStreakMultiplier * 0.10);
+      // Calculate the additional 10 percentage points
+      const additionalStreakPercentage = 0.10; // 10 percentage points additional
+      const additionalStreakBonus = Math.round(baseXP * additionalStreakPercentage);
       
       if (additionalStreakBonus > 0) {
         bonusBreakdown.push({
           skill: CLASS_PASSIVE_SKILLS.MONGE.SECONDARY,
           amount: additionalStreakBonus,
-          description: '+10% no bônus de sequência'
+          description: '+10 pontos percentuais no bônus de sequência'
         });
         bonusXP += additionalStreakBonus;
       }

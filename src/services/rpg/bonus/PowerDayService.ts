@@ -32,11 +32,12 @@ export class PowerDayService {
       const year = now.getFullYear();
       
       // Query database for power day usage in the current week
-      const { data, error } = await supabase.rpc('get_power_day_usage', {
-        p_user_id: userId,
-        p_week_number: week,
-        p_year: year
-      });
+      const { data, error } = await supabase
+        .from('power_day_usage')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('week_number', week)
+        .eq('year', year);
       
       if (error) {
         console.error('Error checking power day usage:', error);
@@ -44,7 +45,7 @@ export class PowerDayService {
       }
       
       // Count used power days
-      const usedPowerDays = data?.[0]?.count || 0;
+      const usedPowerDays = data ? data.length : 0;
       
       return {
         available: usedPowerDays < this.POWER_DAYS_PER_WEEK,
@@ -85,19 +86,23 @@ export class PowerDayService {
         return false;
       }
       
-      // Record the power day usage using the RPC function
-      const { data, error } = await supabase.rpc('create_power_day_usage', {
-        p_user_id: userId,
-        p_week_number: week,
-        p_year: year
-      });
+      // FIX: Use direct table insert instead of RPC function
+      const { data, error } = await supabase
+        .from('power_day_usage')
+        .insert({
+          user_id: userId,
+          week_number: week,
+          year: year,
+          used_at: new Date().toISOString()
+        })
+        .select();
       
       if (error) {
         console.error('Error recording power day usage:', error);
         throw error;
       }
       
-      return true;
+      return data && data.length > 0;
     } catch (error) {
       console.error('Error in recordPowerDayUsage:', error);
       return false;

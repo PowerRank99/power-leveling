@@ -63,12 +63,6 @@ const PersonalRecordSimulation: React.FC<PersonalRecordSimulationProps> = ({ use
   const calculatePotentialXp = () => {
     let xp = XPService.PR_BONUS_XP;
     
-    if (useClassPassives && selectedClass) {
-      if (selectedClass === 'Guerreiro') {
-        xp = Math.round(xp * 1.2);
-      }
-    }
-    
     setPotentialXp(xp);
     return xp;
   };
@@ -103,16 +97,14 @@ const PersonalRecordSimulation: React.FC<PersonalRecordSimulationProps> = ({ use
         exerciseId: selectedExerciseId,
         weight: currentWeight,
         previousWeight: previousWeight,
-        improvementPercent: calculateImprovement().toFixed(1),
-        ...(useClassPassives ? { class: selectedClass } : {})
+        improvementPercent: calculateImprovement().toFixed(1)
       });
       
       const exerciseName = exercises.find(ex => ex.id === selectedExerciseId)?.name || 'Unknown exercise';
       
-      const classInfo = useClassPassives ? `, Class: ${selectedClass}` : '';
       addLogEntry(
         'Personal Record Logged', 
-        `Exercise: ${exerciseName}, Weight: ${currentWeight}kg (previous: ${previousWeight}kg), Improvement: ${calculateImprovement().toFixed(1)}%, XP: ${xpToAward}${classInfo}`
+        `Exercise: ${exerciseName}, Weight: ${currentWeight}kg (previous: ${previousWeight}kg), Improvement: ${calculateImprovement().toFixed(1)}%, XP: ${xpToAward}`
       );
       
       toast.success('Personal Record Logged!', {
@@ -170,13 +162,6 @@ const PersonalRecordSimulation: React.FC<PersonalRecordSimulationProps> = ({ use
                 onChange={(e) => setPreviousWeight(parseFloat(e.target.value) || 0)}
               />
             </div>
-            
-            <ClassPassivesToggle
-              enabled={useClassPassives}
-              onEnabledChange={setUseClassPassives}
-              selectedClass={selectedClass}
-              onClassChange={setSelectedClass}
-            />
           </div>
           
           <div className="space-y-4 flex flex-col">
@@ -198,18 +183,9 @@ const PersonalRecordSimulation: React.FC<PersonalRecordSimulationProps> = ({ use
                 </div>
                 
                 <div className="flex justify-between items-center">
-                  <span className="text-text-secondary">Base XP Reward:</span>
+                  <span className="text-text-secondary">XP Reward:</span>
                   <span className="font-space text-arcane">+{XPService.PR_BONUS_XP} XP</span>
                 </div>
-                
-                {useClassPassives && potentialXp !== XPService.PR_BONUS_XP && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-text-secondary">Class Bonus:</span>
-                    <span className="font-space text-achievement">
-                      +{potentialXp - XPService.PR_BONUS_XP} XP
-                    </span>
-                  </div>
-                )}
                 
                 <div className="flex justify-between items-center border-t border-divider/20 pt-3 mt-1">
                   <span className="text-text-secondary font-semibold">Total XP:</span>

@@ -82,20 +82,15 @@ export class XPCalculationService {
         baseXP = Math.round(baseXP * this.DIFFICULTY_MULTIPLIERS[workoutDifficulty as keyof typeof this.DIFFICULTY_MULTIPLIERS]);
       }
       
-      // Apply streak multiplier - this was missing!
+      // Create a bonusBreakdown array to track all bonuses
+      let bonusBreakdown: { skill: string, amount: number, description: string }[] = [];
+      
+      // First apply streak multiplier
       const streakMultiplier = this.getStreakMultiplier(streak);
       let streakBonusXP = 0;
       
       if (streak > 0) {
         streakBonusXP = Math.round(baseXP * (streakMultiplier - 1));
-        baseXP += streakBonusXP;
-      }
-      
-      // Create a bonusBreakdown array to track all bonuses
-      let bonusBreakdown: { skill: string, amount: number, description: string }[] = [];
-      
-      // Add streak bonus to breakdown if applicable
-      if (streakBonusXP > 0) {
         bonusBreakdown.push({
           skill: 'Streak',
           amount: streakBonusXP,
@@ -103,9 +98,12 @@ export class XPCalculationService {
         });
       }
       
+      // Add streak bonus to XP
+      let totalXPAfterStreak = baseXP + streakBonusXP;
+      
       // Apply class-specific bonuses with breakdown
       const { totalXP, bonusBreakdown: classBonusBreakdown } = ClassBonusCalculator.applyClassBonuses(
-        baseXP, 
+        totalXPAfterStreak, 
         workout, 
         userClass, 
         streak
@@ -134,7 +132,6 @@ export class XPCalculationService {
   
   /**
    * Should preserve streak (Bruxo passive skill)
-   * This is now an async method that returns a Promise<boolean>
    */
   static async shouldPreserveStreak(userId: string, userClass: string | null): Promise<boolean> {
     return ClassBonusCalculator.shouldPreserveStreak(userId, userClass);
