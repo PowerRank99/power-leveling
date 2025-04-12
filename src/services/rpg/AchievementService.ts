@@ -222,7 +222,7 @@ export class AchievementService {
           points: item.points,
           xpReward: item.xp_reward,
           iconName: item.icon_name,
-          requirements: item.requirements
+          requirements: parseRequirements(item.requirements)
         }));
       }
 
@@ -244,7 +244,7 @@ export class AchievementService {
         points: item.points,
         xpReward: item.xp_reward,
         iconName: item.icon_name,
-        requirements: item.requirements,
+        requirements: parseRequirements(item.requirements),
         isUnlocked: unlockedAchievementIds.has(item.id)
       }));
     } catch (error) {
@@ -281,7 +281,7 @@ export class AchievementService {
         points: item.achievements.points,
         xpReward: item.achievements.xp_reward,
         iconName: item.achievements.icon_name,
-        requirements: item.achievements.requirements,
+        requirements: parseRequirements(item.achievements.requirements),
         achievedAt: item.achieved_at
       }));
     } catch (error) {
@@ -405,9 +405,7 @@ export class AchievementService {
       }
 
       // Parse requirements
-      const requirements = typeof achievement.requirements === 'string'
-        ? JSON.parse(achievement.requirements)
-        : achievement.requirements;
+      const requirements = parseRequirements(achievement.requirements);
 
       // Check if user has already unlocked this achievement
       const { data: userAchievement, error: userAchievementError } = await supabase
@@ -450,6 +448,29 @@ export class AchievementService {
       console.error('Error getting achievement progress:', error);
       return null;
     }
+  }
+}
+
+/**
+ * Helper function to parse requirements from JSON
+ */
+function parseRequirements(requirementsJson: any): Record<string, any> {
+  if (!requirementsJson) return {};
+  
+  try {
+    if (typeof requirementsJson === 'string') {
+      return JSON.parse(requirementsJson);
+    }
+    
+    // If it's already an object, return it
+    if (typeof requirementsJson === 'object') {
+      return requirementsJson;
+    }
+    
+    return {};
+  } catch (error) {
+    console.error('Error parsing requirements:', error);
+    return {};
   }
 }
 
