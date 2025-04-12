@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { WorkoutExercise } from '@/types/workoutTypes';
+import { WorkoutExercise } from '@/types/workout';
 import { toast } from 'sonner';
 import { SetService } from '@/services/SetService';
 import { useState } from 'react';
@@ -29,9 +29,12 @@ export const useSetAdder = (workoutId: string | null) => {
       
       // Get current sets from the exercise, filtering out default sets
       const updatedExercises = [...exercises];
-      const currentSets = updatedExercises[exerciseIndex].sets;
+      const currentSets = Array.isArray(updatedExercises[exerciseIndex].sets) 
+        ? updatedExercises[exerciseIndex].sets 
+        : [];
+        
       const realSets = currentSets.filter(set => !set.id.startsWith('default-') && !set.id.startsWith('new-'));
-      const lastSet = currentSets[currentSets.length - 1];
+      const lastSet = currentSets.length > 0 ? currentSets[currentSets.length - 1] : null;
       
       // First, get the actual count of sets in the database
       const countResult = await SetService.countSetsForExercise(
@@ -72,7 +75,7 @@ export const useSetAdder = (workoutId: string | null) => {
       );
       
       if (!createResult.success) {
-        SetService.displayError("adicionar série", createResult.error);
+        SetService.displayError('adicionar série', createResult.error);
         return exercises; // Return original exercises on error
       }
       
@@ -81,7 +84,9 @@ export const useSetAdder = (workoutId: string | null) => {
       
       // Now update local state with the database-generated ID
       // First check if we should replace a default set
-      const defaultSetIndex = currentSets.findIndex(set => set.id.startsWith('default-'));
+      const defaultSetIndex = Array.isArray(currentSets) 
+        ? currentSets.findIndex(set => set.id.startsWith('default-')) 
+        : -1;
       
       if (defaultSetIndex !== -1) {
         // Replace the first default set with our new real set
@@ -95,6 +100,11 @@ export const useSetAdder = (workoutId: string | null) => {
           previous: lastSet?.previous || { weight: '0', reps: '12' }
         };
       } else {
+        // Ensure sets is an array before pushing
+        if (!Array.isArray(updatedExercises[exerciseIndex].sets)) {
+          updatedExercises[exerciseIndex].sets = [];
+        }
+        
         // Just add the new set
         updatedExercises[exerciseIndex].sets.push({
           id: newSet.id,
@@ -120,9 +130,12 @@ export const useSetAdder = (workoutId: string | null) => {
         console.log(`[useSetAdder] Verification: database now has ${newCount} sets`);
         
         // Count real sets in UI state 
-        const newRealSets = updatedExercises[exerciseIndex].sets.filter(
-          set => !set.id.startsWith('default-') && !set.id.startsWith('new-')
-        );
+        const newRealSets = Array.isArray(updatedExercises[exerciseIndex].sets)
+          ? updatedExercises[exerciseIndex].sets.filter(
+              set => !set.id.startsWith('default-') && !set.id.startsWith('new-')
+            )
+          : [];
+          
         console.log(`[useSetAdder] UI state now has ${newRealSets.length} real sets`);
         
         // Verify the counts match

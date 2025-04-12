@@ -347,7 +347,7 @@ export class AchievementCheckerService {
         .from('workouts')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', userId)
-        .is('completed_at', 'not.null');
+        .filter('completed_at', 'not.is.null');
         
       if (workoutError) throw workoutError;
       
@@ -369,18 +369,19 @@ export class AchievementCheckerService {
       ]);
       
       // Get workouts per week
+      // Use a simple SQL query instead of RPC to avoid recursion issues
       const { data: weekData, error: weekError } = await supabase
-        .rpc('get_workouts_per_week', { p_user_id: userId }) as any; // Use 'as any' to avoid type recursion
+        .from('workouts')
+        .select('started_at, count')
+        .eq('user_id', userId)
+        .filter('completed_at', 'not.is.null')
+        .gte('started_at', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString());
         
       if (weekError) throw weekError;
       
-      if (weekData && weekData.length) {
-        const maxWorkoutsInWeek = Math.max(...weekData.map((w: any) => w.count));
-        
-        // Check for weekly workout achievements
-        await this.checkForAchievement(userId, 'trio_na_semana', { 
-          maxWorkoutsInWeek 
-        });
+      // Check for weekly workout achievements
+      if (weekData && weekData.length >= 3) {
+        await this.checkForAchievement(userId, 'trio_na_semana', {}); 
       }
       
       // Update achievement points and rank

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise, WorkoutExerciseData } from '@/types/workout';
 import { XPService } from '../rpg/XPService';
@@ -167,15 +166,21 @@ export class WorkoutCompletionService {
         if (set.exercise_id && !processedExercises.has(set.exercise_id)) {
           processedExercises.add(set.exercise_id);
           
-          const sets = exercisesData.filter(s => s.exercise_id === set.exercise_id).length;
+          const exerciseSets = exercisesData.filter(s => s.exercise_id === set.exercise_id);
           const completedSets = exercisesData.filter(s => s.exercise_id === set.exercise_id && s.completed).length;
           
+          // Create a proper WorkoutExercise object with an array of sets
           exercises.push({
+            id: set.exercise_id,
+            name: `Exercise ${set.exercise_id.slice(0, 8)}`, // Default name
             exerciseId: set.exercise_id,
-            weight: set.weight || 0,
-            reps: set.reps || 0,
-            sets: completedSets,
-            targetSets: sets
+            sets: exerciseSets.map(s => ({
+              id: s.id,
+              weight: s.weight?.toString() || '0',
+              reps: s.reps?.toString() || '0',
+              completed: s.completed || false,
+              set_order: s.set_order,
+            }))
           });
         }
       });

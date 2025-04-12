@@ -1,10 +1,12 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { WorkoutExercise } from '@/types/workoutTypes';
+import { WorkoutExercise } from '@/types/workout';
 import { XPCalculationService } from './XPCalculationService';
-import { PersonalRecordService, PersonalRecord } from './PersonalRecordService';
+import { PersonalRecordService } from './PersonalRecordService';
 import { XPBonusService } from './XPBonusService';
 import { PowerDayService } from './bonus/PowerDayService';
 import { AchievementCheckerService } from './achievements/AchievementCheckerService';
+import { mapToWorkoutExerciseData } from '@/utils/typeMappers';
 
 /**
  * Main XP Service that coordinates XP calculations and awards
@@ -41,7 +43,13 @@ export class XPService {
     baseXP: number;
     bonusBreakdown: { skill: string, amount: number, description: string }[];
   } {
-    return XPCalculationService.calculateWorkoutXP(workout, userClass, streak, difficulty);
+    // Convert WorkoutExercise to WorkoutExerciseData for XPCalculationService if needed
+    const workoutData = {
+      ...workout,
+      exercises: workout.exercises.map(ex => mapToWorkoutExerciseData(ex))
+    };
+    
+    return XPCalculationService.calculateWorkoutXP(workoutData, userClass, streak, difficulty);
   }
   
   /**
@@ -62,7 +70,7 @@ export class XPService {
       durationSeconds: number;
       difficulty?: 'iniciante' | 'intermediario' | 'avancado'
     }
-  ): Promise<PersonalRecord[]> {
+  ): Promise<any[]> {
     return PersonalRecordService.checkForPersonalRecords(userId, workout);
   }
   
