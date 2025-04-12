@@ -1,891 +1,104 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { achievementPopupStore } from '@/stores/achievementPopupStore';
-import { 
-  Achievement, 
-  AchievementProgress, 
-  AchievementStats, 
-  AchievementRank 
-} from '@/types/achievementTypes';
+import { Achievement, AchievementStats } from '@/types/achievementTypes';
 import { XPService } from './XPService';
-import { WorkoutExercise } from '@/types/workoutTypes';
 
+/**
+ * Service for managing achievements
+ */
 export class AchievementService {
-  // Rank calculation constants
-  private static readonly rankThresholds: Record<AchievementRank, number> = {
-    'Unranked': 0,
-    'E': 20,
-    'D': 50,
-    'C': 80,
-    'B': 120,
-    'A': 160,
-    'S': 198
-  };
+  /**
+   * Get all achievements for a user
+   */
+  static async getAchievements(userId: string): Promise<Achievement[]> {
+    try {
+      // Get all achievements
+      const { data: achievements, error: achievementsError } = await supabase
+        .from('achievements')
+        .select('*')
+        .order('rank', { ascending: false });
 
-  /**
-   * Master achievement checker that calls all individual achievement checks
-   */
-  static async checkAchievements(userId: string): Promise<void> {
-    try {
-      if (!userId) {
-        console.error('No userId provided to checkAchievements');
-        return;
-      }
-      
-      // Get user profile data
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('workouts_count, streak, records_count, level, achievements_count')
-        .eq('id', userId)
-        .single();
-        
-      if (!profile) {
-        console.error('No profile found for user', userId);
-        return;
-      }
-      
-      // Get all achievements user doesn't have yet
-      const { data: userAchievements } = await supabase
+      if (achievementsError) throw achievementsError;
+
+      // Get user's unlocked achievements
+      const { data: userAchievements, error: userAchievementsError } = await supabase
         .from('user_achievements')
-        .select('achievement_id')
+        .select('achievement_id, achieved_at')
         .eq('user_id', userId);
-        
-      const unlockedIds = userAchievements?.map(a => a.achievement_id) || [];
-      
-      // Get all eligible achievements
-      const { data: achievements } = await supabase
-        .from('achievements')
+
+      if (userAchievementsError) throw userAchievementsError;
+
+      // Get achievement progress
+      const { data: progress, error: progressError } = await supabase
+        .from('achievement_progress')
         .select('*')
-        .not('id', 'in', `(${unlockedIds.length > 0 ? unlockedIds.join(',') : 'null'})`);
-        
-      if (!achievements || achievements.length === 0) {
-        return;
-      }
-      
-      // Check each achievement
-      for (const achievement of achievements) {
-        // Parse the requirements JSON to access its properties safely
-        const requirements = parseRequirements(achievement.requirements);
-        
-        let achievementUnlocked = false;
-        
-        // Check workout count achievements
-        if (requirements && 
-            'workouts_count' in requirements && 
-            profile.workouts_count >= requirements.workouts_count) {
-          await this.awardAchievement(
-            userId, 
-            achievement.id, 
-            achievement.name, 
-            achievement.description, 
-            achievement.xp_reward,
-            achievement.points || 1 // Default to 1 if points not specified
-          );
-          achievementUnlocked = true;
-        }
-        
-        // Check streak achievements
-        if (!achievementUnlocked && 
-            requirements && 
-            'streak_days' in requirements && 
-            profile.streak >= requirements.streak_days) {
-          await this.awardAchievement(
-            userId, 
-            achievement.id, 
-            achievement.name, 
-            achievement.description, 
-            achievement.xp_reward,
-            achievement.points || 1
-          );
-          achievementUnlocked = true;
-        }
-        
-        // Check personal records achievements
-        if (!achievementUnlocked && 
-            requirements && 
-            'records_count' in requirements && 
-            profile.records_count >= requirements.records_count) {
-          await this.awardAchievement(
-            userId, 
-            achievement.id, 
-            achievement.name, 
-            achievement.description, 
-            achievement.xp_reward,
-            achievement.points || 1
-          );
-          achievementUnlocked = true;
-        }
-        
-        // Check level-based achievements
-        if (!achievementUnlocked && 
-            requirements && 
-            'level' in requirements && 
-            profile.level >= requirements.level) {
-          await this.awardAchievement(
-            userId, 
-            achievement.id, 
-            achievement.name, 
-            achievement.description, 
-            achievement.xp_reward,
-            achievement.points || 1
-          );
-          achievementUnlocked = true;
-        }
-        
-        // Additional achievement types can be added here
-      }
-    } catch (error) {
-      console.error('Error in checkAchievements:', error);
-    }
-  }
-  
-  /**
-   * Check workout-related achievements
-   */
-  static async checkWorkoutAchievements(
-    userId: string, 
-    workout: { 
-      id: string; 
-      exercises: WorkoutExercise[]; 
-      durationSeconds: number; 
-      difficulty?: string;
-    }
-  ): Promise<void> {
-    try {
-      if (!userId) return;
-      
-      // Get user profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('workouts_count')
-        .eq('id', userId)
-        .single();
-        
-      if (!profile) return;
-      
-      // Get achievements user doesn't have yet that are workout-related
-      const { data: unlockedAchievements } = await supabase
-        .from('user_achievements')
-        .select('achievement_id')
         .eq('user_id', userId);
-        
-      const unlockedIds = unlockedAchievements?.map(a => a.achievement_id) || [];
-      
-      // Get all eligible achievements
-      const { data: achievements } = await supabase
-        .from('achievements')
-        .select('*')
-        .not('id', 'in', `(${unlockedIds.length > 0 ? unlockedIds.join(',') : 'null'})`)
-        .or('requirements->workouts_count.gte.0,requirements->long_workouts_count.gte.0,requirements->exercise_types.neq.null');
-        
-      if (!achievements || achievements.length === 0) return;
-      
-      // Calculate workout duration in minutes
-      const durationMinutes = Math.round(workout.durationSeconds / 60);
-      
-      // Check achievements
-      for (const achievement of achievements) {
-        const requirements = parseRequirements(achievement.requirements);
-        
-        // Check workout count achievements
-        if (requirements.workouts_count && profile.workouts_count >= requirements.workouts_count) {
-          await this.awardAchievement(
-            userId, 
-            achievement.id, 
-            achievement.name, 
-            achievement.description, 
-            achievement.xp_reward,
-            achievement.points
-          );
-        }
-        
-        // Check long workout achievements (workouts > 60 mins)
-        if (requirements.long_workouts_count && durationMinutes >= 60) {
-          // Get count of long workouts
-          const { count } = await supabase
-            .from('workouts')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', userId)
-            .gte('duration_seconds', 3600);
-            
-          if (count && count >= requirements.long_workouts_count) {
-            await this.awardAchievement(
-              userId, 
-              achievement.id, 
-              achievement.name, 
-              achievement.description, 
-              achievement.xp_reward,
-              achievement.points
-            );
-          }
-        }
-        
-        // Check for specific exercise types in workout
-        if (requirements.exercise_types && workout.exercises.length > 0) {
-          const exerciseTypeMap = await this.getExerciseTypesFromWorkout(workout.exercises);
-          const requiredTypes = requirements.exercise_types.split(',');
-          
-          // Check if all required types are in the workout
-          const hasAllTypes = requiredTypes.every(type => exerciseTypeMap[type.trim()]);
-          
-          if (hasAllTypes) {
-            await this.awardAchievement(
-              userId, 
-              achievement.id, 
-              achievement.name, 
-              achievement.description, 
-              achievement.xp_reward,
-              achievement.points
-            );
-          }
-        }
-        
-        // Check for time of day achievements (early morning workouts)
-        if (requirements.workout_time_range) {
-          const now = new Date();
-          const hour = now.getHours();
-          const [startHour, endHour] = requirements.workout_time_range.split('-').map(Number);
-          
-          if (hour >= startHour && hour <= endHour) {
-            // Count workouts in this time range
-            const { count } = await supabase.rpc('count_workouts_in_time_range', {
-              p_user_id: userId,
-              p_start_hour: startHour,
-              p_end_hour: endHour
-            });
-            
-            if (count && count >= (requirements.workout_time_count || 1)) {
-              await this.awardAchievement(
-                userId, 
-                achievement.id, 
-                achievement.name, 
-                achievement.description, 
-                achievement.xp_reward,
-                achievement.points
-              );
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error checking workout achievements:', error);
-    }
-  }
-  
-  /**
-   * Helper method to get exercise types from a workout
-   */
-  private static async getExerciseTypesFromWorkout(exercises: WorkoutExercise[]): Promise<Record<string, boolean>> {
-    try {
-      const exerciseIds = exercises.map(e => e.id);
-      const { data } = await supabase
-        .from('exercises')
-        .select('id, type')
-        .in('id', exerciseIds);
-        
-      const typeMap: Record<string, boolean> = {};
-      data?.forEach(exercise => {
-        if (exercise.type) {
-          typeMap[exercise.type] = true;
-        }
+
+      if (progressError) throw progressError;
+
+      // Map and merge the data
+      const achievementsWithStatus = achievements.map(achievement => {
+        const userAchievement = userAchievements?.find(ua => ua.achievement_id === achievement.id);
+        const achievementProgress = progress?.find(p => p.achievement_id === achievement.id);
+
+        return {
+          id: achievement.id,
+          name: achievement.name,
+          description: achievement.description,
+          category: achievement.category,
+          rank: achievement.rank,
+          points: achievement.points,
+          xpReward: achievement.xp_reward,
+          iconName: achievement.icon_name,
+          requirements: achievement.requirements,
+          isUnlocked: !!userAchievement,
+          achievedAt: userAchievement?.achieved_at,
+          progress: achievementProgress ? {
+            id: achievementProgress.id,
+            current: achievementProgress.current_value,
+            total: achievementProgress.target_value,
+            isComplete: achievementProgress.is_complete
+          } : undefined
+        };
       });
-      
-      return typeMap;
-    } catch (error) {
-      console.error('Error getting exercise types:', error);
-      return {};
-    }
-  }
-  
-  /**
-   * Check streak-related achievements
-   */
-  static async checkStreakAchievements(userId: string, currentStreak: number): Promise<void> {
-    try {
-      if (!userId || currentStreak <= 0) return;
-      
-      // Get achievements user doesn't have yet that are streak-related
-      const { data: unlockedAchievements } = await supabase
-        .from('user_achievements')
-        .select('achievement_id')
-        .eq('user_id', userId);
-        
-      const unlockedIds = unlockedAchievements?.map(a => a.achievement_id) || [];
-      
-      // Get eligible streak achievements
-      const { data: achievements } = await supabase
-        .from('achievements')
-        .select('*')
-        .not('id', 'in', `(${unlockedIds.length > 0 ? unlockedIds.join(',') : 'null'})`)
-        .or('requirements->streak_days.lte.' + currentStreak);
-        
-      if (!achievements || achievements.length === 0) return;
-      
-      // Award achievements
-      for (const achievement of achievements) {
-        const requirements = parseRequirements(achievement.requirements);
-        
-        if (requirements.streak_days && currentStreak >= requirements.streak_days) {
-          await this.awardAchievement(
-            userId, 
-            achievement.id, 
-            achievement.name, 
-            achievement.description, 
-            achievement.xp_reward,
-            achievement.points
-          );
-        }
-      }
-    } catch (error) {
-      console.error('Error checking streak achievements:', error);
-    }
-  }
-  
-  /**
-   * Check guild-related achievements
-   */
-  static async checkGuildAchievements(userId: string): Promise<void> {
-    try {
-      if (!userId) return;
-      
-      // Get user's guild memberships
-      const { data: guildMemberships } = await supabase
-        .from('guild_members')
-        .select('guild_id')
-        .eq('user_id', userId);
-        
-      if (!guildMemberships || guildMemberships.length === 0) return;
-      
-      // Get raids the user has participated in
-      const { data: raidParticipations } = await supabase
-        .from('guild_raid_participants')
-        .select('raid_id, completed')
-        .eq('user_id', userId);
-        
-      const completedRaids = raidParticipations?.filter(p => p.completed).length || 0;
-      
-      // Get unlocked achievements
-      const { data: unlockedAchievements } = await supabase
-        .from('user_achievements')
-        .select('achievement_id')
-        .eq('user_id', userId);
-        
-      const unlockedIds = unlockedAchievements?.map(a => a.achievement_id) || [];
-      
-      // Get eligible guild achievements
-      const { data: achievements } = await supabase
-        .from('achievements')
-        .select('*')
-        .not('id', 'in', `(${unlockedIds.length > 0 ? unlockedIds.join(',') : 'null'})`)
-        .or('requirements->quests_completed.gte.0,requirements->active_guilds.gte.0,requirements->guild_xp_contributed.gte.0');
-        
-      if (!achievements || achievements.length === 0) return;
-      
-      // Check each achievement
-      for (const achievement of achievements) {
-        const requirements = parseRequirements(achievement.requirements);
-        
-        // Check quest completion achievements
-        if (requirements.quests_completed && completedRaids >= requirements.quests_completed) {
-          await this.awardAchievement(
-            userId, 
-            achievement.id, 
-            achievement.name, 
-            achievement.description, 
-            achievement.xp_reward,
-            achievement.points
-          );
-        }
-        
-        // Check active guilds achievements
-        if (requirements.active_guilds && guildMemberships.length >= requirements.active_guilds) {
-          // Check if the guilds are active (have > 5 members)
-          let activeGuildsCount = 0;
-          
-          for (const membership of guildMemberships) {
-            const { count } = await supabase
-              .from('guild_members')
-              .select('*', { count: 'exact', head: true })
-              .eq('guild_id', membership.guild_id);
-              
-            if (count && count >= 5) {
-              activeGuildsCount++;
-            }
-          }
-          
-          if (activeGuildsCount >= requirements.active_guilds) {
-            await this.awardAchievement(
-              userId, 
-              achievement.id, 
-              achievement.name, 
-              achievement.description, 
-              achievement.xp_reward,
-              achievement.points
-            );
-          }
-        }
-        
-        // Check guild XP contribution achievements
-        if (requirements.guild_xp_contributed) {
-          // This would require tracking XP contributions to guilds
-          // Implement based on how guild XP contributions are tracked
-        }
-      }
-    } catch (error) {
-      console.error('Error checking guild achievements:', error);
-    }
-  }
-  
-  /**
-   * Check personal record achievements
-   */
-  static async checkRecordAchievements(userId: string): Promise<void> {
-    try {
-      if (!userId) return;
-      
-      // Get user's personal records count
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('records_count')
-        .eq('id', userId)
-        .single();
-        
-      if (!profile) return;
-      
-      // Get unlocked achievements
-      const { data: unlockedAchievements } = await supabase
-        .from('user_achievements')
-        .select('achievement_id')
-        .eq('user_id', userId);
-        
-      const unlockedIds = unlockedAchievements?.map(a => a.achievement_id) || [];
-      
-      // Get eligible record achievements
-      const { data: achievements } = await supabase
-        .from('achievements')
-        .select('*')
-        .not('id', 'in', `(${unlockedIds.length > 0 ? unlockedIds.join(',') : 'null'})`)
-        .or('requirements->records_count.lte.' + profile.records_count);
-        
-      if (!achievements || achievements.length === 0) return;
-      
-      // Check each achievement
-      for (const achievement of achievements) {
-        const requirements = parseRequirements(achievement.requirements);
-        
-        if (requirements.records_count && profile.records_count >= requirements.records_count) {
-          await this.awardAchievement(
-            userId, 
-            achievement.id, 
-            achievement.name, 
-            achievement.description, 
-            achievement.xp_reward,
-            achievement.points
-          );
-        }
-      }
-    } catch (error) {
-      console.error('Error checking record achievements:', error);
-    }
-  }
-  
-  /**
-   * Check power day achievements
-   */
-  static async checkPowerDayAchievements(userId: string): Promise<void> {
-    try {
-      if (!userId) return;
-      
-      // Get power day usage count
-      const { data: powerDayUsage } = await supabase
-        .from('power_day_usage')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId);
-        
-      const powerDayCount = powerDayUsage?.length || 0;
-      
-      // Get unlocked achievements
-      const { data: unlockedAchievements } = await supabase
-        .from('user_achievements')
-        .select('achievement_id')
-        .eq('user_id', userId);
-        
-      const unlockedIds = unlockedAchievements?.map(a => a.achievement_id) || [];
-      
-      // Get eligible power day achievements
-      const { data: achievements } = await supabase
-        .from('achievements')
-        .select('*')
-        .not('id', 'in', `(${unlockedIds.length > 0 ? unlockedIds.join(',') : 'null'})`)
-        .or('requirements->power_days_used.lte.' + powerDayCount);
-        
-      if (!achievements || achievements.length === 0) return;
-      
-      // Check each achievement
-      for (const achievement of achievements) {
-        const requirements = parseRequirements(achievement.requirements);
-        
-        if (requirements.power_days_used && powerDayCount >= requirements.power_days_used) {
-          await this.awardAchievement(
-            userId, 
-            achievement.id, 
-            achievement.name, 
-            achievement.description, 
-            achievement.xp_reward,
-            achievement.points
-          );
-        }
-      }
-    } catch (error) {
-      console.error('Error checking power day achievements:', error);
-    }
-  }
-  
-  /**
-   * Check variety achievements (different workout types)
-   */
-  static async checkVarietyAchievements(userId: string): Promise<void> {
-    try {
-      if (!userId) return;
-      
-      // Get distinct exercise types used in the last 30 days
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
-      const { data: exerciseTypes } = await supabase.rpc('get_distinct_exercise_types', {
-        p_user_id: userId,
-        p_start_date: thirtyDaysAgo.toISOString()
-      });
-      
-      const distinctTypes = exerciseTypes?.length || 0;
-      
-      // Get unlocked achievements
-      const { data: unlockedAchievements } = await supabase
-        .from('user_achievements')
-        .select('achievement_id')
-        .eq('user_id', userId);
-        
-      const unlockedIds = unlockedAchievements?.map(a => a.achievement_id) || [];
-      
-      // Get eligible variety achievements
-      const { data: achievements } = await supabase
-        .from('achievements')
-        .select('*')
-        .not('id', 'in', `(${unlockedIds.length > 0 ? unlockedIds.join(',') : 'null'})`)
-        .or('requirements->distinct_exercise_types.lte.' + distinctTypes);
-        
-      if (!achievements || achievements.length === 0) return;
-      
-      // Check each achievement
-      for (const achievement of achievements) {
-        const requirements = parseRequirements(achievement.requirements);
-        
-        if (requirements.distinct_exercise_types && distinctTypes >= requirements.distinct_exercise_types) {
-          await this.awardAchievement(
-            userId, 
-            achievement.id, 
-            achievement.name, 
-            achievement.description, 
-            achievement.xp_reward,
-            achievement.points
-          );
-        }
-      }
-    } catch (error) {
-      console.error('Error checking variety achievements:', error);
-    }
-  }
-  
-  /**
-   * Check manual workout achievements
-   */
-  static async checkManualWorkoutAchievements(userId: string): Promise<void> {
-    try {
-      if (!userId) return;
-      
-      // Count manual workouts
-      const { data: countData } = await supabase
-        .from('manual_workouts')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId);
-        
-      const count = countData?.length || 0;
-      
-      // Get unlocked achievements
-      const { data: unlockedAchievements } = await supabase
-        .from('user_achievements')
-        .select('achievement_id')
-        .eq('user_id', userId);
-        
-      const unlockedIds = unlockedAchievements?.map(a => a.achievement_id) || [];
-      
-      // Get eligible manual workout achievements
-      const { data: achievements } = await supabase
-        .from('achievements')
-        .select('*')
-        .not('id', 'in', `(${unlockedIds.length > 0 ? unlockedIds.join(',') : 'null'})`)
-        .or('requirements->manual_workouts_count.lte.' + count);
-        
-      if (!achievements || achievements.length === 0) return;
-      
-      // Check each achievement
-      for (const achievement of achievements) {
-        const requirements = parseRequirements(achievement.requirements);
-        
-        if (requirements.manual_workouts_count && count >= requirements.manual_workouts_count) {
-          await this.awardAchievement(
-            userId, 
-            achievement.id, 
-            achievement.name, 
-            achievement.description, 
-            achievement.xp_reward,
-            achievement.points
-          );
-        }
-      }
-    } catch (error) {
-      console.error('Error checking manual workout achievements:', error);
-    }
-  }
-  
-  /**
-   * Awards an achievement to a user
-   */
-  static async awardAchievement(
-    userId: string, 
-    achievementId: string, 
-    achievementName: string,
-    achievementDescription: string,
-    xpReward: number,
-    points: number
-  ): Promise<void> {
-    try {
-      // Record the achievement
-      const { error } = await supabase
-        .from('user_achievements')
-        .insert({
-          user_id: userId,
-          achievement_id: achievementId
-        });
-        
-      if (error) {
-        // If there's a unique constraint violation, the user already has this achievement
-        if (error.code !== '23505') { // PostgreSQL unique violation code
-          console.error('Error awarding achievement:', error);
-        }
-        return;
-      }
-      
-      // Update the achievements count and XP
-      await supabase
-        .from('profiles')
-        .update({ 
-          achievements_count: supabase.rpc('increment_profile_counter', {
-            user_id_param: userId,
-            counter_name: 'achievements_count',
-            increment_amount: 1
-          }),
-          xp: supabase.rpc('increment_profile_counter', {
-            user_id_param: userId,
-            counter_name: 'xp',
-            increment_amount: xpReward
-          })
-        })
-        .eq('id', userId);
-      
-      // Update user rank after achievement award
-      await this.updateUserRank(userId);
-      
-      // Show achievement popup using the Zustand store
-      const { showAchievement } = achievementPopupStore.getState();
-      showAchievement({
-        title: achievementName,
-        description: achievementDescription,
-        xpReward: xpReward,
-        bonusText: "Achievement Unlocked! " + points + " points earned!"
-      });
-        
-      // Also show toast notification
-      toast.success(`🏆 Achievement Unlocked!`, {
-        description: `${achievementName} (+${xpReward} XP, +${points} points)`
-      });
-    } catch (error) {
-      console.error('Error awarding achievement:', error);
-    }
-  }
-  
-  /**
-   * Calculate and update user rank based on level and achievement points
-   */
-  static async updateUserRank(userId: string): Promise<string> {
-    try {
-      // Get user profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('level, achievements_count')
-        .eq('id', userId)
-        .single();
-        
-      if (!profile) {
-        return 'Unranked';
-      }
-      
-      // Calculate rank
-      const rank = this.calculateRank(profile.level, profile.achievements_count);
-      
-      // Store rank in profile if needed in the future
-      // Currently just calculating on demand
-      
-      return rank;
-    } catch (error) {
-      console.error('Error updating user rank:', error);
-      return 'Unranked';
-    }
-  }
 
-  /**
-   * Get all achievements for a specific category
-   */
-  static async getAchievements(userId: string, category?: string): Promise<Achievement[]> {
-    try {
-      // Build query
-      let query = supabase
-        .from('achievements')
-        .select('*');
-      
-      // Filter by category if provided
-      if (category && category !== 'all') {
-        query = query.eq('category', category);
-      }
-
-      // Execute query
-      const { data, error } = await query.order('rank', { ascending: false });
-      
-      if (error) {
-        throw error;
-      }
-
-      // If no user ID, just return all achievements
-      if (!userId) {
-        return data.map(item => ({
-          id: item.id,
-          name: item.name,
-          description: item.description,
-          category: item.category,
-          rank: item.rank,
-          points: item.points,
-          xpReward: item.xp_reward,
-          iconName: item.icon_name,
-          requirements: parseRequirements(item.requirements)
-        }));
-      }
-
-      // Get user's achievements to mark which ones are unlocked
-      const { data: userAchievements } = await supabase
-        .from('user_achievements')
-        .select('achievement_id')
-        .eq('user_id', userId);
-
-      const unlockedAchievementIds = new Set(userAchievements?.map(a => a.achievement_id) || []);
-
-      // Return achievements with unlocked status
-      return data.map(item => ({
-        id: item.id,
-        name: item.name,
-        description: item.description,
-        category: item.category,
-        rank: item.rank,
-        points: item.points,
-        xpReward: item.xp_reward,
-        iconName: item.icon_name,
-        requirements: parseRequirements(item.requirements),
-        isUnlocked: unlockedAchievementIds.has(item.id)
-      }));
+      return achievementsWithStatus;
     } catch (error) {
       console.error('Error fetching achievements:', error);
       return [];
     }
   }
-  
-  /**
-   * Get achievements filtered by rank
-   */
-  static async getAchievementsByRank(userId: string, rank: string): Promise<Achievement[]> {
-    try {
-      // Get achievements of the specified rank
-      const { data, error } = await supabase
-        .from('achievements')
-        .select('*')
-        .eq('rank', rank)
-        .order('points', { ascending: false });
-        
-      if (error) {
-        throw error;
-      }
-      
-      // If no user ID, just return all achievements of this rank
-      if (!userId) {
-        return data.map(item => ({
-          id: item.id,
-          name: item.name,
-          description: item.description,
-          category: item.category,
-          rank: item.rank,
-          points: item.points,
-          xpReward: item.xp_reward,
-          iconName: item.icon_name,
-          requirements: parseRequirements(item.requirements)
-        }));
-      }
-      
-      // Get user's achievements to mark which ones are unlocked
-      const { data: userAchievements } = await supabase
-        .from('user_achievements')
-        .select('achievement_id')
-        .eq('user_id', userId);
-        
-      const unlockedAchievementIds = new Set(userAchievements?.map(a => a.achievement_id) || []);
-      
-      // Return achievements with unlocked status
-      return data.map(item => ({
-        id: item.id,
-        name: item.name,
-        description: item.description,
-        category: item.category,
-        rank: item.rank,
-        points: item.points,
-        xpReward: item.xp_reward,
-        iconName: item.icon_name,
-        requirements: parseRequirements(item.requirements),
-        isUnlocked: unlockedAchievementIds.has(item.id)
-      }));
-    } catch (error) {
-      console.error('Error fetching achievements by rank:', error);
-      return [];
-    }
-  }
 
   /**
-   * Get user's unlocked achievements
+   * Get only unlocked achievements for a user
    */
-  static async getUserAchievements(userId: string): Promise<Achievement[]> {
+  static async getUnlockedAchievements(userId: string): Promise<Achievement[]> {
     try {
+      // Get user's unlocked achievements with their details
       const { data, error } = await supabase
         .from('user_achievements')
         .select(`
           achievement_id,
           achieved_at,
-          achievements (*)
+          achievements (
+            id,
+            name,
+            description,
+            category,
+            rank,
+            points,
+            xp_reward,
+            icon_name,
+            requirements
+          )
         `)
         .eq('user_id', userId)
         .order('achieved_at', { ascending: false });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      return data.map(item => ({
+      // Map the data to our Achievement type
+      const achievements: Achievement[] = data.map(item => ({
         id: item.achievements.id,
         name: item.achievements.name,
         description: item.achievements.description,
@@ -894,11 +107,14 @@ export class AchievementService {
         points: item.achievements.points,
         xpReward: item.achievements.xp_reward,
         iconName: item.achievements.icon_name,
-        requirements: parseRequirements(item.achievements.requirements),
+        requirements: item.achievements.requirements,
+        isUnlocked: true,
         achievedAt: item.achieved_at
       }));
+
+      return achievements;
     } catch (error) {
-      console.error('Error fetching user achievements:', error);
+      console.error('Error fetching unlocked achievements:', error);
       return [];
     }
   }
@@ -908,65 +124,46 @@ export class AchievementService {
    */
   static async getAchievementStats(userId: string): Promise<AchievementStats> {
     try {
-      // Get user profile with level and achievements count
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('level, achievements_count')
-        .eq('id', userId)
-        .single();
-      
-      if (profileError) {
-        throw profileError;
-      }
-
-      // Get total number of achievements
-      const { count: totalCount, error: countError } = await supabase
+      // Get total achievements count
+      const { count: totalCount, error: totalError } = await supabase
         .from('achievements')
         .select('*', { count: 'exact', head: true });
-      
-      if (countError) {
-        throw countError;
-      }
 
-      // Get count of unlocked achievements
+      if (totalError) throw totalError;
+
+      // Get unlocked achievements count
       const { count: unlockedCount, error: unlockedError } = await supabase
         .from('user_achievements')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId);
-      
-      if (unlockedError) {
-        throw unlockedError;
-      }
 
-      // Calculate current rank
-      const currentRank = this.calculateRank(profile.level, profile.achievements_count);
-      
-      // Define the rank progression
-      const ranks: AchievementRank[] = ['Unranked', 'E', 'D', 'C', 'B', 'A', 'S'];
-      const currentRankIndex = ranks.indexOf(currentRank as AchievementRank);
-      
-      // Calculate next rank and points needed
-      let nextRank: AchievementRank | null = null;
-      let pointsToNextRank: number | null = null;
-      
-      if (currentRankIndex < ranks.length - 1) {
-        nextRank = ranks[currentRankIndex + 1];
-        
-        const currentScore = (1.5 * profile.level) + (2 * profile.achievements_count);
-        pointsToNextRank = Math.ceil((this.rankThresholds[nextRank] - currentScore) / 2);
-        if (pointsToNextRank < 0) pointsToNextRank = 0;
-      }
+      if (unlockedError) throw unlockedError;
+
+      // Get user profile for points
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('achievement_points')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // Calculate rank based on points
+      const points = profileData?.achievement_points || 0;
+      const rank = this.calculateRank(points);
+      const nextRank = this.getNextRank(rank);
+      const pointsToNextRank = this.getPointsToNextRank(points, rank);
 
       return {
         total: totalCount || 0,
         unlocked: unlockedCount || 0,
-        points: profile.achievements_count || 0,
-        rank: currentRank,
+        points,
+        rank,
         nextRank,
         pointsToNextRank
       };
     } catch (error) {
-      console.error('Error getting achievement stats:', error);
+      console.error('Error fetching achievement stats:', error);
       return {
         total: 0,
         unlocked: 0,
@@ -979,141 +176,583 @@ export class AchievementService {
   }
 
   /**
-   * Get progress for a specific achievement
+   * Award an achievement to a user
    */
-  static async getAchievementProgress(userId: string, achievementId: string): Promise<AchievementProgress | null> {
+  static async awardAchievement(userId: string, achievementId: string): Promise<boolean> {
     try {
+      // Check if the user already has this achievement
+      const { count, error: checkError } = await supabase
+        .from('user_achievements')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('achievement_id', achievementId);
+
+      if (checkError) throw checkError;
+
+      // If already awarded, return true
+      if (count && count > 0) {
+        return true;
+      }
+
       // Get achievement details
       const { data: achievement, error: achievementError } = await supabase
         .from('achievements')
         .select('*')
         .eq('id', achievementId)
         .single();
-      
-      if (achievementError) {
-        throw achievementError;
-      }
 
-      // Get user profile data
+      if (achievementError) throw achievementError;
+
+      // Add achievement to user_achievements
+      const { error: insertError } = await supabase
+        .from('user_achievements')
+        .insert({
+          user_id: userId,
+          achievement_id: achievementId,
+          achieved_at: new Date().toISOString()
+        });
+
+      if (insertError) throw insertError;
+
+      // Award XP to user
+      await XPService.awardXP(userId, achievement.xp_reward, 'achievement', {
+        achievementId,
+        achievementName: achievement.name
+      });
+
+      // Update achievement points in profile
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          achievement_points: supabase.rpc('increment', { 
+            row_id: userId, 
+            table_name: 'profiles', 
+            column_name: 'achievement_points', 
+            increment_amount: achievement.points 
+          }),
+          achievements_count: supabase.rpc('increment', {
+            row_id: userId,
+            table_name: 'profiles',
+            column_name: 'achievements_count',
+            increment_amount: 1
+          })
+        })
+        .eq('id', userId);
+
+      if (updateError) throw updateError;
+
+      return true;
+    } catch (error) {
+      console.error('Error awarding achievement:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check workout achievements
+   */
+  static async checkWorkoutAchievements(userId: string, workoutId: string): Promise<void> {
+    try {
+      // Check for first workout achievement
+      await this.checkFirstWorkoutAchievement(userId);
+
+      // Check workout count achievements
+      await this.checkWorkoutCountAchievements(userId);
+
+      // Check workout streak achievements
+      await this.checkStreakAchievements(userId);
+
+      // Check workout duration achievements
+      await this.checkWorkoutDurationAchievements(userId, workoutId);
+
+      // Check workout variety achievements
+      await this.checkWorkoutVarietyAchievements(userId);
+    } catch (error) {
+      console.error('Error checking workout achievements:', error);
+    }
+  }
+
+  /**
+   * Check streak achievements
+   */
+  static async checkStreakAchievements(userId: string): Promise<void> {
+    try {
+      // Get user's current streak
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('workouts_count, streak, records_count, level')
+        .select('streak')
         .eq('id', userId)
         .single();
-      
-      if (profileError) {
-        throw profileError;
+
+      if (profileError) throw profileError;
+
+      const currentStreak = profile?.streak || 0;
+
+      // Check for streak achievements
+      if (currentStreak >= 7) {
+        await this.awardAchievement(userId, 'streak-7');
       }
 
-      // Parse requirements
-      const requirements = parseRequirements(achievement.requirements);
-
-      // Check if user has already unlocked this achievement
-      const { data: userAchievement, error: userAchievementError } = await supabase
-        .from('user_achievements')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('achievement_id', achievementId)
-        .maybeSingle();
-      
-      const isComplete = !!userAchievement;
-
-      // Calculate progress based on achievement type
-      let current = 0;
-      let total = 1;
-
-      if ('workouts_count' in requirements) {
-        current = profile.workouts_count || 0;
-        total = requirements.workouts_count;
-      } else if ('streak_days' in requirements) {
-        current = profile.streak || 0;
-        total = requirements.streak_days;
-      } else if ('records_count' in requirements) {
-        current = profile.records_count || 0;
-        total = requirements.records_count;
-      } else if ('level' in requirements) {
-        current = profile.level || 1;
-        total = requirements.level;
-      } else if ('manual_workouts_count' in requirements) {
-        // Get count of manual workouts
-        const { count } = await supabase
-          .from('manual_workouts')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId);
-        
-        current = count || 0;
-        total = requirements.manual_workouts_count;
-      } else if ('power_days_used' in requirements) {
-        // Get count of power days used
-        const { count } = await supabase
-          .from('power_day_usage')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId);
-        
-        current = count || 0;
-        total = requirements.power_days_used;
-      } else if ('quests_completed' in requirements) {
-        // Get count of completed quests
-        const { count } = await supabase
-          .from('guild_raid_participants')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId)
-          .eq('completed', true);
-        
-        current = count || 0;
-        total = requirements.quests_completed;
+      if (currentStreak >= 14) {
+        await this.awardAchievement(userId, 'streak-14');
       }
 
-      // Ensure current doesn't exceed total for display purposes
-      current = Math.min(current, total);
+      if (currentStreak >= 30) {
+        await this.awardAchievement(userId, 'streak-30');
+      }
 
-      return {
-        id: achievementId,
-        current,
-        total,
-        isComplete
-      };
+      if (currentStreak >= 60) {
+        await this.awardAchievement(userId, 'streak-60');
+      }
+
+      if (currentStreak >= 100) {
+        await this.awardAchievement(userId, 'streak-100');
+      }
     } catch (error) {
-      console.error('Error getting achievement progress:', error);
-      return null;
+      console.error('Error checking streak achievements:', error);
     }
   }
-  
-  /**
-   * Calculate rank based on level and achievement points
-   */
-  static calculateRank(level: number, achievementPoints: number): string {
-    const rankScore = (1.5 * level) + (2 * achievementPoints);
-    
-    if (rankScore < this.rankThresholds.E) return 'Unranked';
-    if (rankScore >= this.rankThresholds.E && rankScore < this.rankThresholds.D) return 'E';
-    if (rankScore >= this.rankThresholds.D && rankScore < this.rankThresholds.C) return 'D';
-    if (rankScore >= this.rankThresholds.C && rankScore < this.rankThresholds.B) return 'C';
-    if (rankScore >= this.rankThresholds.B && rankScore < this.rankThresholds.A) return 'B';
-    if (rankScore >= this.rankThresholds.A && rankScore < this.rankThresholds.S) return 'A';
-    return 'S';
-  }
-}
 
-/**
- * Helper function to parse requirements from JSON
- */
-function parseRequirements(requirementsJson: any): Record<string, any> {
-  if (!requirementsJson) return {};
-  
-  try {
-    if (typeof requirementsJson === 'string') {
-      return JSON.parse(requirementsJson);
+  /**
+   * Check guild achievements
+   */
+  static async checkGuildAchievements(userId: string, guildId: string): Promise<void> {
+    try {
+      // Check if user is in a guild
+      await this.checkGuildMembershipAchievement(userId);
+
+      // Check if user has participated in raids
+      await this.checkGuildRaidParticipationAchievements(userId);
+
+      // Check if user has completed raids
+      await this.checkGuildRaidCompletionAchievements(userId);
+    } catch (error) {
+      console.error('Error checking guild achievements:', error);
     }
-    
-    // If it's already an object, return it
-    if (typeof requirementsJson === 'object') {
-      return requirementsJson;
+  }
+
+  /**
+   * Check record achievements
+   */
+  static async checkRecordAchievements(userId: string, exerciseId: string): Promise<void> {
+    try {
+      // Check for first PR achievement
+      await this.checkFirstPRAchievement(userId);
+
+      // Check for PR count achievements
+      await this.checkPRCountAchievements(userId);
+    } catch (error) {
+      console.error('Error checking record achievements:', error);
     }
-    
-    return {};
-  } catch (error) {
-    console.error('Error parsing requirements:', error);
-    return {};
+  }
+
+  /**
+   * Check manual workout achievements
+   */
+  static async checkManualWorkoutAchievements(userId: string, workoutId: string): Promise<void> {
+    try {
+      // Check for first manual workout achievement
+      await this.checkFirstManualWorkoutAchievement(userId);
+
+      // Check for manual workout count achievements
+      await this.checkManualWorkoutCountAchievements(userId);
+
+      // Check for activity type achievements
+      await this.checkActivityTypeAchievements(userId);
+    } catch (error) {
+      console.error('Error checking manual workout achievements:', error);
+    }
+  }
+
+  /**
+   * Check first workout achievement
+   */
+  private static async checkFirstWorkoutAchievement(userId: string): Promise<void> {
+    try {
+      // Get workout count
+      const { count, error } = await supabase
+        .from('workouts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      // Award achievement for first workout
+      if (count === 1) {
+        await this.awardAchievement(userId, 'first-workout');
+      }
+    } catch (error) {
+      console.error('Error checking first workout achievement:', error);
+    }
+  }
+
+  /**
+   * Check workout count achievements
+   */
+  private static async checkWorkoutCountAchievements(userId: string): Promise<void> {
+    try {
+      // Get workout count
+      const { count, error } = await supabase
+        .from('workouts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      // Check for workout count achievements
+      if (count >= 5) {
+        await this.awardAchievement(userId, 'workout-5');
+      }
+
+      if (count >= 10) {
+        await this.awardAchievement(userId, 'workout-10');
+      }
+
+      if (count >= 25) {
+        await this.awardAchievement(userId, 'workout-25');
+      }
+
+      if (count >= 50) {
+        await this.awardAchievement(userId, 'workout-50');
+      }
+
+      if (count >= 100) {
+        await this.awardAchievement(userId, 'workout-100');
+      }
+    } catch (error) {
+      console.error('Error checking workout count achievements:', error);
+    }
+  }
+
+  /**
+   * Check workout duration achievements
+   */
+  private static async checkWorkoutDurationAchievements(userId: string, workoutId: string): Promise<void> {
+    try {
+      // Get workout duration
+      const { data: workout, error } = await supabase
+        .from('workouts')
+        .select('duration_seconds')
+        .eq('id', workoutId)
+        .eq('user_id', userId)
+        .single();
+
+      if (error) throw error;
+
+      const durationMinutes = (workout?.duration_seconds || 0) / 60;
+
+      // Check for duration achievements
+      if (durationMinutes >= 60) {
+        await this.awardAchievement(userId, 'workout-60min');
+      }
+
+      if (durationMinutes >= 90) {
+        await this.awardAchievement(userId, 'workout-90min');
+      }
+
+      if (durationMinutes >= 120) {
+        await this.awardAchievement(userId, 'workout-120min');
+      }
+    } catch (error) {
+      console.error('Error checking workout duration achievements:', error);
+    }
+  }
+
+  /**
+   * Check workout variety achievements
+   */
+  private static async checkWorkoutVarietyAchievements(userId: string): Promise<void> {
+    try {
+      // Get count of distinct exercise types in the last 7 days
+      const { data, error } = await supabase.rpc('count_distinct_exercise_types', {
+        user_id: userId,
+        days_back: 7
+      });
+
+      if (error) throw error;
+
+      const distinctExerciseCount = data?.length || 0;
+
+      // Check for variety achievements
+      if (distinctExerciseCount >= 5) {
+        await this.awardAchievement(userId, 'variety-5');
+      }
+
+      if (distinctExerciseCount >= 10) {
+        await this.awardAchievement(userId, 'variety-10');
+      }
+
+      if (distinctExerciseCount >= 15) {
+        await this.awardAchievement(userId, 'variety-15');
+      }
+    } catch (error) {
+      console.error('Error checking workout variety achievements:', error);
+    }
+  }
+
+  /**
+   * Check guild membership achievement
+   */
+  private static async checkGuildMembershipAchievement(userId: string): Promise<void> {
+    try {
+      // Check if user is in a guild
+      const { count, error } = await supabase
+        .from('guild_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      if (count && count > 0) {
+        await this.awardAchievement(userId, 'join-guild');
+      }
+    } catch (error) {
+      console.error('Error checking guild membership achievement:', error);
+    }
+  }
+
+  /**
+   * Check guild raid participation achievements
+   */
+  private static async checkGuildRaidParticipationAchievements(userId: string): Promise<void> {
+    try {
+      // Get count of raids participated in
+      const { count, error } = await supabase
+        .from('guild_raid_participants')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      // Check for raid participation achievements
+      if (count && count >= 1) {
+        await this.awardAchievement(userId, 'raid-participation-1');
+      }
+
+      if (count && count >= 5) {
+        await this.awardAchievement(userId, 'raid-participation-5');
+      }
+
+      if (count && count >= 10) {
+        await this.awardAchievement(userId, 'raid-participation-10');
+      }
+    } catch (error) {
+      console.error('Error checking guild raid participation achievements:', error);
+    }
+  }
+
+  /**
+   * Check guild raid completion achievements
+   */
+  private static async checkGuildRaidCompletionAchievements(userId: string): Promise<void> {
+    try {
+      // Get count of completed raids
+      const { count, error } = await supabase
+        .from('guild_raid_participants')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('completed', true);
+
+      if (error) throw error;
+
+      // Check for raid completion achievements
+      if (count && count >= 1) {
+        await this.awardAchievement(userId, 'raid-completion-1');
+      }
+
+      if (count && count >= 5) {
+        await this.awardAchievement(userId, 'raid-completion-5');
+      }
+
+      if (count && count >= 10) {
+        await this.awardAchievement(userId, 'raid-completion-10');
+      }
+    } catch (error) {
+      console.error('Error checking guild raid completion achievements:', error);
+    }
+  }
+
+  /**
+   * Check first PR achievement
+   */
+  private static async checkFirstPRAchievement(userId: string): Promise<void> {
+    try {
+      // Get PR count
+      const { count, error } = await supabase
+        .from('personal_records')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      // Award achievement for first PR
+      if (count === 1) {
+        await this.awardAchievement(userId, 'first-pr');
+      }
+    } catch (error) {
+      console.error('Error checking first PR achievement:', error);
+    }
+  }
+
+  /**
+   * Check PR count achievements
+   */
+  private static async checkPRCountAchievements(userId: string): Promise<void> {
+    try {
+      // Get PR count
+      const { count, error } = await supabase
+        .from('personal_records')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      // Check for PR count achievements
+      if (count && count >= 5) {
+        await this.awardAchievement(userId, 'pr-5');
+      }
+
+      if (count && count >= 10) {
+        await this.awardAchievement(userId, 'pr-10');
+      }
+
+      if (count && count >= 25) {
+        await this.awardAchievement(userId, 'pr-25');
+      }
+
+      if (count && count >= 50) {
+        await this.awardAchievement(userId, 'pr-50');
+      }
+    } catch (error) {
+      console.error('Error checking PR count achievements:', error);
+    }
+  }
+
+  /**
+   * Check first manual workout achievement
+   */
+  private static async checkFirstManualWorkoutAchievement(userId: string): Promise<void> {
+    try {
+      // Get manual workout count
+      const { count, error } = await supabase
+        .from('manual_workouts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      // Award achievement for first manual workout
+      if (count === 1) {
+        await this.awardAchievement(userId, 'first-manual-workout');
+      }
+    } catch (error) {
+      console.error('Error checking first manual workout achievement:', error);
+    }
+  }
+
+  /**
+   * Check manual workout count achievements
+   */
+  private static async checkManualWorkoutCountAchievements(userId: string): Promise<void> {
+    try {
+      // Get manual workout count
+      const { count, error } = await supabase
+        .from('manual_workouts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      // Check for manual workout count achievements
+      if (count && count >= 5) {
+        await this.awardAchievement(userId, 'manual-workout-5');
+      }
+
+      if (count && count >= 10) {
+        await this.awardAchievement(userId, 'manual-workout-10');
+      }
+
+      if (count && count >= 25) {
+        await this.awardAchievement(userId, 'manual-workout-25');
+      }
+    } catch (error) {
+      console.error('Error checking manual workout count achievements:', error);
+    }
+  }
+
+  /**
+   * Check activity type achievements
+   */
+  private static async checkActivityTypeAchievements(userId: string): Promise<void> {
+    try {
+      // Get distinct activity types
+      const { data, error } = await supabase.rpc('get_distinct_activity_types', {
+        user_id: userId
+      });
+
+      if (error) throw error;
+
+      const distinctActivityCount = data ? data.length : 0;
+
+      // Check for activity type variety achievements
+      if (distinctActivityCount >= 3) {
+        await this.awardAchievement(userId, 'activity-variety-3');
+      }
+
+      if (distinctActivityCount >= 5) {
+        await this.awardAchievement(userId, 'activity-variety-5');
+      }
+
+      if (distinctActivityCount >= 10) {
+        await this.awardAchievement(userId, 'activity-variety-10');
+      }
+    } catch (error) {
+      console.error('Error checking activity type achievements:', error);
+    }
+  }
+
+  /**
+   * Calculate rank based on points
+   */
+  private static calculateRank(points: number): string {
+    if (points >= 1000) return 'S';
+    if (points >= 500) return 'A';
+    if (points >= 250) return 'B';
+    if (points >= 100) return 'C';
+    if (points >= 50) return 'D';
+    if (points >= 10) return 'E';
+    return 'Unranked';
+  }
+
+  /**
+   * Get next rank based on current rank
+   */
+  private static getNextRank(currentRank: string): string | null {
+    switch (currentRank) {
+      case 'Unranked': return 'E';
+      case 'E': return 'D';
+      case 'D': return 'C';
+      case 'C': return 'B';
+      case 'B': return 'A';
+      case 'A': return 'S';
+      case 'S': return null; // Max rank
+      default: return 'E';
+    }
+  }
+
+  /**
+   * Get points needed to reach next rank
+   */
+  private static getPointsToNextRank(currentPoints: number, currentRank: string): number | null {
+    switch (currentRank) {
+      case 'Unranked': return 10 - currentPoints;
+      case 'E': return 50 - currentPoints;
+      case 'D': return 100 - currentPoints;
+      case 'C': return 250 - currentPoints;
+      case 'B': return 500 - currentPoints;
+      case 'A': return 1000 - currentPoints;
+      case 'S': return null; // Max rank
+      default: return 10 - currentPoints;
+    }
   }
 }
