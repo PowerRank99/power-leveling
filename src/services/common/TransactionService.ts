@@ -1,109 +1,58 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceResponse, ErrorHandlingService, ErrorCategory, createSuccessResponse, createErrorResponse } from './ErrorHandlingService';
 
 /**
- * Options for retry operations
- */
-interface RetryOptions {
-  maxRetries: number;
-  delay: number;
-  backoffMultiplier: number;
-}
-
-/**
- * Service for handling database transactions and retries
+ * Service for handling database transactions
  */
 export class TransactionService {
   /**
-   * Default retry options
-   */
-  private static readonly DEFAULT_RETRY_OPTIONS: RetryOptions = {
-    maxRetries: 3,
-    delay: 1000,
-    backoffMultiplier: 1.5
-  };
-
-  /**
-   * Execute a function with database transaction safety
-   */
-  static async executeTransaction<T>(
-    fn: () => Promise<T>,
-    options: { errorMessage?: string; category?: ErrorCategory } = {}
-  ): Promise<ServiceResponse<T>> {
-    try {
-      // Begin transaction (Note: Supabase doesn't directly support client-side transactions,
-      // so we're wrapping the function execution in a try-catch for atomicity-like semantics)
-      const result = await fn();
-      return createSuccessResponse(result);
-    } catch (error) {
-      console.error('Transaction failed:', error);
-      return createErrorResponse(
-        options.errorMessage || 'Transaction failed',
-        error instanceof Error ? error.message : String(error),
-        options.category || ErrorCategory.DATABASE
-      );
-    }
-  }
-
-  /**
    * Execute a function with retry logic
+   * 
+   * @param fn The function to execute
+   * @param lockKey A unique key to identify the transaction
+   * @param maxRetries Maximum number of retries
+   * @param errorMessage Custom error message on failure
    */
   static async executeWithRetry<T>(
     fn: () => Promise<T>,
-    operationName: string,
+    lockKey: string,
     maxRetries: number = 3,
-    errorMessage: string = 'Operation failed after retries',
-    retryOptions?: Partial<RetryOptions>
+    errorMessage: string = 'Transaction failed'
   ): Promise<T> {
-    // Merge default options with provided options
-    const options: RetryOptions = {
-      ...this.DEFAULT_RETRY_OPTIONS,
-      maxRetries,
-      ...retryOptions
-    };
+    let retries = 0;
     
-    let lastError: any;
-    let attempt = 0;
-    
-    while (attempt < options.maxRetries) {
+    while (retries < maxRetries) {
       try {
-        return await fn();
+        // Begin transaction
+        await supabase.rpc('begin_transaction');
+        
+        // Execute the function
+        const result = await fn();
+        
+        // Commit transaction
+        await supabase.rpc('commit_transaction');
+        
+        return result;
       } catch (error) {
-        lastError = error;
-        attempt++;
-        
-        console.warn(`Retry attempt ${attempt}/${options.maxRetries} for ${operationName} failed:`, error);
-        
-        if (attempt < options.maxRetries) {
-          // Calculate backoff delay
-          const backoffDelay = options.delay * Math.pow(options.backoffMultiplier, attempt - 1);
-          await new Promise(resolve => setTimeout(resolve, backoffDelay));
+        // Rollback on error
+        try {
+          await supabase.rpc('rollback_transaction');
+        } catch (rollbackError) {
+          console.error('Error rolling back transaction:', rollbackError);
         }
+        
+        retries++;
+        
+        if (retries >= maxRetries) {
+          console.error(`${errorMessage} after ${maxRetries} attempts:`, error);
+          throw new Error(`${errorMessage}: ${error instanceof Error ? error.message : String(error)}`);
+        }
+        
+        // Wait before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retries)));
       }
     }
     
-    console.error(`All ${options.maxRetries} retry attempts for ${operationName} failed.`);
-    throw new Error(`${errorMessage}. Last error: ${lastError instanceof Error ? lastError.message : String(lastError)}`);
-  }
-  
-  /**
-   * Execute a function with retry logic and standardized error handling
-   */
-  static async executeWithRetryAndErrorHandling<T>(
-    fn: () => Promise<T>,
-    operationName: string,
-    maxRetries: number = 3,
-    errorCode: string = 'RETRY_OPERATION_FAILED',
-    options: { errorMessage?: string; errorCategory?: ErrorCategory } = {}
-  ): Promise<ServiceResponse<T>> {
-    return ErrorHandlingService.executeWithErrorHandling(
-      async () => this.executeWithRetry(fn, operationName, maxRetries, options.errorMessage),
-      errorCode,
-      { 
-        userMessage: options.errorMessage,
-        errorCategory: options.errorCategory
-      }
-    );
+    throw new Error(`${errorMessage}: Max retries exceeded`);
   }
 }

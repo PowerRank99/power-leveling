@@ -3,15 +3,40 @@
  * Exercise type classifications for class bonuses
  */
 export const EXERCISE_TYPES = {
-  COMPOUND_LIFTS: ['squat', 'deadlift', 'bench press', 'agachamento', 'levantamento terra', 'supino'],
-  BODYWEIGHT: ['push-up', 'pull-up', 'dip', 'flexão', 'barra', 'paralela', 'bodyweight', 'calistenia'],
-  CARDIO_HIIT: ['run', 'sprint', 'jog', 'cycle', 'cardio', 'hiit', 'corrida', 'ciclismo', 'bicicleta', 'intervalo'],
-  FLEXIBILITY: ['yoga', 'stretch', 'mobility', 'flexibility', 'alongamento', 'mobilidade', 'flexibilidade'],
-  RECOVERY: ['foam roll', 'massage', 'recovery', 'recuperação', 'massagem', 'mobilidade'],
-  SPORTS: ['soccer', 'basketball', 'volleyball', 'tennis', 'futebol', 'basquete', 'vôlei', 'tênis', 'esporte']
+  // For Guerreiro
+  COMPOUND_LIFTS: [
+    'squat', 'deadlift', 'bench', 'press', 'clean', 'jerk', 'snatch', 
+    'agachamento', 'levantamento', 'supino', 'arranco', 'terra'
+  ],
+  
+  // For Monge
+  BODYWEIGHT: [
+    'pullup', 'pushup', 'dip', 'burpee', 'plank', 'barra', 'flexão', 
+    'prancha', 'muscle up', 'abs', 'abdominais', 'calistenia'
+  ],
+  
+  // For Ninja
+  CARDIO_HIIT: [
+    'run', 'sprint', 'cardio', 'hit', 'hiit', 'interval', 'corrida', 
+    'bike', 'bicycle', 'bicicleta', 'jump', 'pular'
+  ],
+  
+  // For Bruxo
+  FLEXIBILITY: [
+    'yoga', 'stretch', 'flexibility', 'flexibilidade', 'alongamento',
+    'mobility', 'mobilidade', 'pilates'
+  ],
+  
+  // For Paladino
+  SPORTS: [
+    'soccer', 'football', 'basketball', 'tennis', 'volleyball', 'basquete',
+    'futebol', 'tênis', 'vôlei', 'esporte', 'jogo', 'ball', 'bola'
+  ]
 };
 
-// Class passive skill names
+/**
+ * Class passive skills names and descriptions
+ */
 export const CLASS_PASSIVE_SKILLS = {
   GUERREIRO: {
     PRIMARY: 'Força Bruta',

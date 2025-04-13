@@ -2,7 +2,7 @@
 import { toast } from 'sonner';
 
 /**
- * Interface for XP breakdown
+ * XP breakdown for toast notifications
  */
 export interface XPBreakdown {
   base: number;
@@ -11,36 +11,40 @@ export interface XPBreakdown {
   recordBonus: number;
   weeklyBonus: number;
   monthlyBonus: number;
-  bonusDetails: { skill: string, amount: number, description: string }[];
+  bonusDetails: {
+    skill: string;
+    amount: number;
+    description: string;
+  }[];
 }
 
 /**
- * Service for handling XP notifications
+ * Service for showing XP-related toast notifications
  */
 export class XPToastService {
   /**
-   * Show toast notification with XP breakdown
+   * Show an XP gain toast with breakdown
    */
-  static showXPToast(totalXP: number, xpBreakdown: XPBreakdown, isPowerDay: boolean = false): void {
-    let toastDesc = 'Treino completo!';
+  static showXPToast(amount: number, breakdown?: XPBreakdown, leveledUp: boolean = false): void {
+    if (amount <= 0) return;
     
-    const bonuses = [];
-    if (xpBreakdown.classBonus > 0) bonuses.push(`Classe: +${xpBreakdown.classBonus}`);
-    if (xpBreakdown.streakBonus > 0) bonuses.push(`Streak: +${xpBreakdown.streakBonus}`);
-    if (xpBreakdown.recordBonus > 0) bonuses.push(`Recorde: +${xpBreakdown.recordBonus}`);
-    if (xpBreakdown.weeklyBonus > 0) bonuses.push(`Semanal: +${xpBreakdown.weeklyBonus}`);
-    if (xpBreakdown.monthlyBonus > 0) bonuses.push(`Mensal: +${xpBreakdown.monthlyBonus}`);
+    let description = `+${amount} XP`;
     
-    if (bonuses.length > 0) {
-      toastDesc = `Base: ${xpBreakdown.base} | ${bonuses.join(' | ')}`;
+    if (breakdown?.bonusDetails && breakdown.bonusDetails.length > 0) {
+      // If we have detailed breakdown, add the first bonus to the description
+      const firstBonus = breakdown.bonusDetails[0];
+      description += ` (${firstBonus.description})`;
     }
     
-    if (isPowerDay) {
-      toastDesc += ' | Power Day Ativado!';
+    // Show different toast based on level up status
+    if (leveledUp) {
+      toast.success('Nível Aumentado! 🎉', {
+        description: `${description}`
+      });
+    } else {
+      toast.success('XP Ganho!', {
+        description
+      });
     }
-    
-    toast.success(`+${totalXP} XP`, {
-      description: toastDesc
-    });
   }
 }
