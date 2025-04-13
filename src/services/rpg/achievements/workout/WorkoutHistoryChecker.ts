@@ -19,7 +19,7 @@ export class WorkoutHistoryChecker {
           .from('workouts')
           .select('id', { count: 'exact', head: true })
           .eq('user_id', userId)
-          .filter('completed_at', 'not.is.null');
+          .not('completed_at', 'is', null);
           
         if (workoutError) throw workoutError;
         
@@ -48,7 +48,7 @@ export class WorkoutHistoryChecker {
               .from('workouts')
               .select('started_at')
               .eq('user_id', userId)
-              .filter('completed_at', 'not.is.null')
+              .not('completed_at', 'is', null)
               .gte('started_at', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString());
               
             if (weekError) throw weekError;

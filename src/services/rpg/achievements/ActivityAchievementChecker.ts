@@ -82,9 +82,9 @@ export class ActivityAchievementChecker extends BaseAchievementChecker implement
       // Use a custom query to get distinct activity types
       const { data, error } = await supabase
         .from('manual_workouts')
-        .select('activity_type', { count: 'exact', head: false })
+        .select('activity_type')
         .eq('user_id', userId)
-        .is('activity_type', 'not.null');
+        .not('activity_type', 'is', null); // Fixed the type error here
         
       if (error) throw error;
       

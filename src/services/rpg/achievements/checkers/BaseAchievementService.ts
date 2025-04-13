@@ -1,5 +1,5 @@
 
-import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
+import { ServiceResponse, ErrorHandlingService, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 
 /**
  * Base class for achievement checker services
@@ -9,11 +9,8 @@ export abstract class BaseAchievementService {
    * Common method for handling error reporting in achievement checkers
    */
   protected static handleAchievementError(error: any, operation: string): void {
-    ErrorHandlingService.handleError(
-      error,
-      `Error in ${operation}`,
-      { showToast: false }
-    );
+    console.error(`[AchievementService] Error in ${operation}:`, error);
+    // Just log the error without showing a toast
   }
 
   /**
@@ -25,7 +22,7 @@ export abstract class BaseAchievementService {
   ): Promise<ServiceResponse<T>> {
     return ErrorHandlingService.executeWithErrorHandling(
       checkFn,
-      operation,
+      `ACHIEVEMENT_${operation.toUpperCase()}`,
       { showToast: false }
     );
   }
