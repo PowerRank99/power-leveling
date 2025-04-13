@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef } from 'react';
-import { SetData } from './types';
+import { SetData } from '@/types/workout';
 
 interface SetInputManagerProps {
   set: SetData;
@@ -9,9 +9,9 @@ interface SetInputManagerProps {
 }
 
 /**
- * Custom hook to manage set input values and handle synchronization
+ * Custom hook to manage set input values and handle state synchronization
  */
-const SetInputManager = ({ set, onWeightChange, onRepsChange }: SetInputManagerProps) => {
+const useSetInputValues = ({ set, onWeightChange, onRepsChange }: SetInputManagerProps) => {
   const [weightValue, setWeightValue] = useState(set.weight || '0');
   const [repsValue, setRepsValue] = useState(set.reps || '0');
   const isInitializedRef = useRef(false);
@@ -32,6 +32,7 @@ const SetInputManager = ({ set, onWeightChange, onRepsChange }: SetInputManagerP
       let newWeightValue = set.weight;
       let newRepsValue = set.reps;
       
+      // Use previous values if current values are empty
       if (!newWeightValue || newWeightValue === '0') {
         newWeightValue = set.previous?.weight && set.previous.weight !== '0' ? 
           set.previous.weight : '0';
@@ -88,6 +89,25 @@ const SetInputManager = ({ set, onWeightChange, onRepsChange }: SetInputManagerP
     lastUserEditRef.current = Date.now();
     onRepsChange(value);
   };
+  
+  return {
+    weightValue,
+    repsValue,
+    handleWeightChange,
+    handleRepsChange
+  };
+};
+
+/**
+ * A component that manages the input state for workout sets
+ */
+const SetInputManager = (props: SetInputManagerProps) => {
+  const {
+    weightValue,
+    repsValue,
+    handleWeightChange,
+    handleRepsChange
+  } = useSetInputValues(props);
   
   return {
     weightValue,
