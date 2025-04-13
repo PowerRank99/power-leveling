@@ -55,4 +55,38 @@ export class TransactionService {
     
     throw new Error(`${errorMessage}: Max retries exceeded`);
   }
+  
+  /**
+   * Execute a function within a transaction
+   * 
+   * @param fn The function to execute within the transaction
+   * @returns The result of the function
+   */
+  static async executeTransaction<T>(fn: () => Promise<T>): Promise<{ data: T; error: Error | null }> {
+    try {
+      // Begin transaction
+      await supabase.rpc('begin_transaction');
+      
+      // Execute the function
+      const result = await fn();
+      
+      // Commit transaction
+      await supabase.rpc('commit_transaction');
+      
+      return { data: result, error: null };
+    } catch (error) {
+      // Rollback on error
+      try {
+        await supabase.rpc('rollback_transaction');
+      } catch (rollbackError) {
+        console.error('Error rolling back transaction:', rollbackError);
+      }
+      
+      console.error('Transaction error:', error);
+      return { 
+        data: null as any, 
+        error: error instanceof Error ? error : new Error(String(error)) 
+      };
+    }
+  }
 }

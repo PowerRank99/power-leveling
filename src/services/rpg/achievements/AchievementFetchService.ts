@@ -1,88 +1,23 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Achievement, AchievementStats } from '@/types/achievementTypes';
+import { Achievement } from '@/types/achievementTypes';
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
+import { AchievementVerificationService } from './AchievementVerificationService';
 
 /**
- * Service for fetching achievements data
+ * Service for fetching achievements and achievement stats
  */
 export class AchievementFetchService {
   /**
-   * Get all achievements for a user
-   */
-  static async getAchievements(userId: string): Promise<ServiceResponse<Achievement[]>> {
-    return ErrorHandlingService.executeWithErrorHandling(
-      async () => {
-        // Get all achievements
-        const { data: achievements, error: achievementsError } = await supabase
-          .from('achievements')
-          .select('*')
-          .order('rank', { ascending: false });
-
-        if (achievementsError) throw achievementsError;
-
-        // Get user's unlocked achievements
-        const { data: userAchievements, error: userAchievementsError } = await supabase
-          .from('user_achievements')
-          .select('achievement_id, achieved_at')
-          .eq('user_id', userId);
-
-        if (userAchievementsError) throw userAchievementsError;
-
-        // Get achievement progress data
-        const { data: progressMap, error: progressError } = await supabase
-          .rpc('get_all_achievement_progress', { p_user_id: userId });
-          
-        if (progressError) throw progressError;
-
-        // Map and merge the data
-        const achievementsWithStatus: Achievement[] = achievements.map(achievement => {
-          const userAchievement = userAchievements?.find(ua => ua.achievement_id === achievement.id);
-          const parsedRequirements = typeof achievement.requirements === 'string' 
-            ? JSON.parse(achievement.requirements as string) 
-            : achievement.requirements;
-            
-          // Get progress for this achievement
-          const progressData = progressMap && progressMap[achievement.id];
-          const progress = progressData ? {
-            id: progressData.id,
-            current: progressData.current,
-            total: progressData.total,
-            isComplete: progressData.isComplete
-          } : undefined;
-
-          return {
-            id: achievement.id,
-            name: achievement.name,
-            description: achievement.description,
-            category: achievement.category,
-            rank: achievement.rank,
-            points: achievement.points,
-            xpReward: achievement.xp_reward,
-            iconName: achievement.icon_name,
-            requirements: parsedRequirements as Record<string, any>,
-            isUnlocked: !!userAchievement,
-            achievedAt: userAchievement?.achieved_at,
-            progress
-          };
-        });
-
-        return achievementsWithStatus;
-      },
-      'GET_ACHIEVEMENTS'
-    );
-  }
-
-  /**
-   * Get only unlocked achievements for a user
+   * Get all unlocked achievements for a user
    */
   static async getUnlockedAchievements(userId: string): Promise<ServiceResponse<Achievement[]>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
-        // Get user's unlocked achievements with their details
         const { data, error } = await supabase
           .from('user_achievements')
           .select(`
+            id,
             achievement_id,
             achieved_at,
             achievements (
@@ -93,88 +28,60 @@ export class AchievementFetchService {
               rank,
               points,
               xp_reward,
-              icon_name,
-              requirements
+              icon_name
             )
           `)
           .eq('user_id', userId)
           .order('achieved_at', { ascending: false });
-
-        if (error) throw error;
-        if (!data) return [];
-
-        // Map the data to our Achievement type
-        const achievements: Achievement[] = data.map(item => {
-          if (!item.achievements) return null;
           
-          const parsedRequirements = typeof item.achievements.requirements === 'string' 
-            ? JSON.parse(item.achievements.requirements as string) 
-            : item.achievements.requirements;
-
-          return {
-            id: item.achievements.id,
-            name: item.achievements.name,
-            description: item.achievements.description,
-            category: item.achievements.category,
-            rank: item.achievements.rank,
-            points: item.achievements.points,
-            xpReward: item.achievements.xp_reward,
-            iconName: item.achievements.icon_name,
-            requirements: parsedRequirements as Record<string, any>,
-            isUnlocked: true,
-            achievedAt: item.achieved_at
-          };
-        }).filter(Boolean) as Achievement[];
-
-        return achievements;
+        if (error) throw error;
+        
+        return data.map(item => ({
+          id: item.achievement_id,
+          name: item.achievements.name,
+          description: item.achievements.description,
+          category: item.achievements.category,
+          rank: item.achievements.rank,
+          points: item.achievements.points,
+          xpReward: item.achievements.xp_reward,
+          iconName: item.achievements.icon_name,
+          achievedAt: item.achieved_at
+        }));
       },
-      'GET_UNLOCKED_ACHIEVEMENTS'
+      'GET_UNLOCKED_ACHIEVEMENTS',
+      {
+        userMessage: 'Não foi possível carregar suas conquistas',
+        showToast: false
+      }
     );
   }
-
+  
   /**
-   * Get achievement statistics for a user
+   * Get achievement stats using the database function
    */
-  static async getAchievementStats(userId: string): Promise<ServiceResponse<AchievementStats>> {
+  static async getAchievementStats(userId: string): Promise<ServiceResponse<any>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
-        // Use the optimized stored procedure for stats
-        const { data, error } = await supabase
-          .rpc('get_achievement_stats', { p_user_id: userId });
-          
+        const { data, error } = await supabase.rpc('get_achievement_stats', {
+          p_user_id: userId
+        });
+        
         if (error) throw error;
         
-        if (!data) {
-          return {
-            total: 0,
-            unlocked: 0,
-            points: 0,
-            rank: 'Unranked',
-            nextRank: 'E',
-            pointsToNextRank: 10
-          };
-        }
-        
-        // Type assertion to handle complex JSON response
-        const statsData = data as {
-          total: number;
-          unlocked: number;
-          points: number;
-          rank: string;
-          nextRank: string;
-          pointsToNextRank: number;
-        };
-        
-        return {
-          total: statsData.total || 0,
-          unlocked: statsData.unlocked || 0,
-          points: statsData.points || 0,
-          rank: statsData.rank || 'Unranked',
-          nextRank: statsData.nextRank,
-          pointsToNextRank: statsData.pointsToNextRank
-        };
+        return data;
       },
-      'GET_ACHIEVEMENT_STATS'
+      'GET_ACHIEVEMENT_STATS',
+      {
+        userMessage: 'Não foi possível carregar as estatísticas de conquistas',
+        showToast: false
+      }
     );
+  }
+  
+  /**
+   * Check for achievements related to a specific workout
+   */
+  static async checkWorkoutAchievements(userId: string, workoutId: string): Promise<ServiceResponse<void>> {
+    return AchievementVerificationService.checkWorkoutAchievements(userId, workoutId);
   }
 }

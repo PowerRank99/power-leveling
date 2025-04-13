@@ -4,13 +4,24 @@ import { XPService } from './XPService';
 import { toast } from 'sonner';
 import { TransactionService } from '../common/TransactionService';
 import { ServiceResponse, ErrorHandlingService } from '../common/ErrorHandlingService';
+import { AchievementAwardService } from './achievements/AchievementAwardService';
+import { AchievementFetchService } from './achievements/AchievementFetchService';
 
 /**
  * Service for handling achievements
  */
 export class AchievementService {
   /**
+   * Award an achievement to a user
+   * Delegates to AchievementAwardService
+   */
+  static async awardAchievement(userId: string, achievementId: string): Promise<ServiceResponse<boolean>> {
+    return AchievementAwardService.awardAchievement(userId, achievementId);
+  }
+  
+  /**
    * Check and award a batch of achievements at once
+   * Delegates to AchievementAwardService
    */
   static async checkAndAwardAchievements(
     userId: string,
@@ -20,36 +31,22 @@ export class AchievementService {
       async () => {
         if (!userId || !achievementIds.length) return false;
 
-        // Convert string IDs to UUIDs
-        const uuidAchievementIds = achievementIds;
+        // Use AchievementAwardService to check and award achievements
+        const result = await AchievementAwardService.checkAndAwardAchievements(userId, achievementIds);
         
-        // Use transaction service for reliability
-        const result = await TransactionService.executeWithRetry(
-          async () => {
-            // Check and award achievements in batch using RPC function
-            const { data, error } = await supabase.rpc('check_achievement_batch', {
-              p_user_id: userId,
-              p_achievement_ids: uuidAchievementIds
-            });
-            
-            if (error) throw error;
-            
-            return data;
-          },
-          'award_achievements',
-          3,
-          'Failed to award achievements'
-        );
+        if (!result.success) {
+          throw new Error(result.message || 'Failed to check achievements');
+        }
         
         // Get newly awarded achievements
-        const newlyAwarded = result?.filter(a => a.awarded);
+        const newlyAwarded = result.data.successful;
         
         if (newlyAwarded?.length) {
           // Fetch full achievement details for awarded achievements
           const { data: details } = await supabase
             .from('achievements')
             .select('name, description, xp_reward, icon_name')
-            .in('id', newlyAwarded.map(a => a.achievement_id));
+            .in('id', newlyAwarded);
           
           // Show toast for each new achievement
           details?.forEach(achievement => {
@@ -74,5 +71,28 @@ export class AchievementService {
       'CHECK_AND_AWARD_ACHIEVEMENTS',
       { showToast: false }
     );
+  }
+  
+  /**
+   * Get unlocked achievements for a user
+   * Delegates to AchievementFetchService
+   */
+  static async getUnlockedAchievements(userId: string) {
+    return AchievementFetchService.getUnlockedAchievements(userId);
+  }
+  
+  /**
+   * Get achievement stats for a user
+   * Delegates to AchievementFetchService
+   */
+  static async getAchievementStats(userId: string) {
+    return AchievementFetchService.getAchievementStats(userId);
+  }
+  
+  /**
+   * Check for achievements related to workouts
+   */
+  static async checkWorkoutAchievements(userId: string, workoutId: string) {
+    return AchievementFetchService.checkWorkoutAchievements(userId, workoutId);
   }
 }
