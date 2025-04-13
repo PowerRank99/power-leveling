@@ -63,7 +63,7 @@ export class ActivityAchievementChecker extends BaseAchievementChecker implement
    * Instance method implementation of the abstract method
    * Acts as a bridge to the static method for interface conformance
    */
-  async checkAchievements(userId: string): Promise<ServiceResponse<void>> {
+  async checkAchievements(userId: string, data?: any): Promise<ServiceResponse<void>> {
     return ActivityAchievementChecker.checkAchievements(userId);
   }
 
