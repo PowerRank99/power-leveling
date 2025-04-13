@@ -1,6 +1,5 @@
-
 import { useState } from 'react';
-import { WorkoutExercise } from '@/types/workout';
+import { WorkoutExercise, SetData } from '@/types/workout';
 import { useSetManagement } from './useSetManagement';
 import { toast } from 'sonner';
 
@@ -32,9 +31,23 @@ export const useWorkoutSetOperations = (
     try {
       console.log(`Updating set ${setIndex} for exercise index ${exerciseIndex} with:`, data);
       
-      const result = await updateSet(exerciseIndex, exercises, setIndex, data);
+      // Extract just the sets from the exercise for the update operation
+      const exerciseSets = exercises[exerciseIndex].sets as SetData[];
+      const result = await updateSet(exerciseIndex, exerciseSets, setIndex, data);
+      
       if (result) {
-        setExercises(result);
+        // Create new exercise array with updated sets
+        const updatedExercises = exercises.map((exercise, idx) => {
+          if (idx === exerciseIndex) {
+            return {
+              ...exercise,
+              sets: result
+            };
+          }
+          return exercise;
+        });
+        
+        setExercises(updatedExercises);
         return true;
       }
       return false;
@@ -51,9 +64,23 @@ export const useWorkoutSetOperations = (
     try {
       console.log(`Adding new set for exercise index ${exerciseIndex}`);
       
-      const result = await addSet(exerciseIndex, exercises, routineId);
+      // Extract sets for the operation
+      const exerciseSets = exercises[exerciseIndex].sets as SetData[];
+      const result = await addSet(exerciseIndex, exerciseSets, routineId);
+      
       if (result) {
-        setExercises(result);
+        // Update the exercises array with new sets
+        const updatedExercises = exercises.map((exercise, idx) => {
+          if (idx === exerciseIndex) {
+            return {
+              ...exercise,
+              sets: result
+            };
+          }
+          return exercise;
+        });
+        
+        setExercises(updatedExercises);
         return true;
       } else {
         console.error("Failed to add set, no result returned");
@@ -75,9 +102,23 @@ export const useWorkoutSetOperations = (
     try {
       console.log(`Removing set ${setIndex} from exercise index ${exerciseIndex}`);
       
-      const result = await removeSet(exerciseIndex, exercises, setIndex, routineId);
+      // Extract sets for the operation
+      const exerciseSets = exercises[exerciseIndex].sets as SetData[];
+      const result = await removeSet(exerciseIndex, exerciseSets, setIndex, routineId);
+      
       if (result) {
-        setExercises(result);
+        // Update the exercises array with modified sets
+        const updatedExercises = exercises.map((exercise, idx) => {
+          if (idx === exerciseIndex) {
+            return {
+              ...exercise,
+              sets: result
+            };
+          }
+          return exercise;
+        });
+        
+        setExercises(updatedExercises);
         return true;
       }
       return false;
@@ -86,7 +127,7 @@ export const useWorkoutSetOperations = (
       return false;
     }
   };
-  
+
   /**
    * Marks a set as completed or not completed
    */
