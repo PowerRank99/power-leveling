@@ -1,12 +1,14 @@
 
 import { ServiceResponse } from '@/services/common/ErrorHandlingService';
-import { WorkoutAchievementChecker } from './WorkoutAchievementChecker';
-import { RecordAchievementChecker } from './RecordAchievementChecker';
-import { StreakAchievementChecker } from './StreakAchievementChecker';
-import { ActivityAchievementChecker } from './ActivityAchievementChecker';
-import { XPAchievementChecker } from './XPAchievementChecker';
 import { BaseAchievementChecker } from './BaseAchievementChecker';
 import type { PersonalRecordData } from './AchievementCheckerInterface';
+
+// Import specialized services 
+import { WorkoutCheckerService } from './checkers/WorkoutCheckerService';
+import { RecordCheckerService } from './checkers/RecordCheckerService';
+import { StreakCheckerService } from './checkers/StreakCheckerService';
+import { XPCheckerService } from './checkers/XPCheckerService';
+import { ActivityCheckerService } from './checkers/ActivityCheckerService';
 
 /**
  * Centralized service for checking and awarding achievements
@@ -25,7 +27,7 @@ export class AchievementCheckerService extends BaseAchievementChecker {
    * Check all achievements relevant to workout completion
    */
   static async checkWorkoutRelatedAchievements(userId: string): Promise<ServiceResponse<void>> {
-    return WorkoutAchievementChecker.checkAchievements(userId);
+    return WorkoutCheckerService.checkWorkoutAchievements(userId);
   }
 
   /**
@@ -35,14 +37,14 @@ export class AchievementCheckerService extends BaseAchievementChecker {
     userId: string,
     recordInfo?: PersonalRecordData
   ): Promise<ServiceResponse<void>> {
-    return RecordAchievementChecker.checkAchievements(userId, recordInfo);
+    return RecordCheckerService.checkPersonalRecordAchievements(userId, recordInfo);
   }
 
   /**
    * Check all achievements related to streaks
    */
   static async checkStreakAchievements(userId: string): Promise<ServiceResponse<void>> {
-    return StreakAchievementChecker.checkAchievements(userId);
+    return StreakCheckerService.checkStreakAchievements(userId);
   }
 
   /**
@@ -52,28 +54,28 @@ export class AchievementCheckerService extends BaseAchievementChecker {
     userId: string, 
     totalXP?: number
   ): Promise<ServiceResponse<void>> {
-    return XPAchievementChecker.checkAchievements(userId, totalXP);
+    return XPCheckerService.checkXPMilestoneAchievements(userId, totalXP);
   }
 
   /**
    * Check activity variety achievements
    */
   static async checkActivityVarietyAchievements(userId: string): Promise<ServiceResponse<void>> {
-    return ActivityAchievementChecker.checkAchievements(userId);
+    return ActivityCheckerService.checkActivityVarietyAchievements(userId);
   }
 
   /**
    * Check for manual workout achievements
    */
   static async checkManualWorkoutAchievements(userId: string): Promise<ServiceResponse<void>> {
-    return ActivityAchievementChecker.checkManualWorkoutAchievements(userId);
+    return ActivityCheckerService.checkManualWorkoutAchievements(userId);
   }
 
   /**
    * Check a user's workout history for achievements
    */
   static async checkWorkoutHistoryAchievements(userId: string): Promise<ServiceResponse<void>> {
-    return WorkoutAchievementChecker.checkWorkoutHistoryAchievements(userId);
+    return WorkoutCheckerService.checkWorkoutHistoryAchievements(userId);
   }
 }
 

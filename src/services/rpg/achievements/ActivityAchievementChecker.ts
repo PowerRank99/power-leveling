@@ -81,12 +81,22 @@ export class ActivityAchievementChecker extends BaseAchievementChecker implement
     try {
       // Use a custom query to get distinct activity types
       const { data, error } = await supabase
-        .rpc('get_distinct_activity_types_count', { p_user_id: userId });
+        .from('manual_workouts')
+        .select('activity_type', { count: 'exact', head: false })
+        .eq('user_id', userId)
+        .is('activity_type', 'not.null');
         
       if (error) throw error;
       
-      // Process the count result
-      const distinctCount = typeof data === 'number' ? data : 0;
+      // Count unique activity types
+      const distinctTypes = new Set();
+      if (data) {
+        data.forEach(item => {
+          if (item.activity_type) distinctTypes.add(item.activity_type);
+        });
+      }
+      
+      const distinctCount = distinctTypes.size;
       
       const achievementChecks: string[] = [];
       
@@ -108,14 +118,22 @@ export class ActivityAchievementChecker extends BaseAchievementChecker implement
    */
   private static async checkExerciseTypeVarietyAchievements(userId: string): Promise<void> {
     try {
-      // Use a custom query to get distinct exercise types used in completed workouts
+      // Query to get distinct exercise types from completed workouts
       const { data, error } = await supabase
-        .rpc('get_distinct_exercise_types_count', { p_user_id: userId });
+        .from('workout_sets')
+        .select('exercise_id, workouts!inner(user_id)')
+        .eq('workouts.user_id', userId)
+        .eq('completed', true);
         
       if (error) throw error;
       
-      // Process the count result
-      const distinctCount = typeof data === 'number' ? data : 0;
+      // Get unique exercise IDs
+      const uniqueExerciseIds = new Set();
+      data.forEach(item => {
+        if (item.exercise_id) uniqueExerciseIds.add(item.exercise_id);
+      });
+      
+      const distinctCount = uniqueExerciseIds.size;
       
       const achievementChecks: string[] = [];
       
