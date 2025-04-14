@@ -13,7 +13,7 @@ export class ExerciseTypeClassifier {
    */
   static isGuerreiroExercise(exercise: WorkoutExercise): boolean {
     const exerciseName = exercise.name.toLowerCase();
-    return exercise.type === 'Musculação' || 
+    return (exercise as any).type === 'Musculação' || 
            EXERCISE_TYPES.COMPOUND_LIFTS.some(term => exerciseName.includes(term));
   }
   
@@ -24,7 +24,7 @@ export class ExerciseTypeClassifier {
    */
   static isMongeExercise(exercise: WorkoutExercise): boolean {
     const exerciseName = exercise.name.toLowerCase();
-    return exercise.type === 'Calistenia' ||
+    return (exercise as any).type === 'Calistenia' ||
            EXERCISE_TYPES.BODYWEIGHT.some(term => exerciseName.includes(term));
   }
   
@@ -35,7 +35,7 @@ export class ExerciseTypeClassifier {
    */
   static isNinjaExercise(exercise: WorkoutExercise): boolean {
     const exerciseName = exercise.name.toLowerCase();
-    return exercise.type === 'Cardio' ||
+    return (exercise as any).type === 'Cardio' ||
            EXERCISE_TYPES.CARDIO_HIIT.some(term => exerciseName.includes(term));
   }
   
@@ -46,7 +46,7 @@ export class ExerciseTypeClassifier {
    */
   static isDruidaExercise(exercise: WorkoutExercise): boolean {
     const exerciseName = exercise.name.toLowerCase();
-    return exercise.type === 'Flexibilidade & Mobilidade' ||
+    return (exercise as any).type === 'Flexibilidade & Mobilidade' ||
            EXERCISE_TYPES.MOBILITY.some(term => exerciseName.includes(term));
   }
   
@@ -57,7 +57,7 @@ export class ExerciseTypeClassifier {
    */
   static isPaladinoExercise(exercise: WorkoutExercise): boolean {
     const exerciseName = exercise.name.toLowerCase();
-    return exercise.type === 'Esportes' ||
+    return (exercise as any).type === 'Esportes' ||
            EXERCISE_TYPES.SPORTS.some(term => exerciseName.includes(term));
   }
   

@@ -19,8 +19,8 @@ export class DruidaBonus {
       id: string;
       exercises: WorkoutExercise[];
     },
-    userId?: string,
-    isQualifyingExercise: (exercise: WorkoutExercise) => boolean
+    isQualifyingExercise: (exercise: WorkoutExercise) => boolean,
+    userId?: string
   ): { bonusXP: number; bonusBreakdown: ClassBonusBreakdown[] } {
     const bonusBreakdown: ClassBonusBreakdown[] = [];
     let bonusXP = 0;

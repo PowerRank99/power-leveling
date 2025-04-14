@@ -1,117 +1,51 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useClass } from '@/contexts/ClassContext';
-import PageHeader from '@/components/ui/PageHeader';
-import BottomNavBar from '@/components/navigation/BottomNavBar';
-import ProfileHeader from '@/components/profile/ProfileHeader';
-import ProfileProgressSection from '@/components/profile/ProfileProgressSection';
-import ClassSection from '@/components/profile/ClassSection';
-import RecentAchievementsList from '@/components/profile/RecentAchievementsList';
-import ProfileActions from '@/components/profile/ProfileActions';
-import ClassIconSelector from '@/components/profile/ClassIconSelector';
-import ProfileDataProvider from '@/components/profile/ProfileDataProvider';
-import UserDataFormatter from '@/components/profile/UserDataFormatter';
-import { getMockAchievements } from '@/components/profile/MockAchievements';
-import { supabase } from '@/integrations/supabase/client';
-import { XPBonusService } from '@/services/rpg/XPBonusService';
+import { Button } from '@/components/ui/button';
 
 const ProfilePage = () => {
-  const { user, profile, signOut } = useAuth();
-  const { userClass } = useClass();
-  const [classBonuses, setClassBonuses] = useState<{description: string; value: string}[]>([]);
-  const [weeklyBonus, setWeeklyBonus] = useState(0);
-  const [monthlyBonus, setMonthlyBonus] = useState(0);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleTestClassBonus = () => {
+    navigate('/testing/class-bonus');
+  };
   
-  useEffect(() => {
-    const fetchClassBonuses = async () => {
-      if (userClass) {
-        try {
-          const { data } = await supabase
-            .from('class_bonuses')
-            .select('description, bonus_value')
-            .eq('class_name', userClass);
-            
-          if (data) {
-            setClassBonuses(data.map(bonus => ({
-              description: bonus.description,
-              value: `+${Math.round(bonus.bonus_value * 100)}%`
-            })));
-          }
-        } catch (error) {
-          console.error('Error fetching class bonuses:', error);
-        }
-      }
-    };
-    
-    const calculateBonuses = async () => {
-      if (user?.id && profile?.last_workout_at) {
-        setWeeklyBonus(XPBonusService.WEEKLY_COMPLETION_BONUS);
-        setMonthlyBonus(0);
-      }
-    };
-    
-    fetchClassBonuses();
-    calculateBonuses();
-  }, [userClass, user?.id, profile?.last_workout_at]);
-  
-  const recentAchievements = getMockAchievements();
-  
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/login');
+  };
+
   return (
-    <div className="pb-20 min-h-screen bg-midnight-base">
-      <PageHeader 
-        title="Perfil" 
-        rightContent={<ProfileActions onSignOut={signOut} />}
-      />
-      
-      <div className="px-4">
-        <UserDataFormatter user={user} profile={profile}>
-          {({ avatar, name, username, workoutsCount }) => (
-            <ProfileDataProvider userId={user?.id || ""}>
-              {(profileData) => (
-                <>
-                  <ProfileHeader 
-                    avatar={avatar}
-                    name={name}
-                    username={username}
-                    level={profileData.level}
-                    className={profileData.className}
-                    workoutsCount={workoutsCount}
-                    ranking={Number(profileData.ranking)}
-                    currentXP={profileData.currentXP}
-                    nextLevelXP={profileData.nextLevelXP}
-                    rank={profileData.rank}
-                    achievementPoints={profileData.achievementPoints}
-                  />
-                  
-                  <ProfileProgressSection 
-                    dailyXP={profileData.dailyXP}
-                    dailyXPCap={profileData.dailyXPCap}
-                    lastActivity={profileData.lastActivity}
-                    xpGain={profileData.xpGain}
-                    streak={profileData.streak}
-                    weeklyBonus={weeklyBonus}
-                    monthlyBonus={monthlyBonus}
-                  />
-                  
-                  <ClassSection 
-                    className={profileData.className}
-                    classDescription={profileData.classDescription}
-                    icon={<ClassIconSelector className={profileData.className} />}
-                    bonuses={classBonuses}
-                  />
-                  
-                  <div className="mb-5">
-                    <RecentAchievementsList achievements={recentAchievements} />
-                  </div>
-                </>
-              )}
-            </ProfileDataProvider>
-          )}
-        </UserDataFormatter>
+    <div className="min-h-screen bg-midnight-base p-4">
+      <div className="max-w-lg mx-auto">
+        <h1 className="text-2xl font-bold mb-6">Profile Page</h1>
+        
+        {user ? (
+          <div className="rounded-lg bg-midnight-card p-4 border border-divider/20 space-y-4">
+            <div>
+              <div className="text-text-secondary">Email:</div>
+              <div className="font-semibold">{user.email}</div>
+            </div>
+            
+            <div className="pt-4 space-y-2">
+              <Button onClick={handleTestClassBonus} className="w-full">
+                Test Class XP Bonuses
+              </Button>
+              
+              <Button onClick={handleLogout} variant="outline" className="w-full">
+                Logout
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="mb-4">You are not logged in</p>
+            <Button onClick={() => navigate('/login')}>Go to Login</Button>
+          </div>
+        )}
       </div>
-      
-      <BottomNavBar />
     </div>
   );
 };

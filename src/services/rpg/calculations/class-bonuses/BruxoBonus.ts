@@ -1,3 +1,4 @@
+
 import { EXERCISE_TYPES, CLASS_PASSIVE_SKILLS } from '../../constants/exerciseTypes';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { ClassBonusBreakdown } from '../../types/classTypes';
@@ -62,7 +63,7 @@ export class BruxoBonus {
       // Check if user has completed 100 workouts
       const { data, error } = await supabase
         .from('workouts')
-        .select('count(*)')
+        .select('count')
         .eq('user_id', userId);
       
       if (error) {
@@ -70,7 +71,8 @@ export class BruxoBonus {
         return false;
       }
       
-      const workoutCount = data ? (data[0]?.count as number) : 0;
+      // Safely access the count from the returned data
+      const workoutCount = data && data.length > 0 ? parseInt(data[0].count as unknown as string, 10) : 0;
       return workoutCount >= 100;
     } catch (error) {
       console.error('Error checking achievement bonus:', error);

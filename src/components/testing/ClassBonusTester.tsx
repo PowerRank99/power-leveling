@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { XPCalculationService } from '@/services/rpg/XPCalculationService';
 import { ExerciseType } from '@/components/workout/types/Exercise';
+import { ExerciseTypeClassifier } from '@/services/rpg/calculations/ExerciseTypeClassifier';
 
 const ClassBonusTester = () => {
   // Test configuration
@@ -16,15 +17,35 @@ const ClassBonusTester = () => {
   const [setsPerExercise, setSetsPerExercise] = useState(3);
   const [durationMinutes, setDurationMinutes] = useState(60);
   const [hasPR, setHasPR] = useState(false);
+  const [exerciseName, setExerciseName] = useState('Agachamento');
   
   // Results
   const [results, setResults] = useState<any>(null);
+  const [exerciseMatches, setExerciseMatches] = useState<any>(null);
+  
+  const checkClassMatches = (exerciseName: string, type: ExerciseType) => {
+    const testExercise = {
+      id: 'test-id',
+      name: exerciseName,
+      exerciseId: 'test-id',
+      type: type,
+      sets: []
+    };
+    
+    return {
+      isGuerreiroExercise: ExerciseTypeClassifier.isGuerreiroExercise(testExercise),
+      isMongeExercise: ExerciseTypeClassifier.isMongeExercise(testExercise),
+      isNinjaExercise: ExerciseTypeClassifier.isNinjaExercise(testExercise),
+      isDruidaExercise: ExerciseTypeClassifier.isDruidaExercise(testExercise),
+      isPaladinoExercise: ExerciseTypeClassifier.isPaladinoExercise(testExercise)
+    };
+  };
   
   const runTest = () => {
     // Create a simulated workout with the specified exercise type
     const exercises = Array(exerciseCount).fill(0).map((_, i) => ({
       id: `test-ex-${i}`,
-      name: `Test Exercise ${i+1}`,
+      name: `${exerciseName} ${i+1}`,
       exerciseId: `ex-${i}`,
       type: exerciseType,
       sets: Array(setsPerExercise).fill(0).map((_, j) => ({
@@ -34,6 +55,10 @@ const ClassBonusTester = () => {
         completed: true
       }))
     }));
+    
+    // Check exercise classifications
+    const matches = checkClassMatches(exerciseName, exerciseType);
+    setExerciseMatches(matches);
     
     // Calculate XP using our service
     const result = XPCalculationService.calculateWorkoutXP({
@@ -93,6 +118,16 @@ const ClassBonusTester = () => {
             </div>
             
             <div className="space-y-2">
+              <Label htmlFor="exerciseName">Exercise Name</Label>
+              <Input 
+                id="exerciseName" 
+                type="text" 
+                value={exerciseName} 
+                onChange={(e) => setExerciseName(e.target.value)} 
+              />
+            </div>
+            
+            <div className="space-y-2">
               <Label htmlFor="exerciseCount">Exercise Count</Label>
               <Input 
                 id="exerciseCount" 
@@ -138,6 +173,33 @@ const ClassBonusTester = () => {
           </div>
           
           <Button onClick={runTest} className="w-full">Calculate XP</Button>
+          
+          {exerciseMatches && (
+            <div className="mt-6 space-y-4">
+              <div className="rounded-md bg-midnight-card p-4 border border-divider/20">
+                <h3 className="font-semibold mb-2">Exercise Classification:</h3>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>Exercise:</div>
+                  <div className="text-right">{exerciseName} ({exerciseType})</div>
+                  
+                  <div>Guerreiro Exercise:</div>
+                  <div className="text-right">{exerciseMatches.isGuerreiroExercise ? '✓' : '✗'}</div>
+                  
+                  <div>Monge Exercise:</div>
+                  <div className="text-right">{exerciseMatches.isMongeExercise ? '✓' : '✗'}</div>
+                  
+                  <div>Ninja Exercise:</div>
+                  <div className="text-right">{exerciseMatches.isNinjaExercise ? '✓' : '✗'}</div>
+                  
+                  <div>Druida Exercise:</div>
+                  <div className="text-right">{exerciseMatches.isDruidaExercise ? '✓' : '✗'}</div>
+                  
+                  <div>Paladino Exercise:</div>
+                  <div className="text-right">{exerciseMatches.isPaladinoExercise ? '✓' : '✗'}</div>
+                </div>
+              </div>
+            </div>
+          )}
           
           {results && (
             <div className="mt-6 space-y-4">

@@ -109,8 +109,8 @@ export class ClassBonusCalculator {
         const { bonusXP, bonusBreakdown: breakdown } = DruidaBonus.applyBonuses(
           components,
           workout,
-          userId,
-          ExerciseTypeClassifier.isDruidaExercise
+          ExerciseTypeClassifier.isDruidaExercise,
+          userId
         );
         totalXP += bonusXP;
         bonusBreakdown = breakdown;

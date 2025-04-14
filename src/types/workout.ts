@@ -1,22 +1,20 @@
 
 /**
- * Consolidated workout types for the entire application
+ * Core workout data types for the application
  */
 
 /**
- * Base workout interface with common properties
+ * Interface for workout exercise data
  */
-export interface BaseWorkout {
+export interface WorkoutExercise {
   id: string;
-  userId: string;
-  routineId?: string | null;
-  startedAt: string;
-  completedAt?: string | null;
-  durationSeconds?: number | null;
+  exerciseId: string;
+  name: string;
+  sets: WorkoutSet[];
 }
 
 /**
- * Represents a single exercise set
+ * Interface for workout set data
  */
 export interface WorkoutSet {
   id: string;
@@ -24,7 +22,6 @@ export interface WorkoutSet {
   reps: string;
   completed: boolean;
   set_order?: number;
-  completed_at?: string | null;
   previous?: {
     weight: string;
     reps: string;
@@ -32,135 +29,67 @@ export interface WorkoutSet {
 }
 
 /**
- * Represents an exercise within a workout
- */
-export interface WorkoutExercise {
-  id: string;
-  name: string;
-  exerciseId: string; // Changed from optional to required for compatibility
-  sets: WorkoutSet[];
-  targetSets?: number; // From workout routine
-  targetReps?: string; // From workout routine
-}
-
-/**
- * Represents data for workout exercises coming from the database
- * This maintains backward compatibility with existing code
+ * Interface for database-formatted exercise data
  */
 export interface WorkoutExerciseData {
-  exerciseId: string;
-  weight?: number;
-  reps?: number;
-  sets?: number;
-  targetSets?: number;
-  id?: string;
-  name?: string;
-}
-
-/**
- * Complete workout session with exercises
- */
-export interface WorkoutSession extends BaseWorkout {
-  exercises: WorkoutExercise[];
-  notes?: Record<string, string>; // Exercise ID to notes
-}
-
-/**
- * For displaying workout history/summary
- */
-export interface WorkoutSummary {
   id: string;
+  exercise_id: string;
   name: string;
-  date: string;
-  workoutDate: string; // ISO string for sorting
-  exercisesCount: number;
-  setsCount: number;
-  prs: number;
-  durationSeconds: number | null;
-  type: 'tracked';
 }
 
 /**
- * For manual workout entries
- */
-export interface ManualWorkout {
-  id: string;
-  date: string;
-  workoutDate: string; // ISO string for sorting
-  type: 'manual';
-  description: string | null;
-  activityType: string | null;
-  photoUrl: string;
-  xpAwarded: number;
-  isPowerDay: boolean;
-}
-
-/**
- * Union type for workout history display
- */
-export type UnifiedWorkout = WorkoutSummary | ManualWorkout;
-
-/**
- * Exercise history for a user
- */
-export interface ExerciseHistory {
-  id: string;
-  userId: string;
-  exerciseId: string;
-  weight: number;
-  reps: number;
-  sets: number;
-  lastUsedAt: string;
-  createdAt: string;
-}
-
-/**
- * Previous set data (simple version for reuse)
- */
-export interface PreviousSetData {
-  weight: string;
-  reps: string;
-}
-
-/**
- * Set data for use in components (maintains compatibility)
+ * Interface for set data
  */
 export interface SetData {
   id: string;
+  exercise_id: string;
+  weight: number | null;
+  reps: number | null;
+  completed: boolean;
+  set_order: number;
+}
+
+/**
+ * Interface for previous set data
+ */
+export interface PreviousSetData {
+  id: string;
+  exercise_id: string;
   weight: string;
   reps: string;
-  completed: boolean;
-  previous?: PreviousSetData;
-  set_order?: number;
+  set_order: number;
 }
 
 /**
- * Personal record for an exercise
+ * Interface for exercise history data
  */
-export interface PersonalRecord {
-  exerciseId: string;
+export interface ExerciseHistory {
+  id: string;
+  user_id: string;
+  exercise_id: string;
   weight: number;
-  previousWeight: number;
+  reps: number;
+  sets: number;
+  last_used_at: string;
 }
 
 /**
- * Timer state for workout rest timer
- */
-export interface TimerState {
-  isActive: boolean;
-  isPaused: boolean;
-  remainingSeconds: number;
-  totalSeconds: number;
-  progress: number;
-  exerciseId?: string;
-  exerciseName?: string;
-}
-
-/**
- * Standardized database operation result
+ * Interface for database operation result
  */
 export interface DatabaseResult<T> {
-  success: boolean;
-  data?: T;
-  error?: any;
+  data: T | null;
+  error: Error | null;
+}
+
+/**
+ * Interface for personal record data
+ */
+export interface PersonalRecord {
+  id?: string;
+  user_id?: string;
+  exercise_id: string;
+  exercise_name: string;
+  weight: number;
+  previous_weight: number;
+  recorded_at?: string;
 }

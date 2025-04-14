@@ -1,88 +1,89 @@
 
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Session, User } from '@supabase/supabase-js';
 
-type AuthContextType = {
-  session: Session | null;
+interface User {
+  id: string;
+  email: string;
+}
+
+interface AuthContextType {
   user: User | null;
-  profile: any | null;
   loading: boolean;
+  signIn: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
-};
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [session, setSession] = useState<Session | null>(null);
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
-        
-        // Defer profile fetching to avoid recursion
-        if (newSession?.user) {
-          setTimeout(() => {
-            fetchProfile(newSession.user.id);
-          }, 0);
-        } else {
-          setProfile(null);
-        }
-      }
-    );
-
-    // THEN check for existing session
-    const initializeAuth = async () => {
-      setLoading(true);
+    const getCurrentUser = async () => {
       try {
-        const { data } = await supabase.auth.getSession();
-        setSession(data.session);
-        setUser(data.session?.user ?? null);
+        const { data: { user } } = await supabase.auth.getUser();
         
-        if (data.session?.user) {
-          await fetchProfile(data.session.user.id);
+        if (user) {
+          setUser({
+            id: user.id,
+            email: user.email || '',
+          });
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
+        console.error('Error fetching user:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    initializeAuth();
-    return () => subscription.unsubscribe();
+    getCurrentUser();
+
+    // Set up auth state listener
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session && session.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email || '',
+        });
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
-  const fetchProfile = async (userId: string) => {
+  const signIn = async (email: string, password: string) => {
     try {
-      // Using a type assertion to work around the TypeScript limitation
-      const { data, error } = await (supabase as any)
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
       if (error) throw error;
-      setProfile(data);
+      return data;
     } catch (error) {
-      console.error('Error fetching profile:', error);
-      setProfile(null);
+      console.error('Error signing in:', error);
+      throw error;
     }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setProfile(null);
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, loading, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );
