@@ -1,7 +1,7 @@
 
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { AchievementService } from '@/services/rpg/AchievementService';
-import { AchievementUtils } from '@/constants/AchievementDefinitions';
+import { AchievementUtils } from '@/constants/achievements';
 import { supabase } from '@/integrations/supabase/client';
 import { AchievementCategory } from '@/types/achievementTypes';
 

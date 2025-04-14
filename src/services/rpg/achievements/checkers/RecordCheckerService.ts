@@ -1,20 +1,64 @@
 
-import { ServiceResponse } from '@/services/common/ErrorHandlingService';
-import { RecordAchievementChecker } from '../RecordAchievementChecker';
-import { BaseAchievementService } from './BaseAchievementService';
-import type { PersonalRecordData } from '../AchievementCheckerInterface';
+import { ServiceResponse, ErrorHandlingService, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
+import { BaseAchievementChecker } from '../BaseAchievementChecker';
+import { AchievementService } from '@/services/rpg/AchievementService';
+import { supabase } from '@/integrations/supabase/client';
+import { PersonalRecordData } from '../AchievementCheckerInterface';
 
 /**
- * Service specifically for checking record-related achievements
+ * Service specifically for checking personal record achievements
  */
-export class RecordCheckerService extends BaseAchievementService {
+export class RecordCheckerService extends BaseAchievementChecker {
   /**
-   * Check all achievements related to personal records
+   * Implementation of abstract method from BaseAchievementChecker
+   */
+  async checkAchievements(userId: string, recordInfo?: PersonalRecordData): Promise<ServiceResponse<void>> {
+    return RecordCheckerService.checkPersonalRecordAchievements(userId, recordInfo);
+  }
+  
+  /**
+   * Check personal record achievements
    */
   static async checkPersonalRecordAchievements(
     userId: string,
     recordInfo?: PersonalRecordData
   ): Promise<ServiceResponse<void>> {
-    return RecordAchievementChecker.checkAchievements(userId, recordInfo);
+    try {
+      // Get user's personal record count
+      const { count: recordCount, error: countError } = await supabase
+        .from('personal_records')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+        
+      if (countError) {
+        return createErrorResponse(
+          countError.message,
+          'Failed to count personal records',
+          ErrorCategory.DATABASE
+        );
+      }
+      
+      // Define achievements to check based on record count
+      const achievementsToCheck = [];
+      
+      if (recordCount && recordCount >= 1) achievementsToCheck.push('pr-first');
+      if (recordCount && recordCount >= 5) achievementsToCheck.push('pr-5');
+      if (recordCount && recordCount >= 10) achievementsToCheck.push('pr-10');
+      if (recordCount && recordCount >= 25) achievementsToCheck.push('pr-25');
+      if (recordCount && recordCount >= 50) achievementsToCheck.push('pr-50');
+      
+      // Award achievements
+      if (achievementsToCheck.length > 0) {
+        await AchievementService.checkAndAwardAchievements(userId, achievementsToCheck);
+      }
+      
+      return createSuccessResponse(undefined);
+    } catch (error) {
+      return createErrorResponse(
+        (error as Error).message,
+        `Exception in checkPersonalRecordAchievements: ${(error as Error).message}`,
+        ErrorCategory.EXCEPTION
+      );
+    }
   }
 }

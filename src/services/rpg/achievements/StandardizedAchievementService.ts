@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 import { AchievementUtils } from '@/constants/achievements';
@@ -6,6 +7,7 @@ import { useAchievementNotificationStore } from '@/stores/achievementNotificatio
 import { XPService } from '../XPService';
 import { AchievementCategory } from '@/types/achievementTypes';
 import { AchievementDefinition } from '@/constants/achievements/AchievementSchema';
+import { AchievementCheckerService } from './AchievementCheckerService';
 
 /**
  * Standardized achievement service that provides consistent achievement verification and awarding.
@@ -241,113 +243,68 @@ export class StandardizedAchievementService {
   }
   
   /**
-   * Check for workout-related achievements using the standardized definitions
+   * Check for workout-related achievements using the specialized service
    */
   static async checkWorkoutAchievements(userId: string): Promise<ServiceResponse<string[]>> {
-    try {
-      if (!userId) {
-        return createSuccessResponse([]);
-      }
-      
-      // Get user's workout stats
-      const { count: workoutCount, error: countError } = await supabase
-        .from('workouts')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId);
-        
-      if (countError) {
-        return createErrorResponse(
-          countError.message,
-          'Failed to count workouts',
-          ErrorCategory.DATABASE
-        );
-      }
-      
-      // Get achievement definitions related to workout counts from centralized system
-      const workoutAchievements = AchievementUtils
-        .getAchievementsByCategory(AchievementCategory.WORKOUT)
-        .filter(a => a.requirementType === 'workouts_count')
-        .sort((a, b) => b.requirementValue - a.requirementValue); // Sort descending
-      
-      // Find achievements to award
-      const achievementsToCheck: string[] = [];
-      
-      for (const achievement of workoutAchievements) {
-        if (workoutCount && workoutCount >= achievement.requirementValue) {
-          achievementsToCheck.push(achievement.id);
-        }
-      }
-      
-      // Award achievements
-      if (achievementsToCheck.length > 0) {
-        const result = await this.checkAndAwardMultipleAchievements(userId, achievementsToCheck);
-        return result;
-      }
-      
-      return createSuccessResponse([]);
-    } catch (error) {
+    // Delegate to the specialized checker service
+    const result = await AchievementCheckerService.checkWorkoutRelatedAchievements(userId);
+    
+    if (!result.success) {
       return createErrorResponse(
-        (error as Error).message,
-        `Exception in checkWorkoutAchievements: ${(error as Error).message}`,
-        ErrorCategory.EXCEPTION
+        result.message || 'Failed to check workout achievements',
+        result.details || 'Unknown error',
+        result.error?.category || ErrorCategory.UNKNOWN
       );
     }
+    
+    // Get existing achievements to determine which ones were awarded
+    const { data: achievements, error } = await supabase
+      .from('user_achievements')
+      .select('achievement_id')
+      .eq('user_id', userId)
+      .in('achievement_id', AchievementUtils.getAchievementsByCategory(AchievementCategory.WORKOUT).map(a => a.id));
+      
+    if (error) {
+      return createErrorResponse(
+        error.message,
+        'Failed to get awarded workout achievements',
+        ErrorCategory.DATABASE
+      );
+    }
+    
+    return createSuccessResponse(achievements?.map(a => a.achievement_id) || []);
   }
   
   /**
-   * Check streak-related achievements
+   * Check streak-related achievements using the specialized service
    */
   static async checkStreakAchievements(userId: string): Promise<ServiceResponse<string[]>> {
-    try {
-      if (!userId) {
-        return createSuccessResponse([]);
-      }
-      
-      // Get user's current streak
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('streak')
-        .eq('id', userId)
-        .maybeSingle();
-        
-      if (profileError) {
-        return createErrorResponse(
-          profileError.message,
-          'Failed to get user profile',
-          ErrorCategory.DATABASE
-        );
-      }
-      
-      const currentStreak = profile?.streak || 0;
-      
-      // Get streak achievements from centralized definitions
-      const streakAchievements = AchievementUtils
-        .getAchievementsByCategory(AchievementCategory.STREAK)
-        .filter(a => a.requirementType === 'streak_days')
-        .sort((a, b) => b.requirementValue - a.requirementValue); // Sort descending
-      
-      // Find achievements to award
-      const achievementsToCheck: string[] = [];
-      
-      for (const achievement of streakAchievements) {
-        if (currentStreak >= achievement.requirementValue) {
-          achievementsToCheck.push(achievement.id);
-        }
-      }
-      
-      // Award achievements
-      if (achievementsToCheck.length > 0) {
-        const result = await this.checkAndAwardMultipleAchievements(userId, achievementsToCheck);
-        return result;
-      }
-      
-      return createSuccessResponse([]);
-    } catch (error) {
+    // Delegate to the specialized checker service
+    const result = await AchievementCheckerService.checkStreakAchievements(userId);
+    
+    if (!result.success) {
       return createErrorResponse(
-        (error as Error).message,
-        `Exception in checkStreakAchievements: ${(error as Error).message}`,
-        ErrorCategory.EXCEPTION
+        result.message || 'Failed to check streak achievements',
+        result.details || 'Unknown error',
+        result.error?.category || ErrorCategory.UNKNOWN
       );
     }
+    
+    // Get existing achievements to determine which ones were awarded
+    const { data: achievements, error } = await supabase
+      .from('user_achievements')
+      .select('achievement_id')
+      .eq('user_id', userId)
+      .in('achievement_id', AchievementUtils.getAchievementsByCategory(AchievementCategory.STREAK).map(a => a.id));
+      
+    if (error) {
+      return createErrorResponse(
+        error.message,
+        'Failed to get awarded streak achievements',
+        ErrorCategory.DATABASE
+      );
+    }
+    
+    return createSuccessResponse(achievements?.map(a => a.achievement_id) || []);
   }
 }

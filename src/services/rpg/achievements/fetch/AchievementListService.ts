@@ -1,95 +1,83 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceResponse, createSuccessResponse } from '@/services/common/ErrorHandlingService';
-import { Achievement, UserAchievementData, AchievementRank, AchievementCategory } from '@/types/achievementTypes';
-import { BaseAchievementFetchService } from './BaseAchievementFetchService';
+import { ServiceResponse, ErrorHandlingService, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
+import { Achievement, UserAchievementData } from '@/types/achievementTypes';
+import { AchievementUtils } from '@/constants/achievements';
 
 /**
  * Service for fetching achievement lists
  */
-export class AchievementListService extends BaseAchievementFetchService {
+export class AchievementListService {
   /**
    * Get all achievements
    */
   static async getAllAchievements(): Promise<ServiceResponse<Achievement[]>> {
-    try {
-      const { data, error } = await supabase
-        .from('achievements')
-        .select('*')
-        .order('rank');
+    return ErrorHandlingService.executeWithErrorHandling(
+      async () => {
+        // Use the centralized achievement definitions
+        const achievements = AchievementUtils.getAllAchievements()
+          .map(def => AchievementUtils.convertToAchievement(def));
         
-      if (error) {
-        return this.handleQueryError(error, 'fetch achievements');
-      }
-      
-      // Transform the data to match our Achievement interface
-      const achievements = data?.map(achievement => ({
-        id: achievement.id,
-        name: achievement.name,
-        description: achievement.description,
-        category: achievement.category as AchievementCategory,
-        rank: achievement.rank as AchievementRank,
-        points: achievement.points,
-        xpReward: achievement.xp_reward,
-        iconName: achievement.icon_name,
-        requirements: achievement.requirements,
-        isUnlocked: false
-      })) as Achievement[] || [];
-      
-      return createSuccessResponse(achievements);
-    } catch (error) {
-      return this.handleException(error, 'fetching achievements');
-    }
+        return achievements;
+      },
+      'GET_ALL_ACHIEVEMENTS',
+      { showToast: false }
+    );
   }
   
   /**
    * Get unlocked achievements for a user
    */
   static async getUnlockedAchievements(userId: string): Promise<ServiceResponse<Achievement[]>> {
-    try {
-      const { data, error } = await supabase
-        .from('user_achievements')
-        .select(`
-          achievement_id,
-          achieved_at,
-          achievements:achievement_id (
-            id,
-            name,
-            description,
-            category,
-            rank,
-            points,
-            xp_reward,
-            icon_name,
-            requirements
-          )
-        `)
-        .eq('user_id', userId)
-        .order('achieved_at', { ascending: false });
+    return ErrorHandlingService.executeWithErrorHandling(
+      async () => {
+        if (!userId) {
+          return createErrorResponse(
+            'User ID is required',
+            'User ID is required to fetch unlocked achievements',
+            ErrorCategory.VALIDATION
+          ).data as Achievement[];
+        }
         
-      if (error) {
-        return this.handleQueryError(error, 'fetch unlocked achievements');
-      }
-      
-      // Explicit type casting and safe transformation
-      const castData = data as unknown as UserAchievementData[];
-      const achievements = castData?.map(item => ({
-        id: item.achievement_id,
-        name: item.achievements.name,
-        description: item.achievements.description,
-        category: item.achievements.category as AchievementCategory,
-        rank: item.achievements.rank as AchievementRank,
-        points: item.achievements.points,
-        xpReward: item.achievements.xp_reward,
-        iconName: item.achievements.icon_name,
-        requirements: item.achievements.requirements,
-        isUnlocked: true,
-        achievedAt: item.achieved_at
-      })) as Achievement[] || [];
-      
-      return createSuccessResponse(achievements);
-    } catch (error) {
-      return this.handleException(error, 'fetching unlocked achievements');
-    }
+        // Query unlocked achievements with joined data
+        const { data: userAchievements, error: achievementsError } = await supabase
+          .from('user_achievements')
+          .select(`
+            achievement_id,
+            achieved_at,
+            achievements:achievement_id (
+              id, name, description, category, rank, 
+              points, xp_reward, icon_name, requirements
+            )
+          `)
+          .eq('user_id', userId)
+          .order('achieved_at', { ascending: false });
+          
+        if (achievementsError) {
+          throw new Error(`Failed to fetch achievements: ${achievementsError.message}`);
+        }
+        
+        // Transform the data to match Achievement interface
+        const formattedAchievements: Achievement[] = (userAchievements as unknown as UserAchievementData[])
+          .filter(ua => ua.achievements) // Filter out any null achievements
+          .map(ua => ({
+            id: ua.achievements.id,
+            name: ua.achievements.name,
+            description: ua.achievements.description,
+            category: ua.achievements.category,
+            rank: ua.achievements.rank as any,
+            points: ua.achievements.points,
+            xpReward: ua.achievements.xp_reward,
+            iconName: ua.achievements.icon_name,
+            requirements: ua.achievements.requirements,
+            isUnlocked: true,
+            achievedAt: ua.achieved_at
+          }));
+          
+        return formattedAchievements;
+      },
+      'GET_UNLOCKED_ACHIEVEMENTS',
+      { showToast: false }
+    );
   }
 }

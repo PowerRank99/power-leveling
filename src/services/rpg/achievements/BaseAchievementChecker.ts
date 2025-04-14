@@ -1,136 +1,34 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
-import { AchievementChecker, UserProfileData, UserWorkoutStats } from './AchievementCheckerInterface';
-import { TransactionService } from '../../common/TransactionService';
-import { AchievementService } from '../AchievementService';
+import { ServiceResponse, ErrorHandlingService, createSuccessResponse } from '@/services/common/ErrorHandlingService';
 
 /**
- * Base class for achievement checkers with common utility methods
+ * Abstract base class for all achievement checkers
+ * Provides common methods and enforces a standard interface
  */
-export abstract class BaseAchievementChecker implements AchievementChecker {
+export abstract class BaseAchievementChecker {
   /**
-   * Abstract method that all achievement checkers must implement
-   * This ensures the interface is properly satisfied
+   * Check achievements based on the implementation in derived classes
+   * Must be implemented by all derived checker classes
    */
   abstract checkAchievements(userId: string, data?: any): Promise<ServiceResponse<void>>;
-
+  
   /**
-   * Get workout statistics for a user
+   * Executes the checker with error handling
    */
-  protected static async getWorkoutStats(userId: string): Promise<UserWorkoutStats> {
-    try {
-      // Get current date ranges
-      const now = new Date();
-      const weekStart = new Date(now);
-      weekStart.setDate(now.getDate() - now.getDay());
-      weekStart.setHours(0, 0, 0, 0);
-      
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      
-      // Get total workout count
-      const { count: totalCount, error: totalError } = await supabase
-        .from('workouts')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId);
-        
-      if (totalError) throw totalError;
-      
-      // Get weekly workout count
-      const { count: weeklyCount, error: weeklyError } = await supabase
-        .from('workouts')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .gte('completed_at', weekStart.toISOString());
-        
-      if (weeklyError) throw weeklyError;
-      
-      // Get monthly workout count
-      const { count: monthlyCount, error: monthlyError } = await supabase
-        .from('workouts')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .gte('completed_at', monthStart.toISOString());
-        
-      if (monthlyError) throw monthlyError;
-      
-      return {
-        totalCount: totalCount || 0,
-        weeklyCount: weeklyCount || 0,
-        monthlyCount: monthlyCount || 0
-      };
-    } catch (error) {
-      console.error('Error getting workout stats:', error);
-      return { totalCount: 0, weeklyCount: 0, monthlyCount: 0 };
-    }
-  }
-
-  /**
-   * Get user profile data
-   */
-  protected static async getUserProfile(userId: string): Promise<UserProfileData | null> {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-        
-      if (error) throw error;
-      
-      return data;
-    } catch (error) {
-      console.error('Error getting user profile:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Calculate rank score based on level and achievement points
-   * Using formula: 1.5 × Level + 2 × (Achievement Points)
-   */
-  static calculateRankScore(level: number, achievementPoints: number): number {
-    return (1.5 * level) + (2 * achievementPoints);
-  }
-
-  /**
-   * Determine rank based on rank score
-   */
-  static determineRank(rankScore: number): string {
-    if (rankScore >= 198) return 'S';
-    if (rankScore >= 160) return 'A';
-    if (rankScore >= 120) return 'B';
-    if (rankScore >= 80) return 'C';
-    if (rankScore >= 50) return 'D';
-    if (rankScore >= 20) return 'E';
-    return 'Unranked';
+  async executeWithErrorHandling(userId: string, data?: any): Promise<ServiceResponse<void>> {
+    return ErrorHandlingService.executeWithErrorHandling(
+      async () => {
+        await this.checkAchievements(userId, data);
+      },
+      'CHECK_ACHIEVEMENTS',
+      { showToast: false }
+    );
   }
   
   /**
-   * Execute achievement checks with transaction retry support
+   * Create a successful response (helper method)
    */
-  protected static async executeChecks(
-    userId: string,
-    checkFn: () => Promise<string[]>,
-    operationName: string,
-    retryCount: number = 3
-  ): Promise<void> {
-    try {
-      const response = await TransactionService.executeWithRetry(
-        checkFn,
-        operationName,
-        retryCount,
-        `Failed to check ${operationName}`
-      );
-      
-      // We need to check if response.data exists and has a length
-      const achievementIds = response.success && response.data ? response.data : [];
-      
-      if (achievementIds.length > 0) {
-        await AchievementService.checkAndAwardAchievements(userId, achievementIds);
-      }
-    } catch (error) {
-      console.error(`Error in ${operationName}:`, error);
-    }
+  protected createSuccess(): ServiceResponse<void> {
+    return createSuccessResponse(undefined);
   }
 }

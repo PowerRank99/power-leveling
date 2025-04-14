@@ -1,15 +1,15 @@
 
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { AchievementService } from '@/services/rpg/AchievementService';
-import { AchievementUtils } from '@/constants/AchievementDefinitions';
+import { AchievementUtils } from '@/constants/achievements';
 import { AchievementCategory } from '@/types/achievementTypes';
 
 /**
- * Service for processing milestone-related achievements (level, XP)
+ * Service for processing milestone achievements (level, XP, etc.)
  */
 export class MilestoneAchievementProcessor {
   /**
-   * Process level up for achievements
+   * Process level up achievements
    */
   static async processLevelUp(userId: string, currentLevel: number): Promise<ServiceResponse<string[]>> {
     return ErrorHandlingService.executeWithErrorHandling(
@@ -45,7 +45,7 @@ export class MilestoneAchievementProcessor {
   }
   
   /**
-   * Process XP milestone for achievements
+   * Process XP milestone achievements
    */
   static async processXPMilestone(userId: string, totalXP: number): Promise<ServiceResponse<string[]>> {
     return ErrorHandlingService.executeWithErrorHandling(

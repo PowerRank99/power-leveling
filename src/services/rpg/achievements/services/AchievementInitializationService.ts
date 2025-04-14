@@ -1,43 +1,26 @@
 
-import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
-import { AchievementUtils } from '@/constants/AchievementDefinitions';
-import { Achievement, AchievementCategory } from '@/types/achievementTypes';
+import { ServiceResponse, ErrorHandlingService, createSuccessResponse } from '@/services/common/ErrorHandlingService';
 import { AchievementProgressService } from '../AchievementProgressService';
+import { AchievementUtils } from '@/constants/achievements';
 
 /**
- * Service specialized in initializing achievement-related data
+ * Service for initializing achievements for new users
  */
 export class AchievementInitializationService {
   /**
-   * Initialize achievements for a new user
+   * Initialize user achievements
+   * This sets up achievement progress tracking for a new user
    */
   static async initializeUserAchievements(userId: string): Promise<ServiceResponse<void>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
         // Get all achievements from centralized definitions
-        const allAchievements = AchievementUtils.getAllAchievements();
-        
-        // Initialize progress tracking for achievements that need it
-        const progressCategories: string[] = [
-          AchievementCategory.WORKOUT,
-          AchievementCategory.STREAK,
-          AchievementCategory.RECORD,
-          AchievementCategory.XP,
-          AchievementCategory.LEVEL,
-          AchievementCategory.MANUAL,
-          AchievementCategory.VARIETY
-        ];
-        
-        const progressAchievements = allAchievements.filter(
-          a => progressCategories.includes(a.category)
+        const achievements = AchievementUtils.getAllAchievements().map(def => 
+          AchievementUtils.convertToAchievement(def)
         );
         
-        // Convert AchievementDefinition to Achievement to match the expected types
-        const achievementsForProgress = progressAchievements.map(a => 
-          AchievementUtils.convertToAchievement(a)
-        );
-        
-        await AchievementProgressService.initializeMultipleProgress(userId, achievementsForProgress);
+        // Initialize progress tracking for all achievements
+        await AchievementProgressService.initializeMultipleProgress(userId, achievements);
       },
       'INITIALIZE_USER_ACHIEVEMENTS',
       { showToast: false }
