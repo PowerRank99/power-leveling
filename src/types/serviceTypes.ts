@@ -1,16 +1,13 @@
 
-import { ServiceResponse } from '@/services/common/ErrorHandlingService';
-
 /**
- * Generic database operation result with error handling
+ * Error categories for consistent error handling
  */
-export interface DatabaseResult<T> {
-  success: boolean;
-  data?: T;
-  error?: any;
+export enum ErrorCategory {
+  AUTHENTICATION = 'authentication',
+  AUTHORIZATION = 'authorization',
+  VALIDATION = 'validation',
+  DATABASE = 'database',
+  NETWORK = 'network',
+  BUSINESS_LOGIC = 'business_logic',
+  UNKNOWN = 'unknown'
 }
-
-/**
- * Updated database result to match the new standardized format
- */
-export type StandardDatabaseResult<T> = ServiceResponse<T>;

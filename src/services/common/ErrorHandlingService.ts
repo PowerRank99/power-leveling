@@ -1,16 +1,5 @@
 
-/**
- * Error categories for consistent error handling
- */
-export enum ErrorCategory {
-  AUTHENTICATION = 'authentication',
-  AUTHORIZATION = 'authorization',
-  VALIDATION = 'validation',
-  DATABASE = 'database',
-  NETWORK = 'network',
-  BUSINESS_LOGIC = 'business_logic',
-  UNKNOWN = 'unknown'
-}
+import { ErrorCategory } from '@/types/serviceTypes';
 
 /**
  * Error structure for consistent error handling
@@ -30,6 +19,7 @@ export interface ServiceResponse<T> {
   data?: T;
   message?: string;
   error?: Error | ServiceError;
+  details?: string; // Added to address missing details property
 }
 
 // Backward compatibility type alias
@@ -45,7 +35,10 @@ export class ErrorHandlingService {
   static async executeWithErrorHandling<T>(
     fn: () => Promise<T>,
     operation: string,
-    options: { showToast?: boolean } = {}
+    options: { 
+      showToast?: boolean; 
+      userMessage?: string; // Added to support existing usage
+    } = {}
   ): Promise<ServiceResponse<T>> {
     try {
       const result = await fn();
@@ -59,7 +52,8 @@ export class ErrorHandlingService {
       return {
         success: false,
         message: error instanceof Error ? error.message : 'An unknown error occurred',
-        error: error instanceof Error ? error : new Error('Unknown error')
+        error: error instanceof Error ? error : new Error('Unknown error'),
+        details: error instanceof Error ? error.message : undefined
       };
     }
   }
