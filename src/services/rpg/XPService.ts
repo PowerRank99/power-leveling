@@ -1,7 +1,7 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { XPToastService } from './bonus/XPToastService';
 import { ServiceResponse } from '../common/ErrorHandlingService';
+import { PowerDayService } from './bonus/PowerDayService';
 
 /**
  * XP Service for handling experience points operations
@@ -124,19 +124,23 @@ export class XPService {
     week: number;
     year: number;
   }> {
-    const now = new Date();
-    const currentWeek = this.getWeekNumber(now);
-    const currentYear = now.getFullYear();
-    
+    if (!userId) {
+      return { available: false, used: 0, max: 2, week: 0, year: 0 };
+    }
+
     try {
-      // Count power day usages for the current week
+      const now = new Date();
+      const currentWeek = this.getWeekNumber(now);
+      const currentYear = now.getFullYear();
+
+      // Use the RPC function get_power_day_usage
       const { data, error } = await supabase
-        .from('power_day_usage')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('week_number', currentWeek)
-        .eq('year', currentYear);
-      
+        .rpc('get_power_day_usage', {
+          p_user_id: userId,
+          p_week_number: currentWeek,
+          p_year: currentYear
+        });
+
       if (error) {
         console.error('[XPService] Error checking power day availability:', error);
         return {
@@ -147,10 +151,10 @@ export class XPService {
           year: currentYear
         };
       }
-      
-      const usedCount = data?.length || 0;
+
+      const usedCount = data?.[0]?.count || 0;
       const maxUses = 2;
-      
+
       return {
         available: usedCount < maxUses,
         used: usedCount,
@@ -164,8 +168,8 @@ export class XPService {
         available: false,
         used: 0,
         max: 2,
-        week: currentWeek,
-        year: currentYear
+        week: 0,
+        year: 0
       };
     }
   }
