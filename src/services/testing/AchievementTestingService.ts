@@ -8,6 +8,7 @@ import { EXERCISE_TYPES } from '@/services/rpg/constants/exerciseTypes';
 import { XPService } from '@/services/rpg/XPService';
 import { UnifiedAchievementChecker } from '@/services/rpg/achievements/UnifiedAchievementChecker';
 import { TransactionService } from '@/services/common/TransactionService';
+import { TestCoverageService } from './TestCoverageService';
 
 // Define interfaces for the testing service
 export interface AchievementTestResult {
@@ -116,20 +117,21 @@ export class AchievementTestingService {
     if (!this.testUserId) {
       return createErrorResponse(
         'Test user ID not set',
-        'A valid user ID is required to run achievement tests',
-        ErrorCategory.VALIDATION
+        'A valid user ID is required to run achievement tests'
       );
     }
 
     if (this.progress.isRunning) {
       return createErrorResponse(
         'Tests already running',
-        'Wait for current test suite to complete before starting a new one',
-        ErrorCategory.BUSINESS_LOGIC
+        'Wait for current test suite to complete'
       );
     }
 
     try {
+      // Clear previous coverage data
+      TestCoverageService.clearCoverage();
+
       // Initialize test session
       this.testSessionStartTime = new Date();
       this.results = [];
@@ -138,46 +140,58 @@ export class AchievementTestingService {
         completed: 0,
         successful: 0,
         failed: 0,
-        isRunning: true,
+        isRunning: true
       };
 
-      // Get all achievements matching the configuration
       const achievements = this.getAchievementsToTest();
       this.progress.total = achievements.length;
       this.updateProgress();
 
-      console.log(`[AchievementTestingService] Starting test suite for ${achievements.length} achievements`);
-
-      // Run tests for each achievement
-      for (const achievement of achievements) {
-        this.progress.currentTest = achievement.name;
-        this.updateProgress();
-
-        const result = await this.testAchievement(achievement.id);
-        this.results.push(result);
-
-        // Update progress
-        this.progress.completed++;
-        if (result.success) {
-          this.progress.successful++;
-        } else {
-          this.progress.failed++;
-        }
-
-        this.updateProgress();
-        
-        // Notify result callback
-        if (this.resultCallback) {
-          this.resultCallback(result);
-        }
+      // Run tests using transactions if configured
+      if (this.config.useTransaction) {
+        await supabase.rpc('begin_transaction');
       }
 
-      // Complete test session
+      try {
+        for (const achievement of achievements) {
+          this.progress.currentTest = achievement.name;
+          this.updateProgress();
+
+          const result = await this.testAchievement(achievement.id);
+          this.results.push(result);
+
+          if (result.success) {
+            TestCoverageService.recordTestedAchievement(achievement.id);
+            this.progress.successful++;
+          } else {
+            this.progress.failed++;
+          }
+
+          this.progress.completed++;
+          this.updateProgress();
+
+          if (this.resultCallback) {
+            this.resultCallback(result);
+          }
+        }
+
+        if (this.config.useTransaction) {
+          await supabase.rpc('commit_transaction');
+        }
+      } catch (error) {
+        if (this.config.useTransaction) {
+          await supabase.rpc('rollback_transaction');
+        }
+        throw error;
+      }
+
+      // Generate coverage report
+      const coverageReport = TestCoverageService.generateCoverageReport();
+      console.log('Test Coverage Report:', coverageReport);
+
       this.progress.isRunning = false;
       this.progress.currentTest = undefined;
       this.updateProgress();
-
-      console.log(`[AchievementTestingService] Test suite completed: ${this.progress.successful}/${this.progress.total} passed`);
 
       return createSuccessResponse(this.results);
     } catch (error) {
@@ -186,8 +200,7 @@ export class AchievementTestingService {
 
       return createErrorResponse(
         'Test suite failed',
-        `Exception in achievement test suite: ${(error as Error).message}`,
-        ErrorCategory.EXCEPTION
+        error instanceof Error ? error.message : 'Unknown error'
       );
     }
   }
@@ -293,7 +306,7 @@ export class AchievementTestingService {
   }
 
   /**
-   * Get test report with summary statistics
+   * Get test report with enhanced metrics
    */
   getTestReport(): {
     summary: {
@@ -302,12 +315,15 @@ export class AchievementTestingService {
       failed: number;
       successRate: number;
       totalDurationMs: number;
+      averageTestDurationMs: number;
+      coverage: TestCoverageReport;
     };
     results: AchievementTestResult[];
     failedTests: AchievementTestResult[];
   } {
     const failedTests = this.results.filter(r => !r.success);
     const totalDurationMs = this.results.reduce((sum, r) => sum + r.testDurationMs, 0);
+    const averageTestDurationMs = this.results.length > 0 ? totalDurationMs / this.results.length : 0;
     
     return {
       summary: {
@@ -318,6 +334,8 @@ export class AchievementTestingService {
           ? this.results.filter(r => r.success).length / this.results.length 
           : 0,
         totalDurationMs,
+        averageTestDurationMs,
+        coverage: TestCoverageService.generateCoverageReport()
       },
       results: this.results,
       failedTests,

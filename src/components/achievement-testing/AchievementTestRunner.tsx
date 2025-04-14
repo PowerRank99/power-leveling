@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,6 +17,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
+import TestCoverageReport from './TestCoverageReport';
 
 interface AchievementTestRunnerProps {
   userId: string;
@@ -41,7 +41,6 @@ const AchievementTestRunner: React.FC<AchievementTestRunnerProps> = ({ userId, a
   const [verbose, setVerbose] = useState(true);
   const [loading, setLoading] = useState(false);
 
-  // Initialize test service when userId changes
   useEffect(() => {
     if (userId) {
       const service = new AchievementTestingService(userId, {
@@ -81,7 +80,6 @@ const AchievementTestRunner: React.FC<AchievementTestRunnerProps> = ({ userId, a
     try {
       let response;
       
-      // Run tests based on selected options
       if (selectedCategory !== 'all') {
         response = await testService.runCategoryTests(selectedCategory as AchievementCategory);
       } else if (selectedRank !== 'all') {
@@ -96,7 +94,6 @@ const AchievementTestRunner: React.FC<AchievementTestRunnerProps> = ({ userId, a
         });
       }
       
-      // Generate report
       const report = testService.getTestReport();
       
       if (addLogEntry) {
@@ -172,7 +169,7 @@ const AchievementTestRunner: React.FC<AchievementTestRunnerProps> = ({ userId, a
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="space-y-3">
             <div>
               <Label htmlFor="category">Filter by Category</Label>
@@ -269,7 +266,7 @@ const AchievementTestRunner: React.FC<AchievementTestRunnerProps> = ({ userId, a
             </div>
           </div>
           
-          <div className="space-y-4 col-span-2">
+          <div className="lg:col-span-2 space-y-4">
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Progress: {progress.completed}/{progress.total}</span>
@@ -322,6 +319,10 @@ const AchievementTestRunner: React.FC<AchievementTestRunnerProps> = ({ userId, a
                 )}
               </ScrollArea>
             </div>
+            
+            {results.length > 0 && (
+              <TestCoverageReport coverage={testService?.getTestReport().summary.coverage} />
+            )}
           </div>
         </div>
       </CardContent>
