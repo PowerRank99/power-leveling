@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, ErrorCategory, createErrorResponse, createSuccessResponse } from '@/services/common/ErrorHandlingService';
-import { Achievement } from '@/types/achievementTypes';
+import { Achievement, UserAchievementData } from '@/types/achievementTypes';
 
 /**
  * Service for fetching achievement data
@@ -83,7 +83,7 @@ export class AchievementFetchService {
       }
       
       // Transform the data to match our Achievement interface
-      const achievements = data?.map(item => ({
+      const achievements = (data as UserAchievementData[] | null)?.map(item => ({
         id: item.achievement_id,
         name: item.achievements?.name,
         description: item.achievements?.description,
