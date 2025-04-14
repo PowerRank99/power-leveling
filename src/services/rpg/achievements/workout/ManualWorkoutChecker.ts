@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
-import { ACHIEVEMENT_IDS, AchievementErrorCategory } from '../AchievementConstants';
+import { ACHIEVEMENT_IDS } from '../AchievementConstants';
 
 /**
  * Service for checking manual workout related achievements
@@ -53,7 +53,7 @@ export class ManualWorkoutChecker {
       return createErrorResponse(
         'Failed to check manual workout achievements',
         error instanceof Error ? error.message : String(error),
-        ErrorCategory.ACHIEVEMENT_RELATED
+        ErrorCategory.BUSINESS_LOGIC  // Changed from ACHIEVEMENT_RELATED
       );
     }
   }
