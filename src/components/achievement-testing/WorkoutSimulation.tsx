@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -50,7 +49,7 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
       case 'strength':
         return 'Bench Press';
       case 'bodyweight':
-        return 'Calisthenics Pull-up'; // Updated to include more precise keywords for Monk bonus
+        return 'calistenia';
       case 'cardio':
         return 'Running';
       case 'sports':
@@ -338,7 +337,7 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
             <li>• Ninja: +20% XP from cardio, +40% XP for workouts under 45min</li>
             <li>• Bruxo: Reduced streak loss, +50% achievement points</li>
             <li>• Paladino: +40% XP from sports, +10% guild contribution</li>
-            <li>• Druida: +40% XP from flexibility, +50% XP after rest day</li>
+            <li>• Druida: +40% XP from flexibility & mobility, +50% XP after rest day</li>
           </ul>
         </div>
       </CardContent>

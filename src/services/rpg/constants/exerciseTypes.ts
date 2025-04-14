@@ -1,4 +1,3 @@
-
 /**
  * Exercise type classifications for class bonuses
  */
@@ -12,7 +11,8 @@ export const EXERCISE_TYPES = {
   // For Monge
   BODYWEIGHT: [
     'pullup', 'pushup', 'dip', 'burpee', 'plank', 'barra', 'flexão', 
-    'prancha', 'muscle up', 'abs', 'abdominais', 'calistenia'
+    'prancha', 'muscle up', 'abs', 'abdominais', 'calistenia', 'calisthenics',
+    'bodyweight', 'peso corporal'
   ],
   
   // For Ninja
