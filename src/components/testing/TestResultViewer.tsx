@@ -1,12 +1,12 @@
-
 import React, { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Check, Clock, Download, Trash2, XCircle } from 'lucide-react';
+import { Check, Clock, Download, Save, Trash2, XCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { AchievementTestResult } from '@/services/testing/AchievementTestingService';
+import { toast } from 'sonner';
 
 interface TestResultViewerProps {
   results: AchievementTestResult[];
@@ -14,6 +14,7 @@ interface TestResultViewerProps {
   onExportResults: () => void;
   filter: string;
   onFilterChange: (value: string) => void;
+  lastSaved?: string;
 }
 
 const TestResultViewer: React.FC<TestResultViewerProps> = ({
@@ -21,7 +22,8 @@ const TestResultViewer: React.FC<TestResultViewerProps> = ({
   onClearResults,
   onExportResults,
   filter,
-  onFilterChange
+  onFilterChange,
+  lastSaved
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -39,12 +41,46 @@ const TestResultViewer: React.FC<TestResultViewerProps> = ({
   const passedCount = results.filter(r => r.success).length;
   const failedCount = results.filter(r => !r.success).length;
   
+  const handleExport = () => {
+    if (results.length === 0) {
+      toast.error('No results to export');
+      return;
+    }
+
+    const exportData = {
+      results: filteredResults,
+      exportedAt: new Date().toISOString(),
+      metadata: {
+        totalTests: results.length,
+        passedTests: passedCount,
+        failedTests: failedCount,
+        lastSaved
+      }
+    };
+
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
+    const exportFileName = `achievement-test-results-${new Date().toISOString().slice(0, 10)}.json`;
+
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileName);
+    linkElement.click();
+
+    toast.success('Results exported successfully');
+  };
+
   return (
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center justify-between">
           <span>Test Results</span>
           <div className="flex space-x-2">
+            {lastSaved && (
+              <span className="text-sm text-text-secondary">
+                Last saved: {new Date(lastSaved).toLocaleString()}
+              </span>
+            )}
             <Button 
               variant="outline" 
               size="sm"
@@ -57,7 +93,7 @@ const TestResultViewer: React.FC<TestResultViewerProps> = ({
             <Button 
               variant="outline" 
               size="sm"
-              onClick={onExportResults}
+              onClick={handleExport}
               disabled={results.length === 0}
             >
               <Download className="mr-2 h-4 w-4" />

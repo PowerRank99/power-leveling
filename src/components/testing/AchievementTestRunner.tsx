@@ -36,6 +36,7 @@ import TestResultViewer from './TestResultViewer';
 import TestConfigurationPanel from './TestConfigurationPanel';
 import TestCoverageReport from '@/components/achievement-testing/TestCoverageReport';
 import TestingDashboard from '../testing/dashboard/TestingDashboard';
+import { useTestResultPersistence } from '@/hooks/useTestResultPersistence';
 
 interface AchievementTestRunnerProps {
   userId: string;
@@ -84,6 +85,13 @@ const AchievementTestRunner: React.FC<AchievementTestRunnerProps> = ({ userId, a
   
   // Persist results to localStorage
   const [savedResults, setSavedResults] = useLocalStorage<AchievementTestResult[]>(STORAGE_KEY, []);
+
+  const {
+    savedResults: localStorageResults,
+    lastUpdated,
+    saveResults,
+    clearResults: clearSavedResults
+  } = useTestResultPersistence();
   
   // Initialize service
   useEffect(() => {
@@ -100,11 +108,12 @@ const AchievementTestRunner: React.FC<AchievementTestRunnerProps> = ({ userId, a
       setTestService(service);
       
       // Load saved results from localStorage
-      if (savedResults.length > 0) {
-        setResults(savedResults);
+      if (localStorageResults.length > 0) {
+        setResults(localStorageResults);
+        toast.info(`Loaded ${localStorageResults.length} saved test results`);
       }
     }
-  }, [userId, useCleanup, useTransaction, verbose, savedResults]);
+  }, [userId, useCleanup, useTransaction, verbose, localStorageResults]);
   
   // Update progress handler
   const handleProgressUpdate = useCallback((newProgress: AchievementTestProgress) => {
@@ -130,9 +139,9 @@ const AchievementTestRunner: React.FC<AchievementTestRunnerProps> = ({ userId, a
   // Save results to localStorage whenever they change
   useEffect(() => {
     if (results.length > 0) {
-      setSavedResults(results);
+      saveResults(results);
     }
-  }, [results, setSavedResults]);
+  }, [results, saveResults]);
   
   // Get all achievements
   const allAchievements = useMemo(() => {
@@ -416,11 +425,10 @@ const AchievementTestRunner: React.FC<AchievementTestRunnerProps> = ({ userId, a
       setLoading(false);
     }
   };
-  
-  // Handler for clearing all results
-  const clearAllResults = () => {
+
+  const handleClearResults = () => {
     setResults([]);
-    setSavedResults([]);
+    clearSavedResults();
     toast.info('Test results cleared');
   };
   
@@ -502,7 +510,7 @@ const AchievementTestRunner: React.FC<AchievementTestRunnerProps> = ({ userId, a
         results={results}
         onRunAllTests={runAllTests}
         onRunCategoryTests={runCategoryTests}
-        onClearResults={clearAllResults}
+        onClearResults={handleClearResults}
         onExportResults={exportResults}
         isLoading={loading}
       />
@@ -730,154 +738,14 @@ const AchievementTestRunner: React.FC<AchievementTestRunnerProps> = ({ userId, a
   // Render results tab
   const renderResults = () => {
     return (
-      <div className="space-y-4">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Test Results</h3>
-          <div className="flex space-x-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={clearAllResults}
-              disabled={results.length === 0}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Clear Results
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={exportResults}
-              disabled={results.length === 0}
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Export
-            </Button>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-center">
-                <div className="text-3xl font-semibold">{results.length}</div>
-                <div className="text-sm text-text-secondary">Total Tests</div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-center">
-                <div className="text-3xl font-semibold text-success">
-                  {results.filter(r => r.success).length}
-                </div>
-                <div className="text-sm text-text-secondary">Passing Tests</div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-center">
-                <div className="text-3xl font-semibold text-valor">
-                  {results.filter(r => !r.success).length}
-                </div>
-                <div className="text-sm text-text-secondary">Failing Tests</div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <div className="flex items-center space-x-2 mb-4">
-          <Input
-            placeholder="Search results..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="w-64 bg-midnight-elevated border-divider"
-          />
-          <Select value={filter} onValueChange={value => setFilter(value as FilterOption)}>
-            <SelectTrigger className="bg-midnight-elevated border-divider w-40">
-              <SelectValue placeholder="Filter" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Filter</SelectLabel>
-                <SelectItem value="all">All Results</SelectItem>
-                <SelectItem value="passed">Passed Tests</SelectItem>
-                <SelectItem value="failed">Failed Tests</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <ScrollArea className="h-[500px] border border-divider/20 rounded-md">
-          <table className="w-full">
-            <thead className="sticky top-0 bg-midnight-card">
-              <tr>
-                <th className="p-3 text-left">Achievement</th>
-                <th className="p-3 text-left">Category</th>
-                <th className="p-3 text-left">Rank</th>
-                <th className="p-3 text-left">Status</th>
-                <th className="p-3 text-left">Duration</th>
-                <th className="p-3 text-left">Error</th>
-              </tr>
-            </thead>
-            <tbody>
-              {results
-                .filter(result => {
-                  if (filter === 'passed') return result.success;
-                  if (filter === 'failed') return !result.success;
-                  if (searchQuery) {
-                    return result.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           result.category.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           (result.errorMessage && result.errorMessage.toLowerCase().includes(searchQuery.toLowerCase()));
-                  }
-                  return true;
-                })
-                .map(result => (
-                  <tr key={result.achievementId} className="border-b border-divider/10">
-                    <td className="p-3">{result.name}</td>
-                    <td className="p-3">
-                      <Badge variant="outline">{result.category}</Badge>
-                    </td>
-                    <td className="p-3">
-                      <Badge variant="outline">Rank {result.rank}</Badge>
-                    </td>
-                    <td className="p-3">
-                      {result.success ? (
-                        <Badge variant="success" className="flex items-center">
-                          <Check className="mr-1 h-3 w-3" />
-                          Passed
-                        </Badge>
-                      ) : (
-                        <Badge variant="valor" className="flex items-center">
-                          <XCircle className="mr-1 h-3 w-3" />
-                          Failed
-                        </Badge>
-                      )}
-                    </td>
-                    <td className="p-3">
-                      <Badge 
-                        variant="outline" 
-                        className="text-xs flex items-center"
-                      >
-                        <Clock className="mr-1 h-3 w-3" />
-                        {result.testDurationMs}ms
-                      </Badge>
-                    </td>
-                    <td className="p-3 max-w-xs">
-                      {result.errorMessage && (
-                        <div className="text-xs text-valor truncate" title={result.errorMessage}>
-                          {result.errorMessage}
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </ScrollArea>
-      </div>
+      <TestResultViewer
+        results={results}
+        onClearResults={handleClearResults}
+        onExportResults={exportResults}
+        filter={filter}
+        onFilterChange={setFilter}
+        lastSaved={lastUpdated}
+      />
     );
   };
   
@@ -961,7 +829,7 @@ const AchievementTestRunner: React.FC<AchievementTestRunnerProps> = ({ userId, a
             <div className="flex justify-between">
               <Button 
                 variant="outline"
-                onClick={clearAllResults}
+                onClick={handleClearResults}
                 disabled={results.length === 0}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
