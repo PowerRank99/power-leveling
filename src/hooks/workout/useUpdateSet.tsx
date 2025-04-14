@@ -1,145 +1,94 @@
-
+import { useState } from 'react';
+import { SetData } from '@/types/workout';
 import { supabase } from '@/integrations/supabase/client';
-import { WorkoutExercise } from '@/types/workout';
 import { toast } from 'sonner';
 
+/**
+ * A specialized hook for updating sets in a workout
+ */
 export const useUpdateSet = (workoutId: string | null) => {
+  const [isUpdating, setIsUpdating] = useState(false);
+
   /**
-   * Updates a workout set with new values
-   * @param exerciseIndex The exercise index in the exercises array
-   * @param exercises The array of exercises
-   * @param setIndex The index of the set within the exercise
-   * @param data The data to update (weight, reps, completed status)
+   * Updates a set with new values
+   * @param exerciseIndex The index of the exercise in the array
+   * @param exerciseSets The sets of the exercise to update a set from
+   * @param setIndex The index of the set to update
+   * @param data The data to update the set with
+   * @returns An array of updated sets or null if there was an error
    */
   const updateSet = async (
-    exerciseIndex: number, 
-    exercises: WorkoutExercise[], 
-    setIndex: number, 
+    exerciseIndex: number,
+    exerciseSets: SetData[],
+    setIndex: number,
     data: { weight?: string; reps?: string; completed?: boolean }
-  ) => {
+  ): Promise<SetData[] | null> => {
+    if (!workoutId) {
+      toast.error("Erro ao atualizar série", {
+        description: "Treino não encontrado"
+      });
+      return null;
+    }
+
+    setIsUpdating(true);
+    
     try {
-      if (!workoutId || !exercises[exerciseIndex]) {
+      // Clone the sets
+      const updatedSets = [...exerciseSets];
+      
+      // Get the set to update
+      const setToUpdate = updatedSets[setIndex];
+      if (!setToUpdate) {
+        console.error(`Set not found at index ${setIndex}`);
+        return null;
+      }
+      
+      // Update the set with the new data
+      updatedSets[setIndex] = {
+        ...setToUpdate,
+        weight: data.weight !== undefined ? data.weight : setToUpdate.weight,
+        reps: data.reps !== undefined ? data.reps : setToUpdate.reps,
+        completed: data.completed !== undefined ? data.completed : setToUpdate.completed
+      };
+      
+      // If this is a temporary ID (not persisted to the database yet), just return the updated sets
+      if (setToUpdate.id.startsWith('new-') || setToUpdate.id.startsWith('default-')) {
+        return updatedSets;
+      }
+      
+      // Otherwise, update the set in the database
+      const { error } = await supabase
+        .from('workout_sets')
+        .update({
+          weight: updatedSets[setIndex].weight,
+          reps: updatedSets[setIndex].reps,
+          completed: updatedSets[setIndex].completed,
+          set_order: exerciseIndex * 100 + setIndex
+        })
+        .eq('id', setToUpdate.id);
+        
+      if (error) {
+        console.error("Error updating set:", error);
         toast.error("Erro ao atualizar série", {
-          description: "Treino ou exercício não encontrado"
+          description: "Não foi possível atualizar a série"
         });
         return null;
       }
       
-      const currentExercise = exercises[exerciseIndex];
-      const currentSet = currentExercise.sets[setIndex];
-      
-      if (!currentSet) {
-        console.error(`[useUpdateSet] Set not found at index ${setIndex} for exercise ${currentExercise.name}`);
-        return null;
-      }
-      
-      console.log(`[useUpdateSet] Updating set for ${currentExercise.name}, set #${setIndex + 1}`, data);
-      
-      // Update local state first for immediate feedback
-      const updatedExercises = [...exercises];
-      const updatedSets = [...updatedExercises[exerciseIndex].sets];
-      
-      updatedSets[setIndex] = {
-        ...updatedSets[setIndex],
-        ...data
-      };
-      
-      updatedExercises[exerciseIndex].sets = updatedSets;
-      
-      // Prepare data for database update - ensure consistent formatting
-      const setData: Record<string, any> = {};
-      
-      // Never send empty values to the database
-      if (data.weight !== undefined) {
-        const weightValue = data.weight === '' ? 0 : parseFloat(data.weight) || 0;
-        setData.weight = weightValue;
-        console.log(`[useUpdateSet] Setting weight to ${weightValue} for set #${setIndex + 1}`);
-      }
-      
-      if (data.reps !== undefined) {
-        const repsValue = data.reps === '' ? 0 : parseInt(data.reps) || 0;
-        setData.reps = repsValue;
-        console.log(`[useUpdateSet] Setting reps to ${repsValue} for set #${setIndex + 1}`);
-      }
-      
-      if (data.completed !== undefined) {
-        setData.completed = data.completed;
-        setData.completed_at = data.completed ? new Date().toISOString() : null;
-      }
-      
-      // Only make a database call if we have something to update
-      if (Object.keys(setData).length === 0) {
-        console.log(`[useUpdateSet] No changes to save for set ID: ${currentSet.id}`);
-        return updatedExercises;
-      }
-      
-      // Handle temporary IDs (default- or new- prefixed IDs)
-      if (currentSet.id.startsWith('default-') || currentSet.id.startsWith('new-')) {
-        console.log(`[useUpdateSet] Creating new database record for temp set ID: ${currentSet.id}`);
-        
-        // Generate a stable set_order - use exerciseIndex*100 + setIndex for consistency
-        const setOrder = exerciseIndex * 100 + setIndex;
-        
-        const { data: newSet, error: insertError } = await supabase
-          .from('workout_sets')
-          .insert({
-            workout_id: workoutId,
-            exercise_id: currentExercise.id,
-            set_order: setOrder,
-            weight: parseFloat(data.weight ?? currentSet.weight) || 0,
-            reps: parseInt(data.reps ?? currentSet.reps) || 0,
-            completed: data.completed !== undefined ? data.completed : currentSet.completed,
-            completed_at: data.completed ? new Date().toISOString() : null
-          })
-          .select()
-          .single();
-        
-        if (insertError) {
-          console.error("[useUpdateSet] Error creating set in database:", insertError);
-          toast.error("Erro ao salvar série", {
-            description: "A série não pôde ser criada no banco de dados"
-          });
-        } else if (newSet) {
-          console.log(`[useUpdateSet] Successfully created new set with ID: ${newSet.id}, set_order: ${setOrder}`);
-          // Update the ID in our local state with the real database ID
-          updatedExercises[exerciseIndex].sets[setIndex].id = newSet.id;
-        }
-      } 
-      // Regular update for existing database records - make sure we don't overwrite values unnecessarily
-      else if (Object.keys(setData).length > 0) {
-        console.log(`[useUpdateSet] Updating existing set ID: ${currentSet.id} in database with:`, setData);
-        
-        try {
-          // Use select() to verify the data was updated correctly
-          const { data: updatedData, error: updateError } = await supabase
-            .from('workout_sets')
-            .update(setData)
-            .eq('id', currentSet.id)
-            .select('weight, reps, completed');
-            
-          if (updateError) {
-            console.error("[useUpdateSet] Error updating set in database:", updateError);
-            toast.error("Erro ao salvar série", {
-              description: "As alterações podem não ter sido salvas"
-            });
-          } else {
-            console.log(`[useUpdateSet] Successfully updated set ${currentSet.id} in database:`, updatedData);
-          }
-        } catch (err) {
-          console.error("[useUpdateSet] Exception during database update:", err);
-          // Continue execution - don't block the UI for database errors
-        }
-      }
-      
-      return updatedExercises;
+      return updatedSets;
     } catch (error) {
-      console.error("[useUpdateSet] Error updating set:", error);
+      console.error("Error in updateSet:", error);
       toast.error("Erro ao atualizar série", {
-        description: "Não foi possível salvar as alterações"
+        description: "Não foi possível atualizar a série"
       });
       return null;
+    } finally {
+      setIsUpdating(false);
     }
   };
 
-  return { updateSet };
+  return {
+    updateSet,
+    isUpdating
+  };
 };

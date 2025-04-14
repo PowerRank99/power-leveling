@@ -1,7 +1,10 @@
 import { supabase } from '@/integrations/supabase/client';
-import { WorkoutExercise } from '@/types/workout';
+import { SetData } from '@/types/workout';
 import { toast } from 'sonner';
 
+/**
+ * A specialized hook for removing sets from a workout
+ */
 export const useRemoveSet = (workoutId: string | null) => {
   const updateRoutineExerciseSetCount = async (exerciseId: string, routineId: string, newSetCount: number) => {
     try {
@@ -21,65 +24,78 @@ export const useRemoveSet = (workoutId: string | null) => {
     }
   };
 
+  /**
+   * Removes a set from an exercise
+   * @param exerciseIndex The index of the exercise in the array
+   * @param exerciseSets The sets of the exercise to remove a set from
+   * @param setIndex The index of the set to remove
+   * @param routineId The routine ID for updating target sets
+   * @returns An array of updated sets or null if there was an error
+   */
   const removeSet = async (
-    exerciseIndex: number, 
-    exercises: WorkoutExercise[], 
-    setIndex: number, 
+    exerciseIndex: number,
+    exerciseSets: SetData[],
+    setIndex: number,
     routineId: string
-  ) => {
+  ): Promise<SetData[] | null> => {
     try {
-      if (!workoutId || !exercises[exerciseIndex]) {
+      if (!workoutId) {
         toast.error("Erro ao remover série", {
-          description: "Treino ou exercício não encontrado"
+          description: "Treino não encontrado"
         });
         return null;
       }
       
-      const currentExercise = exercises[exerciseIndex];
-      const setId = currentExercise.sets[setIndex].id;
+      // Clone the sets
+      const updatedSets = [...exerciseSets];
       
-      if (currentExercise.sets.length <= 1) {
+      // Get the set to remove
+      const setToRemove = updatedSets[setIndex];
+      if (!setToRemove) {
+        console.error(`Set not found at index ${setIndex}`);
+        return null;
+      }
+      
+      if (updatedSets.length <= 1) {
         toast.error("Não é possível remover", {
           description: "Deve haver pelo menos uma série"
         });
-        return exercises;
+        return exerciseSets;
       }
       
-      console.log(`Removing set ${setIndex + 1} for exercise ${currentExercise.name}, ID: ${setId}`);
+      console.log(`Removing set ${setIndex + 1} for exercise ID: ${setToRemove.exercise_id}, Set ID: ${setToRemove.id}`);
       
-      const updatedExercises = [...exercises];
-      updatedExercises[exerciseIndex].sets = [
-        ...currentExercise.sets.slice(0, setIndex),
-        ...currentExercise.sets.slice(setIndex + 1)
-      ];
+      // Remove the set from our local array
+      updatedSets.splice(setIndex, 1);
       
-      // If this is a temporary ID (not in the database yet), we don't need to delete it
-      if (!setId.startsWith('default-') && !setId.startsWith('new-')) {
-        const { error } = await supabase
-          .from('workout_sets')
-          .delete()
-          .eq('id', setId);
+      // If this is a temporary ID (not in the database yet), just return the updated sets
+      if (setToRemove.id.startsWith('new-') || setToRemove.id.startsWith('default-')) {
+        return updatedSets;
+      }
+      
+      // Otherwise, remove the set from the database
+      const { error } = await supabase
+        .from('workout_sets')
+        .delete()
+        .eq('id', setToRemove.id);
         
-        if (error) {
-          console.error("Error removing set:", error);
-          toast.error("Erro ao remover série", {
-            description: "A série pode não ter sido removida corretamente"
-          });
-        } else {
-          console.log(`Successfully removed set ${setId} from database`);
-          
-          // Update the set_order for all remaining sets to keep them sequential
-          // This is critical to maintain consistency
-          await reorderRemainingDatabaseSets(currentExercise.id, workoutId, exerciseIndex, updatedExercises[exerciseIndex].sets);
-        }
+      if (error) {
+        console.error("Error removing set:", error);
+        toast.error("Erro ao remover série", {
+          description: "Não foi possível remover a série"
+        });
+        return null;
       }
       
-      // Update the routine exercise set count for persistence
-      await updateRoutineExerciseSetCount(currentExercise.id, routineId, currentExercise.sets.length - 1);
+      // Reorder the remaining sets to keep the set_order sequential
+      await reorderRemainingDatabaseSets(setToRemove.exercise_id, workoutId, exerciseIndex, updatedSets);
       
-      return updatedExercises;
+      // Update the routine's target set count
+      await updateRoutineExerciseSetCount(setToRemove.exercise_id, routineId, updatedSets.length);
+      
+      return updatedSets;
     } catch (error) {
-      console.error("Error removing set:", error);
+      console.error("Error in removeSet:", error);
       toast.error("Erro ao remover série", {
         description: "Não foi possível remover a série"
       });
@@ -87,12 +103,19 @@ export const useRemoveSet = (workoutId: string | null) => {
     }
   };
   
-  // Helper function to reorder sets after a deletion
-  const reorderRemainingDatabaseSets = async (exerciseId: string, workoutId: string, exerciseIndex: number, remainingSets: any[]) => {
+  /**
+   * Reorders the remaining sets after a set has been removed
+   */
+  const reorderRemainingDatabaseSets = async (
+    exerciseId: string,
+    workoutId: string,
+    exerciseIndex: number,
+    remainingSets: SetData[]
+  ) => {
     try {
       // Only update sets that are in the database (not temporary)
       const databaseSets = remainingSets.filter(set => 
-        !set.id.startsWith('default-') && !set.id.startsWith('new-')
+        !set.id.startsWith('new-') && !set.id.startsWith('default-')
       );
       
       console.log(`Reordering ${databaseSets.length} database sets after removal`);

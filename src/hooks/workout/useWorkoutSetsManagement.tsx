@@ -42,6 +42,7 @@ export const useWorkoutSetsManagement = (
         mapWorkoutSetToSetData(set)
       );
       
+      // Now pass the correct types to updateSetInDb
       const updatedSets = await updateSetInDb(exerciseIndex, exerciseSets, setIndex, data);
       
       if (updatedSets) {
@@ -93,6 +94,7 @@ export const useWorkoutSetsManagement = (
         mapWorkoutSetToSetData(set)
       );
       
+      // Now pass the correct types to addSetInDb
       const updatedSets = await addSetInDb(exerciseIndex, exerciseSets, routineId);
       
       if (updatedSets) {
@@ -154,6 +156,7 @@ export const useWorkoutSetsManagement = (
         mapWorkoutSetToSetData(set)
       );
       
+      // Now pass the correct types to removeSetInDb
       const updatedSets = await removeSetInDb(exerciseIndex, exerciseSets, setIndex, routineId);
       
       if (updatedSets) {
