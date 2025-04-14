@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { SetData } from '@/types/workoutTypes';
+import { SetData, PreviousSetData } from '@/types/workoutTypes';
 import PreviousValues from './PreviousValues';
 import InputField from './InputField';
 import CompleteButton from './CompleteButton';
@@ -29,11 +29,11 @@ const SetRowContent: React.FC<SetRowContentProps> = ({
     : "bg-midnight-elevated border-divider/20";
     
   // Ensure we have a properly formatted previous value object
-  const previousValue = set.previous || {
+  const previousValue: PreviousSetData = set.previous || {
     id: set.id,
     exercise_id: set.exercise_id,
-    weight: typeof set.weight === 'number' ? set.weight.toString() : set.weight,
-    reps: typeof set.reps === 'number' ? set.reps.toString() : set.reps,
+    weight: typeof set.weight === 'number' ? set.weight.toString() : set.weight.toString(),
+    reps: typeof set.reps === 'number' ? set.reps.toString() : set.reps.toString(),
     set_order: set.set_order
   };
 

@@ -1,5 +1,5 @@
 
-import { ExerciseHistory, WorkoutExercise, WorkoutExerciseData, SetData, WorkoutSet } from '@/types/workout';
+import { ExerciseHistory, WorkoutExercise, WorkoutExerciseData, SetData, WorkoutSet, DatabaseResult } from '@/types/workout';
 
 /**
  * Utility functions to map between database objects and TypeScript interfaces

@@ -65,7 +65,7 @@ export const ClassProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     <ClassContext.Provider
       value={{
         classes,
-        userClass: cooldownInfo?.currentClass || null,
+        userClass: cooldownInfo?.currentClass || profile?.class || null,
         isOnCooldown: cooldownInfo?.onCooldown || false,
         cooldownEndsAt: cooldownInfo?.cooldownEndsAt || null,
         cooldownText,

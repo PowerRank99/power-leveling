@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { SetData, DatabaseResult } from '@/types/workoutTypes';
+import { createSuccessResult, createErrorResult, createVoidSuccessResult } from '@/utils/serviceUtils';
 
 /**
  * Service responsible for managing the ordering of workout sets
@@ -27,12 +28,12 @@ export class SetOrderingService {
         
       if (fetchError) {
         console.error("[SetOrderingService] Error fetching sets:", fetchError);
-        return { success: false, error: fetchError };
+        return createErrorResult(fetchError);
       }
       
       if (!sets || sets.length === 0) {
         console.log("[SetOrderingService] No sets to normalize");
-        return { success: true };
+        return createVoidSuccessResult();
       }
       
       console.log(`[SetOrderingService] Found ${sets.length} sets to normalize`);
@@ -49,7 +50,7 @@ export class SetOrderingService {
       
       if (!needsNormalization) {
         console.log("[SetOrderingService] Sets already have correct sequential ordering");
-        return { success: true };
+        return createVoidSuccessResult();
       }
       
       // Update each set with a new sequential order
@@ -68,15 +69,15 @@ export class SetOrderingService {
           
         if (updateError) {
           console.error(`[SetOrderingService] Error updating set ${sets[i].id} order:`, updateError);
-          return { success: false, error: updateError };
+          return createErrorResult(updateError);
         }
       }
       
       console.log("[SetOrderingService] Successfully normalized set orders");
-      return { success: true };
+      return createVoidSuccessResult();
     } catch (error) {
       console.error("[SetOrderingService] Exception normalizing set orders:", error);
-      return { success: false, error };
+      return createErrorResult(error as Error);
     }
   }
 }

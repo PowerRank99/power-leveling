@@ -38,22 +38,28 @@ export const useSetAdder = (workoutId: string | null) => {
       // Get the last set as a template
       const lastSet = updatedSets.length > 0
         ? updatedSets[updatedSets.length - 1]
-        : { weight: '0', reps: '12', completed: false, previous: { weight: '0', reps: '12' } };
+        : null;
         
       // Get exercise_id from the existing sets or use a default
-      const exerciseId = lastSet.exercise_id || 
-        (exerciseSets.length > 0 ? exerciseSets[0].exercise_id : '');
+      const exerciseId = lastSet?.exercise_id || 
+        (exerciseSets.length > 0 && 'exercise_id' in exerciseSets[0] ? exerciseSets[0].exercise_id : '');
         
       // Create new set with a temporary ID
       const newSetId = `new-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       const newSet: SetData = {
         id: newSetId,
         exercise_id: exerciseId,
-        weight: lastSet.weight,
-        reps: lastSet.reps,
+        weight: lastSet?.weight || '0',
+        reps: lastSet?.reps || '12',
         completed: false,
         set_order: updatedSets.length,
-        previous: lastSet.previous || { weight: '0', reps: '12' }
+        previous: lastSet?.previous || { 
+          id: newSetId,
+          exercise_id: exerciseId,
+          weight: '0', 
+          reps: '12',
+          set_order: updatedSets.length
+        }
       };
       
       // Add to our local array

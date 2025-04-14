@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise, PersonalRecord } from '@/types/workoutTypes';
 import { XPCalculationService } from './XPCalculationService';
@@ -74,11 +73,25 @@ export class XPService {
       difficulty?: 'iniciante' | 'intermediario' | 'avancado'
     }
   ): Promise<PersonalRecord[]> {
-    const result = await PersonalRecordService.checkForPersonalRecords(userId, workout);
-    if (result.success) {
-      return result.data;
+    try {
+      const result = await PersonalRecordService.checkForPersonalRecords(userId, workout);
+      if (result.success && result.data) {
+        // Convert the specialized PersonalRecord type to the standard one
+        return result.data.map(record => ({
+          id: record.id,
+          user_id: record.user_id,
+          exercise_id: record.exerciseId || record.exercise_id,
+          exercise_name: record.exerciseName || '',
+          weight: record.weight,
+          previous_weight: record.previousWeight || 0,
+          recorded_at: record.recordedAt || new Date().toISOString()
+        }));
+      }
+      return [];
+    } catch (error) {
+      console.error('Error checking for personal records:', error);
+      return [];
     }
-    return [];
   }
   
   /**

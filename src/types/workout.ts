@@ -24,10 +24,7 @@ export interface WorkoutSet {
   reps: string;
   completed: boolean;
   set_order?: number;
-  previous?: {
-    weight: string;
-    reps: string;
-  };
+  previous?: PreviousSetData;
   exercise_id?: string; // Added for compatibility with SetData
 }
 
@@ -55,10 +52,7 @@ export interface SetData {
   reps: string | number; // Support both string and number
   completed: boolean;
   set_order: number;
-  previous?: {
-    weight: string;
-    reps: string;
-  };
+  previous?: PreviousSetData;
 }
 
 /**
@@ -95,7 +89,7 @@ export interface ExerciseHistory {
 export interface DatabaseResult<T> {
   data: T | null;
   error: Error | null;
-  success?: boolean; // Added for compatibility with existing code
+  success: boolean;
 }
 
 /**

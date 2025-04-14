@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { CreateGuildParams, CreateRaidParams, GuildRole } from './types';
@@ -418,6 +417,29 @@ export class GuildService {
     } catch (error) {
       console.error('Failed to fetch guild details:', error);
       return null;
+    }
+  }
+
+  /**
+   * Format member data for UI display
+   */
+  static formatMemberData(memberData: any[]): ServiceResponse<any[]> {
+    try {
+      const formattedMembers = memberData.map(member => ({
+        id: member.id,
+        name: member.name || 'Unknown',
+        avatar_url: member.avatar_url || null,
+        level: member.level || 1,
+        xp: member.xp || 0,
+        workouts_count: member.workouts_count || 0,
+        streak: member.streak || 0,
+        joined_at: member.joined_at || new Date().toISOString()
+      }));
+      
+      return createSuccessResponse(formattedMembers);
+    } catch (error: any) {
+      console.error('Error formatting member data:', error);
+      return createErrorResponse(error.message);
     }
   }
 }
