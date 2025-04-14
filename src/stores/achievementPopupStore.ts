@@ -1,15 +1,6 @@
 
 import { create } from 'zustand';
-
-export interface Achievement {
-  id: string;
-  title: string;
-  description: string;
-  xpReward: number;
-  points?: number;
-  rank?: string;
-  bonusText?: string;
-}
+import { Achievement } from '@/types/achievementTypes';
 
 interface AchievementPopupState {
   isVisible: boolean;
