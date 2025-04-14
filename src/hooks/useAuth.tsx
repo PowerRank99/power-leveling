@@ -38,22 +38,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Set up auth state listener first
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.id);
+      if (session && session.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email || '',
+          user_metadata: session.user.user_metadata
+        });
+        
+        // Fetch profile data on auth state change
+        const { data: profileData, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+          
+        if (profileData) {
+          setProfile(profileData);
+        } else if (error) {
+          console.error('Error fetching profile:', error);
+        }
+      } else {
+        setUser(null);
+        setProfile(null);
+      }
+      setLoading(false);
+    });
+
+    // Then check for existing session
     const getCurrentUser = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (user) {
+        if (session?.user) {
           setUser({
-            id: user.id,
-            email: user.email || '',
-            user_metadata: user.user_metadata
+            id: session.user.id,
+            email: session.user.email || '',
+            user_metadata: session.user.user_metadata
           });
           
           // Fetch profile data
           const { data: profileData } = await supabase
             .from('profiles')
             .select('*')
-            .eq('id', user.id)
+            .eq('id', session.user.id)
             .single();
             
           if (profileData) {
@@ -68,32 +98,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     getCurrentUser();
-
-    // Set up auth state listener
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session && session.user) {
-        setUser({
-          id: session.user.id,
-          email: session.user.email || '',
-          user_metadata: session.user.user_metadata
-        });
-        
-        // Fetch profile data on auth state change
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-          
-        if (profileData) {
-          setProfile(profileData);
-        }
-      } else {
-        setUser(null);
-        setProfile(null);
-      }
-      setLoading(false);
-    });
 
     return () => {
       authListener.subscription.unsubscribe();
@@ -118,8 +122,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
-      setUser(null);
-      setProfile(null);
     } catch (error) {
       console.error('Error signing out:', error);
     }

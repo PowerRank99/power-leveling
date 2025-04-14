@@ -12,8 +12,8 @@ const AuthRequiredRoute: React.FC<AuthRequiredRouteProps> = ({ children }) => {
   
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-fitblue"></div>
+      <div className="flex items-center justify-center min-h-screen bg-midnight-deep">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-arcane"></div>
       </div>
     );
   }
