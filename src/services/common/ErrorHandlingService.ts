@@ -1,4 +1,3 @@
-
 /**
  * Error categories for consistent error handling
  */
@@ -9,6 +8,7 @@ export enum ErrorCategory {
   DATABASE = 'database',
   NETWORK = 'network',
   BUSINESS_LOGIC = 'business_logic',
+  EXCEPTION = 'exception',
   UNKNOWN = 'unknown'
 }
 
