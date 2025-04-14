@@ -74,6 +74,7 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
         id: `mock-ex-${i}`,
         name: getExerciseNameForType(workoutType),
         category: workoutType,
+        exerciseId: `mock-exercise-id-${i}`,
         sets: Array(3).fill({
           id: 'mock-set',
           completed: true
