@@ -10,7 +10,7 @@ export class WorkoutAchievementChecker {
   /**
    * Check all achievements that might be triggered by a workout completion
    */
-  static async checkAchievements(userId: string): Promise<ServiceResponse<void>> {
+  static async checkAchievements(userId: string): Promise<ServiceResponse<string[]>> {
     try {
       // Get workout counts and other achievement-related data
       const { data: stats, error } = await supabase
@@ -57,7 +57,7 @@ export class WorkoutAchievementChecker {
         await AchievementService.checkAndAwardAchievements(userId, achievementsToCheck);
       }
       
-      return createSuccessResponse(undefined);
+      return createSuccessResponse(achievementsToCheck);
     } catch (error) {
       return createErrorResponse(
         (error as Error).message,

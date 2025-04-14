@@ -19,7 +19,7 @@ export class WorkoutAchievementProcessor {
         if (result.success && result.data) {
           // Check if result.data has a count property, otherwise use length for arrays
           const workoutCount = typeof result.data === 'object' && 'count' in result.data 
-            ? result.data.count 
+            ? Number(result.data.count) // Explicitly convert to number
             : Array.isArray(result.data) ? result.data.length : 0;
             
           // Update progress for workout count achievements
