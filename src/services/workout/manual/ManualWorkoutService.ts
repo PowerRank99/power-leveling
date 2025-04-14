@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { XPService } from '@/services/rpg/XPService';
 import { PowerDayService } from '@/services/rpg/bonus/PowerDayService';
+import { ActivityBonusService } from './ActivityBonusService';
 import { ManualWorkoutData, ManualWorkout } from '@/types/manualWorkoutTypes';
 import { ServiceResponse } from '@/services/common/ErrorHandlingService';
 
@@ -47,6 +48,20 @@ export class ManualWorkoutService {
         };
       }
       
+      // Get user's class to apply bonuses
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('class')
+        .eq('id', userId)
+        .single();
+      
+      if (profileError) {
+        console.error('Error getting user profile:', profileError);
+        // Continue without class bonuses
+      }
+      
+      const userClass = userProfile?.class || null;
+      
       // Check if workout should use Power Day
       let isUserPowerDay = false;
       let xpAwarded = XPService.MANUAL_WORKOUT_BASE_XP;
@@ -62,6 +77,16 @@ export class ManualWorkoutService {
             powerDayStatus.week,
             powerDayStatus.year
           );
+        }
+      }
+      
+      // Apply class-specific bonus if applicable
+      let bonusXP = 0;
+      if (userClass && workoutData.activityType) {
+        const bonusMultiplier = ActivityBonusService.getClassBonus(userClass, workoutData.activityType);
+        if (bonusMultiplier > 0) {
+          bonusXP = Math.round(xpAwarded * bonusMultiplier);
+          xpAwarded += bonusXP;
         }
       }
       
@@ -89,11 +114,20 @@ export class ManualWorkoutService {
         };
       }
       
-      // Award XP
+      // Award XP with metadata for class bonus tracking
       const result = await XPService.awardXP(
         userId, 
         xpAwarded, 
-        'manual_workout'
+        'manual_workout',
+        {
+          activityType: workoutData.activityType,
+          isPowerDay: isUserPowerDay,
+          classBonus: bonusXP > 0 ? {
+            class: userClass,
+            amount: bonusXP,
+            description: ActivityBonusService.getBonusDescription(userClass, workoutData.activityType)
+          } : null
+        }
       );
       
       if (!result) {

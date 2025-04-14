@@ -22,19 +22,22 @@ export class ActivityBonusService {
     // Default bonuses per class and activity type
     const classActivityBonuses: Record<string, Record<string, number>> = {
       Guerreiro: {
-        'strength': 0.2, // 20% bonus for strength training
+        'strength': 0.2, // 20% bonus for strength training (Força Bruta)
       },
       Monge: {
-        'bodyweight': 0.15, // 15% bonus for bodyweight exercises
+        'bodyweight': 0.2, // 20% bonus for bodyweight exercises (Força Interior)
       },
       Ninja: {
-        'cardio': 0.2, // 20% bonus for cardio exercises
+        'cardio': 0.2, // 20% bonus for cardio exercises (Forrest Gump)
       },
       Bruxo: {
         'yoga': 0.2, // 20% bonus for yoga/flexibility
       },
+      Druida: {
+        'yoga': 0.4, // 40% bonus for mobility & flexibility (Ritmo da Natureza)
+      },
       Paladino: {
-        'sports': 0.15, // 15% bonus for sports activities
+        'sports': 0.4, // 40% bonus for sports activities (Caminho do Herói)
       }
     };
     

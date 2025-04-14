@@ -2,6 +2,7 @@
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { XPService } from '@/services/rpg/XPService';
+import { ActivityBonusService } from '@/services/workout/manual/ActivityBonusService';
 
 export class ManualWorkoutSubmissionService {
   private userId: string;
@@ -39,6 +40,19 @@ export class ManualWorkoutSubmissionService {
         selectedClass
       } = params;
       
+      // Calculate class bonus for display in log
+      let classBonus = 0;
+      let classBonusDescription = null;
+      
+      if (useClassPassives && selectedClass) {
+        const bonusMultiplier = ActivityBonusService.getClassBonus(selectedClass, activityType);
+        if (bonusMultiplier > 0) {
+          const baseXP = XPService.MANUAL_WORKOUT_BASE_XP + (isPowerDay ? 50 : 0);
+          classBonus = Math.round(baseXP * bonusMultiplier);
+          classBonusDescription = ActivityBonusService.getBonusDescription(selectedClass, activityType);
+        }
+      }
+      
       const { error } = await supabase.rpc('create_manual_workout', {
         p_user_id: this.userId,
         p_description: description,
@@ -52,17 +66,35 @@ export class ManualWorkoutSubmissionService {
       
       if (error) throw error;
       
+      // Award XP with class bonus metadata if applicable
       await XPService.awardXP(this.userId, xpAwarded, 'manual_workout', {
         activityType,
         isPowerDay,
-        ...(useClassPassives ? { class: selectedClass } : {})
+        ...(useClassPassives && classBonus > 0 ? {
+          classBonus: {
+            class: selectedClass,
+            amount: classBonus,
+            description: classBonusDescription
+          }
+        } : {})
       });
       
-      const classInfo = useClassPassives ? `, Class: ${selectedClass}` : '';
-      this.addLogEntry(
-        'Manual Workout Submitted', 
-        `Type: ${activityType}, XP: ${xpAwarded}${isPowerDay ? ' (Power Day)' : ''}${classInfo}`
-      );
+      // Build detailed log entry
+      let logDetails = `Type: ${activityType}, XP: ${xpAwarded}`;
+      
+      if (isPowerDay) {
+        logDetails += ' (Power Day)';
+      }
+      
+      if (useClassPassives && selectedClass) {
+        logDetails += `, Class: ${selectedClass}`;
+        
+        if (classBonus > 0) {
+          logDetails += `, Bonus: +${classBonus} XP (${classBonusDescription})`;
+        }
+      }
+      
+      this.addLogEntry('Manual Workout Submitted', logDetails);
       
       toast.success('Manual Workout Submitted!', {
         description: `${xpAwarded} XP has been awarded.`,

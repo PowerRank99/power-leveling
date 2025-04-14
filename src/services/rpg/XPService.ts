@@ -30,7 +30,7 @@ export class XPService {
     metadata?: any
   ): Promise<boolean> {
     try {
-      console.log(`[XPService] Awarding ${amount} XP to user ${userId} from ${source}`);
+      console.log(`[XPService] Awarding ${amount} XP to user ${userId} from ${source}`, metadata);
       
       // Call the increment_xp RPC function
       const { data, error } = await supabase.rpc('increment_xp', {
@@ -43,8 +43,21 @@ export class XPService {
         return false;
       }
       
-      // Show toast notification - using the correct method name
-      XPToastService.showXPToast(amount, undefined, false);
+      // Show toast notification with class bonuses if available
+      if (metadata?.classBonus) {
+        XPToastService.showXPToast(
+          amount, 
+          [{ 
+            skill: metadata.classBonus.class, 
+            amount: metadata.classBonus.amount,
+            description: metadata.classBonus.description 
+          }],
+          false
+        );
+      } else {
+        // Standard XP toast
+        XPToastService.showXPToast(amount, undefined, false);
+      }
       
       return true;
     } catch (error) {
