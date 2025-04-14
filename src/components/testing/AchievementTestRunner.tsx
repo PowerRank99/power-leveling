@@ -35,7 +35,7 @@ import TestProgressIndicator from './TestProgressIndicator';
 import TestResultViewer from './TestResultViewer';
 import TestConfigurationPanel from './TestConfigurationPanel';
 import TestCoverageReport from '@/components/achievement-testing/TestCoverageReport';
-import TestingDashboard from '@/components/achievement-testing/TestingDashboard';
+import TestingDashboard from '../testing/dashboard/TestingDashboard';
 
 interface AchievementTestRunnerProps {
   userId: string;

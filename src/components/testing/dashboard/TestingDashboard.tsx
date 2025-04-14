@@ -13,9 +13,9 @@ import {
   Download,
   RotateCcw
 } from 'lucide-react';
-import { TestCoverageStats } from './TestCoverageStats';
-import { RecentTestResults } from './RecentTestResults';
-import { QuickActions } from './QuickActions';
+import TestCoverageStats from './TestCoverageStats';
+import RecentTestResults from './RecentTestResults';
+import QuickActions from './QuickActions';
 
 interface TestingDashboardProps {
   stats: {
