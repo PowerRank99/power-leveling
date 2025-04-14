@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { OptimizedProfileService } from '@/services/profile/OptimizedProfileService';
 import { ProfileData } from '@/types/profile';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProfileDataProviderProps {
   userId: string;
