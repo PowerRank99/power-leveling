@@ -41,7 +41,9 @@ export class UnifiedAchievementChecker {
    * Check achievements related to XP milestones
    */
   static async checkXPAchievements(userId: string, totalXP?: number): Promise<ServiceResponse<string[]>> {
-    return XPCheckerService.checkXPMilestoneAchievements(userId, totalXP);
+    // Create an instance of XPCheckerService and use its instance method
+    const checker = new XPCheckerService();
+    return checker.checkAchievements(userId, totalXP);
   }
 
   /**
