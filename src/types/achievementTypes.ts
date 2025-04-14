@@ -1,3 +1,4 @@
+import { ServiceResponse } from '@/services/common/ErrorHandlingService';
 
 /**
  * Achievement interface for consistent usage across the app
@@ -56,9 +57,7 @@ export interface AchievementBatchResult {
   alreadyAwarded?: string[];
 }
 
-/**
- * User achievement data structure from supabase
- */
+// Update UserAchievementData interface to match Supabase query structure
 export interface UserAchievementData {
   achievement_id: string;
   achieved_at: string;
@@ -74,4 +73,3 @@ export interface UserAchievementData {
     requirements: any;
   };
 }
-

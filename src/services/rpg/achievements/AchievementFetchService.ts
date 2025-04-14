@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, ErrorCategory, createErrorResponse, createSuccessResponse } from '@/services/common/ErrorHandlingService';
 import { Achievement, UserAchievementData } from '@/types/achievementTypes';
@@ -82,9 +81,8 @@ export class AchievementFetchService {
         );
       }
       
-      // Transform the data to match our Achievement interface
-      // First cast to unknown, then to the correct type
-      const achievements = (data as unknown as UserAchievementData[] | null)?.map(item => ({
+      // Explicit type casting and safe transformation
+      const achievements = (data as UserAchievementData[])?.map(item => ({
         id: item.achievement_id,
         name: item.achievements.name,
         description: item.achievements.description,
