@@ -13,6 +13,7 @@ export interface PersonalRecord {
   previousWeight?: number;
 }
 
+// Preserve existing interfaces with explicit type conversions
 export interface WorkoutExercise {
   id: string;
   name: string;
@@ -24,8 +25,8 @@ export interface WorkoutExercise {
 export interface WorkoutSet {
   id: string;
   exercise_id?: string;
-  weight: string | number;
-  reps: string | number;
+  weight: string;  // Explicitly string to match database
+  reps: string;   // Explicitly string to match database
   completed: boolean;
   set_order?: number;
   previous?: PreviousSetData;
@@ -52,8 +53,8 @@ export interface WorkoutExerciseData {
 export interface SetData {
   id: string;
   exercise_id: string;
-  weight: string | number;
-  reps: string | number;
+  weight: string;
+  reps: string;
   completed: boolean;
   set_order: number;
   previous?: PreviousSetData;
