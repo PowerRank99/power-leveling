@@ -108,7 +108,7 @@ export class ProgressUpdateService extends BaseProgressService {
           }
           
           return false;
-        });
+        }, 'update_achievement_progress');
         
         if (error) {
           throw error;

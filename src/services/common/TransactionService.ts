@@ -50,7 +50,7 @@ export class TransactionService {
    */
   static async executeInTransaction<T>(
     operation: () => Promise<T>,
-    operationName: string
+    operationName: string = 'transaction'
   ): Promise<ServiceResponse<T>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {

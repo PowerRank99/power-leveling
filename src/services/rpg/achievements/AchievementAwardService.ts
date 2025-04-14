@@ -93,7 +93,7 @@ export class AchievementAwardService {
           }
 
           return true;
-        });
+        }, 'award_achievement');
 
         if (transactionError) {
           throw transactionError;

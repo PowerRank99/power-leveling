@@ -156,7 +156,7 @@ export class PersonalRecordService {
             weight: weight,
             previousWeight: previousWeight
           };
-        });
+        }, 'record_personal_record');
 
         if (error) {
           toast.error('Erro ao salvar recorde pessoal', {
