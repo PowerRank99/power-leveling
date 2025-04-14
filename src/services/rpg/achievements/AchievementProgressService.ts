@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, ErrorHandlingService, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
@@ -65,7 +64,7 @@ export class AchievementProgressService {
   
   /**
    * Initialize progress for one or more achievements
-   * Uses batch operations for efficiency
+   * Uses batch operations for efficiency 
    */
   static async initializeMultipleProgress(
     userId: string,
