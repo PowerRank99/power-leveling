@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +15,7 @@ import AchievementsList from '@/components/achievement-testing/AchievementsList'
 import UserContextSimulation from '@/components/achievement-testing/UserContextSimulation';
 import LoggingPanel from '@/components/achievement-testing/LoggingPanel';
 import AchievementNotificationTesterSection from '@/components/achievement-testing/AchievementNotificationTesterSection';
+import AchievementTestRunner from '@/components/achievement-testing/AchievementTestRunner';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
@@ -75,6 +77,7 @@ const AchievementTestingPage: React.FC = () => {
               <TabsTrigger value="manual" className="flex-1">Manual Workout</TabsTrigger>
               <TabsTrigger value="powerday" className="flex-1">Power Day</TabsTrigger>
               <TabsTrigger value="verify" className="flex-1">Verification</TabsTrigger>
+              <TabsTrigger value="autotester" className="flex-1">Auto Tester</TabsTrigger>
               <TabsTrigger value="list" className="flex-1">List</TabsTrigger>
               <TabsTrigger value="logs" className="flex-1">Logs</TabsTrigger>
             </TabsList>
@@ -111,6 +114,13 @@ const AchievementTestingPage: React.FC = () => {
               <AchievementVerification 
                 userId={testUser} 
                 addLogEntry={addLogEntry} 
+              />
+            </TabsContent>
+            
+            <TabsContent value="autotester">
+              <AchievementTestRunner 
+                userId={testUser}
+                addLogEntry={addLogEntry}
               />
             </TabsContent>
             
