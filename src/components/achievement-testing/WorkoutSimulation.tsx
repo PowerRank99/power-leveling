@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -49,7 +50,7 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
       case 'strength':
         return 'Bench Press';
       case 'bodyweight':
-        return 'Pull-up';
+        return 'Pull-up Calisthenics'; // Updated to include keyword that triggers Monk bonus
       case 'cardio':
         return 'Running';
       case 'sports':

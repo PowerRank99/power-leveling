@@ -18,7 +18,7 @@ const ClassPassivesToggle: React.FC<ClassPassivesToggleProps> = ({
   selectedClass,
   onClassChange
 }) => {
-  const classes = ['Guerreiro', 'Monge', 'Ninja', 'Bruxo', 'Paladino'];
+  const classes = ['Guerreiro', 'Monge', 'Ninja', 'Bruxo', 'Paladino', 'Druida']; // Added Druida
   
   // Initialize class if none selected
   useEffect(() => {
