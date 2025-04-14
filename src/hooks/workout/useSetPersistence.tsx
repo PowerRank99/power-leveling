@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { SetData } from '@/types/workout';
 import { useSetAdder } from './useSetAdder';
-import { useSetRemover } from './useSetRemover';
+import { useRemoveSet } from './useRemoveSet';
 import { useSetUpdater } from './useSetUpdater';
 
 /**
@@ -14,7 +14,7 @@ export const useSetPersistence = (workoutId: string | null) => {
   
   // Compose specialized hooks with their core functionality
   const { addSet: adderAddSet, isProcessing: isAddProcessing } = useSetAdder(workoutId);
-  const { removeSet: removerRemoveSet, isProcessing: isRemoveProcessing } = useSetRemover(workoutId);
+  const { removeSet: removerRemoveSet, isProcessing: isRemoveProcessing } = useRemoveSet(workoutId);
   const { updateSet: updaterUpdateSet, isUpdating: isUpdateProcessing } = useSetUpdater(workoutId);
   
   /**
@@ -74,3 +74,6 @@ export const useSetPersistence = (workoutId: string | null) => {
     isProcessing: isProcessing || isAddProcessing || isRemoveProcessing || isUpdateProcessing
   };
 };
+
+// Define an alias for useSetManagement for backward compatibility
+export const useSetManagement = useSetPersistence;

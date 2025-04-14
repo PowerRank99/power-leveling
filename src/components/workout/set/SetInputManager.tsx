@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef } from 'react';
-import { SetData } from '@/types/workout';
+import { SetData, PreviousSetData } from '@/types/workoutTypes';
 
 interface SetInputManagerProps {
   set: SetData;

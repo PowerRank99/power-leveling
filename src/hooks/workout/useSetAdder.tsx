@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { SetData } from '@/types/workout';
+import { SetData, PreviousSetData } from '@/types/workout';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -46,6 +46,16 @@ export const useSetAdder = (workoutId: string | null) => {
         
       // Create new set with a temporary ID
       const newSetId = `new-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      
+      // Create properly structured previous data
+      const previousData: PreviousSetData = {
+        id: newSetId,
+        exercise_id: exerciseId,
+        weight: lastSet?.weight?.toString() || '0',
+        reps: lastSet?.reps?.toString() || '12',
+        set_order: updatedSets.length
+      };
+      
       const newSet: SetData = {
         id: newSetId,
         exercise_id: exerciseId,
@@ -53,13 +63,7 @@ export const useSetAdder = (workoutId: string | null) => {
         reps: lastSet?.reps || '12',
         completed: false,
         set_order: updatedSets.length,
-        previous: lastSet?.previous || { 
-          id: newSetId,
-          exercise_id: exerciseId,
-          weight: '0', 
-          reps: '12',
-          set_order: updatedSets.length
-        }
+        previous: previousData
       };
       
       // Add to our local array

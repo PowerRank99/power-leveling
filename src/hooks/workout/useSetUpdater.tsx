@@ -34,11 +34,15 @@ export const useSetUpdater = (workoutId: string | null) => {
     setIsUpdating(true);
     
     try {
-      // Clone the array and the set
+      // Clone the array
       const updatedSets = [...exerciseSets];
+      
+      // Create a properly updated set with all fields preserved
       updatedSets[setIndex] = {
         ...updatedSets[setIndex],
-        ...data
+        weight: data.weight !== undefined ? data.weight : updatedSets[setIndex].weight,
+        reps: data.reps !== undefined ? data.reps : updatedSets[setIndex].reps,
+        completed: data.completed !== undefined ? data.completed : updatedSets[setIndex].completed
       };
       
       // Update in database if it's a permanent ID (not a temporary one)

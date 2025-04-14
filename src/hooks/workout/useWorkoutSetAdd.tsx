@@ -22,21 +22,23 @@ export const useWorkoutSetAdd = (workoutId: string | null, exercises: WorkoutExe
       
       const newSetId = `new-${Date.now()}`;
       
-      // Create a properly structured previous set data
+      // Create a properly structured previous set data object
       const previousData: PreviousSetData = {
         id: newSetId,
         exercise_id: currentExercise.id,
-        weight: lastSet?.weight || '0',
-        reps: lastSet?.reps || '12',
+        weight: lastSet?.weight?.toString() || '0',
+        reps: lastSet?.reps?.toString() || '12',
         set_order: currentSets.length
       };
       
       const newSet = {
         id: newSetId,
+        exercise_id: currentExercise.id,
         weight: lastSet?.weight || '0',
         reps: lastSet?.reps || '12',
         completed: false,
-        previous: previousData
+        previous: previousData,
+        set_order: currentSets.length
       };
       
       updatedExercises[currentExerciseIndex].sets.push(newSet);

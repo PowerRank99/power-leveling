@@ -1,11 +1,18 @@
-import { supabase } from '@/integrations/supabase/client';
+
+import { useState } from 'react';
 import { SetData } from '@/types/workout';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 /**
  * A specialized hook for removing sets from a workout
  */
 export const useRemoveSet = (workoutId: string | null) => {
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  /**
+   * Updates the target set count for a routine exercise
+   */
   const updateRoutineExerciseSetCount = async (exerciseId: string, routineId: string, newSetCount: number) => {
     try {
       const { error } = await supabase
@@ -38,14 +45,16 @@ export const useRemoveSet = (workoutId: string | null) => {
     setIndex: number,
     routineId: string
   ): Promise<SetData[] | null> => {
+    if (!workoutId) {
+      toast.error("Erro ao remover série", {
+        description: "Treino não encontrado"
+      });
+      return null;
+    }
+
+    setIsProcessing(true);
+    
     try {
-      if (!workoutId) {
-        toast.error("Erro ao remover série", {
-          description: "Treino não encontrado"
-        });
-        return null;
-      }
-      
       // Clone the sets
       const updatedSets = [...exerciseSets];
       
@@ -63,12 +72,10 @@ export const useRemoveSet = (workoutId: string | null) => {
         return exerciseSets;
       }
       
-      console.log(`Removing set ${setIndex + 1} for exercise ID: ${setToRemove.exercise_id}, Set ID: ${setToRemove.id}`);
-      
       // Remove the set from our local array
       updatedSets.splice(setIndex, 1);
       
-      // If this is a temporary ID (not in the database yet), just return the updated sets
+      // If this is a temporary ID (not persisted to the database yet), just return the updated sets
       if (setToRemove.id.startsWith('new-') || setToRemove.id.startsWith('default-')) {
         return updatedSets;
       }
@@ -100,6 +107,8 @@ export const useRemoveSet = (workoutId: string | null) => {
         description: "Não foi possível remover a série"
       });
       return null;
+    } finally {
+      setIsProcessing(false);
     }
   };
   
@@ -141,5 +150,11 @@ export const useRemoveSet = (workoutId: string | null) => {
     }
   };
 
-  return { removeSet };
+  return {
+    removeSet,
+    isProcessing
+  };
 };
+
+// Add an alias for backward compatibility
+export const useSetRemover = useRemoveSet;
