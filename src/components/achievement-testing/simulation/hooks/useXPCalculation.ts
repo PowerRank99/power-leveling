@@ -14,7 +14,6 @@ export const useXPCalculation = (
   }, [
     state.duration, 
     state.exerciseCount, 
-    state.difficultyLevel, 
     state.includePersonalRecord, 
     state.streak, 
     state.useClassPassives, 
@@ -37,7 +36,6 @@ export const useXPCalculation = (
           }))
         })),
         durationSeconds: state.duration * 60,
-        difficulty: state.difficultyLevel as any,
         hasPR: state.includePersonalRecord
       };
       
@@ -49,18 +47,16 @@ export const useXPCalculation = (
       const cappedSets = Math.min(totalSets, XPCalculationService.MAX_XP_CONTRIBUTING_SETS);
       const setXP = cappedSets * XPService.BASE_SET_XP;
       
-      const difficultyMultiplier = XPCalculationService.DIFFICULTY_MULTIPLIERS[state.difficultyLevel as keyof typeof XPCalculationService.DIFFICULTY_MULTIPLIERS];
       const streakMultiplier = XPCalculationService.getStreakMultiplier(state.streak);
       
       const prBonus = state.includePersonalRecord ? XPService.PR_BONUS_XP : 0;
       
-      const baseCalculatedXP = Math.round((timeXP + exerciseXP + setXP) * difficultyMultiplier);
+      const baseCalculatedXP = Math.round(timeXP + exerciseXP + setXP);
       
       const result = XPCalculationService.calculateWorkoutXP({
         workout,
         userClass: state.useClassPassives ? state.selectedClass : null,
-        streak: state.streak,
-        defaultDifficulty: state.difficultyLevel as any
+        streak: state.streak
       });
       
       updateState({
@@ -68,7 +64,6 @@ export const useXPCalculation = (
           timeXP,
           exerciseXP,
           setXP,
-          difficultyMultiplier,
           streakMultiplier,
           prBonus,
           baseXP: baseCalculatedXP

@@ -5,7 +5,6 @@ export interface WorkoutState {
   workoutType: string;
   duration: number;
   exerciseCount: number;
-  difficultyLevel: string;
   includePersonalRecord: boolean;
   isLoading: boolean;
   streak: number;
@@ -16,7 +15,6 @@ export interface WorkoutState {
     timeXP: number;
     exerciseXP: number;
     setXP: number;
-    difficultyMultiplier: number;
     streakMultiplier: number;
     prBonus: number;
     baseXP: number;
@@ -29,7 +27,6 @@ export const useWorkoutState = () => {
     workoutType: 'strength',
     duration: 45,
     exerciseCount: 5,
-    difficultyLevel: 'intermediario',
     includePersonalRecord: false,
     isLoading: false,
     streak: 0,
@@ -40,7 +37,6 @@ export const useWorkoutState = () => {
       timeXP: 0,
       exerciseXP: 0,
       setXP: 0,
-      difficultyMultiplier: 1,
       streakMultiplier: 1,
       prBonus: 0,
       baseXP: 0
@@ -52,7 +48,6 @@ export const useWorkoutState = () => {
   const setWorkoutType = (workoutType: string) => setState(prev => ({ ...prev, workoutType }));
   const setDuration = (duration: number) => setState(prev => ({ ...prev, duration }));
   const setExerciseCount = (exerciseCount: number) => setState(prev => ({ ...prev, exerciseCount }));
-  const setDifficultyLevel = (difficultyLevel: string) => setState(prev => ({ ...prev, difficultyLevel }));
   const setIncludePersonalRecord = (includePersonalRecord: boolean) => setState(prev => ({ ...prev, includePersonalRecord }));
   const setStreak = (streak: number) => setState(prev => ({ ...prev, streak }));
   const setUseClassPassives = (useClassPassives: boolean) => setState(prev => ({ ...prev, useClassPassives }));
@@ -70,7 +65,6 @@ export const useWorkoutState = () => {
     setWorkoutType,
     setDuration,
     setExerciseCount,
-    setDifficultyLevel,
     setIncludePersonalRecord,
     setStreak,
     setUseClassPassives,

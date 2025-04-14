@@ -1,13 +1,13 @@
+
 import React, { useState, memo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { ExerciseType, DifficultyLevel } from './types/Exercise';
+import { ExerciseType } from './types/Exercise';
 
 interface ExerciseCardProps {
   name: string;
   category: string;
-  level: DifficultyLevel;
   type?: ExerciseType;
   image: string;
   description?: string;
@@ -21,7 +21,6 @@ interface ExerciseCardProps {
 const ExerciseCard: React.FC<ExerciseCardProps> = memo(({
   name,
   category,
-  level,
   type = 'Musculação',
   image,
   description,
@@ -33,15 +32,6 @@ const ExerciseCard: React.FC<ExerciseCardProps> = memo(({
 }) => {
   const [expanded, setExpanded] = useState(initialExpanded);
   const isMobile = useIsMobile();
-  
-  const getLevelClass = () => {
-    switch (level) {
-      case 'Iniciante': return 'bg-arcane-15 text-arcane border-arcane-30';
-      case 'Intermediário': return 'bg-achievement-15 text-achievement border-achievement-30';
-      case 'Avançado': return 'bg-valor-15 text-valor border-valor-30';
-      default: return 'bg-arcane-15 text-arcane border-arcane-30';
-    }
-  };
   
   const getTypeClass = () => {
     switch (type) {
@@ -72,8 +62,8 @@ const ExerciseCard: React.FC<ExerciseCardProps> = memo(({
             <div className="flex-1">
               <h3 className="font-orbitron font-semibold text-text-primary text-sm">{name}</h3>
               <div className="flex flex-wrap gap-1 mt-1">
-                <span className={`text-xs px-2 py-0.5 rounded-full border ${getLevelClass()}`}>
-                  {level}
+                <span className={`text-xs px-2 py-0.5 rounded-full border ${getTypeClass()}`}>
+                  {type}
                 </span>
               </div>
             </div>
@@ -97,9 +87,6 @@ const ExerciseCard: React.FC<ExerciseCardProps> = memo(({
           <div className="flex-1">
             <h3 className={`font-orbitron font-semibold text-text-primary ${isMobile ? 'text-sm' : ''}`}>{name}</h3>
             <div className="flex flex-wrap gap-1 mt-1">
-              <span className={`text-xs px-2 py-0.5 rounded-full border ${getLevelClass()}`}>
-                {level}
-              </span>
               <span className={`text-xs px-2 py-0.5 rounded-full border ${getTypeClass()}`}>
                 {type}
               </span>

@@ -6,7 +6,7 @@ import { BaseXPCalculator } from './calculations/BaseXPCalculator';
 import { ClassBonusCalculator } from './calculations/ClassBonusCalculator';
 import { 
   XPCalculationInput, 
-  XPCalculationResult, 
+  XPCalculationResult,
   WorkoutDifficulty 
 } from './types/xpTypes';
 import { PassiveSkillService } from './bonus/PassiveSkillService';
@@ -22,7 +22,6 @@ export class XPCalculationService {
   static readonly PR_BONUS_XP = XP_CONSTANTS.PR_BONUS_XP;
   static readonly BASE_EXERCISE_XP = XP_CONSTANTS.BASE_EXERCISE_XP;
   static readonly BASE_SET_XP = XP_CONSTANTS.BASE_SET_XP;
-  static readonly DIFFICULTY_MULTIPLIERS = XP_CONSTANTS.DIFFICULTY_MULTIPLIERS;
   static readonly TIME_XP_TIERS = XP_CONSTANTS.TIME_XP_TIERS;
   static readonly EXERCISE_TYPES = EXERCISE_TYPES;
   static readonly CLASS_PASSIVE_SKILLS = CLASS_PASSIVE_SKILLS;
@@ -56,13 +55,9 @@ export class XPCalculationService {
     userId
   }: XPCalculationInput): XPCalculationResult {
     try {
-      // Get workout difficulty
-      const workoutDifficulty = workout.difficulty || defaultDifficulty;
-      
       // Calculate XP components (time, exercises, sets)
       const components = BaseXPCalculator.calculateXPComponents(
-        workout, 
-        workoutDifficulty
+        workout
       );
       
       // Add PR bonus if applicable

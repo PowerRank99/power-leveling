@@ -8,7 +8,6 @@ interface WorkoutParams {
   workoutType: string;
   duration: number;
   exerciseCount: number;
-  difficultyLevel: string;
   includePersonalRecord: boolean;
   streak: number;
   useClassPassives: boolean;
@@ -61,7 +60,6 @@ export class WorkoutSubmissionService {
       const metadata = {
         workoutType: workout.workoutType,
         exerciseCount: workout.exerciseCount,
-        difficultyLevel: workout.difficultyLevel,
         includePersonalRecord: workout.includePersonalRecord,
         ...(workout.useClassPassives ? { class: workout.selectedClass } : {})
       };

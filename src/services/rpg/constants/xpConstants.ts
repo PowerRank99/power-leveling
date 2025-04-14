@@ -1,5 +1,5 @@
 
-import { XPTimeTier, DifficultyMultipliers } from '../types/xpTypes';
+import { XPTimeTier } from '../types/xpTypes';
 
 /**
  * Constants for XP calculations
@@ -28,13 +28,6 @@ export const XP_CONSTANTS = {
   
   /** Per-day streak bonus percentage (as decimal) */
   STREAK_BONUS_PER_DAY: 0.05,
-  
-  /** XP multipliers for different difficulty levels */
-  DIFFICULTY_MULTIPLIERS: {
-    iniciante: 0.8,
-    intermediario: 1.0,
-    avancado: 1.2
-  } as DifficultyMultipliers,
   
   /** Diminishing returns tiers for time-based XP */
   TIME_XP_TIERS: [

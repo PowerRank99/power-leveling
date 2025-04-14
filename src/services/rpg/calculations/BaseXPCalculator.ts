@@ -1,3 +1,4 @@
+
 import { XP_CONSTANTS } from '../constants/xpConstants';
 import { XPTimeTier, XPComponents } from '../types/xpTypes';
 import { WorkoutExercise } from '@/types/workoutTypes';
@@ -66,15 +67,13 @@ export class BaseXPCalculator {
    * This allows for targeted class bonuses
    * 
    * @param workout - Workout data with exercises and duration
-   * @param difficulty - Workout difficulty level
    * @returns XP components breakdown
    */
   static calculateXPComponents(
     workout: {
       exercises: WorkoutExercise[];
       durationSeconds: number;
-    },
-    difficulty: string = 'intermediario'
+    }
   ): XPComponents {
     // Calculate time-based XP
     const timeMinutes = Math.floor(workout.durationSeconds / 60);
@@ -95,20 +94,13 @@ export class BaseXPCalculator {
     const cappedCompletedSets = Math.min(completedSets, XP_CONSTANTS.MAX_XP_CONTRIBUTING_SETS);
     const setsXP = cappedCompletedSets * XP_CONSTANTS.BASE_SET_XP;
     
-    // Apply difficulty modifier to exercise and set XP only
-    const difficultyMultiplier = 
-      XP_CONSTANTS.DIFFICULTY_MULTIPLIERS[difficulty as keyof typeof XP_CONSTANTS.DIFFICULTY_MULTIPLIERS] || 1.0;
-    
-    const adjustedExerciseXP = Math.round(exerciseXP * difficultyMultiplier);
-    const adjustedSetsXP = Math.round(setsXP * difficultyMultiplier);
-    
     // Return all components
     return {
       timeXP,
-      exerciseXP: adjustedExerciseXP,
-      setsXP: adjustedSetsXP,
+      exerciseXP,
+      setsXP,
       prBonus: 0, // Will be added later if applicable
-      totalBaseXP: timeXP + adjustedExerciseXP + adjustedSetsXP
+      totalBaseXP: timeXP + exerciseXP + setsXP
     };
   }
 }

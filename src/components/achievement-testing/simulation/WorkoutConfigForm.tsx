@@ -11,8 +11,6 @@ import ClassPassivesToggle from '../common/ClassPassivesToggle';
 interface WorkoutConfigFormProps {
   workoutType: string;
   setWorkoutType: (value: string) => void;
-  difficultyLevel: string;
-  setDifficultyLevel: (value: string) => void;
   duration: number;
   setDuration: (value: number) => void;
   exerciseCount: number;
@@ -30,8 +28,6 @@ interface WorkoutConfigFormProps {
 const WorkoutConfigForm: React.FC<WorkoutConfigFormProps> = ({
   workoutType,
   setWorkoutType,
-  difficultyLevel,
-  setDifficultyLevel,
   duration,
   setDuration,
   exerciseCount,
@@ -59,20 +55,6 @@ const WorkoutConfigForm: React.FC<WorkoutConfigFormProps> = ({
             <SelectItem value="flexibility">Flexibility/Yoga</SelectItem>
             <SelectItem value="hiit">HIIT</SelectItem>
             <SelectItem value="sports">Sports Activity</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="difficulty">Difficulty Level</Label>
-        <Select value={difficultyLevel} onValueChange={setDifficultyLevel}>
-          <SelectTrigger id="difficulty" className="bg-midnight-elevated border-divider">
-            <SelectValue placeholder="Select difficulty" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="iniciante">Iniciante</SelectItem>
-            <SelectItem value="intermediario">Intermediário</SelectItem>
-            <SelectItem value="avancado">Avançado</SelectItem>
           </SelectContent>
         </Select>
       </div>

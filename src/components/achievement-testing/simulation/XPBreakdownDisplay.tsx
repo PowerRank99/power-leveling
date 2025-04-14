@@ -9,7 +9,6 @@ interface XPBreakdownDisplayProps {
     timeXP: number;
     exerciseXP: number;
     setXP: number;
-    difficultyMultiplier: number;
     streakMultiplier: number;
     prBonus: number;
     baseXP: number;
@@ -57,16 +56,6 @@ const XPBreakdownDisplay: React.FC<XPBreakdownDisplayProps> = ({
           <div className="grid grid-cols-2 gap-1 text-sm">
             <div className="text-text-secondary">Base Subtotal:</div>
             <div className="text-right font-space text-arcane">
-              {xpBreakdown.timeXP + xpBreakdown.exerciseXP + xpBreakdown.setXP} XP
-            </div>
-            
-            <div className="text-text-secondary">Difficulty:</div>
-            <div className="text-right font-space text-arcane-60">
-              {xpBreakdown.difficultyMultiplier.toFixed(1)}×
-            </div>
-            
-            <div className="text-text-secondary">Base XP:</div>
-            <div className="text-right font-space text-arcane-60 font-bold">
               {xpBreakdown.baseXP} XP
             </div>
             
