@@ -7,6 +7,7 @@ import { StandardizedAchievementService } from './achievements/StandardizedAchie
 import { AchievementFetchService } from './achievements/AchievementFetchService';
 import { Achievement } from '@/types/achievementTypes';
 import { AchievementUtils } from '@/constants/AchievementDefinitions';
+import { AchievementProgressService } from './achievements/AchievementProgressService';
 
 /**
  * Service for handling achievements
@@ -130,6 +131,22 @@ export class AchievementService {
    */
   static async getAllAchievementProgress(userId: string): Promise<ServiceResponse<any>> {
     return AchievementFetchService.getAllAchievementProgress(userId);
+  }
+  
+  /**
+   * Update multiple achievement progress values
+   * Delegates to AchievementProgressService
+   */
+  static async updateMultipleProgressValues(
+    userId: string,
+    progressUpdates: Array<{
+      achievementId: string,
+      currentValue: number,
+      targetValue: number,
+      isComplete: boolean
+    }>
+  ): Promise<ServiceResponse<boolean>> {
+    return AchievementProgressService.updateMultipleProgressValues(userId, progressUpdates);
   }
   
   /**
