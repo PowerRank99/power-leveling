@@ -19,7 +19,7 @@ export interface ServiceResponse<T> {
   data?: T;
   message?: string;
   error?: Error | ServiceError;
-  details?: string; // Added to address missing details property
+  details?: string;
 }
 
 // Backward compatibility type alias
@@ -37,7 +37,7 @@ export class ErrorHandlingService {
     operation: string,
     options: { 
       showToast?: boolean; 
-      userMessage?: string; // Added to support existing usage
+      userMessage?: string;
     } = {}
   ): Promise<ServiceResponse<T>> {
     try {
@@ -77,7 +77,7 @@ export function createErrorResponse(
   technical: string = '',
   category: ErrorCategory = ErrorCategory.UNKNOWN,
   code: string = 'ERROR'
-): ServiceErrorResponse {
+): ServiceResponse<any> {
   return {
     success: false,
     message,
