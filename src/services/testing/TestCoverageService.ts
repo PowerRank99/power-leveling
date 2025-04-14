@@ -35,7 +35,9 @@ export class TestCoverageService {
    * Generate coverage report
    */
   static generateCoverageReport(): TestCoverageReport {
-    const allAchievements = AchievementUtils.getAllAchievements();
+    const allAchievementDefinitions = AchievementUtils.getAllAchievements();
+    const allAchievements = allAchievementDefinitions.map(def => AchievementUtils.convertToAchievement(def));
+    
     const byCategory: Record<AchievementCategory, { total: number; tested: number; coverage: number }> = 
       Object.values(AchievementCategory).reduce((acc, category) => ({
         ...acc,
@@ -63,7 +65,7 @@ export class TestCoverageService {
     return {
       totalAchievements: allAchievements.length,
       testedAchievements: this.testedAchievements.size,
-      coveragePercentage: (this.testedAchievements.size / allAchievements.length) * 100,
+      coveragePercentage: allAchievements.length > 0 ? (this.testedAchievements.size / allAchievements.length) * 100 : 0,
       byCategory,
       untestedAchievements
     };
