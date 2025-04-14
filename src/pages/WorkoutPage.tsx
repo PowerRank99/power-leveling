@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import PageHeader from '@/components/ui/PageHeader';
 import BottomNavBar from '@/components/navigation/BottomNavBar';
@@ -29,7 +28,6 @@ const WorkoutPage = () => {
     loadMoreWorkouts
   } = useWorkoutData();
   
-  // Use the unified workouts hook
   const {
     unifiedWorkouts,
     isLoadingManual,
@@ -47,7 +45,6 @@ const WorkoutPage = () => {
     isLoadingMore
   );
   
-  // Transform Routine[] to RoutineWithExercises[]
   const routinesWithExercises: RoutineWithExercises[] = savedRoutines.map(routine => ({
     id: routine.id,
     name: routine.name,
@@ -57,14 +54,11 @@ const WorkoutPage = () => {
     exercises: [] // Empty array as we don't have exercise details at this level
   }));
   
-  // Wrap deleteRoutine to match expected signature
   const handleDeleteRoutine = async (id: string): Promise<void> => {
     await deleteRoutine(id);
   };
   
-  // Handle workout deletion (unified for both tracked and manual)
   const handleDeleteWorkout = async (id: string): Promise<void> => {
-    // Try to determine if it's a manual workout from the unifiedWorkouts list
     const workout = unifiedWorkouts.find(w => w.id === id);
     
     if (workout?.type === 'manual') {
@@ -74,7 +68,6 @@ const WorkoutPage = () => {
     }
   };
   
-  // Create function that returns boolean for workout deletion status
   const isDeletingItemRecord = (id: string): boolean => {
     const workout = unifiedWorkouts.find(w => w.id === id);
     if (workout?.type === 'manual') {
@@ -83,18 +76,15 @@ const WorkoutPage = () => {
     return isDeletingItem(id);
   };
 
-  // Create a proper Record object for routines deletion status
   const isDeletingItemAsRecord: Record<string, boolean> = {};
   savedRoutines.forEach(routine => {
     isDeletingItemAsRecord[routine.id] = isDeletingItem(routine.id);
   });
   
-  // Handle successful manual workout submission
   const handleManualWorkoutSuccess = () => {
     loadManualWorkouts();
   };
   
-  // Refresh all data when component mounts or user changes
   useEffect(() => {
     const initialLoad = async () => {
       console.log("WorkoutPage: Initial data load");

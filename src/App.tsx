@@ -18,6 +18,7 @@ import GuildsListPage from './pages/GuildsListPage';
 import GuildQuestsPage from './pages/GuildQuestsPage';
 import CreateQuestPage from './pages/CreateQuestPage';
 import GuildLeaderboardPage from './pages/GuildLeaderboardPage';
+import ActiveWorkoutPage from './pages/ActiveWorkoutPage';
 
 function App() {
   return (
@@ -27,6 +28,8 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/auth" element={<AuthPage />} />
+        
+        {/* English routes */}
         <Route path="/profile" element={
           <AuthRequiredRoute>
             <ProfilePage />
@@ -37,7 +40,26 @@ function App() {
             <WorkoutPage />
           </AuthRequiredRoute>
         } />
+        
+        {/* Portuguese routes */}
+        <Route path="/perfil" element={
+          <AuthRequiredRoute>
+            <ProfilePage />
+          </AuthRequiredRoute>
+        } />
+        <Route path="/treino" element={
+          <AuthRequiredRoute>
+            <WorkoutPage />
+          </AuthRequiredRoute>
+        } />
+        <Route path="/treino/ativo/:id" element={
+          <AuthRequiredRoute>
+            <ActiveWorkoutPage />
+          </AuthRequiredRoute>
+        } />
+        
         <Route path="/exercises" element={<ExercisePage />} />
+        <Route path="/exercicios" element={<ExercisePage />} />
         <Route path="/premium" element={<PremiumPage />} />
         <Route path="/achievements" element={<AchievementPage />} />
         <Route path="/classes" element={
