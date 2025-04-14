@@ -1,12 +1,12 @@
 
-import { ErrorCategory, ServiceErrorResponse, createErrorResponse } from './ErrorHandlingService';
+import { ErrorCategory, ServiceResponse, createErrorResponse } from './ErrorHandlingService';
 
 /**
  * Factory for creating standardized error responses across the application
  */
 export class ErrorFactory {
   // Authentication errors
-  static createAuthenticationError(message: string, technical: string): ServiceErrorResponse {
+  static createAuthenticationError(message: string, technical: string): ServiceResponse<any> {
     return createErrorResponse(
       message,
       technical,
@@ -15,7 +15,7 @@ export class ErrorFactory {
     );
   }
   
-  static createSessionExpiredError(): ServiceErrorResponse {
+  static createSessionExpiredError(): ServiceResponse<any> {
     return createErrorResponse(
       'Sua sessão expirou, por favor faça login novamente',
       'User session expired or invalid',
@@ -25,7 +25,7 @@ export class ErrorFactory {
   }
   
   // Database errors
-  static createDatabaseError(message: string, technical: string): ServiceErrorResponse {
+  static createDatabaseError(message: string, technical: string): ServiceResponse<any> {
     return createErrorResponse(
       message || 'Erro ao acessar dados',
       technical,
@@ -34,7 +34,7 @@ export class ErrorFactory {
     );
   }
   
-  static createRecordNotFoundError(entity: string): ServiceErrorResponse {
+  static createRecordNotFoundError(entity: string): ServiceResponse<any> {
     return createErrorResponse(
       `${entity} não encontrado`,
       `${entity} record not found in database`,
@@ -44,7 +44,7 @@ export class ErrorFactory {
   }
   
   // Validation errors
-  static createValidationError(message: string, details: string): ServiceErrorResponse {
+  static createValidationError(message: string, details: string): ServiceResponse<any> {
     return createErrorResponse(
       message,
       details,
@@ -54,7 +54,7 @@ export class ErrorFactory {
   }
   
   // Network errors
-  static createNetworkError(message: string = 'Erro de conexão'): ServiceErrorResponse {
+  static createNetworkError(message: string = 'Erro de conexão'): ServiceResponse<any> {
     return createErrorResponse(
       message,
       'Network request failed',
@@ -64,7 +64,7 @@ export class ErrorFactory {
   }
   
   // Business logic errors
-  static createBusinessLogicError(message: string, technical: string, code: string): ServiceErrorResponse {
+  static createBusinessLogicError(message: string, technical: string, code: string): ServiceResponse<any> {
     return createErrorResponse(
       message,
       technical,
@@ -74,7 +74,7 @@ export class ErrorFactory {
   }
   
   // Achievement system errors
-  static createAchievementError(message: string, technical: string): ServiceErrorResponse {
+  static createAchievementError(message: string, technical: string): ServiceResponse<any> {
     return createErrorResponse(
       message || 'Erro ao processar conquistas',
       technical,
@@ -84,7 +84,7 @@ export class ErrorFactory {
   }
   
   // XP system errors
-  static createXPError(message: string, technical: string): ServiceErrorResponse {
+  static createXPError(message: string, technical: string): ServiceResponse<any> {
     return createErrorResponse(
       message || 'Erro ao calcular XP',
       technical,
@@ -94,7 +94,7 @@ export class ErrorFactory {
   }
   
   // Workout errors
-  static createWorkoutError(message: string, technical: string): ServiceErrorResponse {
+  static createWorkoutError(message: string, technical: string): ServiceResponse<any> {
     return createErrorResponse(
       message || 'Erro ao processar treino',
       technical,

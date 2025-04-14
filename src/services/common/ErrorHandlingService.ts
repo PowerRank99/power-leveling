@@ -1,13 +1,39 @@
 
 /**
+ * Error categories for consistent error handling
+ */
+export enum ErrorCategory {
+  AUTHENTICATION = 'authentication',
+  AUTHORIZATION = 'authorization',
+  VALIDATION = 'validation',
+  DATABASE = 'database',
+  NETWORK = 'network',
+  BUSINESS_LOGIC = 'business_logic',
+  UNKNOWN = 'unknown'
+}
+
+/**
+ * Error structure for consistent error handling
+ */
+export interface ServiceError {
+  message: string;
+  technical?: string;
+  category?: ErrorCategory;
+  code?: string;
+}
+
+/**
  * Generic response object for service operations
  */
 export interface ServiceResponse<T> {
   success: boolean;
   data?: T;
   message?: string;
-  error?: Error;
+  error?: Error | ServiceError;
 }
+
+// Backward compatibility type alias
+export type ServiceErrorResponse = ServiceResponse<any>;
 
 /**
  * Service for handling errors consistently
@@ -52,10 +78,20 @@ export function createSuccessResponse<T>(data: T): ServiceResponse<T> {
 /**
  * Create an error response
  */
-export function createErrorResponse(error: Error): ServiceResponse<any> {
+export function createErrorResponse(
+  message: string,
+  technical: string = '',
+  category: ErrorCategory = ErrorCategory.UNKNOWN,
+  code: string = 'ERROR'
+): ServiceErrorResponse {
   return {
     success: false,
-    message: error.message,
-    error
+    message,
+    error: {
+      message,
+      technical,
+      category,
+      code
+    }
   };
 }

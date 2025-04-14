@@ -1,7 +1,7 @@
 
 import { toast } from 'sonner';
 import { ErrorFactory } from '../common/ErrorFactory';
-import { ServiceErrorResponse } from '../common/ErrorHandlingService';
+import { ServiceResponse } from '../common/ErrorHandlingService';
 
 /**
  * Service responsible for handling errors in set operations
@@ -33,7 +33,7 @@ export class SetErrorService {
   /**
    * Creates a standardized error response for set operations
    */
-  static createSetError(operation: string, error: any): ServiceErrorResponse {
+  static createSetError(operation: string, error: any): ServiceResponse<any> {
     const technical = error instanceof Error ? error.message : String(error);
     const message = `Erro ao ${operation}`;
     
@@ -47,14 +47,14 @@ export class SetErrorService {
   /**
    * Handles set operation errors with standardized responses and optional toast
    */
-  static handleSetError(operation: string, error: any, showToast: boolean = true): ServiceErrorResponse {
+  static handleSetError(operation: string, error: any, showToast: boolean = true): ServiceResponse<any> {
     // Get a standardized error response
     const errorResponse = this.createSetError(operation, error);
     
     // Optionally show toast
     if (showToast) {
-      toast.error(errorResponse.error.message, {
-        description: errorResponse.error.technical.substring(0, 100), // Truncate long messages
+      toast.error(errorResponse.message || '', {
+        description: errorResponse.error?.message?.substring(0, 100), // Truncate long messages
         duration: 5000
       });
     }

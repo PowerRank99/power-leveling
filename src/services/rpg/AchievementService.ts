@@ -39,7 +39,7 @@ export class AchievementService {
         }
         
         // Get newly awarded achievements
-        const newlyAwarded = result.data.successful;
+        const newlyAwarded = result.data?.successful;
         
         if (newlyAwarded?.length) {
           // Fetch full achievement details for awarded achievements

@@ -1,4 +1,3 @@
-
 import { WorkoutExercise, WorkoutSet, PreviousSetData } from '@/types/workout';
 import { ExerciseHistoryService } from '@/services/ExerciseHistoryService';
 
@@ -125,5 +124,35 @@ export class WorkoutDataFormatter {
     
     // Wait for all exercise promises to resolve
     return Promise.all(workoutExercisesPromises);
+  }
+
+  /**
+   * Generate empty sets for an exercise with proper structure
+   */
+  static generateEmptySets(exerciseId: string, count: number = 3): WorkoutSet[] {
+    const sets: WorkoutSet[] = [];
+    for (let i = 0; i < count; i++) {
+      const id = `new-${Date.now()}-${i}`;
+      
+      // Create properly structured previous data
+      const previousData: PreviousSetData = {
+        id,
+        exercise_id: exerciseId,
+        weight: '0',
+        reps: '12',
+        set_order: i
+      };
+      
+      sets.push({
+        id,
+        weight: '0',
+        reps: '12',
+        completed: false,
+        set_order: i,
+        previous: previousData,
+        exercise_id: exerciseId
+      });
+    }
+    return sets;
   }
 }

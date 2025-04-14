@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise, PersonalRecord } from '@/types/workoutTypes';
 import { XPCalculationService } from './XPCalculationService';
@@ -79,17 +78,17 @@ export class XPService {
       if (result.success && result.data) {
         // Convert the specialized PersonalRecord type to the standard one
         return result.data.map(record => ({
-          id: record.id || undefined,
+          id: record.id,
           user_id: record.user_id || userId,
           exercise_id: record.exerciseId || record.exercise_id,
-          exercise_name: record.exerciseName || '',
+          exercise_name: record.exerciseName,
           exerciseId: record.exerciseId || record.exercise_id,
-          exerciseName: record.exerciseName || '',
+          exerciseName: record.exerciseName,
           weight: record.weight,
           previous_weight: record.previousWeight || 0,
           previousWeight: record.previousWeight || 0,
-          recorded_at: record.recordedAt || new Date().toISOString(),
-          recordedAt: record.recordedAt || new Date().toISOString()
+          recorded_at: record.recordedAt,
+          recordedAt: record.recordedAt
         }));
       }
       return [];

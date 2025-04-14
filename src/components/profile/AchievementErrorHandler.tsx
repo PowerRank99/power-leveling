@@ -1,10 +1,10 @@
 
 import React from 'react';
-import { ServiceErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
+import { ServiceResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 import ErrorDisplay from '@/components/ui/ErrorDisplay';
 
 interface AchievementErrorHandlerProps {
-  error: ServiceErrorResponse | null;
+  error: ServiceResponse<any> | null;
   onRetry: () => void;
   className?: string;
 }
@@ -19,13 +19,28 @@ const AchievementErrorHandler: React.FC<AchievementErrorHandlerProps> = ({
 }) => {
   if (!error) return null;
   
+  const errorMessage = error.message || 'Erro desconhecido';
+  const technicalDetails = error.error && typeof error.error === 'object' && 'technical' in error.error 
+    ? (error.error as any).technical 
+    : error.error instanceof Error 
+      ? error.error.message 
+      : 'Detalhes técnicos não disponíveis';
+      
+  const errorCategory = error.error && typeof error.error === 'object' && 'category' in error.error
+    ? (error.error as any).category
+    : ErrorCategory.UNKNOWN;
+    
+  const errorCode = error.error && typeof error.error === 'object' && 'code' in error.error
+    ? (error.error as any).code
+    : undefined;
+  
   return (
     <ErrorDisplay
       title="Erro ao carregar conquistas"
-      message={error.error.message}
-      details={error.error.technical}
-      category={error.error.category || ErrorCategory.UNKNOWN}
-      code={error.error.code}
+      message={errorMessage}
+      details={technicalDetails}
+      category={errorCategory}
+      code={errorCode}
       onRetry={onRetry}
       className={className}
     />

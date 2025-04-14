@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { SetData } from '@/types/workout';
+import { SetData, PreviousSetData } from '@/types/workout';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -48,7 +48,7 @@ export const useSetAdder = (workoutId: string | null) => {
       const newSetId = `new-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       
       // Create properly structured previous data
-      const previousData = lastSet?.previous || {
+      const previousData: PreviousSetData = {
         id: newSetId,
         exercise_id: exerciseId,
         weight: lastSet?.weight?.toString() || '0',
@@ -86,3 +86,6 @@ export const useSetAdder = (workoutId: string | null) => {
     isProcessing
   };
 };
+
+// Add re-exports for backwards compatibility
+export { useSetAdder as useAddSet };

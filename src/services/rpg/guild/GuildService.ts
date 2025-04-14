@@ -1,6 +1,8 @@
 import { supabase } from '@/integrations/supabase/client';
 import { DatabaseResult } from '@/types/workout';
 import { createSuccessResult, createErrorResult } from '@/utils/serviceUtils';
+import { GuildRole, CreateGuildParams, CreateRaidParams, toast, AchievementService } from './types';
+import { ServiceResponse } from '@/services/common/ErrorHandlingService';
 
 /**
  * Represents a guild member in the system
@@ -502,8 +504,14 @@ export class GuildService {
    */
   static formatMemberData(memberData: any[]): DatabaseResult<any[]> {
     try {
+      // Check if the input is valid
+      if (!Array.isArray(memberData)) {
+        console.error('Error formatting member data: Input is not an array', memberData);
+        return createErrorResult(new Error('Invalid member data format'));
+      }
+
       const formattedMembers = memberData.map(member => ({
-        id: member.id,
+        id: member.id || 'unknown',
         name: member.name || 'Unknown',
         avatar_url: member.avatar_url || null,
         level: member.level || 1,
@@ -516,7 +524,7 @@ export class GuildService {
       return createSuccessResult(formattedMembers);
     } catch (error: any) {
       console.error('Error formatting member data:', error);
-      return createErrorResponse(error.message);
+      return createErrorResult(error);
     }
   }
 }

@@ -148,4 +148,30 @@ export class WorkoutDataService {
       return {};
     }
   }
+
+  /**
+   * Format exercise data for the UI
+   */
+  static formatExerciseData(exerciseData: any[]): WorkoutExerciseData[] {
+    if (!exerciseData || !Array.isArray(exerciseData)) {
+      console.error('Invalid exercise data received:', exerciseData);
+      return [];
+    }
+    
+    try {
+      return exerciseData.map(exercise => ({
+        id: exercise.id || '',
+        exercise_id: exercise.exercise_id || '',
+        name: exercise.name || 'Unknown Exercise',
+        type: exercise.type || '',
+        weight: exercise.weight || 0,
+        reps: exercise.reps || 0,
+        sets: exercise.sets || 0,
+        targetSets: exercise.target_sets
+      }));
+    } catch (error) {
+      console.error('Error formatting exercise data:', error);
+      return [];
+    }
+  }
 }

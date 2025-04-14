@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { WorkoutExercise } from '@/types/workout';
-import { useAddSet } from './useAddSet';
+import { useSetAdder } from './useAddSet';
 import { useRemoveSet } from './useRemoveSet';
 import { useUpdateSet } from './useUpdateSet';
 
@@ -18,7 +18,7 @@ export const useWorkoutSetsManagement = (
   }, [initialExercises]);
   
   const { updateSet: updateSetInDb } = useUpdateSet(workoutId);
-  const { addSet: addSetInDb } = useAddSet(workoutId);
+  const { addSet: addSetInDb } = useSetAdder(workoutId);
   const { removeSet: removeSetInDb } = useRemoveSet(workoutId);
   
   const updateSet = async (

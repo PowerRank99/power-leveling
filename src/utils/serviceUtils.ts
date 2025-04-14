@@ -2,45 +2,34 @@
 import { DatabaseResult } from '@/types/workout';
 
 /**
- * Creates a properly formatted DatabaseResult with success=true
+ * Creates a success result with the given data
  */
 export function createSuccessResult<T>(data: T): DatabaseResult<T> {
   return {
+    success: true,
     data,
-    error: null,
-    success: true
+    error: null
   };
 }
 
 /**
- * Creates a properly formatted DatabaseResult with success=false
- */
-export function createErrorResult<T>(error: Error): DatabaseResult<T> {
-  return {
-    data: null,
-    error,
-    success: false
-  };
-}
-
-/**
- * Creates a properly formatted DatabaseResult for void operations
+ * Creates a void success result (for operations that don't return data)
  */
 export function createVoidSuccessResult(): DatabaseResult<void> {
   return {
+    success: true,
     data: null,
-    error: null,
-    success: true
+    error: null
   };
 }
 
 /**
- * Helper to ensure all required DatabaseResult properties are present
+ * Creates an error result with the given error
  */
-export function ensureCompleteResult<T>(result: Partial<DatabaseResult<T>>): DatabaseResult<T> {
+export function createErrorResult(error: Error | any): DatabaseResult<any> {
   return {
-    data: result.data !== undefined ? result.data : null,
-    error: result.error !== undefined ? result.error : null,
-    success: result.success !== undefined ? result.success : !result.error
+    success: false,
+    data: null,
+    error: error instanceof Error ? error : new Error(String(error))
   };
 }

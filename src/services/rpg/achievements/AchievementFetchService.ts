@@ -1,7 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { createSuccessResult, createErrorResult } from '@/utils/serviceUtils';
-import { DatabaseResult } from '@/types/workout';
+import { ServiceResponse, createErrorResponse, createSuccessResponse } from '@/services/common/ErrorHandlingService';
 
 /**
  * Service for fetching achievement data
@@ -10,7 +9,7 @@ export class AchievementFetchService {
   /**
    * Get all achievements
    */
-  static async getAllAchievements() {
+  static async getAllAchievements(): Promise<ServiceResponse<any[]>> {
     try {
       const { data, error } = await supabase
         .from('achievements')
@@ -18,19 +17,19 @@ export class AchievementFetchService {
         .order('rank');
         
       if (error) {
-        return createErrorResult(error);
+        return createErrorResponse(error.message, error.message);
       }
       
-      return createSuccessResult(data);
+      return createSuccessResponse(data || []);
     } catch (error) {
-      return createErrorResult(error as Error);
+      return createErrorResponse((error as Error).message, (error as Error).message);
     }
   }
   
   /**
    * Get unlocked achievements for a user
    */
-  static async getUnlockedAchievements(userId: string) {
+  static async getUnlockedAchievements(userId: string): Promise<ServiceResponse<any[]>> {
     try {
       const { data, error } = await supabase
         .from('user_achievements')
@@ -53,37 +52,37 @@ export class AchievementFetchService {
         .order('achieved_at', { ascending: false });
         
       if (error) {
-        return createErrorResult(error);
+        return createErrorResponse(error.message, error.message);
       }
       
-      return createSuccessResult(data);
+      return createSuccessResponse(data || []);
     } catch (error) {
-      return createErrorResult(error as Error);
+      return createErrorResponse((error as Error).message, (error as Error).message);
     }
   }
   
   /**
    * Get achievement stats for a user
    */
-  static async getAchievementStats(userId: string) {
+  static async getAchievementStats(userId: string): Promise<ServiceResponse<any>> {
     try {
       const { data, error } = await supabase
         .rpc('get_achievement_stats', { p_user_id: userId });
         
       if (error) {
-        return createErrorResult(error);
+        return createErrorResponse(error.message, error.message);
       }
       
-      return createSuccessResult(data);
+      return createSuccessResponse(data || {});
     } catch (error) {
-      return createErrorResult(error as Error);
+      return createErrorResponse((error as Error).message, (error as Error).message);
     }
   }
   
   /**
    * Check for achievements related to workouts
    */
-  static async checkWorkoutAchievements(userId: string, workoutId: string) {
+  static async checkWorkoutAchievements(userId: string, workoutId: string): Promise<ServiceResponse<any>> {
     try {
       // Get workout details
       const { data: workoutData, error: workoutError } = await supabase
@@ -93,7 +92,7 @@ export class AchievementFetchService {
         .single();
         
       if (workoutError) {
-        return createErrorResult(workoutError);
+        return createErrorResponse(workoutError.message, workoutError.message);
       }
       
       // Get all workouts count for user
@@ -103,16 +102,16 @@ export class AchievementFetchService {
         .eq('user_id', userId);
         
       if (countError) {
-        return createErrorResult(countError);
+        return createErrorResponse(countError.message, countError.message);
       }
       
       // Return results
-      return createSuccessResult({
+      return createSuccessResponse({
         workoutData,
         totalWorkouts: count || 0
       });
     } catch (error) {
-      return createErrorResult(error as Error);
+      return createErrorResponse((error as Error).message, (error as Error).message);
     }
   }
 }

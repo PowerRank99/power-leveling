@@ -29,6 +29,17 @@ export interface WorkoutSet {
 }
 
 /**
+ * Interface for previous set data
+ */
+export interface PreviousSetData {
+  id: string;
+  exercise_id: string;
+  weight: string;
+  reps: string;
+  set_order: number;
+}
+
+/**
  * Interface for database-formatted exercise data
  */
 export interface WorkoutExerciseData {
@@ -56,17 +67,6 @@ export interface SetData {
 }
 
 /**
- * Interface for previous set data
- */
-export interface PreviousSetData {
-  id: string;
-  exercise_id: string;
-  weight: string;
-  reps: string;
-  set_order: number;
-}
-
-/**
  * Interface for exercise history data
  */
 export interface ExerciseHistory {
@@ -87,9 +87,9 @@ export interface ExerciseHistory {
  * Interface for database operation result
  */
 export interface DatabaseResult<T> {
+  success: boolean;
   data: T | null;
   error: Error | null;
-  success: boolean;
 }
 
 /**
@@ -98,12 +98,12 @@ export interface DatabaseResult<T> {
 export interface PersonalRecord {
   id?: string;
   user_id?: string;
-  exercise_id: string;
+  exercise_id?: string;
   exercise_name?: string;
   exerciseId?: string; // For compatibility
   exerciseName?: string; // For compatibility
   weight: number;
-  previous_weight: number;
+  previous_weight?: number;
   previousWeight?: number; // For compatibility
   recorded_at?: string;
   recordedAt?: string; // For compatibility

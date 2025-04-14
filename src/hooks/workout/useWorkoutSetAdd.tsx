@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { WorkoutExercise } from '@/types/workout';
+import { WorkoutExercise, PreviousSetData } from '@/types/workout';
 import { toast } from 'sonner';
 
 export const useWorkoutSetAdd = (workoutId: string | null, exercises: WorkoutExercise[], currentExerciseIndex: number) => {
@@ -23,7 +23,7 @@ export const useWorkoutSetAdd = (workoutId: string | null, exercises: WorkoutExe
       const newSetId = `new-${Date.now()}`;
       
       // Create a properly structured previous set data
-      const previousData = lastSet?.previous || {
+      const previousData: PreviousSetData = {
         id: newSetId,
         exercise_id: currentExercise.id,
         weight: lastSet?.weight || '0',

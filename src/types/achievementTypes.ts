@@ -1,8 +1,7 @@
 
 /**
- * Types for the achievement system
+ * Achievement interface for consistent usage across the app
  */
-
 export interface Achievement {
   id: string;
   name: string;
@@ -12,60 +11,16 @@ export interface Achievement {
   points: number;
   xpReward: number;
   iconName: string;
-  requirements: Record<string, any>;
-  isUnlocked?: boolean;
+  requirements: any;
   achievedAt?: string;
-  progress?: AchievementProgress;
 }
 
-export interface UserAchievement {
-  id: string;
-  userId: string;
-  achievementId: string;
-  achievedAt: string;
-  achievement?: Achievement;
-}
-
+/**
+ * Achievement progress interface
+ */
 export interface AchievementProgress {
   id: string;
   current: number;
   total: number;
   isComplete: boolean;
-}
-
-export interface AchievementCategory {
-  id: string;
-  name: string;
-  description: string;
-  achievements: Achievement[];
-}
-
-export interface AchievementStats {
-  total: number;
-  unlocked: number;
-  points: number;
-  rank: string;
-  nextRank: string | null;
-  pointsToNextRank: number | null;
-}
-
-export type AchievementRank = 'Unranked' | 'E' | 'D' | 'C' | 'B' | 'A' | 'S';
-
-export interface AchievementFilter {
-  status: 'all' | 'unlocked' | 'locked';
-  rank: string;
-  category: string;
-  searchTerm: string;
-}
-
-export interface AchievementNotification {
-  id: string;
-  title: string;
-  description: string;
-  xpReward: number;
-  rank: AchievementRank;
-  bonusText?: string;
-  points: number;
-  iconName: string;
-  timestamp: string;
 }
