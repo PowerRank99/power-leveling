@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth';
@@ -22,6 +23,7 @@ import EditProfilePage from './pages/EditProfilePage';
 import AchievementNotificationSystem from './components/achievements/AchievementNotificationSystem';
 import PerformanceDashboardPage from './pages/PerformanceDashboardPage';
 import AdminPage from './pages/AdminPage';
+import AchievementTestingPage from './pages/AchievementTestingPage';
 
 function App() {
   return (
@@ -107,6 +109,11 @@ function App() {
         
         {/* Test pages */}
         <Route path="/testing/class-bonus" element={<ClassBonusTestPage />} />
+        <Route path="/achievement-testing" element={
+          <AuthRequiredRoute>
+            <AchievementTestingPage />
+          </AuthRequiredRoute>
+        } />
         
         {/* Admin Route */}
         <Route path="/admin" element={
