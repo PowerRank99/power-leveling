@@ -50,19 +50,19 @@ const ClassDesktopGrid: React.FC<ClassDesktopGridProps> = ({
     >
       {classes.map((classInfo, index) => (
         <motion.div 
-          key={`grid-${classInfo.class_name}`} 
+          key={`grid-${classInfo.className}`} 
           className="h-full"
           variants={itemVariants}
         >
           <ClassSelectionCard
             classInfo={classInfo}
-            isCurrentClass={userClass === classInfo.class_name}
-            isSelected={selectedClass === classInfo.class_name}
+            isCurrentClass={userClass === classInfo.className}
+            isSelected={selectedClass === classInfo.className}
             isFocused={index === focusedIndex}
             isOnCooldown={isOnCooldown}
             onClick={() => {
-              if (!isOnCooldown || userClass === classInfo.class_name) {
-                onClassSelect(classInfo.class_name, index);
+              if (!isOnCooldown || userClass === classInfo.className) {
+                onClassSelect(classInfo.className, index);
               }
             }}
           />

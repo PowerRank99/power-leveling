@@ -11,31 +11,31 @@ export class ClassUtils {
    */
   static readonly CLASS_METADATA: Record<string, ClassMetadata> = {
     'Guerreiro': {
-      class_name: 'Guerreiro',
+      className: 'Guerreiro',
       icon: 'Sword',
       description: 'Especialista em Força',
       color: 'from-red-600 to-red-800'
     },
     'Monge': {
-      class_name: 'Monge',
+      className: 'Monge',
       icon: 'Dumbbell',
       description: 'Especialista em Calistenia',
       color: 'from-amber-600 to-amber-800'
     },
     'Ninja': {
-      class_name: 'Ninja',
+      className: 'Ninja',
       icon: 'Wind',
       description: 'Especialista em Cardio',
       color: 'from-green-600 to-green-800'
     },
     'Bruxo': {
-      class_name: 'Bruxo',
+      className: 'Bruxo',
       icon: 'Sparkles',
       description: 'Especialista em Flexibilidade',
       color: 'from-purple-600 to-purple-800'
     },
     'Paladino': {
-      class_name: 'Paladino',
+      className: 'Paladino',
       icon: 'Shield',
       description: 'Especialista em Esportes',
       color: 'from-blue-600 to-blue-800'

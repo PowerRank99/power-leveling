@@ -28,7 +28,8 @@ export class AchievementFetchService {
               rank,
               points,
               xp_reward,
-              icon_name
+              icon_name,
+              requirements
             )
           `)
           .eq('user_id', userId)
@@ -45,6 +46,7 @@ export class AchievementFetchService {
           points: item.achievements.points,
           xpReward: item.achievements.xp_reward,
           iconName: item.achievements.icon_name,
+          requirements: item.achievements.requirements,
           achievedAt: item.achieved_at
         }));
       },

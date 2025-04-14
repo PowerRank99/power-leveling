@@ -39,7 +39,7 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
       setFocusedIndex(emblaApi.selectedScrollSnap());
       const currentClass = classes[emblaApi.selectedScrollSnap()];
       if (currentClass) {
-        onClassSelect(currentClass.class_name);
+        onClassSelect(currentClass.className);
       }
       
       setCanScrollPrev(emblaApi.canScrollPrev());
@@ -66,7 +66,7 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
   useEffect(() => {
     if (!emblaApi || !classes.length || !selectedClass) return;
     
-    const classIndex = classes.findIndex(cls => cls.class_name === selectedClass);
+    const classIndex = classes.findIndex(cls => cls.className === selectedClass);
     if (classIndex !== -1 && classIndex !== focusedIndex) {
       emblaApi.scrollTo(classIndex);
     }
@@ -75,7 +75,7 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
   useEffect(() => {
     if (!emblaApi || !classes.length || !userClass) return;
     
-    const classIndex = classes.findIndex(cls => cls.class_name === userClass);
+    const classIndex = classes.findIndex(cls => cls.className === userClass);
     if (classIndex !== -1) {
       emblaApi.scrollTo(classIndex);
     }
@@ -106,18 +106,18 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
         <div className="flex py-8">
           {classes.map((classInfo, index) => (
             <div 
-              key={classInfo.class_name} 
+              key={classInfo.className} 
               className="flex-[0_0_100%] min-w-0 pl-4 md:flex-[0_0_85%] transition-all duration-300"
             >
               <ClassSelectionCard
                 classInfo={classInfo}
-                isCurrentClass={userClass === classInfo.class_name}
-                isSelected={selectedClass === classInfo.class_name}
+                isCurrentClass={userClass === classInfo.className}
+                isSelected={selectedClass === classInfo.className}
                 isFocused={index === focusedIndex}
                 isOnCooldown={isOnCooldown}
                 onClick={() => {
-                  if (!isOnCooldown || userClass === classInfo.class_name) {
-                    onClassSelect(classInfo.class_name);
+                  if (!isOnCooldown || userClass === classInfo.className) {
+                    onClassSelect(classInfo.className);
                     if (emblaApi) emblaApi.scrollTo(index);
                   }
                 }}
@@ -189,7 +189,7 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
         <div className="flex gap-2">
           {classes.map((classInfo, index) => (
             <motion.button
-              key={`dot-${classInfo.class_name}`}
+              key={`dot-${classInfo.className}`}
               variants={indicatorVariants}
               initial="inactive"
               animate={index === focusedIndex ? "active" : "inactive"}

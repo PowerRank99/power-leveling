@@ -13,6 +13,9 @@ export interface ClassBonusBreakdown {
  */
 export interface ClassInfo {
   className: string;
+  description: string;
+  icon: string;
+  color: string;
   bonuses: ClassBonus[];
 }
 
@@ -23,6 +26,7 @@ export interface ClassBonus {
   bonusType: string;
   bonusValue: number;
   description: string;
+  skillName?: string;
 }
 
 /**
@@ -38,11 +42,8 @@ export interface CooldownInfo {
  * Interface for class metadata
  */
 export interface ClassMetadata {
-  name: string;
-  title: string;
+  className: string;
   description: string;
-  primaryBonus: string;
-  secondaryBonus: string;
   icon: string;
   color: string;
 }
