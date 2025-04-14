@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { AchievementChecker, PersonalRecordData } from './AchievementCheckerInterface';
@@ -6,6 +5,7 @@ import { BaseAchievementChecker } from './BaseAchievementChecker';
 import { AchievementService } from '../AchievementService';
 import { TransactionService } from '../../common/TransactionService';
 import { AchievementProgressService } from './AchievementProgressService';
+import { normalizePersonalRecord } from '@/utils/caseConversions';
 
 /**
  * Checker for personal record related achievements
@@ -22,6 +22,9 @@ export class RecordAchievementChecker extends BaseAchievementChecker implements 
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
         if (!userId) throw new Error('User ID is required');
+
+        // Ensure consistent property names by normalizing the record info
+        const normalizedRecordInfo = recordInfo ? normalizePersonalRecord(recordInfo) : undefined;
 
         // Get total PR count
         const { count: prCount, error: prError } = await supabase
@@ -40,8 +43,8 @@ export class RecordAchievementChecker extends BaseAchievementChecker implements 
             }
 
             // Check for impressive PR achievements based on weight increase percentage
-            if (recordInfo && recordInfo.previousWeight > 0) {
-              const increasePercentage = ((recordInfo.weight - recordInfo.previousWeight) / recordInfo.previousWeight) * 100;
+            if (normalizedRecordInfo && normalizedRecordInfo.previousWeight > 0) {
+              const increasePercentage = ((normalizedRecordInfo.weight - normalizedRecordInfo.previousWeight) / normalizedRecordInfo.previousWeight) * 100;
               
               if (increasePercentage >= 10) {
                 await AchievementService.awardAchievement(userId, 'pr-increase-10');

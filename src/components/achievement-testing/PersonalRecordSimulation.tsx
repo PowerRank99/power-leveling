@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -84,32 +85,38 @@ const PersonalRecordSimulation: React.FC<PersonalRecordSimulationProps> = ({ use
     
     setIsLoading(true);
     try {
-      await PersonalRecordService.recordPersonalRecord(
+      const result = await PersonalRecordService.recordPersonalRecord(
         userId,
         selectedExerciseId,
         currentWeight,
         previousWeight
       );
       
-      const xpToAward = calculatePotentialXp();
-      
-      await XPService.awardXP(userId, xpToAward, 'personal_record', {
-        exerciseId: selectedExerciseId,
-        weight: currentWeight,
-        previousWeight: previousWeight,
-        improvementPercent: calculateImprovement().toFixed(1)
-      });
-      
-      const exerciseName = exercises.find(ex => ex.id === selectedExerciseId)?.name || 'Unknown exercise';
-      
-      addLogEntry(
-        'Personal Record Logged', 
-        `Exercise: ${exerciseName}, Weight: ${currentWeight}kg (previous: ${previousWeight}kg), Improvement: ${calculateImprovement().toFixed(1)}%, XP: ${xpToAward}`
-      );
-      
-      toast.success('Personal Record Logged!', {
-        description: `${xpToAward} XP has been awarded for this PR.`,
-      });
+      if (result.success && result.data) {
+        const xpToAward = calculatePotentialXp();
+        
+        await XPService.awardXP(userId, xpToAward, 'personal_record', {
+          exerciseId: selectedExerciseId,
+          weight: currentWeight,
+          previousWeight: previousWeight,
+          improvementPercent: calculateImprovement().toFixed(1)
+        });
+        
+        const exerciseName = exercises.find(ex => ex.id === selectedExerciseId)?.name || 'Unknown exercise';
+        
+        addLogEntry(
+          'Personal Record Logged', 
+          `Exercise: ${exerciseName}, Weight: ${currentWeight}kg (previous: ${previousWeight}kg), Improvement: ${calculateImprovement().toFixed(1)}%, XP: ${xpToAward}`
+        );
+        
+        toast.success('Personal Record Logged!', {
+          description: `${xpToAward} XP has been awarded for this PR.`,
+        });
+      } else {
+        toast.error('Error', {
+          description: result.message || 'Failed to record personal record',
+        });
+      }
     } catch (error) {
       console.error('Error simulating personal record:', error);
       toast.error('Error', {

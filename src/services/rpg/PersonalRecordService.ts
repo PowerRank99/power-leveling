@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
@@ -6,6 +5,7 @@ import { TransactionService } from '../common/TransactionService';
 import { AchievementCheckerService, PersonalRecordData } from './achievements/AchievementCheckerService';
 import { AchievementProgressService } from './achievements/AchievementProgressService';
 import { toast } from 'sonner';
+import { normalizePersonalRecord } from '@/utils/caseConversions';
 
 /**
  * Interface for personal record data
@@ -77,8 +77,9 @@ export class PersonalRecordService {
             });
           }
         }
-
-        return newRecords;
+        
+        // Make sure the returned records use consistent property names
+        return newRecords.map(record => normalizePersonalRecord(record));
       }, 
       'CHECK_PERSONAL_RECORDS',
       { showToast: false }
@@ -166,8 +167,13 @@ export class PersonalRecordService {
         toast.success('Novo recorde pessoal!', {
           description: `Você levantou ${weight}kg, superando seu recorde anterior de ${previousWeight}kg!`
         });
-
-        return data as PersonalRecord;
+        
+        // Normalize the response to use consistent property names
+        return normalizePersonalRecord({
+          exerciseId: exerciseId,
+          weight: weight,
+          previousWeight: previousWeight
+        });
       },
       'RECORD_PERSONAL_RECORD'
     );
@@ -186,11 +192,8 @@ export class PersonalRecordService {
 
         if (error) throw error;
 
-        return data.map(record => ({
-          exerciseId: record.exercise_id,
-          weight: record.weight,
-          previousWeight: record.previous_weight
-        }));
+        // Normalize all records to use consistent property names
+        return data.map(record => normalizePersonalRecord(record));
       },
       'GET_USER_PERSONAL_RECORDS',
       { showToast: false }
