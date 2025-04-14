@@ -1,37 +1,39 @@
 
-import { ExerciseHistory } from '@/types/workoutTypes';
-import { DatabaseResult } from '@/types/workout';
-import { ExerciseHistoryFetchService } from './ExerciseHistoryFetchService';
-import { ExerciseHistoryUpdateService } from './ExerciseHistoryUpdateService';
+import { supabase } from '@/integrations/supabase/client';
+import { CachingService } from '../common/CachingService';
 
-/**
- * Facade service for managing exercise history data
- * Coordinates between fetch and update services
- */
+const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes for exercise data
+
 export class ExerciseHistoryService {
-  /**
-   * Get exercise history for a specific user and exercise
-   */
-  static async getExerciseHistory(exerciseId: string): Promise<DatabaseResult<ExerciseHistory | null>> {
-    return ExerciseHistoryFetchService.getExerciseHistory(exerciseId);
+  static async fetchExerciseHistory(userId: string, exerciseId: string) {
+    const cacheKey = `exercise_history_${userId}_${exerciseId}`;
+    const cached = CachingService.get(cacheKey);
+    if (cached) return cached;
+
+    const { data, error } = await supabase
+      .from('exercise_history')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('exercise_id', exerciseId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching exercise history:', error);
+      throw error;
+    }
+
+    CachingService.set(cacheKey, data, CACHE_DURATION);
+    return data;
   }
-  
-  /**
-   * Get exercise history for multiple exercises
-   */
-  static async getMultipleExerciseHistory(exerciseIds: string[]): Promise<DatabaseResult<Record<string, ExerciseHistory>>> {
-    return ExerciseHistoryFetchService.getMultipleExerciseHistory(exerciseIds);
-  }
-  
-  /**
-   * Update exercise history based on workout data
-   */
-  static async updateExerciseHistory(
-    exerciseId: string,
-    weight: number,
-    reps: number,
-    sets: number
-  ): Promise<DatabaseResult<boolean>> {
-    return ExerciseHistoryUpdateService.updateExerciseHistory(exerciseId, weight, reps, sets);
+
+  static clearCache(userId: string, exerciseId?: string) {
+    if (exerciseId) {
+      CachingService.clear(`exercise_history_${userId}_${exerciseId}`);
+    } else {
+      // Clear all exercise history cache for this user
+      // This is a simplified approach - in a real implementation you might want
+      // to only clear specific patterns
+      CachingService.clear();
+    }
   }
 }

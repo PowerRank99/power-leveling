@@ -1,23 +1,23 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceResponse, ErrorHandlingService, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
-import { TransactionService } from '@/services/common/TransactionService';
+import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
+import { AchievementProgress } from '@/types/achievementTypes';
+import { CachingService } from '@/services/common/CachingService';
 
-/**
- * Base service for achievement progress operations
- * Provides common utilities for progress services
- */
-export class ProgressBaseService {
-  /**
-   * Get achievement progress for a specific achievement
-   */
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+export class BaseProgressService {
   static async getProgress(
     userId: string,
     achievementId: string
-  ): Promise<ServiceResponse<any>> {
+  ): Promise<ServiceResponse<AchievementProgress | null>> {
+    const cacheKey = `achievement_progress_${userId}_${achievementId}`;
+    const cached = CachingService.get(cacheKey);
+    if (cached) return { success: true, data: cached };
+
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
-        const { data: progress, error } = await supabase
+        const { data, error } = await supabase
           .from('achievement_progress')
           .select('*')
           .eq('user_id', userId)
@@ -26,38 +26,55 @@ export class ProgressBaseService {
           
         if (error) throw error;
         
-        if (!progress) {
-          return {
-            id: null,
-            current: 0,
-            total: 0,
-            isComplete: false
-          };
-        }
+        if (!data) return null;
         
-        return {
-          id: progress.id,
-          current: progress.current_value,
-          total: progress.target_value,
-          isComplete: progress.is_complete,
-          lastUpdated: progress.updated_at
+        const progress = {
+          id: data.id,
+          current: data.current_value,
+          total: data.target_value,
+          isComplete: data.is_complete
         };
+
+        CachingService.set(cacheKey, progress, CACHE_DURATION);
+        return progress;
       },
-      'GET_ACHIEVEMENT_PROGRESS',
+      'GET_PROGRESS',
       { showToast: false }
     );
   }
   
-  /**
-   * Utility method to transform progress updates to the expected format
-   * for batch RPC calls
-   */
-  static formatProgressUpdates(progressUpdates) {
-    return progressUpdates.map(update => ({
-      achievement_id: update.achievementId,
-      current_value: update.currentValue,
-      target_value: update.targetValue,
-      is_complete: update.isComplete
-    }));
+  static async getAllProgress(userId: string): Promise<ServiceResponse<Record<string, AchievementProgress>>> {
+    const cacheKey = `all_achievement_progress_${userId}`;
+    const cached = CachingService.get(cacheKey);
+    if (cached) return { success: true, data: cached };
+
+    return ErrorHandlingService.executeWithErrorHandling(
+      async () => {
+        const { data, error } = await supabase.rpc(
+          'get_all_achievement_progress',
+          { p_user_id: userId }
+        );
+          
+        if (error) throw error;
+        
+        const progressMap: Record<string, AchievementProgress> = {};
+        
+        if (data) {
+          Object.entries(data).forEach(([achievementId, progressData]: [string, any]) => {
+            progressMap[achievementId] = {
+              id: progressData.id,
+              current: progressData.current,
+              total: progressData.total,
+              isComplete: progressData.isComplete
+            };
+          });
+        }
+        
+        CachingService.set(cacheKey, progressMap, CACHE_DURATION);
+        return progressMap;
+      }, 
+      'GET_ALL_PROGRESS', 
+      { showToast: false }
+    );
   }
 }

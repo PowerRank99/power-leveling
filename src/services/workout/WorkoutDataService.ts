@@ -1,12 +1,37 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { WorkoutExerciseData, DatabaseResult } from '@/types/workout';
-import { createSuccessResult, createErrorResult } from '@/utils/serviceUtils';
+import { CachingService } from '../common/CachingService';
 
-/**
- * Service for handling workout-related data operations
- */
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const WORKOUTS_CACHE_KEY = 'recent_workouts';
+
 export class WorkoutDataService {
+  static async fetchWorkoutSets(workoutId: string) {
+    const cacheKey = `workout_sets_${workoutId}`;
+    const cached = CachingService.get(cacheKey);
+    if (cached) return cached;
+
+    const { data: workoutSets, error: fetchSetsError } = await supabase
+      .from('workout_sets')
+      .select(`
+        id,
+        exercise_id,
+        set_order,
+        weight,
+        reps,
+        completed
+      `)
+      .eq('workout_id', workoutId)
+      .order('set_order');
+      
+    if (fetchSetsError) {
+      console.error("Error fetching workout sets:", fetchSetsError);
+      throw fetchSetsError;
+    }
+    
+    CachingService.set(cacheKey, workoutSets || [], CACHE_DURATION);
+    return workoutSets || [];
+  }
+
   /**
    * Fetch exercise data for the specified workout
    */
