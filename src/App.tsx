@@ -10,7 +10,7 @@ import ExercisePage from './pages/ExercisePage';
 import PremiumPage from './pages/PremiumPage';
 import AchievementPage from './pages/AchievementPage';
 import ClassBonusTestPage from './pages/ClassBonusTestPage';
-import IndexPage from './pages/index'; // Fixed casing here
+import IndexPage from './pages/Index';
 import AuthPage from './pages/AuthPage';
 import ClassSelectionPage from './pages/class-selection/ClassSelectionPage';
 import AuthRequiredRoute from './components/AuthRequiredRoute';
