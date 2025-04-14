@@ -21,6 +21,7 @@ import ActiveWorkoutPage from './pages/ActiveWorkoutPage';
 import EditProfilePage from './pages/EditProfilePage';
 import AchievementNotificationSystem from './components/achievements/AchievementNotificationSystem';
 import PerformanceDashboardPage from './pages/PerformanceDashboardPage';
+import AdminPage from './pages/AdminPage';
 
 function App() {
   return (
@@ -106,6 +107,13 @@ function App() {
         
         {/* Test pages */}
         <Route path="/testing/class-bonus" element={<ClassBonusTestPage />} />
+        
+        {/* Admin Route */}
+        <Route path="/admin" element={
+          <AuthRequiredRoute>
+            <AdminPage />
+          </AuthRequiredRoute>
+        } />
         
         {/* Performance Dashboard Route */}
         <Route path="/performance" element={
