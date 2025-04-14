@@ -40,13 +40,19 @@ export const useSetAdder = (workoutId: string | null) => {
         ? updatedSets[updatedSets.length - 1]
         : { weight: '0', reps: '12', completed: false, previous: { weight: '0', reps: '12' } };
         
+      // Get exercise_id from the existing sets or use a default
+      const exerciseId = lastSet.exercise_id || 
+        (exerciseSets.length > 0 ? exerciseSets[0].exercise_id : '');
+        
       // Create new set with a temporary ID
       const newSetId = `new-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       const newSet: SetData = {
         id: newSetId,
+        exercise_id: exerciseId,
         weight: lastSet.weight,
         reps: lastSet.reps,
         completed: false,
+        set_order: updatedSets.length,
         previous: lastSet.previous || { weight: '0', reps: '12' }
       };
       

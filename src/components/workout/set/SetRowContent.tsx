@@ -27,16 +27,25 @@ const SetRowContent: React.FC<SetRowContentProps> = ({
   const rowClass = isCompleted 
     ? "bg-arcane-15/50 border-arcane-30" 
     : "bg-midnight-elevated border-divider/20";
+    
+  // Ensure we have a properly formatted previous value object
+  const previousValue = set.previous || {
+    id: set.id,
+    exercise_id: set.exercise_id,
+    weight: typeof set.weight === 'number' ? set.weight.toString() : set.weight,
+    reps: typeof set.reps === 'number' ? set.reps.toString() : set.reps,
+    set_order: set.set_order
+  };
 
   return (
     <div className={`grid grid-cols-12 gap-2 items-center py-4 ${rowClass} border-b rounded-md mb-2`}>
       <div className="col-span-1 font-bold text-text-primary font-space">{index + 1}</div>
       
-      <PreviousValues previous={set.previous} />
+      <PreviousValues previous={previousValue} />
       
       <div className="col-span-3">
         <InputField
-          value={set.weight}
+          value={typeof set.weight === 'number' ? set.weight.toString() : set.weight}
           onChange={onWeightChange}
           inputMode="decimal"
           disabled={isCompleted}
@@ -45,7 +54,7 @@ const SetRowContent: React.FC<SetRowContentProps> = ({
       
       <div className="col-span-3">
         <InputField
-          value={set.reps}
+          value={typeof set.reps === 'number' ? set.reps.toString() : set.reps}
           onChange={onRepsChange}
           inputMode="numeric"
           disabled={isCompleted}

@@ -17,7 +17,11 @@ export function mapToExerciseHistory(record: any): ExerciseHistory {
     reps: record.reps,
     sets: record.sets,
     last_used_at: record.last_used_at,
-    createdAt: record.created_at
+    createdAt: record.created_at,
+    // Add backward compatibility fields
+    userId: record.user_id,
+    exerciseId: record.exercise_id,
+    lastUsedAt: record.last_used_at
   };
 }
 
@@ -52,5 +56,46 @@ export function mapToWorkoutExerciseData(exercise: WorkoutExercise): WorkoutExer
     sets: completedSets,
     targetSets: exercise.targetSets,
     name: exercise.name
+  };
+}
+
+/**
+ * Converts a SetData to WorkoutSet for type compatibility
+ */
+export function mapSetDataToWorkoutSet(setData: SetData): WorkoutSet {
+  return {
+    id: setData.id,
+    weight: setData.weight.toString(),
+    reps: setData.reps.toString(),
+    completed: setData.completed,
+    set_order: setData.set_order,
+    exercise_id: setData.exercise_id,
+    previous: setData.previous
+  };
+}
+
+/**
+ * Converts WorkoutSet to SetData for database operations
+ */
+export function mapWorkoutSetToSetData(set: WorkoutSet): SetData {
+  return {
+    id: set.id,
+    exercise_id: set.exercise_id || '', // Default to empty string if missing
+    weight: set.weight,
+    reps: set.reps,
+    completed: set.completed,
+    set_order: set.set_order || 0, // Default to 0 if missing
+    previous: set.previous
+  };
+}
+
+/**
+ * Ensures a DatabaseResult has all required properties
+ */
+export function createDatabaseResult<T>(result: Partial<DatabaseResult<T>>): DatabaseResult<T> {
+  return {
+    data: result.data || null,
+    error: result.error || null,
+    success: result.success !== undefined ? result.success : !result.error
   };
 }

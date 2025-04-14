@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { PreviousSetData } from '@/components/workout/set/types';
+import { PreviousSetData } from '@/types/workoutTypes';
 
 interface PreviousValuesProps {
   previous?: PreviousSetData;

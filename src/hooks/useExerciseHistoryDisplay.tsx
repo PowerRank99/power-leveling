@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ExerciseHistory } from '@/types/workout';
+import { mapToExerciseHistory } from '@/utils/typeMappers';
 
 export const useExerciseHistoryDisplay = (exerciseId: string) => {
   const [historyData, setHistoryData] = useState<ExerciseHistory[]>([]);
@@ -25,17 +26,8 @@ export const useExerciseHistoryDisplay = (exerciseId: string) => {
 
         if (error) throw error;
 
-        // Map database snake_case to camelCase for type compatibility
-        const formattedData: ExerciseHistory[] = data.map(item => ({
-          id: item.id,
-          userId: item.user_id,
-          exerciseId: item.exercise_id,
-          weight: item.weight,
-          reps: item.reps,
-          sets: item.sets,
-          lastUsedAt: item.last_used_at,
-          createdAt: item.created_at
-        }));
+        // Use our mapper to ensure type compatibility
+        const formattedData: ExerciseHistory[] = data.map(item => mapToExerciseHistory(item));
 
         setHistoryData(formattedData);
       } catch (error) {

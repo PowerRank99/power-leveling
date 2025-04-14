@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { WorkoutExercise, SetData } from '@/types/workout';
 import { useSetManagement } from './useSetManagement';
 import { toast } from 'sonner';
+import { mapSetDataToWorkoutSet } from '@/utils/typeMappers';
 
 /**
  * A hook that provides workout-specific set operations using the composition pattern
@@ -32,17 +33,30 @@ export const useWorkoutSetOperations = (
     try {
       console.log(`Updating set ${setIndex} for exercise index ${exerciseIndex} with:`, data);
       
-      // Extract just the sets from the exercise for the update operation
-      const exerciseSets = exercises[exerciseIndex].sets as SetData[];
+      // Extract just the sets from the exercise and convert to SetData
+      const currentExercise = exercises[exerciseIndex];
+      const exerciseSets = currentExercise.sets.map(set => ({
+        id: set.id,
+        exercise_id: set.exercise_id || currentExercise.exerciseId,
+        weight: set.weight,
+        reps: set.reps,
+        completed: set.completed,
+        set_order: set.set_order || 0,
+        previous: set.previous
+      })) as SetData[];
+      
       const result = await updateSet(exerciseIndex, exerciseSets, setIndex, data);
       
       if (result) {
+        // Convert back to WorkoutSet type for compatibility
+        const workoutSets = result.map(setData => mapSetDataToWorkoutSet(setData));
+        
         // Create new exercise array with updated sets
         const updatedExercises = exercises.map((exercise, idx) => {
           if (idx === exerciseIndex) {
             return {
               ...exercise,
-              sets: result
+              sets: workoutSets
             };
           }
           return exercise;
@@ -65,17 +79,30 @@ export const useWorkoutSetOperations = (
     try {
       console.log(`Adding new set for exercise index ${exerciseIndex}`);
       
-      // Extract sets for the operation
-      const exerciseSets = exercises[exerciseIndex].sets as SetData[];
+      // Extract sets and convert to SetData
+      const currentExercise = exercises[exerciseIndex];
+      const exerciseSets = currentExercise.sets.map(set => ({
+        id: set.id,
+        exercise_id: set.exercise_id || currentExercise.exerciseId,
+        weight: set.weight,
+        reps: set.reps,
+        completed: set.completed,
+        set_order: set.set_order || 0,
+        previous: set.previous
+      })) as SetData[];
+      
       const result = await addSet(exerciseIndex, exerciseSets, routineId);
       
       if (result) {
+        // Convert back to WorkoutSet for compatibility
+        const workoutSets = result.map(setData => mapSetDataToWorkoutSet(setData));
+        
         // Update the exercises array with new sets
         const updatedExercises = exercises.map((exercise, idx) => {
           if (idx === exerciseIndex) {
             return {
               ...exercise,
-              sets: result
+              sets: workoutSets
             };
           }
           return exercise;
@@ -103,17 +130,30 @@ export const useWorkoutSetOperations = (
     try {
       console.log(`Removing set ${setIndex} from exercise index ${exerciseIndex}`);
       
-      // Extract sets for the operation
-      const exerciseSets = exercises[exerciseIndex].sets as SetData[];
+      // Extract sets and convert to SetData
+      const currentExercise = exercises[exerciseIndex];
+      const exerciseSets = currentExercise.sets.map(set => ({
+        id: set.id,
+        exercise_id: set.exercise_id || currentExercise.exerciseId,
+        weight: set.weight,
+        reps: set.reps,
+        completed: set.completed,
+        set_order: set.set_order || 0,
+        previous: set.previous
+      })) as SetData[];
+      
       const result = await removeSet(exerciseIndex, exerciseSets, setIndex, routineId);
       
       if (result) {
+        // Convert back to WorkoutSet for compatibility
+        const workoutSets = result.map(setData => mapSetDataToWorkoutSet(setData));
+        
         // Update the exercises array with modified sets
         const updatedExercises = exercises.map((exercise, idx) => {
           if (idx === exerciseIndex) {
             return {
               ...exercise,
-              sets: result
+              sets: workoutSets
             };
           }
           return exercise;

@@ -28,7 +28,7 @@ export interface WorkoutSet {
     weight: string;
     reps: string;
   };
-  exercise_id?: string; // Added to make compatible with SetData
+  exercise_id?: string; // Added for compatibility with SetData
 }
 
 /**
@@ -51,8 +51,8 @@ export interface WorkoutExerciseData {
 export interface SetData {
   id: string;
   exercise_id: string;
-  weight: string | number; // Updated to support both string and number
-  reps: string | number; // Updated to support both string and number
+  weight: string | number; // Support both string and number
+  reps: string | number; // Support both string and number
   completed: boolean;
   set_order: number;
   previous?: {

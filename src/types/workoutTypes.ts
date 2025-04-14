@@ -1,7 +1,7 @@
 
 /**
  * Common workout types for the application
- * Most of these types are now imported from src/types/workout.ts for consistency
+ * These types now directly reference src/types/workout.ts for consistency
  */
 
 import { 
@@ -15,6 +15,7 @@ import {
   PersonalRecord as PersonalRecordBase
 } from './workout';
 
+// Re-export with more descriptive naming
 export type WorkoutExercise = WorkoutExerciseBase;
 export type WorkoutSet = WorkoutSetBase;
 export type WorkoutExerciseData = WorkoutExerciseDataBase;
@@ -23,6 +24,10 @@ export type PreviousSetData = PreviousSetDataBase;
 export type ExerciseHistory = ExerciseHistoryBase;
 export type DatabaseResult<T> = DatabaseResultBase<T>;
 export type PersonalRecord = PersonalRecordBase;
+
+/**
+ * Additional type definitions for workout module
+ */
 
 export interface Routine {
   id: string;
