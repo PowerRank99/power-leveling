@@ -78,7 +78,6 @@ export class ProgressBaseService {
     );
   }
   
-  // Helper method for formatting progress updates
   static formatProgressUpdates(progressUpdates: Array<{
     achievementId: string,
     currentValue: number,
