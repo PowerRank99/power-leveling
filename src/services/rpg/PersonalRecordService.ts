@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
@@ -7,6 +6,8 @@ import { AchievementCheckerService, PersonalRecordData } from './achievements/Ac
 import { AchievementProgressService } from './achievements/AchievementProgressService';
 import { toast } from 'sonner';
 import { normalizePersonalRecord } from '@/utils/caseConversions';
+import { DatabaseResult } from '@/types/workout';
+import { createSuccessResult, createErrorResult } from '@/utils/serviceUtils';
 
 /**
  * Interface for personal record data
@@ -31,7 +32,7 @@ export class PersonalRecordService {
       exercises: WorkoutExercise[];
       durationSeconds: number;
     }
-  ): Promise<ServiceResponse<PersonalRecord[]>> {
+  ): Promise<DatabaseResult<PersonalRecord[]>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
         const newRecords: PersonalRecord[] = [];
@@ -80,7 +81,9 @@ export class PersonalRecordService {
         }
         
         // Make sure the returned records use consistent property names
-        return newRecords.map(record => normalizePersonalRecord(record));
+        return createSuccessResult(
+          newRecords.map(record => normalizePersonalRecord(record))
+        );
       }, 
       'CHECK_PERSONAL_RECORDS',
       { showToast: false }
