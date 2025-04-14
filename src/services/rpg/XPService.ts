@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise, PersonalRecord } from '@/types/workoutTypes';
 import { XPCalculationService } from './XPCalculationService';
@@ -80,11 +81,17 @@ export class XPService {
   
   /**
    * Awards XP to a user and updates their level if necessary
+   * 
+   * @param userId - The ID of the user to award XP to
+   * @param amount - The amount of XP to award
+   * @param source - The source of the XP (e.g., 'workout', 'achievement')
+   * @param metadata - Optional metadata about the XP award (for logging/debugging)
    */
   static async awardXP(
     userId: string, 
     amount: number, 
-    source: string = 'workout'
+    source: string = 'workout',
+    metadata?: any
   ): Promise<boolean> {
     try {
       if (!userId) {

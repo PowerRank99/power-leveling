@@ -171,7 +171,7 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
         ...(useClassPassives ? { class: selectedClass } : {})
       };
       
-      await XPService.awardXP(userId, awardedXP, 'workout');
+      await XPService.awardXP(userId, awardedXP, 'workout', metadata);
       
       if (includePersonalRecord) {
         const { data: exercises } = await supabase

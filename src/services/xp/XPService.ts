@@ -24,6 +24,11 @@ export class XPService {
   /**
    * Add XP to a user's profile
    * Uses the awardXP method from the RPGXPService for implementation
+   * 
+   * @param userId - The ID of the user to award XP to
+   * @param amount - The amount of XP to award
+   * @param source - The source of the XP (e.g., 'workout', 'achievement')
+   * @param metadata - Optional metadata about the XP award (for logging/debugging)
    */
   static async addXP(
     userId: string, 
