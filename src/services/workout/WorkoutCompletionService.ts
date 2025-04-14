@@ -1,190 +1,129 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { StreakService } from '../rpg/StreakService';
-import { XPService } from '../rpg/XPService';
-import { PersonalRecordService } from '../rpg/PersonalRecordService';
-import { AchievementCheckerService } from '../rpg/achievements/AchievementCheckerService';
-import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
-import { WorkoutExercise, WorkoutSet } from '@/types/workoutTypes';
+import { WorkoutExercise, PersonalRecord } from '@/types/workoutTypes';
+import { mapToWorkoutExerciseData } from '@/utils/typeMappers';
+import { ServiceResponse } from '@/services/common/ErrorHandlingService';
+import { XPService } from '@/services/rpg/XPService';
 
+/**
+ * Service for completing workouts and handling related operations
+ */
 export class WorkoutCompletionService {
   /**
-   * Complete a workout with all related services
+   * Complete a workout and perform all related operations
+   * 
+   * @param workoutId The ID of the workout to complete
+   * @returns A ServiceResponse indicating success or failure
    */
-  static async completeWorkout(
-    userId: string, 
-    workoutId: string,
-    durationSeconds: number
-  ): Promise<ServiceResponse<boolean>> {
-    return ErrorHandlingService.executeWithErrorHandling(
-      async () => {
-        if (!userId || !workoutId) {
-          throw new Error('userId and workoutId are required');
-        }
-        
-        // Get the workout data
-        const { data: workout, error: fetchError } = await supabase
-          .from('workouts')
-          .select(`
-            id,
-            user_id,
-            routine_id,
-            started_at,
-            duration_seconds,
-            workout_sets (
-              id,
-              exercise_id,
-              reps,
-              weight,
-              completed
-            )
-          `)
-          .eq('id', workoutId)
-          .single();
-        
-        if (fetchError || !workout) {
-          throw new Error('Error fetching workout data: ' + fetchError?.message);
-        }
-        
-        // Mark workout as completed
-        const { error: updateError } = await supabase
-          .from('workouts')
-          .update({
-            completed_at: new Date().toISOString(),
-            duration_seconds: durationSeconds
-          })
-          .eq('id', workoutId);
-        
-        if (updateError) {
-          throw new Error('Error marking workout as completed: ' + updateError.message);
-        }
-        
-        // Execute all post-workout operations
-        await Promise.allSettled([
-          // 1. Update user streak
-          StreakService.updateStreak(userId),
-          
-          // 2. Award XP for the workout
-          XPService.awardWorkoutXP(userId, workout, durationSeconds),
-          
-          // 3. Check for personal records
-          PersonalRecordService.checkForPersonalRecords(userId, {
-            id: workoutId,
-            exercises: workout.workout_sets.map(set => ({
-              id: set.id,
-              name: 'Exercise',
-              exerciseId: set.exercise_id,
-              sets: [{
-                id: set.id,
-                weight: set.weight?.toString() || '0',
-                reps: set.reps?.toString() || '0',
-                completed: Boolean(set.completed)
-              }] as WorkoutSet[]
-            })) as WorkoutExercise[],
-            durationSeconds
-          }).then(async (result) => {
-            if (result.success && result.data && result.data.length > 0) {
-              // Record personal records
-              for (const record of result.data) {
-                await PersonalRecordService.recordPersonalRecord(
-                  userId,
-                  record.exerciseId,
-                  record.weight,
-                  record.previousWeight
-                );
-              }
-            }
-          }),
-          
-          // 4. Check achievements
-          AchievementCheckerService.checkWorkoutRelatedAchievements(userId)
-        ]);
-        
-        // Show completion toast
-        toast.success('Treino concluído com sucesso!', {
-          description: 'Muito bem! Seus dados foram salvos.'
-        });
-        
-        return true;
-      },
-      'COMPLETE_WORKOUT',
-      {
-        userMessage: 'Erro ao finalizar treino'
-      }
-    );
-  }
-
-  /**
-   * Finish a workout
-   * @param workoutId ID of the workout to finish
-   * @param durationSeconds Duration of the workout in seconds
-   * @returns Success status
-   */
-  static async finishWorkout(workoutId: string, durationSeconds: number): Promise<boolean> {
+  static async completeWorkout(workoutId: string): Promise<ServiceResponse<boolean>> {
     try {
-      // Get user ID from workout
-      const { data: workout, error: fetchError } = await supabase
+      // Start a database transaction
+      await supabase.rpc('start_transaction');
+      
+      // Fetch workout data
+      const { data: workout, error: workoutError } = await supabase
         .from('workouts')
-        .select('user_id')
+        .select('user_id, exercises, duration_seconds')
         .eq('id', workoutId)
         .single();
-        
-      if (fetchError || !workout) {
-        console.error('Error fetching workout for finishWorkout:', fetchError);
-        return false;
+      
+      if (workoutError || !workout) {
+        await supabase.rpc('rollback_transaction');
+        console.error('Error fetching workout:', workoutError);
+        return { success: false, error: 'Workout not found' };
       }
       
       const userId = workout.user_id;
+      const workoutExercises = mapToWorkoutExerciseData(workout.exercises as any[]);
+      const workoutDuration = workout.duration_seconds || 0;
       
-      // Use completeWorkout method to handle all the logic
-      const result = await this.completeWorkout(userId, workoutId, durationSeconds);
+      // Check for personal records
+      const personalRecords = await XPService.checkForPersonalRecords(userId, {
+        id: workoutId,
+        exercises: workoutExercises,
+        durationSeconds: workoutDuration
+      });
       
-      return result.success;
+      // Handle streak calculations
+      await this.handleStreakAndXP(userId, workoutExercises, workoutDuration, personalRecords);
+      
+      // Update workout completion status
+      const { error: updateError } = await supabase
+        .from('workouts')
+        .update({ completed: true })
+        .eq('id', workoutId);
+      
+      if (updateError) {
+        await supabase.rpc('rollback_transaction');
+        console.error('Error updating workout completion status:', updateError);
+        return { success: false, error: 'Failed to update workout completion status' };
+      }
+      
+      // Commit the transaction
+      await supabase.rpc('commit_transaction');
+      
+      return { success: true, data: true };
     } catch (error) {
-      console.error('Error in finishWorkout:', error);
-      return false;
+      await supabase.rpc('rollback_transaction');
+      console.error('Error completing workout:', error);
+      return { success: false, error: 'Failed to complete workout' };
     }
   }
-  
+
   /**
-   * Discard a workout
-   * @param workoutId ID of the workout to discard
-   * @returns Success status
+   * Handle streak calculations and XP awards
    */
-  static async discardWorkout(workoutId: string): Promise<boolean> {
+  private static async handleStreakAndXP(
+    userId: string,
+    exercises: WorkoutExercise[],
+    durationSeconds: number,
+    personalRecords: PersonalRecord[]
+  ): Promise<void> {
     try {
-      if (!workoutId) {
-        console.error('No workout ID provided to discardWorkout');
-        return false;
+      // Fetch user profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('streak, class')
+        .eq('id', userId)
+        .single();
+      
+      if (profileError || !profile) {
+        console.error('Error fetching user profile:', profileError);
+        return;
       }
       
-      // Delete all workout sets first
-      const { error: setsError } = await supabase
-        .from('workout_sets')
-        .delete()
-        .eq('workout_id', workoutId);
-        
-      if (setsError) {
-        console.error('Error deleting workout sets:', setsError);
-        return false;
-      }
+      // Calculate and award workout XP
+      const userClass = profile.class;
+      const streak = profile.streak || 0;
       
-      // Delete the workout
-      const { error: workoutError } = await supabase
-        .from('workouts')
-        .delete()
-        .eq('id', workoutId);
-        
-      if (workoutError) {
-        console.error('Error deleting workout:', workoutError);
-        return false;
-      }
+      const workoutData = {
+        id: 'temp-id',
+        exercises,
+        durationSeconds,
+        hasPR: personalRecords.length > 0
+      };
       
-      return true;
+      // Use the new awardWorkoutXP method from XPService
+      const xpAwarded = await XPService.awardWorkoutXP(
+        userId,
+        workoutData,
+        userClass,
+        streak
+      );
+      
+      // Log XP awarded
+      console.log(`XP awarded: ${xpAwarded}`);
+      
+      // Update user's streak
+      const { error: streakError } = await supabase
+        .from('profiles')
+        .update({ streak: streak + 1, last_workout_at: new Date().toISOString() })
+        .eq('id', userId);
+      
+      if (streakError) {
+        console.error('Error updating streak:', streakError);
+      }
     } catch (error) {
-      console.error('Error in discardWorkout:', error);
-      return false;
+      console.error('Error handling streak and XP:', error);
     }
   }
 }

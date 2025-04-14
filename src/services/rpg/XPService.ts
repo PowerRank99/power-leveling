@@ -168,12 +168,7 @@ export class XPService {
       const { error } = await supabase
         .from('profiles')
         .update({
-          achievement_points: supabase.rpc('increment', { 
-            row_id: userId,
-            table: 'profiles',
-            column: 'achievement_points',
-            value: finalPoints
-          })
+          achievement_points: finalPoints
         })
         .eq('id', userId);
       
@@ -216,5 +211,52 @@ export class XPService {
     
     // For other classes, streak resets
     return 0;
+  }
+  
+  /**
+   * Check if Power Day is available for a user
+   */
+  static async checkPowerDayAvailability(userId: string) {
+    return PowerDayService.checkPowerDayAvailability(userId);
+  }
+  
+  /**
+   * Record Power Day usage for a user
+   */
+  static async recordPowerDayUsage(
+    userId: string,
+    week: number,
+    year: number
+  ): Promise<boolean> {
+    return PowerDayService.recordPowerDayUsage(userId, week, year);
+  }
+  
+  /**
+   * Award XP for a completed workout (combines XP calculation and awarding)
+   */
+  static async awardWorkoutXP(
+    userId: string,
+    workout: {
+      id: string;
+      exercises: WorkoutExercise[];
+      durationSeconds: number;
+      difficulty?: 'iniciante' | 'intermediario' | 'avancado';
+      hasPR?: boolean;
+    },
+    userClass?: string | null,
+    streak: number = 0
+  ): Promise<number> {
+    try {
+      // Calculate XP
+      const { totalXP } = this.calculateWorkoutXP(workout, userClass, streak, 'intermediario', userId);
+      
+      // Award the XP
+      await this.awardXP(userId, totalXP, 'workout', { workoutId: workout.id });
+      
+      return totalXP;
+    } catch (error) {
+      console.error('Error in awardWorkoutXP:', error);
+      return 0;
+    }
   }
 }

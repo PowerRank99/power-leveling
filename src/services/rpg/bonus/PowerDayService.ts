@@ -3,15 +3,13 @@ import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Service for handling Power Day functionality
- * Power Day allows users to exceed the daily XP cap (2x per week)
  */
 export class PowerDayService {
+  // Power Day cap (can exceed 300 XP up to 500 XP)
   static readonly POWER_DAY_CAP = 500;
-  static readonly POWER_DAYS_PER_WEEK = 2;
   
   /**
-   * Check if a user has Power Day availability
-   * Returns information about power day usage for the current week
+   * Check if a user has Power Day available
    */
   static async checkPowerDayAvailability(userId: string): Promise<{
     available: boolean;
@@ -20,99 +18,75 @@ export class PowerDayService {
     week: number;
     year: number;
   }> {
+    if (!userId) {
+      return { available: false, used: 0, max: 2, week: 0, year: 0 };
+    }
+
     try {
-      if (!userId) {
-        console.error('checkPowerDayAvailability: No userId provided');
-        throw new Error('User ID is required');
-      }
-      
       // Get current week and year
       const now = new Date();
       const week = this.getWeekNumber(now);
       const year = now.getFullYear();
       
-      // Query database for power day usage in the current week
+      // Check current usage
       const { data, error } = await supabase
-        .from('power_day_usage')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('week_number', week)
-        .eq('year', year);
+        .rpc('get_power_day_usage', { p_user_id: userId, p_week_number: week, p_year: year });
       
       if (error) {
-        console.error('Error checking power day usage:', error);
-        throw error;
+        console.error('Error checking power day availability:', error);
+        return { available: false, used: 0, max: 2, week: week, year: year };
       }
       
-      // Count used power days
-      const usedPowerDays = data ? data.length : 0;
+      const usedCount = data?.[0]?.count || 0;
+      const available = usedCount < 2;
       
       return {
-        available: usedPowerDays < this.POWER_DAYS_PER_WEEK,
-        used: usedPowerDays,
-        max: this.POWER_DAYS_PER_WEEK,
+        available,
+        used: usedCount,
+        max: 2,
         week,
         year
       };
     } catch (error) {
       console.error('Error in checkPowerDayAvailability:', error);
-      // Return a default object instead of throwing
-      return {
-        available: false,
-        used: 0,
-        max: this.POWER_DAYS_PER_WEEK,
-        week: this.getWeekNumber(new Date()),
-        year: new Date().getFullYear()
-      };
+      return { available: false, used: 0, max: 2, week: 0, year: 0 };
     }
   }
-  
+
   /**
-   * Record a power day usage
-   * Returns true if successful, false otherwise
+   * Record Power Day usage for a user
    */
-  static async recordPowerDayUsage(userId: string, week: number, year: number): Promise<boolean> {
+  static async recordPowerDayUsage(
+    userId: string,
+    week: number,
+    year: number
+  ): Promise<boolean> {
+    if (!userId) return false;
+
     try {
-      if (!userId) {
-        console.error('recordPowerDayUsage: No userId provided');
-        throw new Error('User ID is required');
-      }
-      
-      // Check availability first
-      const availability = await this.checkPowerDayAvailability(userId);
-      
-      if (!availability.available) {
-        console.warn('User has no power day availability this week');
-        return false;
-      }
-      
-      // FIX: Use direct table insert instead of RPC function
       const { data, error } = await supabase
-        .from('power_day_usage')
-        .insert({
-          user_id: userId,
-          week_number: week,
-          year: year,
-          used_at: new Date().toISOString()
-        })
-        .select();
-      
+        .rpc('create_power_day_usage', {
+          p_user_id: userId,
+          p_week_number: week,
+          p_year: year
+        });
+
       if (error) {
         console.error('Error recording power day usage:', error);
-        throw error;
+        return false;
       }
-      
-      return data && data.length > 0;
+
+      return !!data;
     } catch (error) {
       console.error('Error in recordPowerDayUsage:', error);
       return false;
     }
   }
-  
+
   /**
-   * Helper function to get the ISO week number
+   * Get the ISO week number for a date
    */
-  static getWeekNumber(date: Date): number {
+  private static getWeekNumber(date: Date): number {
     const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
     const dayNum = d.getUTCDay() || 7;
     d.setUTCDate(d.getUTCDate() + 4 - dayNum);

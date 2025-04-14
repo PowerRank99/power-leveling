@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { XPService } from '@/services/rpg/XPService';
 import { StreakService } from '@/services/rpg/StreakService';
@@ -13,22 +12,23 @@ import { ManualWorkout } from '@/types/manualWorkoutTypes';
  */
 export class ManualWorkoutService {
   /**
-   * Submit a manual workout with photo evidence
+   * Submit a manual workout with photo
    */
   static async submitManualWorkout(
     userId: string,
-    photoUrl: string,
-    description?: string,
-    exerciseId?: string,
-    activityType?: string,
-    muscleGroup?: string,
-    workoutDate?: Date
-  ): Promise<{ success: boolean, error?: string }> {
+    data: {
+      description: string;
+      activityType: string;
+      exerciseId?: string;
+      photoUrl: string;
+      workoutDate: Date;
+    }
+  ): Promise<ServiceResponse<{ id: string; xpAwarded: number }>> {
     try {
       // Use the validation service
       const validationResult = await ManualWorkoutValidationService.validateManualWorkout(
         userId,
-        workoutDate || new Date()
+        data.workoutDate
       );
       
       if (!validationResult.isValid) {
@@ -42,24 +42,33 @@ export class ManualWorkoutService {
       let xpAmount = 100;
       
       // Apply activity-specific bonuses if applicable
-      if (activityType) {
-        xpAmount = ActivityBonusService.getActivityXP(activityType);
+      if (data.activityType) {
+        xpAmount = ActivityBonusService.getActivityXP(data.activityType);
       }
       
-      // Check if this is a power day submission
-      const isPowerDay = await ManualWorkoutValidationService.checkPowerDay(userId);
+      // Check for Power Day activation
+      let isPowerDay = false;
+      const now = new Date();
+      const week = this.getWeekNumber(now);
+      const year = now.getFullYear();
+      
+      const powerDayCheck = await XPService.checkPowerDayAvailability(userId);
+      if (powerDayCheck.available) {
+        // Record Power Day usage if available
+        isPowerDay = await XPService.recordPowerDayUsage(userId, week, year);
+      }
       
       // Record the manual workout
-      const { error } = await supabase
+      const { error, data: result } = await supabase
         .from('manual_workouts')
         .insert({
           user_id: userId,
-          description: description || null,
-          activity_type: activityType || 'general',
-          photo_url: photoUrl,
-          exercise_id: exerciseId || null,
+          description: data.description || null,
+          activity_type: data.activityType || 'general',
+          photo_url: data.photoUrl,
+          exercise_id: data.exerciseId || null,
           xp_awarded: xpAmount,
-          workout_date: workoutDate ? workoutDate.toISOString() : new Date().toISOString(),
+          workout_date: data.workoutDate.toISOString(),
           is_power_day: isPowerDay
         });
         
@@ -75,25 +84,24 @@ export class ManualWorkoutService {
       await StreakService.updateStreak(userId);
       
       // Award XP
-      await XPService.awardXP(userId, xpAmount, 'manual_workout');
-      
-      // Record power day usage if applicable
-      if (isPowerDay) {
-        const now = new Date();
-        const week = this.getWeekNumber(now);
-        const year = now.getFullYear();
-        await XPService.recordPowerDayUsage(userId, week, year);
-      }
+      const finalXpAmount = xpAmount;
+      await XPService.awardXP(userId, finalXpAmount, 'manual_workout');
       
       // Check for manual workout achievements
       await AchievementCheckerService.checkManualWorkoutAchievements(userId);
       
       // Show success toast
       toast.success('Treino registrado!', {
-        description: `Você ganhou ${xpAmount} XP pelo seu treino.`
+        description: `Você ganhou ${finalXpAmount} XP pelo seu treino.`
       });
       
-      return { success: true };
+      return { 
+        success: true,
+        data: { 
+          id: result.data.id,
+          xpAwarded: finalXpAmount 
+        }
+      };
     } catch (error) {
       console.error('Error submitting manual workout:', error);
       toast.error('Erro ao registrar treino', {
