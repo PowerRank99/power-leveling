@@ -1,6 +1,10 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { CachingService } from '../common/CachingService';
+import { ExerciseHistoryFetchService } from './ExerciseHistoryFetchService';
+import { ExerciseHistoryUpdateService } from './ExerciseHistoryUpdateService';
+import { ExerciseHistory } from '@/types/workoutTypes';
+import { DatabaseResult } from '@/types/workout';
 
 const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes for exercise data
 
@@ -35,5 +39,25 @@ export class ExerciseHistoryService {
       // to only clear specific patterns
       CachingService.clear();
     }
+  }
+  
+  // Add the missing methods as facades to the specialized services
+  static async getMultipleExerciseHistory(exerciseIds: string[]): Promise<Record<string, ExerciseHistory>> {
+    const result = await ExerciseHistoryFetchService.getMultipleExerciseHistory(exerciseIds);
+    return result.success && result.data ? result.data : {};
+  }
+  
+  static async updateExerciseHistory(
+    exerciseId: string,
+    weight: number,
+    reps: number,
+    sets: number
+  ): Promise<DatabaseResult<boolean>> {
+    return ExerciseHistoryUpdateService.updateExerciseHistory(
+      exerciseId,
+      weight,
+      reps,
+      sets
+    );
   }
 }

@@ -1,5 +1,8 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { CachingService } from '../common/CachingService';
+import { DatabaseResult, WorkoutExerciseData } from '@/types/workout';
+import { createSuccessResult, createErrorResult } from '@/utils/serviceUtils';
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 const WORKOUTS_CACHE_KEY = 'recent_workouts';
