@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   AchievementTestingService, 
@@ -36,6 +35,7 @@ import TestProgressIndicator from './TestProgressIndicator';
 import TestResultViewer from './TestResultViewer';
 import TestConfigurationPanel from './TestConfigurationPanel';
 import TestCoverageReport from '@/components/achievement-testing/TestCoverageReport';
+import TestingDashboard from '@/components/achievement-testing/TestingDashboard';
 
 interface AchievementTestRunnerProps {
   userId: string;
@@ -491,179 +491,21 @@ const AchievementTestRunner: React.FC<AchievementTestRunnerProps> = ({ userId, a
   // Render dashboard tab
   const renderDashboard = () => {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Total Achievements</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-semibold">{stats.totalAchievements}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Test Coverage</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-semibold">{stats.coveragePercentage.toFixed(1)}%</div>
-              <Progress value={stats.coveragePercentage} className="h-2 mt-2" />
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Passing Tests</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-semibold text-success">{stats.passedTests}</div>
-              <div className="text-sm text-text-secondary">
-                {stats.testedAchievements > 0 ? 
-                  `${((stats.passedTests / stats.testedAchievements) * 100).toFixed(1)}% success rate` : 
-                  'No tests run yet'}
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Failing Tests</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-semibold text-valor">{stats.failedTests}</div>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="text-lg">Recent Test Results</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[300px]">
-                <div className="space-y-2">
-                  {results.length === 0 ? (
-                    <div className="text-center text-text-secondary py-4">
-                      No test results yet. Run some tests to see results here.
-                    </div>
-                  ) : (
-                    results.slice().reverse().slice(0, 10).map(result => (
-                      <div key={result.achievementId} className="p-2 border-b border-divider/20 flex items-center justify-between">
-                        <div className="flex items-center">
-                          {result.success ? (
-                            <CircleCheck className="h-5 w-5 text-success mr-2" />
-                          ) : (
-                            <CircleX className="h-5 w-5 text-valor mr-2" />
-                          )}
-                          <div>
-                            <h4 className="font-semibold text-text-primary">{result.name}</h4>
-                            <div className="flex items-center gap-2 text-xs text-text-secondary">
-                              <Badge variant="outline" className="px-1 py-0 text-xs">
-                                {result.category}
-                              </Badge>
-                              <Badge variant="outline" className="px-1 py-0 text-xs">
-                                Rank {result.rank}
-                              </Badge>
-                              <span className="flex items-center">
-                                <Clock className="h-3 w-3 mr-1" />
-                                {result.testDurationMs}ms
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        {!result.success && (
-                          <div className="text-xs text-valor max-w-[50%] text-right">
-                            {result.errorMessage}
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </ScrollArea>
-            </CardContent>
-            <CardFooter>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="ml-auto"
-                onClick={() => setActiveTab('results')}
-              >
-                View All Results
-              </Button>
-            </CardFooter>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button 
-                variant="arcane" 
-                className="w-full justify-start"
-                onClick={runAllTests}
-                disabled={loading || !userId}
-              >
-                <Play className="mr-2 h-4 w-4" />
-                Run All Tests
-              </Button>
-              
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="bg-midnight-elevated border-divider w-full">
-                  <SelectValue placeholder="Select Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {Object.values(AchievementCategory).map(category => (
-                      <SelectItem key={category} value={category}>{category}</SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => selectedCategory !== 'all' && runCategoryTests(selectedCategory as AchievementCategory)}
-                disabled={loading || selectedCategory === 'all'}
-              >
-                <Play className="mr-2 h-4 w-4" />
-                Run Category Tests
-              </Button>
-              
-              <Separator />
-              
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={clearAllResults}
-                disabled={results.length === 0}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Clear All Results
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={exportResults}
-                disabled={results.length === 0}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Export Results
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-        
-        {coverageReport && (
-          <TestCoverageReport coverage={coverageReport} />
-        )}
-      </div>
+      <TestingDashboard
+        stats={{
+          totalAchievements: stats.totalAchievements,
+          testedAchievements: stats.testedAchievements,
+          passedTests: stats.passedTests,
+          failedTests: stats.failedTests,
+          coveragePercentage: stats.coveragePercentage
+        }}
+        results={results}
+        onRunAllTests={runAllTests}
+        onRunCategoryTests={runCategoryTests}
+        onClearResults={clearAllResults}
+        onExportResults={exportResults}
+        isLoading={loading}
+      />
     );
   };
   
