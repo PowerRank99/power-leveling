@@ -18,7 +18,6 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
     setWorkoutType,
     setDuration,
     setExerciseCount,
-    setDifficultyLevel,
     setIncludePersonalRecord,
     setStreak,
     setUseClassPassives,
@@ -40,8 +39,6 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
             <WorkoutConfigForm
               workoutType={state.workoutType}
               setWorkoutType={setWorkoutType}
-              difficultyLevel={state.difficultyLevel}
-              setDifficultyLevel={setDifficultyLevel}
               duration={state.duration}
               setDuration={setDuration}
               exerciseCount={state.exerciseCount}

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { Exercise, ExerciseType, DifficultyLevel } from '@/components/workout/types/Exercise';
+import { Exercise, ExerciseType } from '@/components/workout/types/Exercise';
 import ExerciseManagerHeader from './exercise-manager/ExerciseManagerHeader';
 import ExerciseSearch from './exercise-manager/ExerciseSearch';
 import ExerciseList from './exercise-manager/ExerciseList';
@@ -33,11 +33,10 @@ const ExerciseManager = () => {
 
       if (error) throw error;
       
-      // Ensure all exercises have valid type and level
+      // Ensure all exercises have valid type
       const processedData = (data || []).map(exercise => ({
         ...exercise,
-        type: (exercise.type || 'Musculação') as ExerciseType,
-        level: (exercise.level || 'Intermediário') as DifficultyLevel
+        type: (exercise.type || 'Musculação') as ExerciseType
       }));
       
       setExercises(processedData as Exercise[]);

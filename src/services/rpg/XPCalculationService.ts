@@ -6,8 +6,7 @@ import { BaseXPCalculator } from './calculations/BaseXPCalculator';
 import { ClassBonusCalculator } from './calculations/ClassBonusCalculator';
 import { 
   XPCalculationInput, 
-  XPCalculationResult,
-  WorkoutDifficulty 
+  XPCalculationResult 
 } from './types/xpTypes';
 import { PassiveSkillService } from './bonus/PassiveSkillService';
 
