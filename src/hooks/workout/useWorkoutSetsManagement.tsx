@@ -4,6 +4,7 @@ import { WorkoutExercise, SetData, WorkoutSet } from '@/types/workout';
 import { useSetAdder } from './useSetAdder';
 import { useRemoveSet } from './useRemoveSet';
 import { useUpdateSet } from './useUpdateSet';
+import { mapWorkoutSetToSetData } from '@/utils/typeMappers';
 
 export const useWorkoutSetsManagement = (
   workoutId: string | null,
@@ -37,15 +38,9 @@ export const useWorkoutSetsManagement = (
       }
       
       // Map the WorkoutSet to SetData
-      const exerciseSets = currentExercise.sets.map(set => ({
-        id: set.id,
-        exercise_id: set.exercise_id || currentExercise.exerciseId,
-        weight: set.weight,
-        reps: set.reps,
-        completed: set.completed,
-        set_order: set.set_order || 0,
-        previous: set.previous
-      })) as SetData[];
+      const exerciseSets: SetData[] = currentExercise.sets.map(set => 
+        mapWorkoutSetToSetData(set)
+      );
       
       const updatedSets = await updateSetInDb(exerciseIndex, exerciseSets, setIndex, data);
       
@@ -94,15 +89,9 @@ export const useWorkoutSetsManagement = (
       }
       
       // Map the WorkoutSet to SetData
-      const exerciseSets = currentExercise.sets.map(set => ({
-        id: set.id,
-        exercise_id: set.exercise_id || currentExercise.exerciseId,
-        weight: set.weight,
-        reps: set.reps,
-        completed: set.completed,
-        set_order: set.set_order || 0,
-        previous: set.previous
-      })) as SetData[];
+      const exerciseSets: SetData[] = currentExercise.sets.map(set => 
+        mapWorkoutSetToSetData(set)
+      );
       
       const updatedSets = await addSetInDb(exerciseIndex, exerciseSets, routineId);
       
@@ -161,15 +150,9 @@ export const useWorkoutSetsManagement = (
       }
       
       // Map the WorkoutSet to SetData
-      const exerciseSets = currentExercise.sets.map(set => ({
-        id: set.id,
-        exercise_id: set.exercise_id || currentExercise.exerciseId,
-        weight: set.weight,
-        reps: set.reps,
-        completed: set.completed,
-        set_order: set.set_order || 0,
-        previous: set.previous
-      })) as SetData[];
+      const exerciseSets: SetData[] = currentExercise.sets.map(set => 
+        mapWorkoutSetToSetData(set)
+      );
       
       const updatedSets = await removeSetInDb(exerciseIndex, exerciseSets, setIndex, routineId);
       
