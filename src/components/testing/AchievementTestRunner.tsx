@@ -1,17 +1,21 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
-  Tabs, TabsContent, TabsList, TabsTrigger,
-  Card, CardContent, CardHeader, CardTitle,
-  Button,
-  Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue,
-  Switch,
-  Badge,
-  Progress,
-  ScrollArea,
-  Separator,
-  Alert, AlertTitle, AlertDescription
-} from '@/components/ui';
+  Tabs, TabsContent, TabsList, TabsTrigger 
+} from '@/components/ui/tabs';
+import {
+  Card, CardContent, CardHeader, CardTitle
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { 
+  Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue 
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import {
   PlayCircle,
   StopCircle,
@@ -29,7 +33,8 @@ import {
   RotateCcw,
   Save,
   Layers,
-  Search
+  Search,
+  Check
 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
