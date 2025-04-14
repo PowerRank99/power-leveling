@@ -16,7 +16,7 @@ export interface PersonalRecordData {
  * Common interface for all achievement checker implementations
  */
 export interface AchievementChecker {
-  checkAchievements(userId: string, data?: any): Promise<ServiceResponse<void>>;
+  checkAchievements(userId: string, data?: any): Promise<ServiceResponse<string[]>>;
 }
 
 /**

@@ -2,12 +2,13 @@
 import { ServiceResponse, ErrorHandlingService, createSuccessResponse } from '@/services/common/ErrorHandlingService';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { AchievementCategory, AchievementRank } from '@/types/achievementTypes';
+import { AchievementChecker } from './AchievementCheckerInterface';
 
 /**
  * Base abstract class for all specialized achievement checkers
  * Provides common functionality and enforces consistent interface
  */
-export abstract class BaseAchievementChecker {
+export abstract class BaseAchievementChecker implements AchievementChecker {
   /**
    * Abstract method that must be implemented by all checker classes
    * Performs the specific achievement checks for a given category 
