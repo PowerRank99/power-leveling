@@ -8,7 +8,7 @@ import { EXERCISE_TYPES } from '@/services/rpg/constants/exerciseTypes';
 import { XPService } from '@/services/rpg/XPService';
 import { UnifiedAchievementChecker } from '@/services/rpg/achievements/UnifiedAchievementChecker';
 import { TransactionService } from '@/services/common/TransactionService';
-import { TestCoverageService } from './TestCoverageService';
+import { TestCoverageService, TestCoverageReport } from './TestCoverageService';
 
 // Define interfaces for the testing service
 export interface AchievementTestResult {

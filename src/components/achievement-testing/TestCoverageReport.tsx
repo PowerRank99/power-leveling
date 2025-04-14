@@ -4,12 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { TestCoverageReport } from '@/services/testing/TestCoverageService';
+import { TestCoverageReport as TestCoverageReportType } from '@/services/testing/TestCoverageService';
 import { AchievementCategory } from '@/types/achievementTypes';
 import { ShieldCheck, AlertTriangle } from 'lucide-react';
 
 interface TestCoverageReportProps {
-  coverage: TestCoverageReport;
+  coverage: TestCoverageReportType;
 }
 
 const TestCoverageReport: React.FC<TestCoverageReportProps> = ({ coverage }) => {
@@ -40,7 +40,7 @@ const TestCoverageReport: React.FC<TestCoverageReportProps> = ({ coverage }) => 
               <div key={category} className="p-2 border border-divider/20 rounded-lg">
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-xs">{category}</span>
-                  <Badge variant={stats.coverage >= 80 ? 'success' : 'warning'} className="text-xs">
+                  <Badge variant={stats.coverage >= 80 ? "achievement" : "valor"} className="text-xs">
                     {stats.coverage.toFixed(0)}%
                   </Badge>
                 </div>
