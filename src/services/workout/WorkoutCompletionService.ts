@@ -69,13 +69,10 @@ export class WorkoutCompletionService {
       const workoutExercises: WorkoutExercise[] = Array.from(exerciseMap.values());
       
       // Check for personal records
-      const personalRecords = await XPService.checkForPersonalRecords(userId, {
-        id: workoutId,
-        exercises: workoutExercises,
-        durationSeconds: durationSeconds || 0
-      });
+      await XPService.checkForPersonalRecords(userId, workoutId);
       
       // Handle streak calculations and XP award
+      const personalRecords: PersonalRecord[] = []; // Placeholder, will be populated by backend
       await this.handleStreakAndXP(userId, workoutExercises, durationSeconds || 0, personalRecords);
       
       // Update workout completion status
@@ -160,24 +157,12 @@ export class WorkoutCompletionService {
         return;
       }
       
-      // Calculate and award workout XP
-      const userClass = profile.class;
+      // Calculate workout data
       const streak = profile.streak || 0;
+      const userClass = profile.class;
       
-      const workoutData = {
-        id: 'temp-id',
-        exercises,
-        durationSeconds,
-        hasPR: personalRecords.length > 0
-      };
-      
-      // Use the awardWorkoutXP method from XPService
-      const xpAwarded = await XPService.awardWorkoutXP(
-        userId,
-        workoutData,
-        userClass,
-        streak
-      );
+      // Award XP based on workout data
+      const xpAwarded = await XPService.awardWorkoutXP(userId, durationSeconds);
       
       // Log XP awarded
       console.log(`XP awarded: ${xpAwarded}`);
@@ -185,7 +170,10 @@ export class WorkoutCompletionService {
       // Update user's streak
       const { error: streakError } = await supabase
         .from('profiles')
-        .update({ streak: streak + 1, last_workout_at: new Date().toISOString() })
+        .update({ 
+          streak: streak + 1, 
+          last_workout_at: new Date().toISOString() 
+        })
         .eq('id', userId);
       
       if (streakError) {

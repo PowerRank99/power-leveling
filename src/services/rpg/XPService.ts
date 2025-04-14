@@ -58,10 +58,12 @@ export class XPService {
    */
   static async awardWorkoutXP(
     userId: string,
-    amount: number,
+    durationSeconds: number,
     metadata?: any
   ): Promise<boolean> {
-    return this.awardXP(userId, amount, 'workout', metadata);
+    // Calculate XP amount based on duration (simplified)
+    const amount = Math.min(durationSeconds / 60 * 10, this.DAILY_XP_CAP);
+    return this.awardXP(userId, Math.round(amount), 'workout', metadata);
   }
   
   /**
