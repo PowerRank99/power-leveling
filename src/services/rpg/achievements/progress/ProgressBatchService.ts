@@ -232,14 +232,24 @@ export class ProgressBatchService extends BaseProgressService {
           is_complete: achievement.isComplete
         }));
         
-        // Use the batch update function
-        const { error } = await supabase.rpc('batch_update_achievement_progress', {
-          p_user_id: userId,
-          p_achievements: JSON.stringify(progressData)
-        });
+        // Use the batch update function with retry logic
+        const result = await TransactionService.executeWithRetry(
+          async () => {
+            const { error } = await supabase.rpc('batch_update_achievement_progress', {
+              p_user_id: userId,
+              p_achievements: JSON.stringify(progressData)
+            });
+            
+            if (error) throw error;
+            return true;
+          },
+          'BATCH_UPDATE_PROGRESS',
+          3,
+          'Failed to update achievement progress in batch'
+        );
         
-        if (error) {
-          throw error;
+        if (!result.success) {
+          throw new Error(result.message || 'Failed to update progress in batch');
         }
       },
       'BATCH_UPDATE_ACHIEVEMENT_PROGRESS',

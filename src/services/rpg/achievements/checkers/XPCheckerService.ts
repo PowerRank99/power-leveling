@@ -50,33 +50,15 @@ export class XPCheckerService extends BaseAchievementChecker {
         }
         
         // Update progress in batch first
-        const progressUpdates = achievementsToCheck.map(achievementId => {
-          const milestone = ACHIEVEMENT_REQUIREMENTS.XP.MILESTONES[
-            Object.values(ACHIEVEMENT_IDS.C.xp).indexOf(achievementId) !== -1 ? 0 :
-            Object.values(ACHIEVEMENT_IDS.B.xp).indexOf(achievementId) !== -1 ? 1 :
-            Object.values(ACHIEVEMENT_IDS.A.xp).indexOf(achievementId) !== -1 ? 2 :
-            Object.values(ACHIEVEMENT_IDS.S.xp).indexOf(achievementId) !== -1 ? 3 : 4
-          ];
-          
-          return {
-            achievementId,
-            currentValue: totalXP,
-            targetValue: milestone,
-            isComplete: totalXP >= milestone
-          };
-        });
+        const progressUpdates = achievementsToCheck.map(achievementId => ({
+          achievementId,
+          currentValue: totalXP,
+          targetValue: this.getMilestoneForAchievement(achievementId, xpMilestones),
+          isComplete: true
+        }));
         
-        // Update progress first
-        const progressResult = await TransactionService.executeWithRetry(
-          async () => {
-            const result = await AchievementService.updateMultipleProgressValues(userId, progressUpdates);
-            if (!result.success) throw new Error(result.message || 'Failed to update XP achievement progress');
-            return true;
-          },
-          'UPDATE_XP_ACHIEVEMENT_PROGRESS',
-          3,
-          'Failed to update XP achievement progress'
-        );
+        // Update progress first using the service's batch update method
+        const progressResult = await AchievementService.updateMultipleProgressValues(userId, progressUpdates);
         
         if (!progressResult.success) {
           console.error('Failed to update XP achievement progress:', progressResult.error);
@@ -88,15 +70,15 @@ export class XPCheckerService extends BaseAchievementChecker {
       'XP_MILESTONE_ACHIEVEMENTS'
     );
   }
-  
+
   /**
-   * Static method to check XP milestone achievements
+   * Helper method to get milestone value for an achievement
    */
-  static async checkXPMilestoneAchievements(
-    userId: string, 
-    totalXP?: number
-  ): Promise<ServiceResponse<string[]>> {
-    const checker = new XPCheckerService();
-    return checker.checkAchievements(userId, totalXP);
+  private getMilestoneForAchievement(achievementId: string, milestones: number[]): number {
+    if (Object.values(ACHIEVEMENT_IDS.C.xp).indexOf(achievementId) !== -1) return milestones[0];
+    if (Object.values(ACHIEVEMENT_IDS.B.xp).indexOf(achievementId) !== -1) return milestones[1];
+    if (Object.values(ACHIEVEMENT_IDS.A.xp).indexOf(achievementId) !== -1) return milestones[2];
+    if (Object.values(ACHIEVEMENT_IDS.S.xp).indexOf(achievementId) !== -1) return milestones[3];
+    return milestones[4];
   }
 }
