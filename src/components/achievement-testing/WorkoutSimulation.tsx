@@ -44,6 +44,23 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
 
   const classes = ['Guerreiro', 'Monge', 'Ninja', 'Bruxo', 'Paladino', 'Druida'];
 
+  const getExerciseNameForType = (type: string): string => {
+    switch (type) {
+      case 'strength':
+        return 'Bench Press';
+      case 'bodyweight':
+        return 'Pull-up';
+      case 'cardio':
+        return 'Running';
+      case 'sports':
+        return 'Basketball';
+      case 'flexibility':
+        return 'Yoga Flow';
+      default:
+        return 'Basic Exercise';
+    }
+  };
+
   useEffect(() => {
     calculatePotentialXP();
   }, [workoutType, duration, exerciseCount, includePersonalRecord, streak, useClassPassives, selectedClass]);
@@ -53,15 +70,15 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
     
     const mockWorkout = {
       id: 'simulation',
-      exercises: Array(exerciseCount).fill({
-        id: 'mock-exercise',
-        name: `Mock ${workoutType} exercise`,
+      exercises: Array(exerciseCount).fill({}).map((_, i) => ({
+        id: `mock-ex-${i}`,
+        name: getExerciseNameForType(workoutType),
         category: workoutType,
         sets: Array(3).fill({
           id: 'mock-set',
           completed: true
         })
-      }),
+      })),
       durationSeconds,
       hasPR: includePersonalRecord
     };
