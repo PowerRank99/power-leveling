@@ -43,12 +43,8 @@ interface AchievementTestRunnerProps {
   addLogEntry?: (action: string, details: string) => void;
 }
 
-// Local storage key for test results
-const STORAGE_KEY = 'achievement-test-results';
-
-// Filter and sort options
-export type FilterOption = 'all' | 'passed' | 'failed' | 'untested';
-export type SortOption = 'category' | 'rank' | 'success-rate' | 'duration';
+// Sort options
+type SortOption = 'category' | 'rank' | 'success-rate' | 'duration';
 
 const AchievementTestRunner: React.FC<AchievementTestRunnerProps> = ({ userId, addLogEntry }) => {
   // Service initialization
@@ -84,8 +80,6 @@ const AchievementTestRunner: React.FC<AchievementTestRunnerProps> = ({ userId, a
   const [selectedRank, setSelectedRank] = useState<string>('all');
   
   // Persist results to localStorage
-  const [savedResults, setSavedResults] = useLocalStorage<AchievementTestResult[]>(STORAGE_KEY, []);
-
   const {
     savedResults: localStorageResults,
     lastUpdated,

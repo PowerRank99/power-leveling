@@ -10,7 +10,7 @@ import { AchievementTestResult } from '@/services/testing/AchievementTestingServ
 import { toast } from 'sonner';
 
 // Explicitly define the FilterOption type here
-export type FilterOption = 'all' | 'passed' | 'failed';
+export type FilterOption = 'all' | 'passed' | 'failed' | 'untested';
 
 interface TestResultViewerProps {
   results: AchievementTestResult[];
@@ -149,6 +149,14 @@ const TestResultViewer: React.FC<TestResultViewerProps> = ({
             onClick={() => onFilterChange('failed')}
           >
             Failed
+          </Button>
+          {/* Add untested filter button */}
+          <Button 
+            variant={filter === 'untested' ? 'arcane' : 'ghost'}
+            size="sm"
+            onClick={() => onFilterChange('untested')}
+          >
+            Untested
           </Button>
         </div>
         
