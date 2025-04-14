@@ -101,6 +101,39 @@ export class AchievementAwardService {
   }
 
   /**
+   * Check and award multiple achievements
+   * This is the missing method that was referenced from AchievementService
+   */
+  static async checkAndAwardAchievements(
+    userId: string,
+    achievementIds: string[]
+  ): Promise<ServiceResponse<boolean>> {
+    try {
+      if (!userId || !achievementIds.length) {
+        return createSuccessResponse(false);
+      }
+
+      let atLeastOneAwarded = false;
+      
+      // Process each achievement
+      for (const achievementId of achievementIds) {
+        const result = await this.awardAchievement(userId, achievementId);
+        if (result.success && result.data === true) {
+          atLeastOneAwarded = true;
+        }
+      }
+      
+      return createSuccessResponse(atLeastOneAwarded);
+    } catch (error) {
+      return createErrorResponse(
+        (error as Error).message,
+        `Exception in checkAndAwardAchievements: ${(error as Error).message}`,
+        ErrorCategory.EXCEPTION
+      );
+    }
+  }
+
+  /**
    * Update profile achievement counters
    */
   private static async updateProfileCounters(userId: string, achievement: AchievementDefinition): Promise<void> {
