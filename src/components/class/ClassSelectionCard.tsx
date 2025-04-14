@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { LegacyClassInfo } from '@/services/rpg/types/classTypes';
 import { motion } from 'framer-motion';
-import { ClassBonusSection } from './ClassBonusSection';
-import { ClassCardUtils } from './ClassCardUtils';
+import ClassBonusSection from './ClassBonusSection';
+import { getClassColors, formatBonuses } from './ClassCardUtils';
 import { Shield, Sword, Wind, Sparkles, Dumbbell } from 'lucide-react';
 
 interface ClassSelectionCardProps {
@@ -22,13 +23,33 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
   isOnCooldown,
   onClick,
 }) => {
-  const {
-    backgroundGradient,
-    textColor,
-    shadowColor,
-    borderGradient,
-    getIcon
-  } = ClassCardUtils.useClassCardStyles(classInfo.class_name, isSelected, isFocused, isOnCooldown, isCurrentClass);
+  // Get class styling
+  const classColors = getClassColors(classInfo.class_name);
+  const formattedBonuses = formatBonuses(classInfo.bonuses);
+  
+  // Define card styles based on state
+  const backgroundGradient = classInfo.class_name ? classColors.gradient : 'bg-midnight-card';
+  const textColor = isSelected || isFocused ? 'text-white' : classColors.text;
+  const shadowColor = (isSelected || isFocused) && !isOnCooldown ? classColors.shadow : '';
+  const borderGradient = isOnCooldown && !isCurrentClass ? 'border-gray-700/50' : 'border-transparent';
+  
+  // Choose the appropriate icon based on class
+  const getIcon = () => {
+    switch(classInfo.class_name) {
+      case 'Guerreiro':
+        return <Sword className={`h-5 w-5 ${textColor}`} />;
+      case 'Monge':
+        return <Dumbbell className={`h-5 w-5 ${textColor}`} />;
+      case 'Ninja':
+        return <Wind className={`h-5 w-5 ${textColor}`} />;
+      case 'Bruxo':
+        return <Sparkles className={`h-5 w-5 ${textColor}`} />;
+      case 'Paladino':
+        return <Shield className={`h-5 w-5 ${textColor}`} />;
+      default:
+        return <Shield className={`h-5 w-5 ${textColor}`} />;
+    }
+  };
   
   const classIcon = getIcon();
   
@@ -81,7 +102,10 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
         <div className="flex-grow" />
         
         {/* Bonuses Section */}
-        <ClassBonusSection classInfo={classInfo} textColor={textColor} />
+        <ClassBonusSection 
+          bonuses={formattedBonuses} 
+          accentColor={classColors.accent} 
+        />
       </div>
     </motion.div>
   );
