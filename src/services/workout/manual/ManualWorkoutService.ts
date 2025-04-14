@@ -128,7 +128,18 @@ export class ManualWorkoutService {
       
       if (error) throw error;
       
-      return data || [];
+      // Map the database response to our ManualWorkout interface
+      return (data || []).map(item => ({
+        id: item.id,
+        description: item.description,
+        activityType: item.activity_type,
+        exerciseId: item.exercise_id,
+        photoUrl: item.photo_url,
+        xpAwarded: item.xp_awarded,
+        createdAt: item.created_at,
+        workoutDate: item.workout_date,
+        isPowerDay: item.is_power_day
+      }));
     } catch (error) {
       console.error('Error getting user manual workouts:', error);
       return [];
