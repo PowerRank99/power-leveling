@@ -1,3 +1,14 @@
-// This file will be used for any global test setup
-// For now, we'll keep it minimal
-export default {}
+
+import '@testing-library/jest-dom';
+import { expect, afterEach } from 'vitest';
+import { cleanup } from '@testing-library/react';
+import matchers from '@testing-library/jest-dom/matchers';
+
+// Extend Vitest's expect method with React Testing Library methods
+expect.extend(matchers);
+
+// Cleanup after each test case
+afterEach(() => {
+  cleanup();
+});
+
