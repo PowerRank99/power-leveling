@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { WorkoutExercise, SetData } from '@/types/workout';
+import { WorkoutExercise, SetData, WorkoutSet } from '@/types/workout';
 import { useSetAdder } from './useSetAdder';
 import { useRemoveSet } from './useRemoveSet';
 import { useUpdateSet } from './useUpdateSet';
@@ -29,14 +29,14 @@ export const useWorkoutSetsManagement = (
     try {
       console.log(`Updating set ${setIndex} for exercise index ${exerciseIndex} with data:`, data);
       
-      // Extract just the sets from the exercise and convert to SetData
+      // Extract just the sets from the exercise 
       const currentExercise = exercises[exerciseIndex];
       if (!currentExercise) {
         console.error(`Exercise not found at index ${exerciseIndex}`);
         return null;
       }
       
-      // Fixed: Properly map WorkoutExercise sets to SetData
+      // Map the WorkoutSet to SetData
       const exerciseSets = currentExercise.sets.map(set => ({
         id: set.id,
         exercise_id: set.exercise_id || currentExercise.exerciseId,
@@ -65,7 +65,7 @@ export const useWorkoutSetsManagement = (
           completed: setData.completed,
           set_order: setData.set_order,
           previous: setData.previous
-        }));
+        })) as WorkoutSet[];
         
         // Replace the old exercise with the updated one
         updatedExercises[exerciseIndex] = exerciseToUpdate;
@@ -93,7 +93,7 @@ export const useWorkoutSetsManagement = (
         return null;
       }
       
-      // Fixed: Properly map WorkoutExercise sets to SetData
+      // Map the WorkoutSet to SetData
       const exerciseSets = currentExercise.sets.map(set => ({
         id: set.id,
         exercise_id: set.exercise_id || currentExercise.exerciseId,
@@ -122,7 +122,7 @@ export const useWorkoutSetsManagement = (
           completed: setData.completed,
           set_order: setData.set_order,
           previous: setData.previous
-        }));
+        })) as WorkoutSet[];
         
         // Replace the old exercise with the updated one
         updatedExercises[exerciseIndex] = exerciseToUpdate;
@@ -160,7 +160,7 @@ export const useWorkoutSetsManagement = (
         return null;
       }
       
-      // Fixed: Properly map WorkoutExercise sets to SetData
+      // Map the WorkoutSet to SetData
       const exerciseSets = currentExercise.sets.map(set => ({
         id: set.id,
         exercise_id: set.exercise_id || currentExercise.exerciseId,
@@ -189,7 +189,7 @@ export const useWorkoutSetsManagement = (
           completed: setData.completed,
           set_order: setData.set_order,
           previous: setData.previous
-        }));
+        })) as WorkoutSet[];
         
         // Replace the old exercise with the updated one
         updatedExercises[exerciseIndex] = exerciseToUpdate;

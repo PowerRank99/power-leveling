@@ -44,10 +44,11 @@ export interface WorkoutExerciseData {
   id: string;
   exercise_id: string;
   name?: string;
-  weight?: number;
-  reps?: number;
+  weight?: number | string;
+  reps?: number | string;
   sets?: number;
   targetSets?: number;
+  type?: string;
 }
 
 export interface SetData {

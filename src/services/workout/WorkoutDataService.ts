@@ -53,12 +53,13 @@ export class WorkoutDataService {
         
         // Create or update exercise entry
         if (!exerciseMap.has(exerciseId)) {
-          const exerciseData = set.exercises as { id: string; name: string; type: string };
+          // Convert the exercise data to expected format
+          const exerciseData = set.exercises as { id: string; name: string; type: string } | null;
+          
           exerciseMap.set(exerciseId, {
             id: set.id,
             exercise_id: exerciseId,
             name: exerciseData?.name || `Exercise ${exerciseId.slice(0, 8)}`,
-            type: exerciseData?.type || 'unknown',
             weight: set.weight,
             reps: set.reps,
             sets: set.completed ? 1 : 0

@@ -44,4 +44,11 @@ export class XPService {
       return false;
     }
   }
+  
+  // Expose methods from RPGXPService
+  static awardXP = RPGXPService.awardXP;
+  static checkPowerDayAvailability = RPGXPService.checkPowerDayAvailability;
+  static recordPowerDayUsage = RPGXPService.recordPowerDayUsage;
+  static checkForPersonalRecords = RPGXPService.checkForPersonalRecords;
+  static awardWorkoutXP = RPGXPService.awardWorkoutXP;
 }
