@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Trophy, Sparkles, Zap } from 'lucide-react';
 import { useAchievementNotificationStore } from '@/stores/achievementNotificationStore';
 import { AchievementUtils } from '@/constants/AchievementDefinitions';
+import { AchievementRank } from '@/types/achievementTypes';
 
 const AchievementNotificationTester: React.FC = () => {
   const { queueNotification } = useAchievementNotificationStore();
@@ -16,18 +17,21 @@ const AchievementNotificationTester: React.FC = () => {
     const randomIndex = Math.floor(Math.random() * allAchievements.length);
     const achievement = allAchievements[randomIndex];
     
+    // Ensure rank is a valid AchievementRank
+    const validRank: AchievementRank = achievement.rank === 'Unranked' ? 'E' : achievement.rank as AchievementRank;
+    
     queueNotification({
       id: achievement.id,
       title: achievement.name,
       description: achievement.description,
-      rank: achievement.rank,
+      rank: validRank,
       points: achievement.points,
       xpReward: achievement.xpReward,
       timestamp: new Date().toISOString()
     });
   };
   
-  const testRandomRankAchievement = (rank: string) => {
+  const testRandomRankAchievement = (rank: AchievementRank) => {
     // Get achievements of a specific rank
     const rankAchievements = AchievementUtils.getAchievementsByRank(rank);
     
@@ -44,7 +48,7 @@ const AchievementNotificationTester: React.FC = () => {
       id: achievement.id,
       title: achievement.name,
       description: achievement.description,
-      rank: achievement.rank,
+      rank: rank,
       points: achievement.points,
       xpReward: achievement.xpReward,
       timestamp: new Date().toISOString()
