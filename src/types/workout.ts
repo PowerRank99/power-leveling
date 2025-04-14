@@ -11,6 +11,8 @@ export interface WorkoutExercise {
   exerciseId: string;
   name: string;
   sets: WorkoutSet[];
+  targetSets?: number;
+  type?: string;
 }
 
 /**
@@ -26,6 +28,7 @@ export interface WorkoutSet {
     weight: string;
     reps: string;
   };
+  exercise_id?: string; // Added to make compatible with SetData
 }
 
 /**
@@ -35,6 +38,11 @@ export interface WorkoutExerciseData {
   id: string;
   exercise_id: string;
   name: string;
+  weight?: number;
+  reps?: number;
+  sets?: number;
+  targetSets?: number;
+  exerciseId?: string; // For backward compatibility
 }
 
 /**
@@ -43,10 +51,14 @@ export interface WorkoutExerciseData {
 export interface SetData {
   id: string;
   exercise_id: string;
-  weight: number | null;
-  reps: number | null;
+  weight: string | number; // Updated to support both string and number
+  reps: string | number; // Updated to support both string and number
   completed: boolean;
   set_order: number;
+  previous?: {
+    weight: string;
+    reps: string;
+  };
 }
 
 /**
@@ -65,12 +77,16 @@ export interface PreviousSetData {
  */
 export interface ExerciseHistory {
   id: string;
-  user_id: string;
-  exercise_id: string;
+  user_id: string; // Snake case for database compatibility
+  exercise_id: string; // Snake case for database compatibility
   weight: number;
   reps: number;
   sets: number;
-  last_used_at: string;
+  last_used_at: string; // Snake case for database compatibility
+  createdAt?: string;
+  userId?: string; // For backward compatibility
+  exerciseId?: string; // For backward compatibility
+  lastUsedAt?: string; // For backward compatibility
 }
 
 /**
@@ -79,6 +95,7 @@ export interface ExerciseHistory {
 export interface DatabaseResult<T> {
   data: T | null;
   error: Error | null;
+  success?: boolean; // Added for compatibility with existing code
 }
 
 /**

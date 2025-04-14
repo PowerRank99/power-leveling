@@ -1,5 +1,5 @@
 
-import { ExerciseHistory, WorkoutExercise, WorkoutExerciseData, SetData } from '@/types/workoutTypes';
+import { ExerciseHistory, WorkoutExercise, WorkoutExerciseData, SetData, WorkoutSet } from '@/types/workout';
 
 /**
  * Utility functions to map between database objects and TypeScript interfaces
@@ -11,12 +11,12 @@ import { ExerciseHistory, WorkoutExercise, WorkoutExerciseData, SetData } from '
 export function mapToExerciseHistory(record: any): ExerciseHistory {
   return {
     id: record.id,
-    userId: record.user_id,
-    exerciseId: record.exercise_id,
+    user_id: record.user_id,
+    exercise_id: record.exercise_id,
     weight: record.weight,
     reps: record.reps,
     sets: record.sets,
-    lastUsedAt: record.last_used_at,
+    last_used_at: record.last_used_at,
     createdAt: record.created_at
   };
 }
@@ -24,11 +24,11 @@ export function mapToExerciseHistory(record: any): ExerciseHistory {
 /**
  * Maps a WorkoutExerciseData object to WorkoutExercise
  */
-export function mapToWorkoutExercise(data: WorkoutExerciseData, sets: SetData[] = []): WorkoutExercise {
+export function mapToWorkoutExercise(data: WorkoutExerciseData, sets: WorkoutSet[] = []): WorkoutExercise {
   return {
-    id: data.id || `temp-${data.exerciseId}`, // Ensure id is always available
-    name: data.name || `Exercise ${data.exerciseId.slice(0, 8)}`, // Fallback name
-    exerciseId: data.exerciseId,
+    id: data.id || `temp-${data.exercise_id}`, // Ensure id is always available
+    name: data.name || `Exercise ${data.exercise_id.slice(0, 8)}`, // Fallback name
+    exerciseId: data.exercise_id,
     sets: sets,
     targetSets: data.targetSets
   };
@@ -46,9 +46,9 @@ export function mapToWorkoutExerciseData(exercise: WorkoutExercise): WorkoutExer
     
   return {
     id: exercise.id,
-    exerciseId: exercise.exerciseId,
-    weight: exercise.sets?.[0] ? parseFloat(exercise.sets[0].weight) : undefined,
-    reps: exercise.sets?.[0] ? parseInt(exercise.sets[0].reps) : undefined,
+    exercise_id: exercise.exerciseId,
+    weight: exercise.sets?.[0] ? parseFloat(exercise.sets[0].weight.toString()) : undefined,
+    reps: exercise.sets?.[0] ? parseInt(exercise.sets[0].reps.toString()) : undefined,
     sets: completedSets,
     targetSets: exercise.targetSets,
     name: exercise.name

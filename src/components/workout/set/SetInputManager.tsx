@@ -12,11 +12,11 @@ interface SetInputManagerProps {
  * Custom hook to manage set input values and handle state synchronization
  */
 const useSetInputValues = ({ set, onWeightChange, onRepsChange }: SetInputManagerProps) => {
-  const [weightValue, setWeightValue] = useState(set.weight || '0');
-  const [repsValue, setRepsValue] = useState(set.reps || '0');
+  const [weightValue, setWeightValue] = useState(set.weight ? set.weight.toString() : '0');
+  const [repsValue, setRepsValue] = useState(set.reps ? set.reps.toString() : '0');
   const isInitializedRef = useRef(false);
   const setIdRef = useRef(set.id);
-  const previousValuesRef = useRef({ weight: set.weight, reps: set.reps });
+  const previousValuesRef = useRef({ weight: set.weight?.toString(), reps: set.reps?.toString() });
   const lastUserEditRef = useRef<number | null>(null);
   
   // Initialize values on first render or when set ID changes
@@ -29,8 +29,8 @@ const useSetInputValues = ({ set, onWeightChange, onRepsChange }: SetInputManage
     }
     
     if (!isInitializedRef.current) {
-      let newWeightValue = set.weight;
-      let newRepsValue = set.reps;
+      let newWeightValue = set.weight ? set.weight.toString() : '0';
+      let newRepsValue = set.reps ? set.reps.toString() : '0';
       
       // Use previous values if current values are empty
       if (!newWeightValue || newWeightValue === '0') {
@@ -52,8 +52,11 @@ const useSetInputValues = ({ set, onWeightChange, onRepsChange }: SetInputManage
   
   // Update local state if props change and no recent user edits
   useEffect(() => {
-    if (set.weight === previousValuesRef.current.weight && 
-        set.reps === previousValuesRef.current.reps) {
+    const currentWeight = set.weight ? set.weight.toString() : '0';
+    const currentReps = set.reps ? set.reps.toString() : '0';
+    
+    if (currentWeight === previousValuesRef.current.weight && 
+        currentReps === previousValuesRef.current.reps) {
       return;
     }
     
@@ -63,14 +66,14 @@ const useSetInputValues = ({ set, onWeightChange, onRepsChange }: SetInputManage
       return;
     }
     
-    if (set.weight && set.weight !== '0' && set.weight !== weightValue) {
-      setWeightValue(set.weight);
-      previousValuesRef.current.weight = set.weight;
+    if (currentWeight && currentWeight !== '0' && currentWeight !== weightValue) {
+      setWeightValue(currentWeight);
+      previousValuesRef.current.weight = currentWeight;
     }
     
-    if (set.reps && set.reps !== '0' && set.reps !== repsValue) {
-      setRepsValue(set.reps);
-      previousValuesRef.current.reps = set.reps;
+    if (currentReps && currentReps !== '0' && currentReps !== repsValue) {
+      setRepsValue(currentReps);
+      previousValuesRef.current.reps = currentReps;
     }
   }, [set.weight, set.reps, weightValue, repsValue]);
   
