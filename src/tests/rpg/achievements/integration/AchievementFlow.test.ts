@@ -1,3 +1,4 @@
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { AchievementProgressService } from '@/services/rpg/achievements/AchievementProgressService';
@@ -67,7 +68,7 @@ describe('Achievement Flow Integration', () => {
   });
 
   describe('Class bonus interactions', () => {
-    it('should apply class bonuses to achievement XP rewards', async () => {
+    it('should apply class bonuses to achievement progress', async () => {
       // Mock profile with warrior class
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
