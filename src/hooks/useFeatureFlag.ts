@@ -15,9 +15,7 @@ export function useFeatureFlag(flag: FeatureFlag): boolean {
   useEffect(() => {
     const checkFlag = async () => {
       // Ensure feature flags are initialized
-      if (!FeatureFlagService['isInitialized']) {
-        await FeatureFlagService.initialize();
-      }
+      await FeatureFlagService.initialize();
       
       // Check if flag is enabled for current user
       const enabled = FeatureFlagService.isEnabled(flag, user?.id);
