@@ -48,7 +48,7 @@ export class AchievementService {
   /**
    * Process achievements
    */
-  static async checkWorkoutAchievements(userId: string, workoutId: string): Promise<ServiceResponse<any>> {
+  static async checkWorkoutAchievements(userId: string, workoutId: string): Promise<ServiceResponse<string[]>> {
     return AchievementProcessingService.checkWorkoutAchievements(userId, workoutId);
   }
   

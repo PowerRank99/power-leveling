@@ -9,7 +9,7 @@ export class AchievementProcessingService {
   /**
    * Check for achievements related to workouts
    */
-  static async checkWorkoutAchievements(userId: string, workoutId: string): Promise<ServiceResponse<any>> {
+  static async checkWorkoutAchievements(userId: string, workoutId: string): Promise<ServiceResponse<string[]>> {
     // Check workout achievements
     const workoutAchievementsResult = await StandardizedAchievementService.checkWorkoutAchievements(userId);
     
@@ -18,8 +18,8 @@ export class AchievementProcessingService {
     
     // Combine results
     const combinedAchievements = [
-      ...(workoutAchievementsResult.success ? workoutAchievementsResult.data || [] : []),
-      ...(streakAchievementsResult.success ? streakAchievementsResult.data || [] : [])
+      ...(workoutAchievementsResult.success && workoutAchievementsResult.data ? workoutAchievementsResult.data : []),
+      ...(streakAchievementsResult.success && streakAchievementsResult.data ? streakAchievementsResult.data : [])
     ];
     
     return createSuccessResponse(combinedAchievements);

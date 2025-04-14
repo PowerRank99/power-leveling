@@ -20,13 +20,13 @@ describe('Achievement Flow Integration', () => {
 
   describe('Complete achievement flow', () => {
     it('should process workout completion and award achievements', async () => {
-      // Mock successful workout completion
+      // Mock successful workout achievement check with boolean success value
       vi.mocked(WorkoutAchievementChecker.checkAchievements).mockResolvedValue({
         success: true,
         data: ['primeiro-treino']
       });
 
-      // Mock progress update
+      // Mock progress update with boolean success value
       vi.mocked(AchievementProgressService.updateWorkoutCountProgress).mockResolvedValue({
         success: true,
         data: true
