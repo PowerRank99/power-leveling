@@ -219,12 +219,14 @@ export class StandardizedAchievementService {
     
     showAchievement({
       id: achievement.id,
-      title: achievement.name,
+      name: achievement.name,
       description: achievement.description,
       xpReward: achievement.xpReward,
       points: achievement.points,
       rank: achievement.rank,
-      bonusText: "Excede o limite diário"
+      metadata: {
+        bonusText: "Excede o limite diário"
+      }
     });
     
     // Also queue it in the notification system for persistent display
