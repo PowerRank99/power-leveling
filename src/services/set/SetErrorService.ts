@@ -1,7 +1,7 @@
 
 import { toast } from 'sonner';
 import { ErrorFactory } from '../common/ErrorFactory';
-import { ServiceResponse } from '../common/ErrorHandlingService';
+import { ServiceResponse, ErrorCategory } from '../common/ErrorHandlingService';
 
 /**
  * Service responsible for handling errors in set operations

@@ -1,5 +1,16 @@
 
-import { ErrorCategory } from '@/types/serviceTypes';
+/**
+ * Error categories for consistent error handling
+ */
+export enum ErrorCategory {
+  AUTHENTICATION = 'authentication',
+  AUTHORIZATION = 'authorization',
+  VALIDATION = 'validation',
+  DATABASE = 'database',
+  NETWORK = 'network',
+  BUSINESS_LOGIC = 'business_logic',
+  UNKNOWN = 'unknown'
+}
 
 /**
  * Error structure for consistent error handling
@@ -22,11 +33,8 @@ export interface ServiceResponse<T> {
   details?: string;
 }
 
-// Backward compatibility type alias
+// Backward compatibility type alias (deprecated)
 export type ServiceErrorResponse = ServiceResponse<any>;
-
-// Re-export ErrorCategory for external use
-export { ErrorCategory };
 
 /**
  * Service for handling errors consistently
