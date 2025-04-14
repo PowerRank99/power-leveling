@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { XPBreakdown, XPToastService } from './bonus/XPToastService';
+import { XPBreakdown } from './bonus/XPToastService';
+import { XPToastService } from './bonus/XPToastService';
 
 /**
  * Service for handling XP bonuses
@@ -135,3 +136,4 @@ export class XPBonusService {
     return cumulativeXP;
   }
 }
+

@@ -5,7 +5,7 @@ import { ClassBonusBreakdown } from '../types/classTypes';
 /**
  * XP breakdown for toast notifications
  */
-export interface XPToastBreakdown {
+export interface XPBreakdown {
   /** Base XP before any modifiers */
   base: number;
   
@@ -39,7 +39,11 @@ export class XPToastService {
    * @param breakdown - Optional detailed breakdown of XP components
    * @param leveledUp - Whether user leveled up from this XP gain
    */
-  static showXPToast(amount: number, breakdown?: XPToastBreakdown, leveledUp: boolean = false): void {
+  static showXPToast(
+    amount: number, 
+    breakdown?: XPBreakdown, 
+    leveledUp: boolean = false
+  ): void {
     if (amount <= 0) return;
     
     let description = `+${amount} XP`;
@@ -62,3 +66,4 @@ export class XPToastService {
     }
   }
 }
+

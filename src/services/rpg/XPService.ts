@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise, PersonalRecord } from '@/types/workoutTypes';
 import { XPCalculationService } from './XPCalculationService';
@@ -84,9 +83,8 @@ export class XPService {
    */
   static async awardXP(
     userId: string, 
-    baseXP: number, 
-    source: string = 'workout',
-    metadata?: any
+    amount: number, 
+    source: string = 'workout'
   ): Promise<boolean> {
     try {
       if (!userId) {
@@ -95,11 +93,11 @@ export class XPService {
       }
       
       const isAchievementXP = source === 'achievement';
-      const result = await XPBonusService.awardXP(userId, baseXP, isAchievementXP);
+      const result = await XPBonusService.awardXP(userId, amount, isAchievementXP);
       
       // Check for XP milestone achievements using the unified checker
       if (result) {
-        await AchievementCheckerService.checkXPMilestoneAchievements(userId, baseXP);
+        await AchievementCheckerService.checkXPMilestoneAchievements(userId, amount);
       }
       
       return result;
