@@ -1,6 +1,8 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { BruxoBonus } from '../calculations/class-bonuses/BruxoBonus';
+import { DruidaBonus } from '../calculations/class-bonuses/DruidaBonus';
 
 /**
  * Service for handling class passive skills
@@ -10,48 +12,94 @@ export class PassiveSkillService {
   private static readonly ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
   /**
-   * Check if Bruxo's Folga Mística passive should preserve streak
+   * Check if Bruxo should preserve partial streak using Pijama Arcano
+   * When Bruxo doesn't train, streak bonus reduced by 5% per day (instead of resetting)
    */
-  static async checkStreakPreservation(userId: string, userClass: string | null): Promise<boolean> {
-    if (!userId || userClass !== 'Bruxo') return false;
+  static async getStreakReductionFactor(userId: string, userClass: string | null, daysMissed: number): Promise<number> {
+    if (!userId || userClass !== 'Bruxo' || daysMissed <= 0) return 0;
+    
+    // For Bruxo, calculate streak reduction instead of complete reset
+    const reductionFactor = BruxoBonus.getStreakReductionFactor(daysMissed);
+    
+    // Only show a notification if this is actually preserving some streak
+    if (reductionFactor > 0) {
+      toast.success('Pijama Arcano Ativado!', {
+        description: `Seu Bruxo preservou ${Math.round(reductionFactor * 100)}% da sua sequência`
+      });
+    }
+    
+    return reductionFactor;
+  }
+  
+  /**
+   * Apply Bruxo's achievement point bonus (Topo da Montanha)
+   * When Bruxo completes an achievement, gets 50% more achievement points
+   */
+  static async applyAchievementPointsBonus(
+    userId: string, 
+    userClass: string | null, 
+    basePoints: number
+  ): Promise<number> {
+    if (!userId || userClass !== 'Bruxo') return basePoints;
     
     try {
-      // Use regular query to check for passive skill usage
-      const { data, error } = await supabase
-        .from('passive_skill_usage')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('skill_name', 'Folga Mística')
-        .gte('used_at', new Date(Date.now() - this.ONE_WEEK_MS).toISOString())
-        .maybeSingle();
+      const shouldApplyBonus = await BruxoBonus.shouldApplyAchievementBonus(userId);
       
-      // If there's no data and no error, the player hasn't used it recently
-      if (!data && !error) {
-        // Record the usage using regular insert
-        const { error: insertError } = await supabase
+      if (shouldApplyBonus) {
+        // Record the passive skill usage
+        await supabase
           .from('passive_skill_usage')
           .insert({
             user_id: userId,
-            skill_name: 'Folga Mística',
+            skill_name: 'Topo da Montanha',
             used_at: new Date().toISOString()
           });
         
-        if (insertError) {
-          console.error('Error recording passive skill usage:', insertError);
-          return false;
-        }
-          
-        toast.success('Folga Mística Ativada!', {
-          description: 'Seu Bruxo usou magia para preservar sua sequência'
+        // Apply 50% bonus to achievement points
+        const bonusPoints = Math.round(basePoints * 0.5);
+        
+        toast.success('Topo da Montanha Ativado!', {
+          description: `Seu Bruxo ganhou ${bonusPoints} pontos de conquista bônus`
         });
         
-        return true;
+        return basePoints + bonusPoints;
       }
       
-      return false;
+      return basePoints;
     } catch (error) {
-      console.error('Error checking streak preservation:', error);
-      return false;
+      console.error('Error applying achievement points bonus:', error);
+      return basePoints;
+    }
+  }
+  
+  /**
+   * Check for Druida's Cochilada Mística skill and apply XP bonus
+   * When Druida doesn't train, earns a 50% XP bonus on next workout
+   */
+  static async applyDruidaRestBonus(
+    userId: string, 
+    userClass: string | null, 
+    baseXP: number
+  ): Promise<number> {
+    if (!userId || userClass !== 'Druida') return baseXP;
+    
+    try {
+      const { applyBonus, multiplier } = await DruidaBonus.shouldApplyRestBonus(userId);
+      
+      if (applyBonus) {
+        const bonusXP = Math.round(baseXP * (multiplier - 1));
+        
+        toast.success('Cochilada Mística Ativada!', {
+          description: `Seu Druida ganhou ${bonusXP} XP bônus por descansar ontem`
+        });
+        
+        return baseXP + bonusXP;
+      }
+      
+      return baseXP;
+    } catch (error) {
+      console.error('Error applying Druida rest bonus:', error);
+      return baseXP;
     }
   }
 }

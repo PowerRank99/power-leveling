@@ -9,6 +9,7 @@ import { AchievementCheckerService } from './achievements/AchievementCheckerServ
 import { mapToWorkoutExerciseData } from '@/utils/typeMappers';
 import { ServiceResponse } from '@/services/common/ErrorHandlingService';
 import { XPCalculationInput } from './types/xpTypes';
+import { PassiveSkillService } from './bonus/PassiveSkillService';
 
 /**
  * Main XP Service that coordinates XP calculations and awards
@@ -39,14 +40,16 @@ export class XPService {
     },
     userClass?: string | null,
     streak: number = 0,
-    difficulty: 'iniciante' | 'intermediario' | 'avancado' = 'intermediario'
+    difficulty: 'iniciante' | 'intermediario' | 'avancado' = 'intermediario',
+    userId?: string
   ) {
     // Pass workout data as an object to XPCalculationService
     const input: XPCalculationInput = {
       workout,
       userClass,
       streak,
-      defaultDifficulty: workout.difficulty || difficulty
+      defaultDifficulty: workout.difficulty || difficulty,
+      userId
     };
     
     return XPCalculationService.calculateWorkoutXP(input);
@@ -98,8 +101,25 @@ export class XPService {
         return false;
       }
       
+      let finalAmount = amount;
       const isAchievementXP = source === 'achievement';
-      const result = await XPBonusService.awardXP(userId, amount, isAchievementXP);
+      
+      // Get user class for bonuses
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('class')
+        .eq('id', userId)
+        .single();
+      
+      const userClass = profile?.class;
+      
+      // Apply class-specific bonuses
+      if (source === 'workout' && userClass === 'Druida') {
+        // Apply Druida's Cochilada Mística bonus if applicable
+        finalAmount = await XPCalculationService.applyDruidaRestBonus(userId, userClass, finalAmount);
+      }
+      
+      const result = await XPBonusService.awardXP(userId, finalAmount, isAchievementXP);
       
       // Check for XP milestone achievements using the unified checker
       if (result) {
@@ -114,63 +134,87 @@ export class XPService {
   }
   
   /**
-   * Awards XP for a completed workout
+   * Awards points for an achievement with class bonuses
+   * 
+   * @param userId - The ID of the user to award points to
+   * @param points - The base amount of points to award
    */
-  static async awardWorkoutXP(
-    userId: string,
-    workout: any,
-    durationSeconds: number
+  static async awardAchievementPoints(
+    userId: string, 
+    points: number
   ): Promise<boolean> {
     try {
-      // Calculate base XP from workout
-      let baseXP = 100; // Default XP
-      
-      if (workout && durationSeconds) {
-        const workoutObj = {
-          id: workout.id,
-          exercises: [],
-          durationSeconds: durationSeconds,
-          difficulty: workout.difficulty || 'intermediario'
-        };
-        
-        // Get the full breakdown now with the updated method signature
-        const xpData = this.calculateWorkoutXP(workoutObj, null, 0);
-        baseXP = xpData.totalXP;
+      if (!userId) {
+        console.error('awardAchievementPoints: No userId provided');
+        return false;
       }
       
-      // Award the XP
-      return await this.awardXP(userId, baseXP, 'workout');
+      // Get user's class
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('class')
+        .eq('id', userId)
+        .single();
+      
+      const userClass = profile?.class;
+      
+      // Apply Bruxo's Topo da Montanha bonus if applicable
+      let finalPoints = points;
+      if (userClass === 'Bruxo') {
+        finalPoints = await XPCalculationService.applyAchievementPointsBonus(userId, userClass, points);
+      }
+      
+      // Update profile
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          achievement_points: supabase.rpc('increment', { 
+            row_id: userId,
+            table: 'profiles',
+            column: 'achievement_points',
+            value: finalPoints
+          })
+        })
+        .eq('id', userId);
+      
+      if (error) {
+        console.error('Error awarding achievement points:', error);
+        return false;
+      }
+      
+      return true;
     } catch (error) {
-      console.error('Error in awardWorkoutXP:', error);
+      console.error('Error in awardAchievementPoints:', error);
       return false;
     }
   }
   
   /**
-   * Helper method for getting streak multiplier
+   * Update streak with Bruxo's Pijama Arcano logic
+   * 
+   * @param userId - User ID
+   * @param userClass - User's class
+   * @param daysMissed - Number of days missed
+   * @param currentStreak - Current streak value
+   * @returns New streak value
    */
-  static getStreakMultiplier(streak: number): number {
-    return XPCalculationService.getStreakMultiplier(streak);
-  }
-  
-  /**
-   * Check if a user has Power Day availability
-   * Returns information about power day usage for the current week
-   */
-  static async checkPowerDayAvailability(userId: string): Promise<{
-    available: boolean;
-    used: number;
-    max: number;
-    week: number;
-    year: number;
-  }> {
-    return PowerDayService.checkPowerDayAvailability(userId);
-  }
-  
-  /**
-   * Record a power day usage
-   */
-  static async recordPowerDayUsage(userId: string, week: number, year: number): Promise<boolean> {
-    return PowerDayService.recordPowerDayUsage(userId, week, year);
+  static async updateStreakWithPassives(
+    userId: string,
+    userClass: string | null,
+    daysMissed: number,
+    currentStreak: number
+  ): Promise<number> {
+    // For Bruxo using Pijama Arcano, streak reduces by 5% per day instead of resetting
+    if (userClass === 'Bruxo' && daysMissed > 0) {
+      const reductionFactor = await XPCalculationService.getStreakReductionFactor(userId, userClass, daysMissed);
+      
+      if (reductionFactor > 0) {
+        // Apply gradual reduction
+        return Math.max(0, Math.floor(currentStreak * reductionFactor));
+      }
+    }
+    
+    // For other classes, streak resets
+    return 0;
   }
 }

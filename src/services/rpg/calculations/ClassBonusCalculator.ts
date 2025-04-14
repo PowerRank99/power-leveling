@@ -7,6 +7,7 @@ import { MongeBonus } from './class-bonuses/MongeBonus';
 import { NinjaBonus } from './class-bonuses/NinjaBonus';
 import { BruxoBonus } from './class-bonuses/BruxoBonus';
 import { PaladinoBonus } from './class-bonuses/PaladinoBonus';
+import { DruidaBonus } from './class-bonuses/DruidaBonus';
 import { XPCalculationInput } from '../types/xpTypes';
 
 /**
@@ -38,7 +39,8 @@ export class ClassBonusCalculator {
       hasPR?: boolean;
     },
     userClass?: string | null,
-    streak: number = 0
+    streak: number = 0,
+    userId?: string
   ): { totalXP: number, bonusBreakdown: ClassBonusBreakdown[] } {
     if (!userClass) return { totalXP: baseXP, bonusBreakdown: [] };
     
@@ -81,23 +83,79 @@ export class ClassBonusCalculator {
         bonusBreakdown = breakdown;
         break;
       }
-      
-      // Note: Druida implementation will be added in a future update
+        
+      case 'Druida': {
+        const { bonusXP, bonusBreakdown: breakdown } = DruidaBonus.applyBonuses(baseXP, workout, userId);
+        totalXP += bonusXP;
+        bonusBreakdown = breakdown;
+        break;
+      }
     }
     
     return { totalXP, bonusBreakdown };
   }
   
   /**
-   * Check if Bruxo should preserve streak using the database
+   * Get streak reduction factor for Bruxo using Pijama Arcano
    * 
    * @param userId - User ID to check
    * @param userClass - User's selected class
-   * @returns Boolean indicating if streak should be preserved
+   * @param daysMissed - Number of days missed
+   * @returns Factor to multiply streak by (0-1)
    */
-  static async shouldPreserveStreak(userId: string, userClass: string | null): Promise<boolean> {
-    if (!userId || userClass !== 'Bruxo') return false;
-    return BruxoBonus.shouldPreserveStreak(userId);
+  static async getStreakReductionFactor(
+    userId: string, 
+    userClass: string | null, 
+    daysMissed: number
+  ): Promise<number> {
+    if (!userId || userClass !== 'Bruxo' || daysMissed <= 0) return 0;
+    return BruxoBonus.getStreakReductionFactor(daysMissed);
+  }
+  
+  /**
+   * Apply bonus to achievement points for Bruxo using Topo da Montanha
+   * 
+   * @param userId - User ID to check
+   * @param userClass - User's selected class
+   * @param basePoints - Base achievement points
+   * @returns Modified achievement points
+   */
+  static async applyAchievementPointsBonus(
+    userId: string, 
+    userClass: string | null, 
+    basePoints: number
+  ): Promise<number> {
+    if (!userId || userClass !== 'Bruxo') return basePoints;
+    
+    const shouldApplyBonus = await BruxoBonus.shouldApplyAchievementBonus(userId);
+    if (shouldApplyBonus) {
+      return Math.round(basePoints * 1.5); // 50% bonus
+    }
+    
+    return basePoints;
+  }
+  
+  /**
+   * Apply Druida's rest bonus using Cochilada Mística
+   * 
+   * @param userId - User ID to check
+   * @param userClass - User's selected class
+   * @param baseXP - Base XP amount
+   * @returns Modified XP amount
+   */
+  static async applyDruidaRestBonus(
+    userId: string, 
+    userClass: string | null, 
+    baseXP: number
+  ): Promise<number> {
+    if (!userId || userClass !== 'Druida') return baseXP;
+    
+    const { applyBonus, multiplier } = await DruidaBonus.shouldApplyRestBonus(userId);
+    if (applyBonus) {
+      return Math.round(baseXP * multiplier);
+    }
+    
+    return baseXP;
   }
   
   /**

@@ -31,6 +31,12 @@ export const EXERCISE_TYPES = {
   SPORTS: [
     'soccer', 'football', 'basketball', 'tennis', 'volleyball', 'basquete',
     'futebol', 'tênis', 'vôlei', 'esporte', 'jogo', 'ball', 'bola'
+  ],
+  
+  // For Druida - mobility & flexibility exercises
+  MOBILITY: [
+    'mobility', 'mobilidade', 'yoga', 'stretching', 'flexibility', 'flexibilidade',
+    'alongamento', 'pilates', 'balance', 'equilíbrio', 'meditation', 'meditação'
   ]
 };
 
@@ -51,11 +57,15 @@ export const CLASS_PASSIVE_SKILLS = {
     SECONDARY: 'HIIT & Run'
   },
   BRUXO: {
-    PRIMARY: 'Fluxo Arcano',
-    SECONDARY: 'Folga Mística'
+    PRIMARY: 'Pijama Arcano',
+    SECONDARY: 'Topo da Montanha'
   },
   PALADINO: {
     PRIMARY: 'Caminho do Herói',
     SECONDARY: 'Camisa 10'
+  },
+  DRUIDA: {
+    PRIMARY: 'Ritmo da Natureza',
+    SECONDARY: 'Cochilada Mística'
   }
 };

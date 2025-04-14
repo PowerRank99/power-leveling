@@ -31,7 +31,7 @@ export class ClassUtils {
     'Bruxo': {
       className: 'Bruxo',
       icon: 'Sparkles',
-      description: 'Especialista em Flexibilidade',
+      description: 'Mestre da Magia e Conquistas',
       color: 'from-purple-600 to-purple-800'
     },
     'Paladino': {
@@ -39,6 +39,12 @@ export class ClassUtils {
       icon: 'Shield',
       description: 'Especialista em Esportes',
       color: 'from-blue-600 to-blue-800'
+    },
+    'Druida': {
+      className: 'Druida',
+      icon: 'Leaf',
+      description: 'Mestre da Flexibilidade',
+      color: 'from-emerald-600 to-emerald-800'
     }
   };
   

@@ -24,55 +24,56 @@ export class BruxoBonus {
     const bonusBreakdown: ClassBonusBreakdown[] = [];
     let bonusXP = 0;
     
-    const exerciseNames = workout.exercises.map(ex => ex.name.toLowerCase());
+    // Add Pijama Arcano to breakdown for display purposes
+    bonusBreakdown.push({
+      skill: CLASS_PASSIVE_SKILLS.BRUXO.PRIMARY,
+      amount: 0,
+      description: 'Sequência reduz apenas 5% por dia sem treinar'
+    });
     
-    // Check for flexibility exercises - Fluxo Arcano
-    const hasFlexibility = exerciseNames.some(name => 
-      EXERCISE_TYPES.FLEXIBILITY.some(flex => name.includes(flex))
-    );
-    
-    if (hasFlexibility) {
-      const flexibilityBonus = Math.round(baseXP * 0.40);
-      bonusBreakdown.push({
-        skill: CLASS_PASSIVE_SKILLS.BRUXO.PRIMARY,
-        amount: flexibilityBonus,
-        description: '+40% XP de yoga e alongamentos'
-      });
-      bonusXP += flexibilityBonus;
-    }
-    
-    // Streak preservation bonus is handled separately
-    // But we add it to the breakdown for display purposes
+    // Add Topo da Montanha to breakdown for display purposes
     bonusBreakdown.push({
       skill: CLASS_PASSIVE_SKILLS.BRUXO.SECONDARY,
       amount: 0,
-      description: 'Preserva sequência se faltar um dia (semanal)'
+      description: '+50% pontos de conquistas ao completar'
     });
     
     return { bonusXP, bonusBreakdown };
   }
   
   /**
-   * Check if Bruxo should preserve streak using the database
+   * Check if Bruxo has completed an achievement recently and should get bonus points
    */
-  static async shouldPreserveStreak(userId: string): Promise<boolean> {
+  static async shouldApplyAchievementBonus(userId: string): Promise<boolean> {
     if (!userId) return false;
     
     try {
-      // Use regular query to check passive skill usage
+      // Check if Topo da Montanha has been used in the past week
       const { data, error } = await supabase
         .from('passive_skill_usage')
         .select('*')
         .eq('user_id', userId)
-        .eq('skill_name', 'Folga Mística')
+        .eq('skill_name', 'Topo da Montanha')
         .gte('used_at', new Date(Date.now() - this.ONE_WEEK_MS).toISOString())
         .maybeSingle();
       
-      // If no data and no error, the skill hasn't been used recently
+      // If there's no data and no error, the player hasn't used it recently
       return !data && !error;
     } catch (error) {
-      console.error('Error checking Bruxo streak preservation:', error);
+      console.error('Error checking Bruxo achievement bonus:', error);
       return false;
     }
+  }
+  
+  /**
+   * Get streak reduction factor for Bruxo (Pijama Arcano)
+   * Bruxo's streak reduces by 5% each day instead of resetting
+   */
+  static getStreakReductionFactor(daysMissed: number): number {
+    // Calculate the reduction (5% per day)
+    const reduction = Math.min(1.0, daysMissed * 0.05);
+    
+    // Return the factor to multiply by streak (e.g., 0.95, 0.90, etc.)
+    return Math.max(0, 1 - reduction);
   }
 }

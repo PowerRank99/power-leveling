@@ -9,6 +9,7 @@ import {
   XPCalculationResult, 
   WorkoutDifficulty 
 } from './types/xpTypes';
+import { PassiveSkillService } from './bonus/PassiveSkillService';
 
 /**
  * Central service for coordinating XP calculations across the application
@@ -51,7 +52,8 @@ export class XPCalculationService {
     workout,
     userClass = null,
     streak = 0,
-    defaultDifficulty = 'intermediario'
+    defaultDifficulty = 'intermediario',
+    userId
   }: XPCalculationInput): XPCalculationResult {
     try {
       // Calculate time-based XP with diminishing returns
@@ -111,7 +113,8 @@ export class XPCalculationService {
         totalXPAfterStreak, 
         workout, 
         userClass, 
-        streak
+        streak,
+        userId
       );
       
       // Combine the bonusBreakdown arrays
@@ -136,16 +139,28 @@ export class XPCalculationService {
   }
   
   /**
-   * Should preserve streak (Bruxo passive skill)
-   * Delegates to ClassBonusCalculator
+   * Check if Bruxo should preserve partial streak using Pijama Arcano
    */
-  static async shouldPreserveStreak(userId: string, userClass: string | null): Promise<boolean> {
-    return ClassBonusCalculator.shouldPreserveStreak(userId, userClass);
+  static async getStreakReductionFactor(userId: string, userClass: string | null, daysMissed: number): Promise<number> {
+    return PassiveSkillService.getStreakReductionFactor(userId, userClass, daysMissed);
+  }
+  
+  /**
+   * Apply Bruxo's achievement points bonus
+   */
+  static async applyAchievementPointsBonus(userId: string, userClass: string | null, basePoints: number): Promise<number> {
+    return PassiveSkillService.applyAchievementPointsBonus(userId, userClass, basePoints);
+  }
+  
+  /**
+   * Apply Druida's rest XP bonus
+   */
+  static async applyDruidaRestBonus(userId: string, userClass: string | null, baseXP: number): Promise<number> {
+    return PassiveSkillService.applyDruidaRestBonus(userId, userClass, baseXP);
   }
   
   /**
    * Get guild contribution bonus multiplier (Paladino passive skill)
-   * Delegates to ClassBonusCalculator
    */
   static getGuildContributionBonus(userId: string, userClass: string | null, contribution: number): number {
     return ClassBonusCalculator.getPaladinoGuildBonus(userId, userClass, contribution);

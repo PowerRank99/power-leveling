@@ -1,5 +1,10 @@
 
 /**
+ * Common workout types for the application
+ * Most of these types are now imported from src/types/workout.ts for consistency
+ */
+
+/**
  * Interface representing a class-specific bonus breakdown
  */
 export interface ClassBonusBreakdown {
@@ -85,5 +90,5 @@ export enum ClassName {
   NINJA = 'Ninja',
   BRUXO = 'Bruxo',
   PALADINO = 'Paladino',
-  // DRUIDA = 'Druida' // To be implemented in the future
+  DRUIDA = 'Druida'
 }
