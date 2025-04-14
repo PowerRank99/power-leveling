@@ -6,7 +6,9 @@ import { StreakService } from '@/services/rpg/StreakService';
 import { PersonalRecordService } from '@/services/rpg/PersonalRecordService';
 import { createMockSupabaseClient } from '../helpers/supabaseTestHelpers';
 import { supabase } from '@/integrations/supabase/client';
+import { DatabaseResult } from '@/types/workout';
 
+// Create a more comprehensive mock for the Supabase client
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: createMockSupabaseClient()
 }));
@@ -22,35 +24,59 @@ describe('Workout Lifecycle Integration Tests', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     
-    // Setup mock implementations
-    vi.mocked(supabase.from).mockImplementation((table) => ({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({
-            data: { id: mockWorkoutId, user_id: mockUserId },
+    // Setup mock implementations with complete return types
+    vi.mocked(supabase.from).mockImplementation((table) => {
+      // Create a properly typed mock PostgrestQueryBuilder
+      return {
+        url: '',
+        headers: {},
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: { id: mockWorkoutId, user_id: mockUserId },
+              error: null
+            })
+          }),
+          order: vi.fn().mockReturnValue({
+            data: [],
+            error: null
+          })
+        }),
+        insert: vi.fn().mockReturnValue({
+          select: vi.fn().mockResolvedValue({
+            data: null,
+            error: null
+          })
+        }),
+        upsert: vi.fn().mockReturnValue({
+          select: vi.fn().mockResolvedValue({
+            data: null,
+            error: null
+          })
+        }),
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({
+            data: null,
+            error: null
+          })
+        }),
+        delete: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({
+            data: null,
             error: null
           })
         })
-      }),
-      update: vi.fn().mockReturnValue({
-        eq: vi.fn().mockResolvedValue({
-          data: null,
-          error: null
-        })
-      }),
-      delete: vi.fn().mockReturnValue({
-        eq: vi.fn().mockResolvedValue({
-          data: null,
-          error: null
-        })
-      })
-    }));
+      } as any;
+    });
 
     vi.mocked(XPService.awardWorkoutXP).mockResolvedValue(true);
     vi.mocked(StreakService.updateStreak).mockResolvedValue({ success: true });
+    
+    // Ensure PersonalRecordService mock returns a properly typed DatabaseResult
     vi.mocked(PersonalRecordService.checkForPersonalRecords).mockResolvedValue({ 
       success: true, 
-      data: [] 
+      data: [],
+      error: null
     });
   });
 
@@ -64,15 +90,21 @@ describe('Workout Lifecycle Integration Tests', () => {
   });
 
   it('should handle transaction rollback on error', async () => {
-    // Simulate a database error
+    // Simulate a database error with properly typed mock
     vi.mocked(supabase.from).mockImplementationOnce(() => ({
+      url: '',
+      headers: {},
+      select: vi.fn(),
+      insert: vi.fn(),
+      upsert: vi.fn(),
       update: vi.fn().mockReturnValue({
         eq: vi.fn().mockResolvedValue({
           data: null,
           error: new Error('Database error')
         })
-      })
-    }));
+      }),
+      delete: vi.fn()
+    } as any));
 
     const result = await WorkoutCompletionService.finishWorkout(mockWorkoutId, 1800);
     
