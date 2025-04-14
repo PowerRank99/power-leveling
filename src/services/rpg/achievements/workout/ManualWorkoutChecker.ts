@@ -1,8 +1,8 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { AchievementService } from '@/services/rpg/AchievementService';
-import { ServiceResponse, createSuccessResponse, createErrorResponse } from '@/services/common/ErrorHandlingService';
-import { ACHIEVEMENT_IDS } from '../AchievementConstants';
+import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
+import { ACHIEVEMENT_IDS, AchievementErrorCategory } from '../AchievementConstants';
 
 /**
  * Service for checking manual workout related achievements
@@ -32,6 +32,16 @@ export class ManualWorkoutChecker {
       if (count && count >= 3) {
         achievementsToCheck.push(ACHIEVEMENT_IDS.E.manual[0]); // diario-do-suor
       }
+      
+      // Check for "Manual 5" achievement (5 manual workouts)
+      if (count && count >= 5) {
+        achievementsToCheck.push(ACHIEVEMENT_IDS.D.manual[0]); // manual-5
+      }
+      
+      // Check for "Manual 10" achievement (10 manual workouts)
+      if (count && count >= 10) {
+        achievementsToCheck.push(ACHIEVEMENT_IDS.C.manual[0]); // manual-10
+      }
 
       // Award achievements (if any)
       if (achievementsToCheck.length > 0) {
@@ -43,7 +53,7 @@ export class ManualWorkoutChecker {
       return createErrorResponse(
         'Failed to check manual workout achievements',
         error instanceof Error ? error.message : String(error),
-        'ACHIEVEMENT_MANUAL_WORKOUT_CHECK'
+        ErrorCategory.ACHIEVEMENT_RELATED
       );
     }
   }
