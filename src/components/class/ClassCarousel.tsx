@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
-import { ClassInfo } from '@/services/rpg/ClassService';
+import { ClassInfo, LegacyClassInfo } from '@/services/rpg/types/classTypes';
 import ClassSelectionCard from './ClassSelectionCard';
 import { ChevronLeft, ChevronRight, MoveHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -100,6 +99,22 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
     }
   };
   
+  // Convert ClassInfo to LegacyClassInfo for backward compatibility with ClassSelectionCard
+  const getLegacyClassInfo = (classInfo: ClassInfo): LegacyClassInfo => {
+    return {
+      class_name: classInfo.className,
+      description: classInfo.description,
+      icon: classInfo.icon,
+      color: classInfo.color,
+      bonuses: classInfo.bonuses.map(bonus => ({
+        bonus_type: bonus.bonusType,
+        bonus_value: bonus.bonusValue,
+        description: bonus.description,
+        skill_name: bonus.skillName
+      }))
+    };
+  };
+  
   return (
     <div className="relative mb-8 mx-auto max-w-xl">
       <div className="overflow-hidden" ref={emblaRef}>
@@ -110,7 +125,7 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
               className="flex-[0_0_100%] min-w-0 pl-4 md:flex-[0_0_85%] transition-all duration-300"
             >
               <ClassSelectionCard
-                classInfo={classInfo}
+                classInfo={getLegacyClassInfo(classInfo)}
                 isCurrentClass={userClass === classInfo.className}
                 isSelected={selectedClass === classInfo.className}
                 isFocused={index === focusedIndex}

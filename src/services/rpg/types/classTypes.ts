@@ -47,3 +47,17 @@ export interface ClassMetadata {
   icon: string;
   color: string;
 }
+
+// For backward compatibility with components that still use snake_case
+export interface LegacyClassInfo {
+  class_name: string;
+  description: string;
+  icon?: string;
+  color?: string;
+  bonuses: {
+    bonus_type: string;
+    bonus_value: number;
+    description: string;
+    skill_name?: string;
+  }[];
+}

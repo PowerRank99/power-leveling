@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ClassInfo } from '@/services/rpg/ClassService';
+import { ClassInfo, LegacyClassInfo } from '@/services/rpg/types/classTypes';
 import ClassSelectionCard from './ClassSelectionCard';
 
 interface ClassDesktopGridProps {
@@ -41,6 +41,22 @@ const ClassDesktopGrid: React.FC<ClassDesktopGridProps> = ({
     }
   };
 
+  // Convert ClassInfo to LegacyClassInfo for backward compatibility with ClassSelectionCard
+  const getLegacyClassInfo = (classInfo: ClassInfo): LegacyClassInfo => {
+    return {
+      class_name: classInfo.className,
+      description: classInfo.description,
+      icon: classInfo.icon,
+      color: classInfo.color,
+      bonuses: classInfo.bonuses.map(bonus => ({
+        bonus_type: bonus.bonusType,
+        bonus_value: bonus.bonusValue,
+        description: bonus.description,
+        skill_name: bonus.skillName
+      }))
+    };
+  };
+
   return (
     <motion.div 
       className="hidden lg:grid lg:grid-cols-3 gap-8 mb-8 mt-12"
@@ -55,7 +71,7 @@ const ClassDesktopGrid: React.FC<ClassDesktopGridProps> = ({
           variants={itemVariants}
         >
           <ClassSelectionCard
-            classInfo={classInfo}
+            classInfo={getLegacyClassInfo(classInfo)}
             isCurrentClass={userClass === classInfo.className}
             isSelected={selectedClass === classInfo.className}
             isFocused={index === focusedIndex}

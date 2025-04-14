@@ -46,7 +46,7 @@ export class AchievementFetchService {
           points: item.achievements.points,
           xpReward: item.achievements.xp_reward,
           iconName: item.achievements.icon_name,
-          requirements: item.achievements.requirements,
+          requirements: item.achievements.requirements as Record<string, any>,
           achievedAt: item.achieved_at
         }));
       },

@@ -1,25 +1,12 @@
-
-import React, { useState } from 'react';
+import React from 'react';
+import { LegacyClassInfo } from '@/services/rpg/types/classTypes';
 import { motion } from 'framer-motion';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import ParticleBackground from './ParticleBackground';
-import ClassHeader from './ClassHeader';
-import ClassBonusSection from './ClassBonusSection';
-import { getClassColors, formatBonuses } from './ClassCardUtils';
+import { ClassBonusSection } from './ClassBonusSection';
+import { ClassCardUtils } from './ClassCardUtils';
+import { Shield, Sword, Wind, Sparkles, Dumbbell } from 'lucide-react';
 
 interface ClassSelectionCardProps {
-  classInfo: {
-    class_name: string;
-    description: string;
-    bonuses: Array<{
-      bonus_type: string;
-      bonus_value: number;
-      description: string;
-      skill_name?: string;
-    }>;
-  };
+  classInfo: LegacyClassInfo;
   isCurrentClass: boolean;
   isSelected: boolean;
   isFocused: boolean;
@@ -35,90 +22,67 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
   isOnCooldown,
   onClick,
 }) => {
-  const [isHovering, setIsHovering] = useState(false);
+  const {
+    backgroundGradient,
+    textColor,
+    shadowColor,
+    borderGradient,
+    getIcon
+  } = ClassCardUtils.useClassCardStyles(classInfo.class_name, isSelected, isFocused, isOnCooldown, isCurrentClass);
   
-  const colors = getClassColors(classInfo.class_name);
-  const bonuses = formatBonuses(classInfo.bonuses);
+  const classIcon = getIcon();
   
+  // Animation variants for the card
   const cardVariants = {
-    initial: { scale: 1, boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)" },
+    hidden: { scale: 1 },
+    visible: { 
+      scale: 1,
+      transition: { duration: 0.2 }
+    },
     hover: { 
-      scale: 1.02,
-      boxShadow: isCurrentClass ? 
-        colors.shadow : 
-        "0 10px 25px rgba(0, 0, 0, 0.2)"
+      scale: 1.05,
+      transition: { duration: 0.2 }
     },
-    selected: {
-      scale: 1.01,
-      boxShadow: colors.shadow
-    },
-    tap: { scale: 0.98 }
+    tap: { scale: 0.95 }
   };
   
   return (
     <motion.div
-      onHoverStart={() => setIsHovering(true)}
-      onHoverEnd={() => setIsHovering(false)}
-      whileHover={isOnCooldown && !isCurrentClass ? {} : "hover"}
-      whileTap={isOnCooldown && !isCurrentClass ? {} : "tap"}
+      className={`relative rounded-2xl shadow-lg overflow-hidden h-full ${shadowColor} ${borderGradient} border-2`}
       variants={cardVariants}
-      initial="initial"
-      animate={isSelected ? "selected" : "initial"}
-      className={`relative transition-all duration-300 ${isOnCooldown && !isCurrentClass ? 'opacity-70' : ''}`}
-      onClick={isOnCooldown && !isCurrentClass ? undefined : onClick}
+      initial="hidden"
+      animate="visible"
+      whileHover="hover"
+      whileTap="tap"
+      onClick={onClick}
     >
-      <Card
-        className={cn(
-          "overflow-hidden border transition-all duration-300 relative z-10",
-          colors.gradient,
-          isSelected
-            ? `border-2 border-white/30`
-            : isFocused
-              ? `border border-white/20 shadow-md` 
-              : `border border-white/10`,
-          isOnCooldown && !isCurrentClass ? 'opacity-70 grayscale-[30%]' : ''
-        )}
-      >
-        {/* Animated particle background */}
-        <div className="absolute inset-0 z-0 overflow-hidden opacity-20">
-          <ParticleBackground color={colors.particleColor} active={isHovering || isSelected} />
+      {/* Background Gradient */}
+      <div className={`absolute inset-0 ${backgroundGradient} opacity-80`}></div>
+      
+      {/* Content Container */}
+      <div className="relative z-10 flex flex-col h-full p-4">
+        {/* Header Section */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center">
+            {classIcon}
+            <h3 className={`ml-2 font-bold text-xl font-orbitron ${textColor}`}>{classInfo.class_name}</h3>
+          </div>
+          {isCurrentClass && (
+            <div className="px-2 py-1 rounded-full bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider">
+              Atual
+            </div>
+          )}
         </div>
         
-        {/* Selection indicator */}
-        {isCurrentClass && (
-          <div className="absolute top-0 left-0 right-0 flex items-center justify-center">
-            <div className={`h-1.5 w-full ${colors.indicator}`} />
-            <div className="absolute -top-2 transform translate-y-1/2 px-3 py-1 text-xs font-bold rounded-full bg-white text-gray-900 shadow-lg">
-              ATUAL
-            </div>
-          </div>
-        )}
+        {/* Description */}
+        <p className={`text-sm mb-4 font-sora ${textColor}`}>{classInfo.description}</p>
         
-        <CardContent className="p-6 z-10 relative">
-          {/* Class Header */}
-          <div className="flex justify-between items-start mb-4">
-            <ClassHeader 
-              className={classInfo.class_name}
-              isSelected={isSelected}
-              isCurrentClass={isCurrentClass}
-              accentColor={colors.accent}
-            />
-          </div>
-          
-          {/* Bonus Section */}
-          <ClassBonusSection 
-            bonuses={bonuses} 
-            accentColor={colors.accent} 
-          />
-          
-          {/* Class description at bottom */}
-          <div className="mt-5 pt-3 border-t border-white/10">
-            <Badge variant="outline" className="w-full flex justify-center text-white/90 border-white/30 py-2">
-              {classInfo.description}
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
+        {/* Spacer */}
+        <div className="flex-grow" />
+        
+        {/* Bonuses Section */}
+        <ClassBonusSection classInfo={classInfo} textColor={textColor} />
+      </div>
     </motion.div>
   );
 };
