@@ -1,5 +1,4 @@
-
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutCompletionService } from '@/services/workout/WorkoutCompletionService';
 import { XPService } from '@/services/rpg/XPService';
@@ -237,5 +236,87 @@ describe('Workout Completion Flow', () => {
     expect(supabase.from).toHaveBeenCalledWith('workouts');
     const workoutsDeleteMock = vi.mocked(supabase.from('workouts').delete);
     expect(workoutsDeleteMock).toHaveBeenCalled();
+  });
+
+  it('should handle partial workout completion', async () => {
+    const mockWorkoutId = 'partial-workout-id';
+    const mockUserId = 'test-user-id';
+
+    // Setup mock for a partially completed workout
+    vi.mocked(supabase.from).mockImplementation((table) => {
+      if (table === 'workouts') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: { 
+                  id: mockWorkoutId, 
+                  user_id: mockUserId, 
+                  routine_id: 'test-routine-id' 
+                },
+                error: null
+              })
+            })
+          }),
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({
+              data: null,
+              error: null
+            })
+          })
+        } as any;
+      }
+      
+      if (table === 'workout_sets') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({
+                data: [
+                  { 
+                    id: 'set1', 
+                    exercise_id: 'ex1', 
+                    set_order: 1, 
+                    weight: 50, 
+                    reps: 10, 
+                    completed: true
+                  },
+                  { 
+                    id: 'set2', 
+                    exercise_id: 'ex1', 
+                    set_order: 2, 
+                    weight: 50, 
+                    reps: 10, 
+                    completed: false // Partially completed set
+                  }
+                ],
+                error: null
+              })
+            })
+          })
+        } as any;
+      }
+
+      // Default mock for other tables
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: null,
+              error: null
+            })
+          })
+        })
+      } as any;
+    });
+
+    // Execute workout completion
+    const result = await WorkoutCompletionService.finishWorkout(mockWorkoutId, 1800);
+    
+    // Verify result
+    expect(result).toBe(true);
+    
+    // Verify XP calculation considered partially completed set
+    expect(XPService.awardWorkoutXP).toHaveBeenCalled();
   });
 });

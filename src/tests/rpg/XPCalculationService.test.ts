@@ -1,7 +1,7 @@
-
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { XPCalculationService } from '@/services/rpg/XPCalculationService';
 import { XP_CONSTANTS } from '@/services/rpg/constants/xpConstants';
+import { WorkoutExercise } from '@/types/workoutTypes';
 
 describe('XPCalculationService', () => {
   describe('getStreakMultiplier', () => {
@@ -174,5 +174,38 @@ describe('XPCalculationService', () => {
       // This should exceed the daily cap of 300 XP, so it should be capped
       expect(result.totalXP).toBe(XP_CONSTANTS.DAILY_XP_CAP);
     });
+  });
+
+  it('should handle edge cases in XP calculation', () => {
+    // Test with minimal workout data
+    const minimalWorkout = {
+      id: 'minimal-workout',
+      exercises: [],
+      durationSeconds: 0,
+      hasPR: false
+    };
+
+    const minimalResult = XPCalculationService.calculateWorkoutXP({ workout: minimalWorkout });
+    expect(minimalResult.totalXP).toBe(50); // Default XP on error
+
+    // Test with extremely long workout
+    const longWorkout = {
+      id: 'long-workout',
+      exercises: Array(50).fill({
+        id: 'exercise',
+        exerciseId: 'ex1',
+        name: 'Test Exercise',
+        sets: [{ completed: true, weight: 50, reps: 10 }]
+      }),
+      durationSeconds: 7200, // 2 hours
+      hasPR: true
+    };
+
+    const longWorkoutResult = XPCalculationService.calculateWorkoutXP({ 
+      workout: longWorkout,
+      streak: 7
+    });
+
+    expect(longWorkoutResult.totalXP).toBe(XP_CONSTANTS.DAILY_XP_CAP);
   });
 });

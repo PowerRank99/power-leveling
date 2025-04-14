@@ -1,4 +1,3 @@
-
 import { describe, it, expect } from 'vitest';
 import { BaseXPCalculator } from '@/services/rpg/calculations/BaseXPCalculator';
 import { XP_CONSTANTS } from '@/services/rpg/constants/xpConstants';
@@ -94,6 +93,23 @@ describe('BaseXPCalculator', () => {
       expect(components.exerciseXP).toBe(5);
       expect(components.setsXP).toBe(0);
       expect(components.totalBaseXP).toBeGreaterThan(15);
+    });
+    
+    it('should handle extreme workout duration scenarios', () => {
+      // Very short workout
+      const shortWorkoutXP = BaseXPCalculator.calculateXPComponents({
+        exercises: [],
+        durationSeconds: 60 // 1 minute
+      });
+      expect(shortWorkoutXP.timeXP).toBeGreaterThan(0);
+      expect(shortWorkoutXP.timeXP).toBeLessThanOrEqual(20);
+
+      // Extremely long workout
+      const longWorkoutXP = BaseXPCalculator.calculateXPComponents({
+        exercises: [],
+        durationSeconds: 10800 // 3 hours
+      });
+      expect(longWorkoutXP.timeXP).toBe(90); // Should cap at max time-based XP
     });
   });
 });
