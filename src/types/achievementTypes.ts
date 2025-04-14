@@ -55,3 +55,22 @@ export interface AchievementBatchResult {
   failed?: string[];
   alreadyAwarded?: string[];
 }
+
+/**
+ * User achievement data structure from supabase
+ */
+export interface UserAchievementData {
+  achievement_id: string;
+  achieved_at: string;
+  achievements: {
+    id: string;
+    name: string;
+    description: string;
+    category: string;
+    rank: string;
+    points: number;
+    xp_reward: number;
+    icon_name: string;
+    requirements: any;
+  };
+}

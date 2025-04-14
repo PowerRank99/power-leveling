@@ -85,14 +85,14 @@ export class AchievementFetchService {
       // Transform the data to match our Achievement interface
       const achievements = data?.map(item => ({
         id: item.achievement_id,
-        name: item.achievements.name,
-        description: item.achievements.description,
-        category: item.achievements.category,
-        rank: item.achievements.rank,
-        points: item.achievements.points,
-        xpReward: item.achievements.xp_reward,
-        iconName: item.achievements.icon_name,
-        requirements: item.achievements.requirements,
+        name: item.achievements?.name,
+        description: item.achievements?.description,
+        category: item.achievements?.category,
+        rank: item.achievements?.rank,
+        points: item.achievements?.points,
+        xpReward: item.achievements?.xp_reward,
+        iconName: item.achievements?.icon_name,
+        requirements: item.achievements?.requirements,
         isUnlocked: true,
         achievedAt: item.achieved_at
       })) || [];
