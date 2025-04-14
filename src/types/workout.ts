@@ -1,3 +1,4 @@
+
 export interface PersonalRecord {
   id?: string;
   userId?: string;
@@ -18,6 +19,7 @@ export interface WorkoutExercise {
   exerciseId: string;
   sets: WorkoutSet[];
   targetSets?: number;
+  type?: string; // Add type property to WorkoutExercise interface
 }
 
 export interface WorkoutSet {

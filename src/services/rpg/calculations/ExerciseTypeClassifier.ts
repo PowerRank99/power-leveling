@@ -1,3 +1,4 @@
+
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { EXERCISE_TYPES } from '../constants/exerciseTypes';
 
@@ -11,7 +12,9 @@ export class ExerciseTypeClassifier {
    * @returns True if the exercise should receive Guerreiro bonus
    */
   static isGuerreiroExercise(exercise: WorkoutExercise): boolean {
-    return (exercise as any).type === 'Musculação';
+    const exerciseName = exercise.name.toLowerCase();
+    return exercise.type === 'Musculação' ||
+           EXERCISE_TYPES.COMPOUND_LIFTS.some(term => exerciseName.includes(term));
   }
   
   /**
@@ -21,7 +24,7 @@ export class ExerciseTypeClassifier {
    */
   static isMongeExercise(exercise: WorkoutExercise): boolean {
     const exerciseName = exercise.name.toLowerCase();
-    return (exercise as any).type === 'Calistenia' ||
+    return exercise.type === 'Calistenia' ||
            EXERCISE_TYPES.BODYWEIGHT.some(term => exerciseName.includes(term));
   }
   
@@ -32,7 +35,8 @@ export class ExerciseTypeClassifier {
    */
   static isNinjaExercise(exercise: WorkoutExercise): boolean {
     const exerciseName = exercise.name.toLowerCase();
-    return (exercise as any).type === 'Cardio' ||
+    return exercise.type === 'Cardio' || 
+           exercise.type === 'HIIT' ||
            EXERCISE_TYPES.CARDIO_HIIT.some(term => exerciseName.includes(term));
   }
   
@@ -43,7 +47,7 @@ export class ExerciseTypeClassifier {
    */
   static isDruidaExercise(exercise: WorkoutExercise): boolean {
     const exerciseName = exercise.name.toLowerCase();
-    return (exercise as any).type === 'Flexibilidade & Mobilidade' ||
+    return exercise.type === 'Flexibilidade & Mobilidade' ||
            EXERCISE_TYPES.MOBILITY.some(term => exerciseName.includes(term));
   }
   
@@ -54,7 +58,7 @@ export class ExerciseTypeClassifier {
    */
   static isPaladinoExercise(exercise: WorkoutExercise): boolean {
     const exerciseName = exercise.name.toLowerCase();
-    return (exercise as any).type === 'Esportes' ||
+    return exercise.type === 'Esportes' ||
            EXERCISE_TYPES.SPORTS.some(term => exerciseName.includes(term));
   }
   
