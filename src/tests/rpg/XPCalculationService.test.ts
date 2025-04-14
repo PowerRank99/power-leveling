@@ -1,3 +1,4 @@
+
 import { describe, it, expect } from 'vitest';
 import { XPCalculationService } from '@/services/rpg/XPCalculationService';
 import { XP_CONSTANTS } from '@/services/rpg/constants/xpConstants';

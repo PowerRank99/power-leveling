@@ -1,3 +1,4 @@
+
 import { describe, it, expect } from 'vitest';
 import { BaseXPCalculator } from '@/services/rpg/calculations/BaseXPCalculator';
 import { XP_CONSTANTS } from '@/services/rpg/constants/xpConstants';
@@ -110,6 +111,56 @@ describe('BaseXPCalculator', () => {
         durationSeconds: 10800 // 3 hours
       });
       expect(longWorkoutXP.timeXP).toBe(90); // Should cap at max time-based XP
+    });
+    
+    it('should handle null or undefined sets array', () => {
+      const components = BaseXPCalculator.calculateXPComponents({
+        exercises: [
+          {
+            id: 'ex1',
+            exerciseId: 'strength-1',
+            name: 'Bench Press',
+            sets: undefined as any // Testing with undefined sets
+          },
+          {
+            id: 'ex2',
+            exerciseId: 'strength-2',
+            name: 'Squat',
+            sets: null as any // Testing with null sets
+          }
+        ],
+        durationSeconds: 1800 // 30 minutes
+      });
+      
+      // Time XP: 40 (for 30 minutes)
+      // Exercise XP: 2 exercises * 5 XP = 10
+      // Sets XP: 0 (no valid sets)
+      // Total: 40 + 10 = 50
+      expect(components.timeXP).toBe(40);
+      expect(components.exerciseXP).toBe(10);
+      expect(components.setsXP).toBe(0);
+      expect(components.totalBaseXP).toBe(50);
+    });
+  });
+  
+  describe('getStreakMultiplier', () => {
+    it('should return 1.0 for streak of 0', () => {
+      expect(BaseXPCalculator.getStreakMultiplier(0)).toBe(1.0);
+    });
+    
+    it('should return correct multiplier for various streak values', () => {
+      expect(BaseXPCalculator.getStreakMultiplier(1)).toBe(1.05);
+      expect(BaseXPCalculator.getStreakMultiplier(3)).toBe(1.15);
+      expect(BaseXPCalculator.getStreakMultiplier(7)).toBe(1.35);
+    });
+    
+    it('should cap the multiplier at the maximum streak days', () => {
+      const maxStreakDays = XP_CONSTANTS.MAX_STREAK_DAYS;
+      expect(BaseXPCalculator.getStreakMultiplier(maxStreakDays + 5)).toBe(1.35);
+    });
+    
+    it('should handle negative streak values gracefully', () => {
+      expect(BaseXPCalculator.getStreakMultiplier(-1)).toBe(1.0);
     });
   });
 });

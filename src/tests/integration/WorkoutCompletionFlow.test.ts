@@ -1,3 +1,4 @@
+
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutCompletionService } from '@/services/workout/WorkoutCompletionService';
@@ -318,5 +319,39 @@ describe('Workout Completion Flow', () => {
     
     // Verify XP calculation considered partially completed set
     expect(XPService.awardWorkoutXP).toHaveBeenCalled();
+  });
+  
+  it('should handle missing workout data gracefully', async () => {
+    // Mock workout not found
+    vi.mocked(supabase.from).mockImplementation((table) => {
+      if (table === 'workouts') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: null,
+                error: { message: 'Workout not found' }
+              })
+            })
+          })
+        } as any;
+      }
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: null,
+              error: null
+            })
+          })
+        })
+      } as any;
+    });
+    
+    const result = await WorkoutCompletionService.finishWorkout('non-existent-id', 1800);
+    
+    // Should fail gracefully
+    expect(result).toBe(false);
+    expect(supabase.rpc).toHaveBeenCalledWith('rollback_transaction');
   });
 });

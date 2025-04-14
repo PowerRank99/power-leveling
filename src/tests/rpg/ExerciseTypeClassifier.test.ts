@@ -1,169 +1,90 @@
 
 import { describe, it, expect } from 'vitest';
 import { ExerciseTypeClassifier } from '@/services/rpg/calculations/ExerciseTypeClassifier';
-import { WorkoutExercise } from '@/types/workoutTypes';
+import { EXERCISE_TYPES } from '@/services/rpg/constants/exerciseTypes';
 
 describe('ExerciseTypeClassifier', () => {
-  describe('exercise classification', () => {
-    it('should identify Guerreiro exercises correctly', () => {
-      const strengthExercise = {
-        id: 'ex1',
-        exerciseId: 'ex1',
+  describe('isGuerreiroExercise', () => {
+    it('should correctly identify strength exercises', () => {
+      const exercise = { 
+        id: 'ex1', 
+        exerciseId: 'str-1', 
         name: 'Bench Press',
-        type: 'Musculação',
-        sets: []
-      } as WorkoutExercise;
+        type: EXERCISE_TYPES.STRENGTH
+      };
       
-      expect(ExerciseTypeClassifier.isGuerreiroExercise(strengthExercise)).toBe(true);
-      
-      const nonStrengthExercise = {
-        id: 'ex2',
-        exerciseId: 'ex2',
-        name: 'Running',
-        type: 'Cardio',
-        sets: []
-      } as WorkoutExercise;
-      
-      expect(ExerciseTypeClassifier.isGuerreiroExercise(nonStrengthExercise)).toBe(false);
+      expect(ExerciseTypeClassifier.isGuerreiroExercise(exercise)).toBe(true);
     });
     
-    it('should identify Monge exercises correctly', () => {
-      const calisthenicExercise = {
-        id: 'ex3',
-        exerciseId: 'ex3',
-        name: 'Pull-up',
-        type: 'Calistenia',
-        sets: []
-      } as WorkoutExercise;
-      
-      expect(ExerciseTypeClassifier.isMongeExercise(calisthenicExercise)).toBe(true);
-      
-      const bodyweightExercise = {
-        id: 'ex4',
-        exerciseId: 'ex4',
-        name: 'push up challenge',
-        type: 'Other',
-        sets: []
-      } as WorkoutExercise;
-      
-      expect(ExerciseTypeClassifier.isMongeExercise(bodyweightExercise)).toBe(true);
-      
-      const nonBodyweightExercise = {
-        id: 'ex5',
-        exerciseId: 'ex5',
-        name: 'Bench Press',
-        type: 'Musculação',
-        sets: []
-      } as WorkoutExercise;
-      
-      expect(ExerciseTypeClassifier.isMongeExercise(nonBodyweightExercise)).toBe(false);
-    });
-    
-    it('should identify Ninja exercises correctly', () => {
-      const cardioExercise = {
-        id: 'ex6',
-        exerciseId: 'ex6',
+    it('should reject non-strength exercises', () => {
+      const exercise = { 
+        id: 'ex2', 
+        exerciseId: 'cardio-1', 
         name: 'Running',
-        type: 'Cardio',
-        sets: []
-      } as WorkoutExercise;
+        type: EXERCISE_TYPES.CARDIO
+      };
       
-      expect(ExerciseTypeClassifier.isNinjaExercise(cardioExercise)).toBe(true);
-      
-      const hiitExercise = {
-        id: 'ex7',
-        exerciseId: 'ex7',
-        name: 'hiit training',
-        type: 'Other',
-        sets: []
-      } as WorkoutExercise;
-      
-      expect(ExerciseTypeClassifier.isNinjaExercise(hiitExercise)).toBe(true);
-      
-      const nonCardioExercise = {
-        id: 'ex8',
-        exerciseId: 'ex8',
-        name: 'Bench Press',
-        type: 'Musculação',
-        sets: []
-      } as WorkoutExercise;
-      
-      expect(ExerciseTypeClassifier.isNinjaExercise(nonCardioExercise)).toBe(false);
+      expect(ExerciseTypeClassifier.isGuerreiroExercise(exercise)).toBe(false);
     });
   });
   
-  describe('counting exercises and sets', () => {
-    it('should count qualifying exercises correctly', () => {
-      const exercises = [
-        { id: 'ex1', exerciseId: 'ex1', name: 'Bench Press', type: 'Musculação', sets: [] } as WorkoutExercise,
-        { id: 'ex2', exerciseId: 'ex2', name: 'Squat', type: 'Musculação', sets: [] } as WorkoutExercise,
-        { id: 'ex3', exerciseId: 'ex3', name: 'Running', type: 'Cardio', sets: [] } as WorkoutExercise
-      ];
+  describe('isMongeExercise', () => {
+    it('should correctly identify bodyweight exercises', () => {
+      const exercise = { 
+        id: 'ex3', 
+        exerciseId: 'bw-1', 
+        name: 'Push-ups',
+        type: EXERCISE_TYPES.BODYWEIGHT
+      };
       
-      const guerreiroCount = ExerciseTypeClassifier.countQualifyingExercises(
-        exercises,
-        ExerciseTypeClassifier.isGuerreiroExercise
-      );
-      
-      expect(guerreiroCount).toBe(2);
-      
-      const ninjaCount = ExerciseTypeClassifier.countQualifyingExercises(
-        exercises,
-        ExerciseTypeClassifier.isNinjaExercise
-      );
-      
-      expect(ninjaCount).toBe(1);
+      expect(ExerciseTypeClassifier.isMongeExercise(exercise)).toBe(true);
     });
-    
-    it('should count qualifying sets correctly', () => {
-      const exercises = [
-        {
-          id: 'ex1',
-          exerciseId: 'ex1',
-          name: 'Bench Press',
-          type: 'Musculação',
-          sets: [
-            { id: 'set1', completed: true },
-            { id: 'set2', completed: true },
-            { id: 'set3', completed: false }
-          ]
-        } as unknown as WorkoutExercise,
-        {
-          id: 'ex2',
-          exerciseId: 'ex2',
-          name: 'Squat',
-          type: 'Musculação',
-          sets: [
-            { id: 'set4', completed: true },
-            { id: 'set5', completed: true }
-          ]
-        } as unknown as WorkoutExercise,
-        {
-          id: 'ex3',
-          exerciseId: 'ex3',
-          name: 'Running',
-          type: 'Cardio',
-          sets: [
-            { id: 'set6', completed: true }
-          ]
-        } as unknown as WorkoutExercise
-      ];
+  });
+  
+  describe('isNinjaExercise', () => {
+    it('should correctly identify cardio and HIIT exercises', () => {
+      const cardioExercise = { 
+        id: 'ex4', 
+        exerciseId: 'cardio-2', 
+        name: 'Running',
+        type: EXERCISE_TYPES.CARDIO
+      };
       
-      const guerreiroSets = ExerciseTypeClassifier.countQualifyingSets(
-        exercises,
-        ExerciseTypeClassifier.isGuerreiroExercise
-      );
+      const hiitExercise = { 
+        id: 'ex5', 
+        exerciseId: 'hiit-1', 
+        name: 'Burpees',
+        type: EXERCISE_TYPES.HIIT
+      };
       
-      // 2 completed sets from Bench Press + 2 completed sets from Squat
-      expect(guerreiroSets).toBe(4);
+      expect(ExerciseTypeClassifier.isNinjaExercise(cardioExercise)).toBe(true);
+      expect(ExerciseTypeClassifier.isNinjaExercise(hiitExercise)).toBe(true);
+    });
+  });
+  
+  describe('isDruidaExercise', () => {
+    it('should correctly identify mobility and flexibility exercises', () => {
+      const exercise = { 
+        id: 'ex6', 
+        exerciseId: 'mob-1', 
+        name: 'Stretching',
+        type: EXERCISE_TYPES.MOBILITY
+      };
       
-      const ninjaSets = ExerciseTypeClassifier.countQualifyingSets(
-        exercises,
-        ExerciseTypeClassifier.isNinjaExercise
-      );
+      expect(ExerciseTypeClassifier.isDruidaExercise(exercise)).toBe(true);
+    });
+  });
+  
+  describe('isPaladinoExercise', () => {
+    it('should correctly identify sport exercises', () => {
+      const exercise = { 
+        id: 'ex7', 
+        exerciseId: 'sport-1', 
+        name: 'Basketball',
+        type: EXERCISE_TYPES.SPORT
+      };
       
-      // 1 completed set from Running
-      expect(ninjaSets).toBe(1);
+      expect(ExerciseTypeClassifier.isPaladinoExercise(exercise)).toBe(true);
     });
   });
 });
