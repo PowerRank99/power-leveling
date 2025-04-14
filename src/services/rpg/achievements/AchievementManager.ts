@@ -1,9 +1,10 @@
 
-import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
+import { ServiceResponse, ErrorHandlingService, createSuccessResponse } from '@/services/common/ErrorHandlingService';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { AchievementProgressService } from './AchievementProgressService';
 import { AchievementUtils } from '@/constants/AchievementDefinitions';
 import { Achievement } from '@/types/achievementTypes';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Centralized manager for achievement-related operations
@@ -24,7 +25,23 @@ export class AchievementManager {
           a => ['workout', 'streak', 'record', 'xp', 'level', 'manual', 'variety'].includes(a.category)
         );
         
-        await AchievementProgressService.initializeMultipleProgress(userId, progressAchievements);
+        // Convert AchievementDefinition to Achievement to match the expected types
+        const achievementsForProgress = progressAchievements.map(a => ({
+          id: a.id,
+          name: a.name,
+          description: a.description,
+          category: a.category,
+          rank: a.rank,
+          points: a.points,
+          xpReward: a.xpReward,
+          iconName: a.iconName,
+          requirements: {
+            type: a.requirementType,
+            value: a.requirementValue
+          }
+        } as Achievement));
+        
+        await AchievementProgressService.initializeMultipleProgress(userId, achievementsForProgress);
       },
       'INITIALIZE_USER_ACHIEVEMENTS',
       { showToast: false }
@@ -38,14 +55,14 @@ export class AchievementManager {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
         // Get workout count for the user
-        const { count } = await AchievementService.checkWorkoutAchievements(userId);
+        const result = await AchievementService.checkWorkoutAchievements(userId, workoutId);
         
-        if (count) {
+        if (result.success && result.data && result.data.count) {
           // Update progress for workout count achievements
-          await AchievementProgressService.updateWorkoutCountProgress(userId, count);
+          await AchievementProgressService.updateWorkoutCountProgress(userId, result.data.count);
         }
         
-        return [];
+        return result.success && Array.isArray(result.data) ? result.data : [];
       },
       'PROCESS_WORKOUT_COMPLETION',
       { showToast: false }
@@ -59,7 +76,7 @@ export class AchievementManager {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
         // Get manual workout count for the user
-        const { data, error } = await fetch
+        const { data, error } = await supabase
           .from('manual_workouts')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', userId);
@@ -87,7 +104,9 @@ export class AchievementManager {
         // Award achievements
         if (achievementsToCheck.length > 0) {
           const result = await AchievementService.checkAndAwardAchievements(userId, achievementsToCheck);
-          return result.success && result.data ? result.data : [];
+          if (result.success && result.data) {
+            return Array.isArray(result.data) ? result.data : [];
+          }
         }
         
         return [];
@@ -137,7 +156,9 @@ export class AchievementManager {
         // Award achievements
         if (achievementsToCheck.length > 0) {
           const result = await AchievementService.checkAndAwardAchievements(userId, achievementsToCheck);
-          return result.success && result.data ? result.data : [];
+          if (result.success && result.data) {
+            return Array.isArray(result.data) ? result.data : [];
+          }
         }
         
         return [];
@@ -171,7 +192,9 @@ export class AchievementManager {
         // Award achievements
         if (achievementsToCheck.length > 0) {
           const result = await AchievementService.checkAndAwardAchievements(userId, achievementsToCheck);
-          return result.success && result.data ? result.data : [];
+          if (result.success && result.data) {
+            return Array.isArray(result.data) ? result.data : [];
+          }
         }
         
         return [];

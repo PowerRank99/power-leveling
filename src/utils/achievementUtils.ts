@@ -119,3 +119,69 @@ export const calculatePointsForNextRank = (currentRank: AchievementRank, level: 
   
   return Math.max(0, pointsNeeded);
 };
+
+/**
+ * Get icon background class based on rank
+ */
+export const getIconBgClass = (rank: AchievementRank | string): string => {
+  switch (rank) {
+    case 'S':
+      return 'bg-achievement-15';
+    case 'A':
+      return 'bg-valor-15';
+    case 'B':
+      return 'bg-valor-15/50';
+    case 'C':
+      return 'bg-arcane-15';
+    case 'D':
+      return 'bg-arcane-15/50';
+    case 'E':
+    default:
+      return 'bg-midnight-elevated';
+  }
+};
+
+/**
+ * Get animation settings based on rank
+ */
+export const getAnimationSettings = (rank: AchievementRank | string) => {
+  switch (rank) {
+    case 'S':
+      return {
+        delay: 0.1,
+        duration: 0.8,
+        type: 'spring',
+        stiffness: 120
+      };
+    case 'A':
+      return {
+        delay: 0.09,
+        duration: 0.7,
+        type: 'spring',
+        stiffness: 110
+      };
+    case 'B':
+      return {
+        delay: 0.08,
+        duration: 0.6,
+        type: 'spring',
+        stiffness: 100
+      };
+    case 'C':
+      return {
+        delay: 0.07,
+        duration: 0.5,
+        type: 'spring',
+        stiffness: 90
+      };
+    case 'D':
+    case 'E':
+    default:
+      return {
+        delay: 0.05,
+        duration: 0.4,
+        type: 'spring',
+        stiffness: 80
+      };
+  }
+};
