@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 import { AchievementUtils } from '@/constants/achievements';
@@ -253,7 +252,7 @@ export class StandardizedAchievementService {
       return createErrorResponse(
         result.message || 'Failed to check workout achievements',
         result.details || 'Unknown error',
-        result.error?.category || ErrorCategory.UNKNOWN
+        ErrorCategory.UNKNOWN
       );
     }
     
@@ -286,7 +285,7 @@ export class StandardizedAchievementService {
       return createErrorResponse(
         result.message || 'Failed to check streak achievements',
         result.details || 'Unknown error',
-        result.error?.category || ErrorCategory.UNKNOWN
+        ErrorCategory.UNKNOWN
       );
     }
     

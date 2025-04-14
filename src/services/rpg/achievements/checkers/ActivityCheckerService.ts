@@ -1,11 +1,11 @@
 
+import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, ErrorHandlingService, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 import { BaseAchievementChecker } from '../BaseAchievementChecker';
 import { AchievementService } from '@/services/rpg/AchievementService';
-import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Service specifically for checking activity variety achievements
+ * Service specifically for checking activity-related achievements
  */
 export class ActivityCheckerService extends BaseAchievementChecker {
   /**
@@ -16,45 +16,31 @@ export class ActivityCheckerService extends BaseAchievementChecker {
   }
   
   /**
-   * Check activity variety achievements
+   * Check achievements related to activity variety
    */
   static async checkActivityVarietyAchievements(userId: string): Promise<ServiceResponse<void>> {
     try {
-      // Get user's activity diversity
-      const { data: exercises, error: exercisesError } = await supabase
-        .from('workout_sets')
-        .select(`
-          exercise_id,
-          exercises:exercise_id (
-            id, type, category, muscle_group
-          )
-        `)
-        .eq('workout_sets.user_id', userId)
-        .is('completed', true);
-        
-      if (exercisesError) {
+      // Get distinct activity types from user's records
+      const { data, error } = await supabase.rpc('get_distinct_activity_types', {
+        p_user_id: userId
+      });
+      
+      if (error) {
         return createErrorResponse(
-          exercisesError.message,
-          'Failed to get user exercise variety',
+          error.message,
+          'Failed to get distinct activity types',
           ErrorCategory.DATABASE
         );
       }
       
-      // Count unique exercise types
-      const uniqueTypes = new Set<string>();
-      const uniqueCategories = new Set<string>();
+      // Count distinct types
+      const distinctCount = data?.length || 0;
       
-      exercises?.forEach(item => {
-        if (item.exercises?.type) uniqueTypes.add(item.exercises.type);
-        if (item.exercises?.category) uniqueCategories.add(item.exercises.category);
-      });
+      // Check for achievements
+      const achievementsToCheck: string[] = [];
       
-      // Define achievements to check based on variety
-      const achievementsToCheck = [];
-      
-      if (uniqueTypes.size >= 3) achievementsToCheck.push('variety-3');
-      if (uniqueTypes.size >= 5) achievementsToCheck.push('variety-5');
-      if (uniqueTypes.size >= 10) achievementsToCheck.push('variety-10');
+      if (distinctCount >= 3) achievementsToCheck.push('activity-variety-3');
+      if (distinctCount >= 5) achievementsToCheck.push('activity-variety-5');
       
       // Award achievements
       if (achievementsToCheck.length > 0) {
@@ -72,31 +58,81 @@ export class ActivityCheckerService extends BaseAchievementChecker {
   }
   
   /**
-   * Check manual workout achievements
+   * Check for exercise type variety within workout records
+   */
+  static async checkExerciseTypeVarietyAchievements(userId: string): Promise<ServiceResponse<void>> {
+    try {
+      // Query to get distinct exercise types from completed workouts
+      const { data, error } = await supabase
+        .from('workout_sets')
+        .select('exercise_id, workouts!inner(user_id)')
+        .eq('workouts.user_id', userId)
+        .eq('completed', true);
+        
+      if (error) {
+        return createErrorResponse(
+          error.message,
+          'Failed to get exercise varieties',
+          ErrorCategory.DATABASE
+        );
+      }
+      
+      // Get unique exercise IDs
+      const uniqueExerciseIds = new Set();
+      if (data) {
+        data.forEach(item => {
+          if (item.exercise_id) uniqueExerciseIds.add(item.exercise_id);
+        });
+      }
+      
+      const distinctCount = uniqueExerciseIds.size;
+      
+      // Check for achievements
+      const achievementsToCheck: string[] = [];
+      
+      if (distinctCount >= 3) achievementsToCheck.push('exercise-variety-3');
+      if (distinctCount >= 5) achievementsToCheck.push('exercise-variety-5');
+      if (distinctCount >= 10) achievementsToCheck.push('exercise-variety-10');
+      
+      // Award achievements
+      if (achievementsToCheck.length > 0) {
+        await AchievementService.checkAndAwardAchievements(userId, achievementsToCheck);
+      }
+      
+      return createSuccessResponse(undefined);
+    } catch (error) {
+      return createErrorResponse(
+        (error as Error).message,
+        `Exception in checkExerciseTypeVarietyAchievements: ${(error as Error).message}`,
+        ErrorCategory.EXCEPTION
+      );
+    }
+  }
+  
+  /**
+   * Check for manual workout achievements
    */
   static async checkManualWorkoutAchievements(userId: string): Promise<ServiceResponse<void>> {
     try {
-      // Get user's manual workout count
-      const { count: manualCount, error: countError } = await supabase
+      // Get count of manual workouts
+      const { count, error } = await supabase
         .from('manual_workouts')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('user_id', userId);
-        
-      if (countError) {
+          
+      if (error) {
         return createErrorResponse(
-          countError.message,
+          error.message,
           'Failed to count manual workouts',
           ErrorCategory.DATABASE
         );
       }
       
-      // Define achievements to check based on manual workout count
-      const achievementsToCheck = [];
+      // Check for achievement criteria
+      const achievementsToCheck: string[] = [];
       
-      if (manualCount && manualCount >= 1) achievementsToCheck.push('manual-first');
-      if (manualCount && manualCount >= 5) achievementsToCheck.push('manual-5');
-      if (manualCount && manualCount >= 10) achievementsToCheck.push('manual-10');
-      if (manualCount && manualCount >= 25) achievementsToCheck.push('manual-25');
+      if (count && count >= 3) achievementsToCheck.push('manual-3');
+      if (count && count >= 10) achievementsToCheck.push('manual-10');
       
       // Award achievements
       if (achievementsToCheck.length > 0) {

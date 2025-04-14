@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, ErrorHandlingService, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 import { AchievementUtils } from '@/constants/achievements';
-import { Achievement } from '@/types/achievementTypes';
+import { Achievement, AchievementCategory } from '@/types/achievementTypes';
 
 /**
  * Service for handling achievement progress updates
@@ -103,7 +103,7 @@ export class AchievementProgressService {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
         const streakAchievements = AchievementUtils
-          .getAchievementsByCategory('streak')
+          .getAchievementsByCategory(AchievementCategory.STREAK)
           .filter(a => a.requirementType === 'streak_days');
           
         for (const achievement of streakAchievements) {
@@ -133,7 +133,7 @@ export class AchievementProgressService {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
         const workoutAchievements = AchievementUtils
-          .getAchievementsByCategory('workout')
+          .getAchievementsByCategory(AchievementCategory.WORKOUT)
           .filter(a => a.requirementType === 'workouts_count');
           
         for (const achievement of workoutAchievements) {
@@ -149,6 +149,36 @@ export class AchievementProgressService {
         return true;
       },
       'UPDATE_WORKOUT_COUNT_PROGRESS',
+      { showToast: false }
+    );
+  }
+  
+  /**
+   * Update personal record progress for relevant achievements
+   */
+  static async updatePersonalRecordProgress(
+    userId: string,
+    recordCount: number
+  ): Promise<ServiceResponse<boolean>> {
+    return ErrorHandlingService.executeWithErrorHandling(
+      async () => {
+        const recordAchievements = AchievementUtils
+          .getAchievementsByCategory(AchievementCategory.RECORD)
+          .filter(a => a.requirementType === 'pr_count');
+          
+        for (const achievement of recordAchievements) {
+          await this.updateProgress(
+            userId,
+            achievement.id,
+            recordCount,
+            achievement.requirementValue,
+            recordCount >= achievement.requirementValue
+          );
+        }
+        
+        return true;
+      },
+      'UPDATE_RECORD_PROGRESS',
       { showToast: false }
     );
   }
