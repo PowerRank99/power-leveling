@@ -1,7 +1,8 @@
 
-import { achievementPopupStore, AchievementPopupData } from '@/stores/achievementPopupStore';
+import { achievementPopupStore } from '@/stores/achievementPopupStore';
 import { useAchievementNotificationStore } from '@/stores/achievementNotificationStore';
 import { AchievementDefinition } from '@/constants/achievements/AchievementSchema';
+import { Achievement, AchievementCategory } from '@/types/achievementTypes';
 
 /**
  * Service for handling achievement notifications
@@ -14,13 +15,20 @@ export class AchievementNotificationService {
     // First show the achievement popup if a user is viewing it
     const { showAchievement } = achievementPopupStore.getState();
     
-    const popupData: AchievementPopupData = {
+    // Convert AchievementDefinition to Achievement interface
+    const popupData: Achievement = {
       id: achievement.id,
       name: achievement.name,
       description: achievement.description,
-      xpReward: achievement.xpReward,
-      points: achievement.points,
+      category: achievement.category || AchievementCategory.SPECIAL,
       rank: achievement.rank,
+      points: achievement.points,
+      xpReward: achievement.xpReward,
+      iconName: achievement.iconName || 'award',
+      requirements: {
+        type: achievement.requirementType,
+        value: achievement.requirementValue
+      },
       metadata: {
         bonusText: "Excede o limite diário"
       }
