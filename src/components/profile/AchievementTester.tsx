@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Trophy } from 'lucide-react';
-import { achievementPopupStore } from '@/stores/achievementPopupStore';
+import { achievementPopupStore, AchievementPopupData } from '@/stores/achievementPopupStore';
 import { AchievementUtils } from '@/constants/AchievementDefinitions';
 
 const AchievementTester: React.FC = () => {
@@ -14,17 +14,26 @@ const AchievementTester: React.FC = () => {
     const randomIndex = Math.floor(Math.random() * achievements.length);
     const achievement = achievements[randomIndex];
     
-    showAchievement({
+    // Create a popup-compatible achievement object
+    const popupData: AchievementPopupData = {
       id: achievement.id,
       name: achievement.name,
       description: achievement.description,
       xpReward: achievement.xpReward,
       points: achievement.points,
       rank: achievement.rank,
+      category: achievement.category, // Added for completeness
+      iconName: achievement.iconName, // Added for completeness
+      requirements: { // Added for completeness
+        type: achievement.requirementType,
+        value: achievement.requirementValue
+      },
       metadata: {
         bonusText: "Excede o limite diário"
       }
-    });
+    };
+    
+    showAchievement(popupData);
   };
 
   return (

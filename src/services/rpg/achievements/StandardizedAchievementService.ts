@@ -1,7 +1,8 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 import { AchievementUtils } from '@/constants/achievements';
-import { achievementPopupStore } from '@/stores/achievementPopupStore';
+import { achievementPopupStore, AchievementPopupData } from '@/stores/achievementPopupStore';
 import { useAchievementNotificationStore } from '@/stores/achievementNotificationStore';
 import { XPService } from '../XPService';
 import { AchievementCategory } from '@/types/achievementTypes';
