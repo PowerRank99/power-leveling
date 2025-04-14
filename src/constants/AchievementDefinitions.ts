@@ -1,4 +1,3 @@
-
 import { z } from 'zod';
 import { AchievementCategory, AchievementRank, Achievement, AchievementRequirement } from '@/types/achievementTypes';
 
@@ -741,7 +740,7 @@ export const AchievementUtils = {
       id: achievement.id,
       name: achievement.name,
       description: achievement.description,
-      category: achievement.category,
+      category: achievement.category as string,
       rank: achievement.rank,
       points: achievement.points,
       xpReward: achievement.xpReward,

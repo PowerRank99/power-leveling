@@ -34,7 +34,7 @@ export class AchievementListService extends BaseAchievementFetchService {
         iconName: achievement.icon_name,
         requirements: achievement.requirements,
         isUnlocked: false
-      })) || [];
+      })) as Achievement[] || [];
       
       return createSuccessResponse(achievements);
     } catch (error) {
@@ -85,7 +85,7 @@ export class AchievementListService extends BaseAchievementFetchService {
         requirements: item.achievements.requirements,
         isUnlocked: true,
         achievedAt: item.achieved_at
-      })) || [];
+      })) as Achievement[] || [];
       
       return createSuccessResponse(achievements);
     } catch (error) {
