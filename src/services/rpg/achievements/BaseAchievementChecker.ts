@@ -116,12 +116,15 @@ export abstract class BaseAchievementChecker implements AchievementChecker {
     retryCount: number = 3
   ): Promise<void> {
     try {
-      const achievementIds = await TransactionService.executeWithRetry(
+      const response = await TransactionService.executeWithRetry(
         checkFn,
         operationName,
         retryCount,
         `Failed to check ${operationName}`
       );
+      
+      // We need to check if response.data exists and has a length
+      const achievementIds = response.success && response.data ? response.data : [];
       
       if (achievementIds.length > 0) {
         await AchievementService.checkAndAwardAchievements(userId, achievementIds);

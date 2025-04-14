@@ -43,7 +43,7 @@ export class AchievementAwardService {
         if (!achievement) throw new Error(`Achievement ${achievementId} not found`);
 
         // Use transaction service to ensure atomic operation
-        const { data: success, error: transactionError } = await TransactionService.executeTransaction(async () => {
+        const { data: success, error: transactionError } = await TransactionService.executeInTransaction(async () => {
           // 1. Add achievement to user_achievements
           const { error: insertError } = await supabase
             .from('user_achievements')

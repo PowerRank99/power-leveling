@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
@@ -99,7 +100,7 @@ export class PersonalRecordService {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
         // Use transaction service for atomicity
-        const { data, error } = await TransactionService.executeTransaction(async () => {
+        const { data, error } = await TransactionService.executeInTransaction(async () => {
           // Record the personal record
           const { error } = await supabase
             .from('personal_records')

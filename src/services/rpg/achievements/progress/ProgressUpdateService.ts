@@ -36,7 +36,7 @@ export class ProgressUpdateService extends BaseProgressService {
         }
         
         // Execute with transaction support for reliability
-        const { data: wasCompleted, error } = await TransactionService.executeTransaction(async () => {
+        const { data: wasCompleted, error } = await TransactionService.executeInTransaction(async () => {
           // Get current progress
           const { data, error: progressError } = await supabase
             .from('achievement_progress')
