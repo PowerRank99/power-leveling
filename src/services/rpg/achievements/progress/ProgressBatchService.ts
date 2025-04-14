@@ -25,17 +25,17 @@ export class ProgressBatchService extends BaseProgressService {
           .sort((a, b) => b.requirementValue - a.requirementValue);
         
         // Prepare batch update data as expected by the stored procedure
-        const progressUpdates = JSON.stringify(workoutCountAchievements.map(achievement => ({
+        const progressUpdates = workoutCountAchievements.map(achievement => ({
           achievement_id: achievement.id,
           current_value: totalCount,
           target_value: achievement.requirementValue,
           is_complete: totalCount >= achievement.requirementValue
-        })));
+        }));
         
         // Use the batch update function
         const { error } = await supabase.rpc('batch_update_achievement_progress', {
           p_user_id: userId,
-          p_achievements: progressUpdates
+          p_achievements: JSON.stringify(progressUpdates)
         });
         
         if (error) {
@@ -72,17 +72,17 @@ export class ProgressBatchService extends BaseProgressService {
           .sort((a, b) => b.requirementValue - a.requirementValue);
         
         // Prepare batch update data as expected by the stored procedure
-        const progressUpdates = JSON.stringify(prAchievements.map(achievement => ({
+        const progressUpdates = prAchievements.map(achievement => ({
           achievement_id: achievement.id,
           current_value: totalCount,
           target_value: achievement.requirementValue,
           is_complete: totalCount >= achievement.requirementValue
-        })));
+        }));
         
         // Use the batch update function
         const { error } = await supabase.rpc('batch_update_achievement_progress', {
           p_user_id: userId,
-          p_achievements: progressUpdates
+          p_achievements: JSON.stringify(progressUpdates)
         });
         
         if (error) {
@@ -119,17 +119,17 @@ export class ProgressBatchService extends BaseProgressService {
           .sort((a, b) => b.requirementValue - a.requirementValue);
         
         // Prepare batch update data as expected by the stored procedure
-        const progressUpdates = JSON.stringify(streakAchievements.map(achievement => ({
+        const progressUpdates = streakAchievements.map(achievement => ({
           achievement_id: achievement.id,
           current_value: currentStreak,
           target_value: achievement.requirementValue,
           is_complete: currentStreak >= achievement.requirementValue
-        })));
+        }));
         
         // Use the batch update function
         const { error } = await supabase.rpc('batch_update_achievement_progress', {
           p_user_id: userId,
-          p_achievements: progressUpdates
+          p_achievements: JSON.stringify(progressUpdates)
         });
         
         if (error) {

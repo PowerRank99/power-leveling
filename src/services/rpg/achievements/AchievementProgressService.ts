@@ -94,6 +94,56 @@ export class AchievementProgressService {
   }
   
   /**
+   * Update multiple achievement progress values in a single operation
+   * Optimizes database calls by batching updates
+   */
+  static async updateMultipleProgressValues(
+    userId: string,
+    progressUpdates: Array<{
+      achievementId: string,
+      currentValue: number,
+      targetValue: number,
+      isComplete: boolean
+    }>
+  ): Promise<ServiceResponse<boolean>> {
+    try {
+      // Transform to match the expected format for the RPC function
+      const progressData = progressUpdates.map(update => ({
+        achievement_id: update.achievementId,
+        current_value: update.currentValue,
+        target_value: update.targetValue,
+        is_complete: update.isComplete
+      }));
+      
+      if (progressData.length === 0) {
+        return createSuccessResponse(true);
+      }
+      
+      const { data, error } = await supabase
+        .rpc('batch_update_achievement_progress', {
+          p_user_id: userId,
+          p_achievements: progressData
+        });
+        
+      if (error) {
+        return createErrorResponse(
+          error.message, 
+          `Failed to update multiple achievement progress values: ${error.message}`, 
+          ErrorCategory.DATABASE
+        );
+      }
+      
+      return createSuccessResponse(true);
+    } catch (error) {
+      return createErrorResponse(
+        (error as Error).message, 
+        `Exception updating multiple achievement progress values: ${(error as Error).message}`, 
+        ErrorCategory.EXCEPTION
+      );
+    }
+  }
+  
+  /**
    * Update streak progress for relevant achievements
    */
   static async updateStreakProgress(
@@ -106,17 +156,14 @@ export class AchievementProgressService {
           .getAchievementsByCategory(AchievementCategory.STREAK)
           .filter(a => a.requirementType === 'streak_days');
           
-        for (const achievement of streakAchievements) {
-          await this.updateProgress(
-            userId,
-            achievement.id,
-            currentStreak,
-            achievement.requirementValue,
-            currentStreak >= achievement.requirementValue
-          );
-        }
+        const progressUpdates = streakAchievements.map(achievement => ({
+          achievementId: achievement.id,
+          currentValue: currentStreak,
+          targetValue: achievement.requirementValue,
+          isComplete: currentStreak >= achievement.requirementValue
+        }));
         
-        return true;
+        return this.updateMultipleProgressValues(userId, progressUpdates).then(result => result.success);
       },
       'UPDATE_STREAK_PROGRESS',
       { showToast: false }
@@ -136,17 +183,14 @@ export class AchievementProgressService {
           .getAchievementsByCategory(AchievementCategory.WORKOUT)
           .filter(a => a.requirementType === 'workouts_count');
           
-        for (const achievement of workoutAchievements) {
-          await this.updateProgress(
-            userId,
-            achievement.id,
-            workoutCount,
-            achievement.requirementValue,
-            workoutCount >= achievement.requirementValue
-          );
-        }
+        const progressUpdates = workoutAchievements.map(achievement => ({
+          achievementId: achievement.id,
+          currentValue: workoutCount,
+          targetValue: achievement.requirementValue,
+          isComplete: workoutCount >= achievement.requirementValue
+        }));
         
-        return true;
+        return this.updateMultipleProgressValues(userId, progressUpdates).then(result => result.success);
       },
       'UPDATE_WORKOUT_COUNT_PROGRESS',
       { showToast: false }
@@ -166,17 +210,14 @@ export class AchievementProgressService {
           .getAchievementsByCategory(AchievementCategory.RECORD)
           .filter(a => a.requirementType === 'pr_count');
           
-        for (const achievement of recordAchievements) {
-          await this.updateProgress(
-            userId,
-            achievement.id,
-            recordCount,
-            achievement.requirementValue,
-            recordCount >= achievement.requirementValue
-          );
-        }
+        const progressUpdates = recordAchievements.map(achievement => ({
+          achievementId: achievement.id,
+          currentValue: recordCount,
+          targetValue: achievement.requirementValue,
+          isComplete: recordCount >= achievement.requirementValue
+        }));
         
-        return true;
+        return this.updateMultipleProgressValues(userId, progressUpdates).then(result => result.success);
       },
       'UPDATE_RECORD_PROGRESS',
       { showToast: false }
