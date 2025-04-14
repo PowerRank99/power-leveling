@@ -1,10 +1,9 @@
-
 import { ServiceResponse } from '@/services/common/ErrorHandlingService';
 import { Achievement } from '@/types/achievementTypes';
 import { AchievementListService } from './fetch/AchievementListService';
 import { AchievementStatsService } from './fetch/AchievementStatsService';
 import { AchievementProgressFetchService } from './fetch/AchievementProgressFetchService';
-import { WorkoutAchievementProcessor } from './services/WorkoutAchievementProcessor';
+import { AchievementProcessorService } from './AchievementProcessorService';
 
 /**
  * Facade service for fetching achievement data
@@ -37,10 +36,10 @@ export class AchievementFetchService {
   
   /**
    * Check for achievements related to workouts
-   * Delegates to WorkoutAchievementProcessor
+   * Delegates to AchievementProcessorService
    */
   static async checkWorkoutAchievements(userId: string, workoutId: string): Promise<ServiceResponse<any>> {
-    return WorkoutAchievementProcessor.processWorkoutCompletion(userId, workoutId);
+    return AchievementProcessorService.processWorkoutCompletion(userId, workoutId);
   }
   
   /**
