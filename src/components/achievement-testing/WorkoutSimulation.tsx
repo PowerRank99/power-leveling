@@ -1,11 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dumbbell } from 'lucide-react';
-import { useWorkoutSimulation } from './simulation/useWorkoutSimulation';
-import WorkoutConfigForm from './simulation/WorkoutConfigForm';
-import XPBreakdownDisplay from './simulation/XPBreakdownDisplay';
-import SimulateButton from './simulation/SimulateButton';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface WorkoutSimulationProps {
   userId: string;
@@ -13,63 +12,83 @@ interface WorkoutSimulationProps {
 }
 
 const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEntry }) => {
-  const {
-    state,
-    setWorkoutType,
-    setDuration,
-    setExerciseCount,
-    setIncludePersonalRecord,
-    setStreak,
-    setUseClassPassives,
-    setSelectedClass,
-    simulateWorkout
-  } = useWorkoutSimulation({ userId, addLogEntry });
+  const [exerciseType, setExerciseType] = useState('strength');
+  const [duration, setDuration] = useState(30);
+  const [hasPR, setHasPR] = useState(false);
+
+  const exerciseTypes = [
+    { id: 'strength', name: 'Strength Training' },
+    { id: 'bodyweight', name: 'Bodyweight/Calisthenics' },
+    { id: 'cardio', name: 'Cardio' },
+    { id: 'sports', name: 'Sports' },
+    { id: 'flexibility', name: 'Flexibility & Mobility' }
+  ];
+
+  const simulateWorkout = () => {
+    addLogEntry('Workout Simulated', 
+      `Type: ${exerciseType}, Duration: ${duration}min, PR: ${hasPR ? 'Yes' : 'No'}`
+    );
+  };
 
   return (
-    <Card className="premium-card border-arcane-30 shadow-glow-subtle">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-orbitron flex items-center">
-          <Dumbbell className="mr-2 h-5 w-5 text-arcane" />
-          Workout Achievement Simulation
-        </CardTitle>
+    <Card>
+      <CardHeader>
+        <CardTitle>Workout Simulation</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-4">
-            <WorkoutConfigForm
-              workoutType={state.workoutType}
-              setWorkoutType={setWorkoutType}
-              duration={state.duration}
-              setDuration={setDuration}
-              exerciseCount={state.exerciseCount}
-              setExerciseCount={setExerciseCount}
-              streak={state.streak}
-              setStreak={setStreak}
-              includePersonalRecord={state.includePersonalRecord}
-              setIncludePersonalRecord={setIncludePersonalRecord}
-              useClassPassives={state.useClassPassives}
-              setUseClassPassives={setUseClassPassives}
-              selectedClass={state.selectedClass}
-              setSelectedClass={setSelectedClass}
-            />
-          </div>
-          
-          <div className="space-y-4 flex flex-col">
-            <XPBreakdownDisplay
-              xpBreakdown={state.xpBreakdown}
-              bonusBreakdown={state.bonusBreakdown}
-              totalXP={state.totalXP}
-              exerciseCount={state.exerciseCount}
-              includePersonalRecord={state.includePersonalRecord}
-              duration={state.duration}
-            />
-            
-            <SimulateButton
-              onClick={simulateWorkout}
-              isLoading={state.isLoading}
-              disabled={!userId}
-            />
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="exerciseType">Exercise Type</Label>
+          <Select value={exerciseType} onValueChange={setExerciseType}>
+            <SelectTrigger id="exerciseType">
+              <SelectValue placeholder="Select exercise type" />
+            </SelectTrigger>
+            <SelectContent>
+              {exerciseTypes.map((type) => (
+                <SelectItem key={type.id} value={type.id}>
+                  {type.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="duration">Duration (minutes)</Label>
+          <Input
+            id="duration"
+            type="number"
+            value={duration}
+            onChange={(e) => setDuration(parseInt(e.target.value) || 0)}
+            min={1}
+          />
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            id="hasPR"
+            checked={hasPR}
+            onChange={(e) => setHasPR(e.target.checked)}
+            className="h-4 w-4"
+          />
+          <Label htmlFor="hasPR">Include Personal Record</Label>
+        </div>
+
+        <Button onClick={simulateWorkout} className="w-full">
+          Simulate Workout
+        </Button>
+
+        <div className="mt-4 p-4 bg-midnight-card rounded-lg border border-divider/20">
+          <h3 className="font-semibold mb-2">Class Bonus Guide:</h3>
+          <ul className="space-y-2 text-sm text-text-secondary">
+            <li>• Strength Training: Guerreiro (+20%)</li>
+            <li>• Bodyweight: Monge (+20%)</li>
+            <li>• Cardio: Ninja (+20%)</li>
+            <li>• Sports: Paladino (+40%)</li>
+            <li>• Flexibility: Druida (+40%)</li>
+            <li>• PR Bonus: Guerreiro (+10%)</li>
+            <li>• Under 45min: Ninja (+40%)</li>
+          </ul>
         </div>
       </CardContent>
     </Card>

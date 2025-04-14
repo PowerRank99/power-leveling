@@ -1,16 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import React from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User, Users } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-
-interface UserProfile {
-  id: string;
-  name: string;
-  level: number;
-}
+import { Input } from '@/components/ui/input';
 
 interface UserContextSimulationProps {
   currentUserId: string;
@@ -18,91 +11,99 @@ interface UserContextSimulationProps {
   addLogEntry: (action: string, details: string) => void;
 }
 
-const UserContextSimulation: React.FC<UserContextSimulationProps> = ({ 
-  currentUserId, 
+const UserContextSimulation: React.FC<UserContextSimulationProps> = ({
+  currentUserId,
   onUserChange,
   addLogEntry
 }) => {
-  const [users, setUsers] = useState<UserProfile[]>([]);
-  const [selectedUserId, setSelectedUserId] = useState(currentUserId);
-  const [isLoading, setIsLoading] = useState(false);
-  
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-  
-  useEffect(() => {
-    setSelectedUserId(currentUserId);
-  }, [currentUserId]);
-  
-  const fetchUsers = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, name, level')
-        .order('name');
-      
-      if (error) throw error;
-      
-      setUsers(data || []);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    } finally {
-      setIsLoading(false);
-    }
+  const classes = ['Guerreiro', 'Monge', 'Ninja', 'Bruxo', 'Paladino', 'Druida'];
+  const [selectedClass, setSelectedClass] = React.useState<string>('');
+
+  const handleClassChange = (className: string) => {
+    setSelectedClass(className);
+    addLogEntry('Class Changed', `Selected class: ${className}`);
   };
-  
-  const handleUserSelection = () => {
-    onUserChange(selectedUserId);
-    
-    const selectedUser = users.find(u => u.id === selectedUserId);
-    addLogEntry(
-      'Test User Selected', 
-      `User: ${selectedUser?.name || 'Unknown'}, Level: ${selectedUser?.level || 0}`
-    );
-  };
-  
+
   return (
-    <div className="flex flex-col md:flex-row gap-3 items-end">
-      <div className="flex-grow space-y-2">
-        <Label htmlFor="userSelect" className="flex items-center text-arcane-60">
-          <Users className="mr-2 h-4 w-4" />
-          Select Test User
-        </Label>
-        <Select 
-          value={selectedUserId} 
-          onValueChange={setSelectedUserId}
-          disabled={isLoading || users.length === 0}
-        >
-          <SelectTrigger id="userSelect" className="bg-midnight-elevated border-divider">
-            <SelectValue placeholder={isLoading ? "Loading users..." : "Select a user"} />
-          </SelectTrigger>
-          <SelectContent>
-            {users.map((user) => (
-              <SelectItem key={user.id} value={user.id}>
-                <div className="flex items-center">
-                  <User className="mr-2 h-4 w-4" />
-                  <span>{user.name}</span>
-                  <span className="ml-2 text-xs text-text-tertiary">Lvl {user.level}</span>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <p className="text-xs text-text-tertiary mt-1">
-          Note: Actions will be performed as the selected test user
-        </p>
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="userId">User ID</Label>
+          <Input
+            id="userId"
+            value={currentUserId}
+            onChange={(e) => onUserChange(e.target.value)}
+            placeholder="Enter user ID"
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="class">Class</Label>
+          <Select value={selectedClass} onValueChange={handleClassChange}>
+            <SelectTrigger id="class">
+              <SelectValue placeholder="Select class" />
+            </SelectTrigger>
+            <SelectContent>
+              {classes.map((className) => (
+                <SelectItem key={className} value={className}>
+                  {className}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
-      
-      <Button 
-        onClick={handleUserSelection} 
-        disabled={isLoading || !selectedUserId || selectedUserId === currentUserId}
-        className="bg-midnight-elevated text-text-primary border border-divider hover:bg-midnight-card"
-      >
-        <User className="mr-2 h-4 w-4" />
-        Use Test User
-      </Button>
+
+      <Card className="bg-midnight-card">
+        <CardContent className="p-4">
+          <div className="text-sm space-y-2">
+            <h3 className="font-semibold text-arcane mb-2">Class Bonuses:</h3>
+            {selectedClass && (
+              <ul className="space-y-2 text-text-secondary">
+                {selectedClass === 'Guerreiro' && (
+                  <>
+                    <li>• Força Bruta: +20% XP from strength training exercises</li>
+                    <li>• Saindo da Jaula: +10% XP for workouts with Personal Records</li>
+                  </>
+                )}
+                {selectedClass === 'Monge' && (
+                  <>
+                    <li>• Força Interior: +20% XP from bodyweight exercises</li>
+                    <li>• Discípulo do Algoritmo: +10% additional streak bonus</li>
+                  </>
+                )}
+                {selectedClass === 'Ninja' && (
+                  <>
+                    <li>• Forrest Gump: +20% XP from cardio exercises</li>
+                    <li>• HIIT & Run: +40% XP from workouts under 45 minutes</li>
+                  </>
+                )}
+                {selectedClass === 'Bruxo' && (
+                  <>
+                    <li>• Pijama Arcano: Reduced streak loss when not training</li>
+                    <li>• Topo da Montanha: +50% achievement points</li>
+                  </>
+                )}
+                {selectedClass === 'Paladino' && (
+                  <>
+                    <li>• Caminho do Herói: +40% XP from sports activities</li>
+                    <li>• Camisa 10: +10% guild XP contribution (stackable)</li>
+                  </>
+                )}
+                {selectedClass === 'Druida' && (
+                  <>
+                    <li>• Ritmo da Natureza: +40% XP from mobility & flexibility</li>
+                    <li>• Cochilada Mística: +50% XP bonus after rest day</li>
+                  </>
+                )}
+              </ul>
+            )}
+            {!selectedClass && (
+              <p className="text-text-tertiary italic">Select a class to view bonuses</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
