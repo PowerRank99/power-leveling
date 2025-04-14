@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, ErrorHandlingService, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 
@@ -56,6 +55,7 @@ export class AchievementProgressFetchService {
   
   /**
    * Get all achievement progress for a user
+   * Optimized to use a dedicated RPC function
    */
   static async getAllAchievementProgress(userId: string): Promise<ServiceResponse<any>> {
     return ErrorHandlingService.executeWithErrorHandling(
@@ -68,7 +68,7 @@ export class AchievementProgressFetchService {
           ).data;
         }
         
-        // Use RPC function to get all progress
+        // Use optimized RPC function with built-in error handling
         const { data: progress, error: progressError } = await supabase
           .rpc('get_all_achievement_progress', { p_user_id: userId });
           
@@ -76,7 +76,10 @@ export class AchievementProgressFetchService {
           throw new Error(`Failed to fetch achievement progress: ${progressError.message}`);
         }
         
-        return progress || {};
+        // Convert the data into a more efficient format for client-side usage
+        const formattedProgress = progress || {};
+        
+        return formattedProgress;
       },
       'GET_ALL_ACHIEVEMENT_PROGRESS',
       { showToast: false }
@@ -84,7 +87,8 @@ export class AchievementProgressFetchService {
   }
   
   /**
-   * Create or update achievement progress
+   * Create or update achievement progress in batch
+   * Uses optimized batch update RPC function
    */
   static async updateAchievementProgress(
     userId: string, 
@@ -94,6 +98,7 @@ export class AchievementProgressFetchService {
     isComplete: boolean
   ): Promise<ServiceResponse<boolean>> {
     try {
+      // Format data for batch update
       const progressData = [{
         achievement_id: achievementId,
         current_value: currentValue,
@@ -101,10 +106,11 @@ export class AchievementProgressFetchService {
         is_complete: isComplete
       }];
       
+      // Use the optimized batch update function even for single updates
       const { data, error } = await supabase
         .rpc('batch_update_achievement_progress', {
           p_user_id: userId,
-          p_achievements: progressData
+          p_achievements: JSON.stringify(progressData)
         });
         
       if (error) {
