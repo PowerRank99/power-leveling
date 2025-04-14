@@ -1,5 +1,6 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
+import { vi } from 'vitest';
 
 /**
  * Creates a mock Supabase response
@@ -17,20 +18,20 @@ export function createMockDbResponse<T>(data: T | null = null, error: any = null
  */
 export function createMockQueryBuilder(responseData: any = null, responseError: any = null) {
   return {
-    select: jest.fn(() => ({
-      eq: jest.fn(() => ({
-        single: jest.fn(() => createMockDbResponse(responseData, responseError)),
-        order: jest.fn(() => createMockDbResponse(responseData, responseError))
+    select: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        single: vi.fn(() => createMockDbResponse(responseData, responseError)),
+        order: vi.fn(() => createMockDbResponse(responseData, responseError))
       }))
     })),
-    insert: jest.fn(() => ({
-      select: jest.fn(() => createMockDbResponse(responseData, responseError))
+    insert: vi.fn(() => ({
+      select: vi.fn(() => createMockDbResponse(responseData, responseError))
     })),
-    update: jest.fn(() => ({
-      eq: jest.fn(() => createMockDbResponse(responseData, responseError))
+    update: vi.fn(() => ({
+      eq: vi.fn(() => createMockDbResponse(responseData, responseError))
     })),
-    delete: jest.fn(() => ({
-      eq: jest.fn(() => createMockDbResponse(responseData, responseError))
+    delete: vi.fn(() => ({
+      eq: vi.fn(() => createMockDbResponse(responseData, responseError))
     }))
   };
 }
@@ -40,8 +41,7 @@ export function createMockQueryBuilder(responseData: any = null, responseError: 
  */
 export function createMockSupabaseClient(responseData: any = null, responseError: any = null) {
   return {
-    from: jest.fn(() => createMockQueryBuilder(responseData, responseError)),
-    rpc: jest.fn(() => createMockDbResponse(responseData, responseError))
+    from: vi.fn(() => createMockQueryBuilder(responseData, responseError)),
+    rpc: vi.fn(() => createMockDbResponse(responseData, responseError))
   } as unknown as SupabaseClient;
 }
-

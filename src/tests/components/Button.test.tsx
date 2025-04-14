@@ -1,8 +1,8 @@
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 
 describe('Button', () => {
   it('renders correctly', () => {
@@ -18,4 +18,3 @@ describe('Button', () => {
     expect(handleClick).toHaveBeenCalled();
   });
 });
-
