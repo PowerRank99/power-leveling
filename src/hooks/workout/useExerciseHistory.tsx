@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { ExerciseHistoryService } from '@/services/ExerciseHistoryService';
+import { ExerciseHistoryService } from '@/services/exercise-history/ExerciseHistoryService';
 
 /**
  * Hook for managing and accessing exercise history
