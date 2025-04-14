@@ -32,7 +32,7 @@ import AchievementTestHeader from './AchievementTestHeader';
 import AchievementCategorySection from './AchievementCategorySection';
 import AchievementTestItem from './AchievementTestItem';
 import TestProgressIndicator from './TestProgressIndicator';
-import TestResultViewer from './TestResultViewer';
+import TestResultViewer, { FilterOption } from './TestResultViewer';
 import TestConfigurationPanel from './TestConfigurationPanel';
 import TestCoverageReport from '@/components/achievement-testing/TestCoverageReport';
 import TestingDashboard from '../testing/dashboard/TestingDashboard';
@@ -743,7 +743,7 @@ const AchievementTestRunner: React.FC<AchievementTestRunnerProps> = ({ userId, a
         onClearResults={handleClearResults}
         onExportResults={exportResults}
         filter={filter}
-        onFilterChange={setFilter}
+        onFilterChange={(value: FilterOption) => setFilter(value)}
         lastSaved={lastUpdated}
       />
     );

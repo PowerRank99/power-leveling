@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -8,12 +9,15 @@ import { Input } from '@/components/ui/input';
 import { AchievementTestResult } from '@/services/testing/AchievementTestingService';
 import { toast } from 'sonner';
 
+// Explicitly define the FilterOption type here
+export type FilterOption = 'all' | 'passed' | 'failed';
+
 interface TestResultViewerProps {
   results: AchievementTestResult[];
   onClearResults: () => void;
   onExportResults: () => void;
-  filter: string;
-  onFilterChange: (value: string) => void;
+  filter: FilterOption;
+  onFilterChange: (value: FilterOption) => void;
   lastSaved?: string;
 }
 
