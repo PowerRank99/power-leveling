@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { ServiceResponse, ErrorHandlingService } from './ErrorHandlingService';
 
 /**
  * Service for handling database transactions
@@ -7,86 +8,70 @@ import { supabase } from '@/integrations/supabase/client';
 export class TransactionService {
   /**
    * Execute a function with retry logic
-   * 
-   * @param fn The function to execute
-   * @param lockKey A unique key to identify the transaction
-   * @param maxRetries Maximum number of retries
-   * @param errorMessage Custom error message on failure
    */
   static async executeWithRetry<T>(
-    fn: () => Promise<T>,
-    lockKey: string,
+    operation: () => Promise<T>,
+    operationName: string,
     maxRetries: number = 3,
-    errorMessage: string = 'Transaction failed'
-  ): Promise<T> {
-    let retries = 0;
+    errorMessage: string = 'Operation failed'
+  ): Promise<ServiceResponse<T>> {
+    let attempt = 0;
     
-    while (retries < maxRetries) {
+    while (attempt < maxRetries) {
       try {
+        attempt++;
+        const result = await operation();
+        return { success: true, data: result };
+      } catch (error) {
+        if (attempt >= maxRetries) {
+          console.error(`[TransactionService] ${operationName} failed after ${maxRetries} attempts:`, error);
+          return {
+            success: false,
+            message: errorMessage,
+            error: error instanceof Error ? error : new Error(String(error))
+          };
+        }
+        
+        console.warn(`[TransactionService] ${operationName} attempt ${attempt} failed, retrying...`);
+        await new Promise(resolve => setTimeout(resolve, 100 * attempt)); // Exponential backoff
+      }
+    }
+    
+    return {
+      success: false,
+      message: `${errorMessage} - max retries exceeded`,
+      error: new Error('Max retries exceeded')
+    };
+  }
+
+  /**
+   * Execute a function within a transaction
+   * Note: This requires Supabase functions for begin/commit/rollback transaction
+   */
+  static async executeInTransaction<T>(
+    operation: () => Promise<T>,
+    operationName: string
+  ): Promise<ServiceResponse<T>> {
+    return ErrorHandlingService.executeWithErrorHandling(
+      async () => {
         // Begin transaction
         await supabase.rpc('begin_transaction');
         
-        // Execute the function
-        const result = await fn();
-        
-        // Commit transaction
-        await supabase.rpc('commit_transaction');
-        
-        return result;
-      } catch (error) {
-        // Rollback on error
         try {
+          // Execute the operation
+          const result = await operation();
+          
+          // Commit transaction
+          await supabase.rpc('commit_transaction');
+          
+          return result;
+        } catch (error) {
+          // Rollback transaction on error
           await supabase.rpc('rollback_transaction');
-        } catch (rollbackError) {
-          console.error('Error rolling back transaction:', rollbackError);
+          throw error;
         }
-        
-        retries++;
-        
-        if (retries >= maxRetries) {
-          console.error(`${errorMessage} after ${maxRetries} attempts:`, error);
-          throw new Error(`${errorMessage}: ${error instanceof Error ? error.message : String(error)}`);
-        }
-        
-        // Wait before retrying (exponential backoff)
-        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retries)));
-      }
-    }
-    
-    throw new Error(`${errorMessage}: Max retries exceeded`);
-  }
-  
-  /**
-   * Execute a function within a transaction
-   * 
-   * @param fn The function to execute within the transaction
-   * @returns The result of the function
-   */
-  static async executeTransaction<T>(fn: () => Promise<T>): Promise<{ data: T; error: Error | null }> {
-    try {
-      // Begin transaction
-      await supabase.rpc('begin_transaction');
-      
-      // Execute the function
-      const result = await fn();
-      
-      // Commit transaction
-      await supabase.rpc('commit_transaction');
-      
-      return { data: result, error: null };
-    } catch (error) {
-      // Rollback on error
-      try {
-        await supabase.rpc('rollback_transaction');
-      } catch (rollbackError) {
-        console.error('Error rolling back transaction:', rollbackError);
-      }
-      
-      console.error('Transaction error:', error);
-      return { 
-        data: null as any, 
-        error: error instanceof Error ? error : new Error(String(error)) 
-      };
-    }
+      },
+      operationName
+    );
   }
 }

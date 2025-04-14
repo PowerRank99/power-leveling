@@ -1,3 +1,4 @@
+
 /**
  * Error categories for consistent error handling
  */
@@ -20,6 +21,7 @@ export interface ServiceError {
   technical?: string;
   category?: ErrorCategory;
   code?: string;
+  details?: any;
 }
 
 /**
@@ -49,7 +51,8 @@ export class ErrorHandlingService {
     options: { 
       showToast?: boolean; 
       userMessage?: string;
-    } = {}
+      logError?: boolean;
+    } = { showToast: true, logError: true }
   ): Promise<ServiceResponse<T>> {
     try {
       const result = await fn();
@@ -58,15 +61,49 @@ export class ErrorHandlingService {
         data: result
       };
     } catch (error) {
-      console.error(`Error during ${operation}:`, error);
+      if (options.logError !== false) {
+        console.error(`Error during ${operation}:`, error);
+      }
       
       return {
         success: false,
         message: error instanceof Error ? error.message : 'An unknown error occurred',
         error: error instanceof Error ? error : new Error('Unknown error'),
-        details: error instanceof Error ? error.message : undefined
+        details: error instanceof Error ? error.stack : undefined
       };
     }
+  }
+  
+  /**
+   * Transform an error to a consistent service error format
+   */
+  static formatError(
+    error: any,
+    defaultMessage: string = 'An error occurred',
+    category: ErrorCategory = ErrorCategory.UNKNOWN
+  ): ServiceError {
+    if (!error) {
+      return { message: defaultMessage, category };
+    }
+    
+    if (typeof error === 'string') {
+      return { message: error, category };
+    }
+    
+    if (error instanceof Error) {
+      return {
+        message: error.message || defaultMessage,
+        technical: error.stack,
+        category
+      };
+    }
+    
+    return {
+      message: error.message || defaultMessage,
+      technical: JSON.stringify(error),
+      category,
+      details: error
+    };
   }
 }
 

@@ -1,4 +1,3 @@
-
 export interface PersonalRecord {
   id?: string;
   userId?: string;
@@ -13,7 +12,6 @@ export interface PersonalRecord {
   previousWeight?: number;
 }
 
-// Preserve existing interfaces with explicit type conversions
 export interface WorkoutExercise {
   id: string;
   name: string;
@@ -75,8 +73,13 @@ export interface ExerciseHistory {
   createdAt?: string;
 }
 
+/**
+ * Standardized response type for database operations
+ */
 export interface DatabaseResult<T> {
   success: boolean;
   data: T | null;
   error: Error | null;
+  code?: string;
+  details?: any;
 }
