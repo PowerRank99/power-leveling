@@ -12,26 +12,19 @@ import { PersonalRecordData } from './AchievementCheckerInterface';
  * Provides a single entry point for all achievement checks
  */
 export class UnifiedAchievementChecker {
-  private static checkers = {
-    workout: new WorkoutCheckerService(),
-    streak: new StreakCheckerService(),
-    record: new RecordCheckerService(),
-    xp: new XPCheckerService(),
-    activity: new ActivityCheckerService()
-  };
-
   /**
    * Check achievements related to workouts 
    */
   static async checkWorkoutAchievements(userId: string): Promise<ServiceResponse<string[]>> {
-    return this.checkers.workout.checkAchievements(userId);
+    return WorkoutCheckerService.checkWorkoutAchievements(userId);
   }
 
   /**
    * Check achievements related to streaks
    */
   static async checkStreakAchievements(userId: string): Promise<ServiceResponse<string[]>> {
-    return this.checkers.streak.checkAchievements(userId);
+    const checker = new StreakCheckerService();
+    return checker.checkAchievements(userId);
   }
 
   /**
@@ -41,21 +34,21 @@ export class UnifiedAchievementChecker {
     userId: string,
     recordInfo?: PersonalRecordData
   ): Promise<ServiceResponse<string[]>> {
-    return this.checkers.record.checkAchievements(userId, recordInfo);
+    return RecordCheckerService.checkPersonalRecordAchievements(userId, recordInfo);
   }
 
   /**
    * Check achievements related to XP milestones
    */
   static async checkXPAchievements(userId: string, totalXP?: number): Promise<ServiceResponse<string[]>> {
-    return this.checkers.xp.checkAchievements(userId, totalXP);
+    return XPCheckerService.checkXPMilestoneAchievements(userId, totalXP);
   }
 
   /**
    * Check achievements related to activity variety
    */
   static async checkActivityVarietyAchievements(userId: string): Promise<ServiceResponse<string[]>> {
-    return this.checkers.activity.checkAchievements(userId);
+    return ActivityCheckerService.checkActivityVarietyAchievements(userId);
   }
 
   /**
@@ -65,7 +58,7 @@ export class UnifiedAchievementChecker {
   static async processCompletedWorkout(userId: string): Promise<ServiceResponse<string[]>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
-        const awardedAchievements = [];
+        const awardedAchievements: string[] = [];
         
         // Check workout achievements
         const workoutResult = await this.checkWorkoutAchievements(userId);

@@ -1,7 +1,6 @@
 
 import { ServiceResponse, ErrorHandlingService, createSuccessResponse } from '@/services/common/ErrorHandlingService';
-import { ACHIEVEMENT_IDS } from '../AchievementConstants';
-import { AchievementService } from '../../AchievementService';
+import { AchievementService } from '@/services/rpg/AchievementService';
 import { AchievementCategory, AchievementRank } from '@/types/achievementTypes';
 
 /**
@@ -26,16 +25,7 @@ export abstract class BaseAchievementChecker {
   ): Promise<string[]> {
     const achievementsToCheck: string[] = [];
     
-    // Get relevant achievement IDs from constants
-    const rankAchievements = ACHIEVEMENT_IDS[rank];
-    if (!rankAchievements) return [];
-    
-    const categoryAchievements = rankAchievements[category];
-    if (!categoryAchievements) return [];
-    
-    // Check each achievement based on the relevant category
-    // Each achievement checker will implement specific logic for determining
-    // whether an achievement should be awarded
+    // Check for achievements in the specified category and rank
     
     return achievementsToCheck;
   }

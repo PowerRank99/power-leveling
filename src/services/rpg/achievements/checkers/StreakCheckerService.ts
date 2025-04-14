@@ -31,7 +31,7 @@ export class StreakCheckerService extends BaseAchievementChecker {
         const currentStreak = profile?.streak || 0;
         
         // Define achievements to check based on streak count
-        const achievementsToCheck = [];
+        const achievementsToCheck: string[] = [];
         
         // Check for E rank achievements
         if (currentStreak >= 3 && ACHIEVEMENT_IDS.E.STREAK.includes('streak-3')) {
