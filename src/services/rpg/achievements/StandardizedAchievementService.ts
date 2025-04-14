@@ -4,7 +4,8 @@ import { AchievementUtils } from '@/constants/achievements';
 import { achievementPopupStore } from '@/stores/achievementPopupStore';
 import { useAchievementNotificationStore } from '@/stores/achievementNotificationStore';
 import { XPService } from '../XPService';
-import { AchievementCategory, AchievementDefinition } from '@/types/achievementTypes';
+import { AchievementCategory } from '@/types/achievementTypes';
+import { AchievementDefinition } from '@/constants/achievements/AchievementSchema';
 
 /**
  * Standardized achievement service that provides consistent achievement verification and awarding.
