@@ -50,7 +50,7 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
       case 'strength':
         return 'Bench Press';
       case 'bodyweight':
-        return 'Pull-up Calisthenics'; // Updated to include keyword that triggers Monk bonus
+        return 'Calisthenics Pull-up'; // Updated to include more precise keywords for Monk bonus
       case 'cardio':
         return 'Running';
       case 'sports':
