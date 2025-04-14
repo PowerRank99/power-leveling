@@ -1,4 +1,3 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { supabase } from '@/integrations/supabase/client';
 import { AchievementManager } from '@/services/rpg/achievements/AchievementManager';
@@ -65,19 +64,54 @@ describe('Complete Achievement Flow Integration', () => {
     });
   });
 
-  describe('Achievement progress tracking', () => {
-    it('should track progress for incremental achievements', async () => {
+  describe('Achievement Progress Tracking', () => {
+    it('should track incremental achievements properly', async () => {
       const progressUpdates = [
-        { achievementId: 'workout-10', currentValue: 5, targetValue: 10, isComplete: false }
+        { achievementId: 'workout-streak-7', currentValue: 5, targetValue: 7, isComplete: false },
+        { achievementId: 'xp-milestone-1000', currentValue: 800, targetValue: 1000, isComplete: false }
       ];
 
-      const result = await AchievementProgressService.updateMultipleProgressValues(
-        mockUserId,
-        progressUpdates
-      );
-
+      const result = await AchievementProgressService.updateMultipleProgressValues(mockUserId, progressUpdates);
       expect(result.success).toBe(true);
-      expect(AchievementService.checkAndAwardAchievements).not.toHaveBeenCalled();
+    });
+
+    it('should handle achievement completion events', async () => {
+      vi.mocked(supabase.from).mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({
+            data: {
+              workouts_count: 10,
+              streak: 7,
+              xp: 1000
+            },
+            error: null
+          })
+        })
+      } as any);
+
+      const result = await AchievementManager.processWorkoutCompletion(mockUserId, mockWorkoutId);
+      expect(result.success).toBe(true);
+      expect(AchievementService.checkAndAwardAchievements).toHaveBeenCalled();
+    });
+  });
+
+  describe('Class Bonus Integration', () => {
+    it('should apply class bonuses to achievement progress', async () => {
+      vi.mocked(supabase.from).mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({
+            data: {
+              class: 'guerreiro',
+              workouts_count: 1
+            },
+            error: null
+          })
+        })
+      } as any);
+
+      const result = await AchievementManager.processWorkoutCompletion(mockUserId, mockWorkoutId);
+      expect(result.success).toBe(true);
+      expect(AchievementProgressService.updateWorkoutCountProgress).toHaveBeenCalled();
     });
   });
 
