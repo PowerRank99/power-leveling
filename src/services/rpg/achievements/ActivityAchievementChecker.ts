@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
+import { ServiceResponse, ErrorHandlingService, createSuccessResponse } from '@/services/common/ErrorHandlingService';
 import { AchievementChecker } from './AchievementCheckerInterface';
 import { BaseAchievementChecker } from './BaseAchievementChecker';
 import { AchievementService } from '../AchievementService';
@@ -14,7 +14,7 @@ export class ActivityAchievementChecker extends BaseAchievementChecker implement
    * Check all achievements related to activity variety
    * Implementation of abstract method from BaseAchievementChecker
    */
-  async checkAchievements(userId: string): Promise<ServiceResponse<void>> {
+  async checkAchievements(userId: string): Promise<ServiceResponse<string[]>> {
     return ActivityAchievementChecker.checkAchievements(userId);
   }
   
@@ -22,22 +22,34 @@ export class ActivityAchievementChecker extends BaseAchievementChecker implement
    * Static implementation of checkAchievements
    * Checks for achievements related to activity variety
    */
-  static async checkAchievements(userId: string): Promise<ServiceResponse<void>> {
+  static async checkAchievements(userId: string): Promise<ServiceResponse<string[]>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
         if (!userId) throw new Error('User ID is required');
         
+        const awardedAchievements: string[] = [];
+        
         await TransactionService.executeWithRetry(
           async () => {
-            await Promise.all([
+            // Check different types of activity variety achievements
+            const varietyResults = await Promise.all([
               this.checkActivityVarietyAchievements(userId),
               this.checkExerciseTypeVarietyAchievements(userId)
             ]);
+            
+            // Collect awarded achievements
+            varietyResults.forEach(result => {
+              if (Array.isArray(result)) {
+                awardedAchievements.push(...result);
+              }
+            });
           }, 
           'activity_variety_achievements', 
           3,
           'Failed to check activity variety achievements'
         );
+        
+        return awardedAchievements;
       },
       'CHECK_ACTIVITY_VARIETY_ACHIEVEMENTS',
       { showToast: false }
@@ -47,7 +59,7 @@ export class ActivityAchievementChecker extends BaseAchievementChecker implement
   /**
    * Check for manual workout achievements
    */
-  static async checkManualWorkoutAchievements(userId: string): Promise<ServiceResponse<void>> {
+  static async checkManualWorkoutAchievements(userId: string): Promise<ServiceResponse<string[]>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
         // Get count of manual workouts
@@ -66,8 +78,11 @@ export class ActivityAchievementChecker extends BaseAchievementChecker implement
         
         // Award achievements
         if (achievementChecks.length > 0) {
-          await AchievementService.checkAndAwardAchievements(userId, achievementChecks);
+          const result = await AchievementService.checkAndAwardAchievements(userId, achievementChecks);
+          return result.success ? achievementChecks : [];
         }
+        
+        return [];
       },
       'CHECK_MANUAL_WORKOUT_ACHIEVEMENTS',
       { showToast: false }
@@ -77,14 +92,14 @@ export class ActivityAchievementChecker extends BaseAchievementChecker implement
   /**
    * Check for activity variety achievements (different types of workouts)
    */
-  private static async checkActivityVarietyAchievements(userId: string): Promise<void> {
+  private static async checkActivityVarietyAchievements(userId: string): Promise<string[]> {
     try {
       // Use a custom query to get distinct activity types
       const { data, error } = await supabase
         .from('manual_workouts')
         .select('activity_type')
         .eq('user_id', userId)
-        .not('activity_type', 'is', null); // Fixed the type error here
+        .not('activity_type', 'is', null);
         
       if (error) throw error;
       
@@ -106,17 +121,21 @@ export class ActivityAchievementChecker extends BaseAchievementChecker implement
       
       // Award achievements
       if (achievementChecks.length > 0) {
-        await AchievementService.checkAndAwardAchievements(userId, achievementChecks);
+        const result = await AchievementService.checkAndAwardAchievements(userId, achievementChecks);
+        return result.success ? achievementChecks : [];
       }
+      
+      return [];
     } catch (error) {
       console.error('Error checking activity variety achievements:', error);
+      return [];
     }
   }
   
   /**
    * Check for exercise type variety achievements (different types of exercises)
    */
-  private static async checkExerciseTypeVarietyAchievements(userId: string): Promise<void> {
+  private static async checkExerciseTypeVarietyAchievements(userId: string): Promise<string[]> {
     try {
       // Query to get distinct exercise types from completed workouts
       const { data, error } = await supabase
@@ -144,10 +163,14 @@ export class ActivityAchievementChecker extends BaseAchievementChecker implement
       
       // Award achievements
       if (achievementChecks.length > 0) {
-        await AchievementService.checkAndAwardAchievements(userId, achievementChecks);
+        const result = await AchievementService.checkAndAwardAchievements(userId, achievementChecks);
+        return result.success ? achievementChecks : [];
       }
+      
+      return [];
     } catch (error) {
       console.error('Error checking exercise type variety achievements:', error);
+      return [];
     }
   }
 }

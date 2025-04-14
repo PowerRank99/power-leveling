@@ -54,6 +54,6 @@ export abstract class BaseAchievementChecker {
     if (!achievementIds.length) return [];
     
     const result = await AchievementService.checkAndAwardAchievements(userId, achievementIds);
-    return result.success && Array.isArray(result.data) ? result.data : [];
+    return result.success && Array.isArray(result.data) ? result.data || [] : [];
   }
 }

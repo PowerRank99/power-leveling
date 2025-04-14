@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
+import { ServiceResponse, ErrorHandlingService, createSuccessResponse } from '@/services/common/ErrorHandlingService';
 import { AchievementChecker, PersonalRecordData } from './AchievementCheckerInterface';
 import { BaseAchievementChecker } from './BaseAchievementChecker';
 import { AchievementService } from '../AchievementService';
@@ -19,10 +19,12 @@ export class RecordAchievementChecker extends BaseAchievementChecker implements 
   static async checkAchievements(
     userId: string,
     recordInfo?: PersonalRecordData
-  ): Promise<ServiceResponse<void>> {
+  ): Promise<ServiceResponse<string[]>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
         if (!userId) throw new Error('User ID is required');
+        
+        const awardedAchievements: string[] = [];
 
         // Ensure consistent property names by normalizing the record info
         const normalizedRecordInfo = recordInfo ? normalizePersonalRecord(recordInfo) : undefined;
@@ -43,22 +45,36 @@ export class RecordAchievementChecker extends BaseAchievementChecker implements 
               await AchievementProgressService.updatePersonalRecordProgress(userId, prCount);
             }
 
+            // Check count-based achievements
+            if (prCount && prCount >= 1) awardedAchievements.push('pr-first');
+            if (prCount && prCount >= 5) awardedAchievements.push('pr-5');
+            if (prCount && prCount >= 10) awardedAchievements.push('pr-10');
+            if (prCount && prCount >= 25) awardedAchievements.push('pr-25');
+            if (prCount && prCount >= 50) awardedAchievements.push('pr-50');
+
             // Check for impressive PR achievements based on weight increase percentage
             if (normalizedRecordInfo && normalizedRecordInfo.previousWeight > 0) {
               const increasePercentage = ((normalizedRecordInfo.weight - normalizedRecordInfo.previousWeight) / normalizedRecordInfo.previousWeight) * 100;
               
               if (increasePercentage >= 10) {
-                await AchievementService.awardAchievement(userId, 'pr-increase-10');
+                awardedAchievements.push('pr-increase-10');
               }
               if (increasePercentage >= 20) {
-                await AchievementService.awardAchievement(userId, 'pr-increase-20');
+                awardedAchievements.push('pr-increase-20');
               }
+            }
+            
+            // Award achievements
+            if (awardedAchievements.length > 0) {
+              await AchievementService.checkAndAwardAchievements(userId, awardedAchievements);
             }
           }, 
           'personal_record_achievements', 
           3,
           'Failed to check personal record achievements'
         );
+        
+        return awardedAchievements;
       },
       'CHECK_PR_ACHIEVEMENTS',
       { showToast: false }
@@ -72,7 +88,7 @@ export class RecordAchievementChecker extends BaseAchievementChecker implements 
   async checkAchievements(
     userId: string,
     recordInfo?: PersonalRecordData
-  ): Promise<ServiceResponse<void>> {
+  ): Promise<ServiceResponse<string[]>> {
     return RecordAchievementChecker.checkAchievements(userId, recordInfo);
   }
 }

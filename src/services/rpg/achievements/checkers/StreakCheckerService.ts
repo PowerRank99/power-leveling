@@ -34,36 +34,36 @@ export class StreakCheckerService extends BaseAchievementChecker {
         const achievementsToCheck: string[] = [];
         
         // Check for E rank achievements
-        if (currentStreak >= 3 && ACHIEVEMENT_IDS.E.STREAK.includes('streak-3')) {
+        if (currentStreak >= 3 && ACHIEVEMENT_IDS.E.streak.includes('streak-3')) {
           achievementsToCheck.push('streak-3');
         }
         
         // Check for D rank achievements
-        if (currentStreak >= 7 && ACHIEVEMENT_IDS.D.STREAK.includes('streak-7')) {
+        if (currentStreak >= 7 && ACHIEVEMENT_IDS.D.streak.includes('streak-7')) {
           achievementsToCheck.push('streak-7');
         }
         
         // Check for C rank achievements
-        if (currentStreak >= 14 && ACHIEVEMENT_IDS.C.STREAK.includes('streak-14')) {
+        if (currentStreak >= 14 && ACHIEVEMENT_IDS.C.streak.includes('streak-14')) {
           achievementsToCheck.push('streak-14');
         }
         
         // Check for B rank achievements
-        if (currentStreak >= 30 && ACHIEVEMENT_IDS.B.STREAK.includes('streak-30')) {
+        if (currentStreak >= 30 && ACHIEVEMENT_IDS.B.streak.includes('streak-30')) {
           achievementsToCheck.push('streak-30');
         }
         
         // Check for A rank achievements
-        if (currentStreak >= 60 && ACHIEVEMENT_IDS.A.STREAK.includes('streak-60')) {
+        if (currentStreak >= 60 && ACHIEVEMENT_IDS.A.streak.includes('streak-60')) {
           achievementsToCheck.push('streak-60');
         }
         
         // Check for S rank achievements
-        if (currentStreak >= 100 && ACHIEVEMENT_IDS.S.STREAK.includes('streak-100')) {
+        if (currentStreak >= 100 && ACHIEVEMENT_IDS.S.streak.includes('streak-100')) {
           achievementsToCheck.push('streak-100');
         }
         
-        if (currentStreak >= 365 && ACHIEVEMENT_IDS.S.STREAK.includes('streak-365')) {
+        if (currentStreak >= 365 && ACHIEVEMENT_IDS.S.streak.includes('streak-365')) {
           achievementsToCheck.push('streak-365');
         }
         

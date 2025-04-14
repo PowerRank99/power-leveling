@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
+import { ServiceResponse, ErrorHandlingService, createSuccessResponse } from '@/services/common/ErrorHandlingService';
 import { AchievementChecker } from './AchievementCheckerInterface';
 import { BaseAchievementChecker } from './BaseAchievementChecker';
 import { AchievementService } from '../AchievementService';
@@ -17,10 +17,12 @@ export class XPAchievementChecker extends BaseAchievementChecker implements Achi
   static async checkAchievements(
     userId: string, 
     totalXP?: number
-  ): Promise<ServiceResponse<void>> {
+  ): Promise<ServiceResponse<string[]>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
         if (!userId) throw new Error('User ID is required');
+        
+        const awardedAchievements: string[] = [];
 
         // Get user profile to get current XP if not provided
         let userXP = totalXP;
@@ -43,30 +45,30 @@ export class XPAchievementChecker extends BaseAchievementChecker implements Achi
         await TransactionService.executeWithRetry(
           async () => {
             // Award XP milestone achievements
-            const achievementChecks = [];
-            
-            if (userXP >= 1000) achievementChecks.push('xp-1000');
-            if (userXP >= 5000) achievementChecks.push('xp-5000');
-            if (userXP >= 10000) achievementChecks.push('xp-10000');
-            if (userXP >= 50000) achievementChecks.push('xp-50000');
-            if (userXP >= 100000) achievementChecks.push('xp-100000');
+            if (userXP >= 1000) awardedAchievements.push('xp-1000');
+            if (userXP >= 5000) awardedAchievements.push('xp-5000');
+            if (userXP >= 10000) awardedAchievements.push('xp-10000');
+            if (userXP >= 50000) awardedAchievements.push('xp-50000');
+            if (userXP >= 100000) awardedAchievements.push('xp-100000');
 
             // Level milestone achievements
-            if (userLevel >= 10) achievementChecks.push('level-10');
-            if (userLevel >= 25) achievementChecks.push('level-25');
-            if (userLevel >= 50) achievementChecks.push('level-50');
-            if (userLevel >= 75) achievementChecks.push('level-75');
-            if (userLevel >= 99) achievementChecks.push('level-99');
+            if (userLevel >= 10) awardedAchievements.push('level-10');
+            if (userLevel >= 25) awardedAchievements.push('level-25');
+            if (userLevel >= 50) awardedAchievements.push('level-50');
+            if (userLevel >= 75) awardedAchievements.push('level-75');
+            if (userLevel >= 99) awardedAchievements.push('level-99');
             
             // Check all achievements in batch
-            if (achievementChecks.length > 0) {
-              await AchievementService.checkAndAwardAchievements(userId, achievementChecks);
+            if (awardedAchievements.length > 0) {
+              await AchievementService.checkAndAwardAchievements(userId, awardedAchievements);
             }
           }, 
           'xp_milestone_achievements', 
           3,
           'Failed to check XP milestone achievements'
         );
+        
+        return awardedAchievements;
       },
       'CHECK_XP_ACHIEVEMENTS',
       { showToast: false }
@@ -80,7 +82,7 @@ export class XPAchievementChecker extends BaseAchievementChecker implements Achi
   async checkAchievements(
     userId: string,
     totalXP?: number
-  ): Promise<ServiceResponse<void>> {
+  ): Promise<ServiceResponse<string[]>> {
     return XPAchievementChecker.checkAchievements(userId, totalXP);
   }
 }
