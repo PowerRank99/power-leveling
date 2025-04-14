@@ -1,9 +1,8 @@
-
 import { XP_CONSTANTS } from '../constants/xpConstants';
 
 /**
- * Service for basic XP calculations that are not class-specific
- * Handles core XP calculations like streak multipliers and time-based XP
+ * Core XP calculation service that handles basic XP computations
+ * Responsible for time-based XP and streak multipliers
  */
 export class BaseXPCalculator {
   /**

@@ -1,4 +1,3 @@
-
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { XP_CONSTANTS } from './constants/xpConstants';
 import { EXERCISE_TYPES, CLASS_PASSIVE_SKILLS } from './constants/exerciseTypes';
@@ -6,8 +5,9 @@ import { BaseXPCalculator } from './calculations/BaseXPCalculator';
 import { ClassBonusCalculator } from './calculations/ClassBonusCalculator';
 
 /**
- * Service responsible for XP calculations and constants
- * Acts as a facade for the various calculation services
+ * Central service for coordinating XP calculations across the application
+ * Acts as a facade for various specialized calculators while maintaining
+ * backward compatibility with older implementations
  */
 export class XPCalculationService {
   // Re-export constants for backward compatibility

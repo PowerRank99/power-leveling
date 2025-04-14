@@ -1,4 +1,3 @@
-
 import { EXERCISE_TYPES, CLASS_PASSIVE_SKILLS } from '../constants/exerciseTypes';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { ClassBonusBreakdown } from '../types/classTypes';
@@ -9,8 +8,14 @@ import { BruxoBonus } from './class-bonuses/BruxoBonus';
 import { PaladinoBonus } from './class-bonuses/PaladinoBonus';
 
 /**
- * Service for calculating class-specific XP bonuses
- * Coordinates the individual class bonus calculators using the Strategy pattern
+ * Service that coordinates class-specific XP bonus calculations
+ * Uses the Strategy pattern to delegate calculations to specialized class calculators
+ * 
+ * Class-specific bonuses are calculated based on:
+ * - Workout type and exercises
+ * - User's current streak
+ * - Personal records
+ * - Time-based conditions
  */
 export class ClassBonusCalculator {
   /**
