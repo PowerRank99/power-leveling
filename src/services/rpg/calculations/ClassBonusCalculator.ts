@@ -1,3 +1,4 @@
+
 import { EXERCISE_TYPES, CLASS_PASSIVE_SKILLS } from '../constants/exerciseTypes';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { ClassBonusBreakdown } from '../types/classTypes';
@@ -6,6 +7,7 @@ import { MongeBonus } from './class-bonuses/MongeBonus';
 import { NinjaBonus } from './class-bonuses/NinjaBonus';
 import { BruxoBonus } from './class-bonuses/BruxoBonus';
 import { PaladinoBonus } from './class-bonuses/PaladinoBonus';
+import { XPCalculationInput } from '../types/xpTypes';
 
 /**
  * Service that coordinates class-specific XP bonus calculations

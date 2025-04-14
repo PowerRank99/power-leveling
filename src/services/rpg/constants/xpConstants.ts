@@ -1,32 +1,46 @@
 
+import { XPTimeTier, DifficultyMultipliers } from '../types/xpTypes';
+
 /**
- * Constants related to XP calculations
+ * Constants for XP calculations
  */
 export const XP_CONSTANTS = {
-  // XP system constants
+  /** Daily XP cap (300 XP) */
   DAILY_XP_CAP: 300,
-  PR_BONUS_XP: 50, // Bonus XP for personal records
-  BASE_EXERCISE_XP: 5, // XP per exercise
-  BASE_SET_XP: 2, // XP per set
-  MAX_XP_CONTRIBUTING_SETS: 10, // Maximum number of sets that contribute to XP
   
-  // Time-based XP tiers
-  // These represent the maximum minutes for each tier and the XP for completing that entire tier
-  TIME_XP_TIERS: [
-    { minutes: 30, xp: 40 },  // 0-30 minutes: 40 XP total
-    { minutes: 60, xp: 30 },  // 31-60 minutes: 30 XP additional
-    { minutes: 90, xp: 20 },  // 61-90 minutes: 20 XP additional
-    { minutes: Infinity, xp: 0 } // Beyond 90 minutes: 0 XP additional
-  ],
+  /** Power day XP cap (500 XP) */
+  POWER_DAY_XP_CAP: 500,
   
-  // Difficulty multipliers
+  /** XP bonus for achieving a personal record */
+  PR_BONUS_XP: 50,
+  
+  /** Base XP per exercise */
+  BASE_EXERCISE_XP: 5,
+  
+  /** Base XP per completed set */
+  BASE_SET_XP: 2,
+  
+  /** Maximum number of sets that contribute to XP (anti-abuse) */
+  MAX_XP_CONTRIBUTING_SETS: 10,
+  
+  /** Maximum streak bonus days */
+  MAX_STREAK_DAYS: 7,
+  
+  /** Per-day streak bonus percentage (as decimal) */
+  STREAK_BONUS_PER_DAY: 0.05,
+  
+  /** XP multipliers for different difficulty levels */
   DIFFICULTY_MULTIPLIERS: {
     iniciante: 0.8,
     intermediario: 1.0,
-    avancado: 1.2,
-  },
+    avancado: 1.2
+  } as DifficultyMultipliers,
   
-  // Streak and bonus constants
-  STREAK_BONUS_PER_DAY: 0.05,
-  MAX_STREAK_DAYS: 7,
+  /** Diminishing returns tiers for time-based XP */
+  TIME_XP_TIERS: [
+    { minutes: 30, xp: 40 },
+    { minutes: 60, xp: 30 },
+    { minutes: 90, xp: 20 },
+    { minutes: Infinity, xp: 0 }
+  ] as XPTimeTier[]
 };

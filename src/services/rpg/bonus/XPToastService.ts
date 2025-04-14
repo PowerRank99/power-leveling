@@ -1,21 +1,31 @@
 
 import { toast } from 'sonner';
+import { ClassBonusBreakdown } from '../types/classTypes';
 
 /**
  * XP breakdown for toast notifications
  */
-export interface XPBreakdown {
+export interface XPToastBreakdown {
+  /** Base XP before any modifiers */
   base: number;
+  
+  /** Bonus from class skills */
   classBonus: number;
+  
+  /** Bonus from streak */
   streakBonus: number;
+  
+  /** Bonus from personal records */
   recordBonus: number;
+  
+  /** Weekly completion bonus */
   weeklyBonus: number;
+  
+  /** Monthly goal completion bonus */
   monthlyBonus: number;
-  bonusDetails: {
-    skill: string;
-    amount: number;
-    description: string;
-  }[];
+  
+  /** Detailed breakdown of all bonuses */
+  bonusDetails: ClassBonusBreakdown[];
 }
 
 /**
@@ -24,8 +34,12 @@ export interface XPBreakdown {
 export class XPToastService {
   /**
    * Show an XP gain toast with breakdown
+   * 
+   * @param amount - Total XP gained
+   * @param breakdown - Optional detailed breakdown of XP components
+   * @param leveledUp - Whether user leveled up from this XP gain
    */
-  static showXPToast(amount: number, breakdown?: XPBreakdown, leveledUp: boolean = false): void {
+  static showXPToast(amount: number, breakdown?: XPToastBreakdown, leveledUp: boolean = false): void {
     if (amount <= 0) return;
     
     let description = `+${amount} XP`;

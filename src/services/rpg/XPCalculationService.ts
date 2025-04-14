@@ -1,8 +1,14 @@
+
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { XP_CONSTANTS } from './constants/xpConstants';
 import { EXERCISE_TYPES, CLASS_PASSIVE_SKILLS } from './constants/exerciseTypes';
 import { BaseXPCalculator } from './calculations/BaseXPCalculator';
 import { ClassBonusCalculator } from './calculations/ClassBonusCalculator';
+import { 
+  XPCalculationInput, 
+  XPCalculationResult, 
+  WorkoutDifficulty 
+} from './types/xpTypes';
 
 /**
  * Central service for coordinating XP calculations across the application
@@ -40,29 +46,13 @@ export class XPCalculationService {
   /**
    * Calculate XP for a completed workout with bonus breakdown
    * Orchestrates the XP calculation process using various calculators
-   * 
-   * @param workout - Workout data including exercises, duration, and difficulty
-   * @param userClass - User's selected class (Guerreiro, Monge, etc.)
-   * @param streak - Current streak count in days
-   * @param difficulty - Workout difficulty level
-   * @returns Total XP, base XP, and breakdown of all bonuses applied
    */
-  static calculateWorkoutXP(
-    workout: {
-      id: string;
-      exercises: WorkoutExercise[];
-      durationSeconds: number;
-      difficulty?: 'iniciante' | 'intermediario' | 'avancado';
-      hasPR?: boolean;
-    },
-    userClass?: string | null,
-    streak: number = 0,
-    difficulty: 'iniciante' | 'intermediario' | 'avancado' = 'intermediario'
-  ): {
-    totalXP: number;
-    baseXP: number;
-    bonusBreakdown: { skill: string, amount: number, description: string }[];
-  } {
+  static calculateWorkoutXP({
+    workout,
+    userClass = null,
+    streak = 0,
+    defaultDifficulty = 'intermediario'
+  }: XPCalculationInput): XPCalculationResult {
     try {
       // Calculate time-based XP with diminishing returns
       const timeMinutes = Math.floor((workout.durationSeconds || 0) / 60);
@@ -91,9 +81,10 @@ export class XPCalculationService {
       let baseXP = timeXP + exerciseXP + setsXP + prBonus;
       
       // Apply difficulty modifier if available
-      const workoutDifficulty = workout.difficulty || difficulty;
-      if (workoutDifficulty in this.DIFFICULTY_MULTIPLIERS) {
-        baseXP = Math.round(baseXP * this.DIFFICULTY_MULTIPLIERS[workoutDifficulty as keyof typeof this.DIFFICULTY_MULTIPLIERS]);
+      const workoutDifficulty = workout.difficulty || defaultDifficulty;
+      const difficultyMultiplier = this.DIFFICULTY_MULTIPLIERS[workoutDifficulty];
+      if (difficultyMultiplier) {
+        baseXP = Math.round(baseXP * difficultyMultiplier);
       }
       
       // Create a bonusBreakdown array to track all bonuses

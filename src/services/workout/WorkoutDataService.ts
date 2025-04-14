@@ -1,6 +1,25 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise, WorkoutSet } from '@/types/workout';
+import { WorkoutDifficulty } from '@/services/rpg/types/xpTypes';
+import { ServiceResponse } from '@/services/common/ErrorHandlingService';
+
+/**
+ * Profile data returned from user query
+ */
+interface UserProfileData {
+  class: string | null;
+  streak: number;
+}
+
+/**
+ * Routine data returned from routine query
+ */
+interface RoutineData {
+  id: string;
+  level?: string;
+  [key: string]: any;
+}
 
 /**
  * Service for fetching and formatting workout data
@@ -8,6 +27,9 @@ import { WorkoutExercise, WorkoutSet } from '@/types/workout';
 export class WorkoutDataService {
   /**
    * Fetch workout exercises for XP calculation
+   * 
+   * @param workoutId - Unique identifier for the workout
+   * @returns Promise resolving to array of workout exercises
    */
   static async fetchWorkoutExercises(workoutId: string): Promise<WorkoutExercise[]> {
     try {
@@ -21,6 +43,7 @@ export class WorkoutDataService {
       
       // Group sets by exercise
       const exerciseMap: Record<string, WorkoutExercise> = {};
+      
       exerciseSets.forEach(set => {
         const exerciseId = set.exercise_id;
         if (!exerciseId) return;
@@ -52,8 +75,11 @@ export class WorkoutDataService {
   
   /**
    * Fetch user profile data
+   * 
+   * @param userId - User identifier
+   * @returns Promise resolving to user profile data or null
    */
-  static async fetchUserProfile(userId: string) {
+  static async fetchUserProfile(userId: string): Promise<UserProfileData | null> {
     try {
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -71,8 +97,11 @@ export class WorkoutDataService {
   
   /**
    * Get workout difficulty level from routine
+   * 
+   * @param routineId - Routine identifier
+   * @returns Promise resolving to workout difficulty
    */
-  static async getWorkoutDifficultyLevel(routineId: string | null): Promise<'iniciante' | 'intermediario' | 'avancado'> {
+  static async getWorkoutDifficultyLevel(routineId: string | null): Promise<WorkoutDifficulty> {
     if (!routineId) return 'intermediario';
     
     try {
@@ -87,8 +116,7 @@ export class WorkoutDataService {
       }
       
       // Map the routine level to our difficulty levels
-      // Since 'level' might not exist on routines, use a type safe approach
-      const level = (routineData as any).level;
+      const level = (routineData as RoutineData).level;
       if (!level) return 'intermediario';
       
       const levelLower = level.toLowerCase();

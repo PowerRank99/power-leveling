@@ -1,4 +1,6 @@
+
 import { XP_CONSTANTS } from '../constants/xpConstants';
+import { XPTimeTier } from '../types/xpTypes';
 
 /**
  * Core XP calculation service that handles basic XP computations
@@ -32,7 +34,7 @@ export class BaseXPCalculator {
     let totalXP = 0;
     
     // Create time brackets for a more readable approach
-    const brackets = XP_CONSTANTS.TIME_XP_TIERS;
+    const brackets: XPTimeTier[] = XP_CONSTANTS.TIME_XP_TIERS;
     
     let remainingMinutes = durationMinutes;
     let previousBracketEnd = 0;
