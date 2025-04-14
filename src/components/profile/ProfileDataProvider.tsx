@@ -1,23 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { XPBonusService } from '@/services/rpg/XPBonusService';
-
-export interface ProfileData {
-  level: number;
-  currentXP: number;
-  nextLevelXP: number;
-  className: string;
-  classDescription: string;
-  dailyXP: number;
-  dailyXPCap: number;
-  lastActivity: string;
-  xpGain: number;
-  streak: number;
-  achievementPoints: number;
-  rank: string;
-  ranking: number;
-}
+import { OptimizedProfileService } from '@/services/profile/OptimizedProfileService';
+import { ProfileData } from '@/types/profile';
+import { toast } from 'sonner';
 
 interface ProfileDataProviderProps {
   userId: string;
@@ -43,70 +28,70 @@ const ProfileDataProvider: React.FC<ProfileDataProviderProps> = ({ userId, child
 
   useEffect(() => {
     const fetchProfileData = async () => {
+      if (!userId) return;
+      
       try {
-        // Get profile data using a single efficient query
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('level, xp, class, daily_xp, daily_xp_cap, last_workout_at, streak, achievements_count, rank, achievement_points')
-          .eq('id', userId)
-          .single();
+        const result = await OptimizedProfileService.getUserProfileData(userId);
         
-        if (error) {
-          console.error('Error fetching profile data:', error);
+        if (!result.success || !result.data) {
+          toast.error('Erro ao carregar dados do perfil');
           return;
         }
+
+        const data = result.data;
         
-        if (data) {
-          // Calculate next level XP
-          const nextLevel = data.level ? data.level + 1 : 2;
-          const nextLevelXP = XPBonusService.getXPForLevel(nextLevel);
-          
-          // Determine last activity
-          const lastActivity = data.last_workout_at
-            ? new Date(data.last_workout_at).toLocaleDateString()
-            : 'Nenhuma atividade recente';
-          
-          // Get class description - note that we're checking for the 'class' field, not 'class_name'
-          let classDescription = 'Sem especialização';
-          
-          if (data.class) {
-            const { data: classData, error: classError } = await supabase
-              .from('class_bonuses')
-              .select('description')
-              .eq('class_name', data.class)
-              .single();
-            
-            if (!classError && classData) {
-              classDescription = classData.description;
-            } else if (classError) {
-              console.error('Error fetching class description:', classError);
-            }
-          }
-          
-          setProfileData({
-            level: data.level || 1,
-            currentXP: data.xp || 0,
-            nextLevelXP: nextLevelXP,
-            className: data.class || 'Aventureiro',
-            classDescription: classDescription,
-            dailyXP: data.daily_xp || 0,
-            dailyXPCap: data.daily_xp_cap || 300,
-            lastActivity: lastActivity,
-            xpGain: 0,
-            streak: data.streak || 0,
-            achievementPoints: data.achievement_points || 0,
-            rank: data.rank || 'Unranked',
-            ranking: 42, // Default value as a number
-          });
-        }
+        setProfileData({
+          level: data.level,
+          currentXP: data.xp,
+          nextLevelXP: data.next_level_xp,
+          className: data.class,
+          classDescription: data.class_data?.description || 'Sem especialização',
+          dailyXP: data.daily_xp,
+          dailyXPCap: data.daily_xp_cap,
+          lastActivity: data.last_workout_at ? 
+            new Date(data.last_workout_at).toLocaleDateString() : 
+            'Nenhuma atividade recente',
+          xpGain: 0, // This will be updated through real-time updates
+          streak: data.streak,
+          achievementPoints: data.achievement_points,
+          rank: data.rank,
+          ranking: 42, // This will be implemented in a future update
+        });
       } catch (error) {
         console.error('Error in ProfileDataProvider:', error);
+        toast.error('Erro ao carregar dados do perfil');
       }
     };
     
-    if (userId) {
-      fetchProfileData();
-    }
+    fetchProfileData();
+
+    // Subscribe to real-time updates for XP changes
+    const channel = supabase
+      .channel('profile-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${userId}`
+        },
+        (payload) => {
+          const newData = payload.new as any;
+          setProfileData(prev => ({
+            ...prev,
+            currentXP: newData.xp || prev.currentXP,
+            dailyXP: newData.daily_xp || prev.dailyXP,
+            level: newData.level || prev.level,
+          }));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+      OptimizedProfileService.clearCache();
+    };
   }, [userId]);
 
   return <>{children(profileData)}</>;

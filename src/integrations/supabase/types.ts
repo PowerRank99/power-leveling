@@ -945,6 +945,26 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: Json
       }
+      get_paginated_workouts: {
+        Args: { p_user_id: string; p_limit: number; p_cursor?: string }
+        Returns: {
+          id: string
+          started_at: string
+          completed_at: string
+          duration_seconds: number
+          routine_id: string
+          exercise_count: number
+          next_cursor: string
+        }[]
+      }
+      get_personal_records_for_workout: {
+        Args: { p_workout_id: string; p_user_id: string }
+        Returns: {
+          exercise_id: string
+          current_record: number
+          previous_record: number
+        }[]
+      }
       get_power_day_usage: {
         Args: { p_user_id: string; p_week_number: number; p_year: number }
         Returns: {
@@ -963,6 +983,28 @@ export type Database = {
           created_at: string
           workout_date: string
           is_power_day: boolean
+        }[]
+      }
+      get_user_profile_dashboard: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
+      get_workout_with_sets: {
+        Args: { p_workout_id: string }
+        Returns: {
+          workout_id: string
+          workout_started_at: string
+          workout_completed_at: string
+          workout_duration_seconds: number
+          routine_id: string
+          user_id: string
+          set_id: string
+          exercise_id: string
+          set_order: number
+          weight: number
+          reps: number
+          completed: boolean
+          completed_at: string
         }[]
       }
       increment_profile_counter: {
