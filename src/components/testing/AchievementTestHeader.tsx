@@ -53,7 +53,10 @@ const AchievementTestHeader: React.FC<AchievementTestHeaderProps> = ({
           )}
         </div>
         
-        <Select value={selectedCategory} onValueChange={(value) => onFilterChange(value, selectedRank)}>
+        <Select 
+          value={selectedCategory} 
+          onValueChange={(value) => onFilterChange(value, selectedRank)}
+        >
           <SelectTrigger className="w-40 bg-midnight-elevated border-divider">
             <SelectValue placeholder="Category" />
           </SelectTrigger>
@@ -67,7 +70,10 @@ const AchievementTestHeader: React.FC<AchievementTestHeaderProps> = ({
           </SelectContent>
         </Select>
         
-        <Select value={selectedRank} onValueChange={(value) => onFilterChange(selectedCategory, value)}>
+        <Select 
+          value={selectedRank} 
+          onValueChange={(value) => onFilterChange(selectedCategory, value)}
+        >
           <SelectTrigger className="w-32 bg-midnight-elevated border-divider">
             <SelectValue placeholder="Rank" />
           </SelectTrigger>
