@@ -1,6 +1,6 @@
 
 import { WorkoutExercise, WorkoutSet, PreviousSetData } from '@/types/workout';
-import { ExerciseHistoryService } from '@/services/ExerciseHistoryService';
+import { ExerciseHistoryService } from '@/services/exercise-history/ExerciseHistoryService';
 
 /**
  * Service responsible for formatting workout data
