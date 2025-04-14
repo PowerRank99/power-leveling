@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ClassBonusCalculator } from '@/services/rpg/calculations/ClassBonusCalculator';
 import { ExerciseTypeClassifier } from '@/services/rpg/calculations/ExerciseTypeClassifier';
+import { WorkoutExercise } from '@/types/workoutTypes';
 
 // Mock the ExerciseTypeClassifier
 vi.mock('@/services/rpg/calculations/ExerciseTypeClassifier', () => ({
@@ -55,7 +56,9 @@ describe('ClassBonusCalculator', () => {
       
       const workout = {
         id: 'test-workout',
-        exercises: [{ id: 'ex1' }],
+        exercises: [
+          { id: 'ex1', exerciseId: 'ex1', name: 'Bench Press', sets: [] }
+        ] as WorkoutExercise[],
         durationSeconds: 1800,
         hasPR: true
       };
@@ -99,7 +102,9 @@ describe('ClassBonusCalculator', () => {
       
       const workout = {
         id: 'test-workout',
-        exercises: [{ id: 'ex1' }],
+        exercises: [
+          { id: 'ex1', exerciseId: 'ex1', name: 'Running', sets: [] }
+        ] as WorkoutExercise[],
         durationSeconds: 2100 // 35 minutes (under 45 minute threshold)
       };
       

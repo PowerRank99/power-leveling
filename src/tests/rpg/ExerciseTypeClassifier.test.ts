@@ -7,15 +7,21 @@ describe('ExerciseTypeClassifier', () => {
   describe('exercise classification', () => {
     it('should identify Guerreiro exercises correctly', () => {
       const strengthExercise = {
+        id: 'ex1',
+        exerciseId: 'ex1',
+        name: 'Bench Press',
         type: 'Musculação',
-        name: 'Bench Press'
+        sets: []
       } as WorkoutExercise;
       
       expect(ExerciseTypeClassifier.isGuerreiroExercise(strengthExercise)).toBe(true);
       
       const nonStrengthExercise = {
+        id: 'ex2',
+        exerciseId: 'ex2',
+        name: 'Running',
         type: 'Cardio',
-        name: 'Running'
+        sets: []
       } as WorkoutExercise;
       
       expect(ExerciseTypeClassifier.isGuerreiroExercise(nonStrengthExercise)).toBe(false);
@@ -23,22 +29,31 @@ describe('ExerciseTypeClassifier', () => {
     
     it('should identify Monge exercises correctly', () => {
       const calisthenicExercise = {
+        id: 'ex3',
+        exerciseId: 'ex3',
+        name: 'Pull-up',
         type: 'Calistenia',
-        name: 'Pull-up'
+        sets: []
       } as WorkoutExercise;
       
       expect(ExerciseTypeClassifier.isMongeExercise(calisthenicExercise)).toBe(true);
       
       const bodyweightExercise = {
+        id: 'ex4',
+        exerciseId: 'ex4',
+        name: 'push up challenge',
         type: 'Other',
-        name: 'push up challenge'
+        sets: []
       } as WorkoutExercise;
       
       expect(ExerciseTypeClassifier.isMongeExercise(bodyweightExercise)).toBe(true);
       
       const nonBodyweightExercise = {
+        id: 'ex5',
+        exerciseId: 'ex5',
+        name: 'Bench Press',
         type: 'Musculação',
-        name: 'Bench Press'
+        sets: []
       } as WorkoutExercise;
       
       expect(ExerciseTypeClassifier.isMongeExercise(nonBodyweightExercise)).toBe(false);
@@ -46,22 +61,31 @@ describe('ExerciseTypeClassifier', () => {
     
     it('should identify Ninja exercises correctly', () => {
       const cardioExercise = {
+        id: 'ex6',
+        exerciseId: 'ex6',
+        name: 'Running',
         type: 'Cardio',
-        name: 'Running'
+        sets: []
       } as WorkoutExercise;
       
       expect(ExerciseTypeClassifier.isNinjaExercise(cardioExercise)).toBe(true);
       
       const hiitExercise = {
+        id: 'ex7',
+        exerciseId: 'ex7',
+        name: 'hiit training',
         type: 'Other',
-        name: 'hiit training'
+        sets: []
       } as WorkoutExercise;
       
       expect(ExerciseTypeClassifier.isNinjaExercise(hiitExercise)).toBe(true);
       
       const nonCardioExercise = {
+        id: 'ex8',
+        exerciseId: 'ex8',
+        name: 'Bench Press',
         type: 'Musculação',
-        name: 'Bench Press'
+        sets: []
       } as WorkoutExercise;
       
       expect(ExerciseTypeClassifier.isNinjaExercise(nonCardioExercise)).toBe(false);
@@ -71,9 +95,9 @@ describe('ExerciseTypeClassifier', () => {
   describe('counting exercises and sets', () => {
     it('should count qualifying exercises correctly', () => {
       const exercises = [
-        { type: 'Musculação', name: 'Bench Press', id: 'ex1' } as WorkoutExercise,
-        { type: 'Musculação', name: 'Squat', id: 'ex2' } as WorkoutExercise,
-        { type: 'Cardio', name: 'Running', id: 'ex3' } as WorkoutExercise
+        { id: 'ex1', exerciseId: 'ex1', name: 'Bench Press', type: 'Musculação', sets: [] } as WorkoutExercise,
+        { id: 'ex2', exerciseId: 'ex2', name: 'Squat', type: 'Musculação', sets: [] } as WorkoutExercise,
+        { id: 'ex3', exerciseId: 'ex3', name: 'Running', type: 'Cardio', sets: [] } as WorkoutExercise
       ];
       
       const guerreiroCount = ExerciseTypeClassifier.countQualifyingExercises(
@@ -94,9 +118,10 @@ describe('ExerciseTypeClassifier', () => {
     it('should count qualifying sets correctly', () => {
       const exercises = [
         {
-          type: 'Musculação',
-          name: 'Bench Press',
           id: 'ex1',
+          exerciseId: 'ex1',
+          name: 'Bench Press',
+          type: 'Musculação',
           sets: [
             { id: 'set1', completed: true },
             { id: 'set2', completed: true },
@@ -104,18 +129,20 @@ describe('ExerciseTypeClassifier', () => {
           ]
         } as unknown as WorkoutExercise,
         {
-          type: 'Musculação',
-          name: 'Squat',
           id: 'ex2',
+          exerciseId: 'ex2',
+          name: 'Squat',
+          type: 'Musculação',
           sets: [
             { id: 'set4', completed: true },
             { id: 'set5', completed: true }
           ]
         } as unknown as WorkoutExercise,
         {
-          type: 'Cardio',
-          name: 'Running',
           id: 'ex3',
+          exerciseId: 'ex3',
+          name: 'Running',
+          type: 'Cardio',
           sets: [
             { id: 'set6', completed: true }
           ]
