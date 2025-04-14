@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { DatabaseResult, SetData } from '@/types/workoutTypes';
+import { createSuccessResult, createErrorResult, createVoidSuccessResult } from '@/utils/serviceUtils';
 
 /**
  * Service responsible for deleting and reordering workout sets
@@ -21,12 +22,12 @@ export class SetDeleteService {
       
       if (fetchError) {
         console.error(`[SetDeleteService] Error fetching set ${setId} for deletion:`, fetchError);
-        return { success: false, error: fetchError };
+        return createErrorResult(fetchError);
       }
       
       if (!setData) {
         console.error(`[SetDeleteService] Set ${setId} not found for deletion`);
-        return { success: false, error: new Error(`Set ${setId} not found`) };
+        return createErrorResult(new Error(`Set ${setId} not found`));
       }
       
       const { workout_id, exercise_id, set_order } = setData;
@@ -40,7 +41,7 @@ export class SetDeleteService {
         
       if (error) {
         console.error(`[SetDeleteService] Error deleting set ${setId}:`, error);
-        return { success: false, error };
+        return createErrorResult(error);
       }
       
       console.log(`[SetDeleteService] Successfully deleted set ${setId}`);
@@ -48,16 +49,15 @@ export class SetDeleteService {
       // After deletion, normalize the set orders to ensure they remain sequential
       await this.normalizeSetOrders(workout_id, exercise_id);
       
-      return { success: true };
+      return createVoidSuccessResult();
     } catch (error) {
       console.error(`[SetDeleteService] Exception deleting set ${setId}:`, error);
-      return { success: false, error };
+      return createErrorResult(error as Error);
     }
   }
 
   /**
    * Reorders sets after deletion or other operations
-   * to ensure they remain sequential
    */
   static async reorderSets(
     workoutId: string,
@@ -74,7 +74,7 @@ export class SetDeleteService {
       
       if (databaseSets.length === 0) {
         console.log(`[SetDeleteService] No database sets to reorder`);
-        return { success: true };
+        return createVoidSuccessResult();
       }
       
       // Get current sets from the database to ensure we're working with latest data
@@ -87,13 +87,13 @@ export class SetDeleteService {
         
       if (fetchError) {
         console.error(`[SetDeleteService] Error fetching current sets for reordering:`, fetchError);
-        return { success: false, error: fetchError };
+        return createErrorResult(fetchError);
       }
       
       // If no sets found in DB, nothing to reorder
       if (!currentSets || currentSets.length === 0) {
         console.log(`[SetDeleteService] No sets found in database to reorder`);
-        return { success: true };
+        return createVoidSuccessResult();
       }
       
       console.log(`[SetDeleteService] Found ${currentSets.length} sets in database for reordering`);
@@ -122,16 +122,15 @@ export class SetDeleteService {
       }
       
       console.log(`[SetDeleteService] Successfully reordered ${currentSets.length} sets`);
-      return { success: true };
+      return createVoidSuccessResult();
     } catch (error) {
       console.error("[SetDeleteService] Exception reordering sets:", error);
-      return { success: false, error };
+      return createErrorResult(error as Error);
     }
   }
   
   /**
    * Normalizes set orders to ensure they are sequential
-   * This is automatically called after deletion
    */
   static async normalizeSetOrders(
     workoutId: string,
@@ -150,12 +149,12 @@ export class SetDeleteService {
         
       if (fetchError) {
         console.error("[SetDeleteService] Error fetching sets for normalization:", fetchError);
-        return { success: false, error: fetchError };
+        return createErrorResult(fetchError);
       }
       
       if (!sets || sets.length === 0) {
         console.log("[SetDeleteService] No sets to normalize after deletion");
-        return { success: true };
+        return createVoidSuccessResult();
       }
       
       console.log(`[SetDeleteService] Found ${sets.length} sets to normalize after deletion`);
@@ -182,10 +181,10 @@ export class SetDeleteService {
       }
       
       console.log("[SetDeleteService] Successfully normalized set orders after deletion");
-      return { success: true };
+      return createVoidSuccessResult();
     } catch (error) {
       console.error("[SetDeleteService] Exception normalizing set orders:", error);
-      return { success: false, error };
+      return createErrorResult(error as Error);
     }
   }
 }

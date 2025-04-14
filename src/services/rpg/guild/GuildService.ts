@@ -1,8 +1,29 @@
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { CreateGuildParams, CreateRaidParams, GuildRole } from './types';
-import { AchievementService } from '@/services/rpg/AchievementService';
+import { DatabaseResult } from '@/types/workout';
+import { createSuccessResult, createErrorResult } from '@/utils/serviceUtils';
 
+/**
+ * Represents a guild member in the system
+ */
+interface GuildMember {
+  id: string;
+  user_id: string;
+  guild_id: string;
+  joined_at: string;
+  role: string;
+  user?: {
+    name: string;
+    avatar_url: string;
+    level: number;
+    xp: number;
+    workouts_count: number;
+    streak: number;
+  }
+}
+
+/**
+ * Service for handling guild operations
+ */
 export class GuildService {
   /**
    * Creates a new guild
@@ -68,28 +89,26 @@ export class GuildService {
    * @param guildId Guild ID to join
    * @returns Success status
    */
-  static async joinGuild(userId: string, guildId: string): Promise<boolean> {
+  static async joinGuild(userId: string, guildId: string): Promise<DatabaseResult<boolean>> {
     try {
       // Check if the user is already a member
       const { count, error: checkError } = await supabase
         .from('guild_members')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .eq('guild_id', guildId);
+        .select('id', { count: 'exact', head: true })
+        .match({ user_id: userId, guild_id: guildId });
         
       if (checkError) {
-        console.error('Error checking guild membership:', checkError);
-        throw checkError;
+        return createErrorResult(checkError);
       }
       
       // User is already a member
       if (count && count > 0) {
         toast.info('Você já é membro desta guilda.');
-        return true;
+        return createSuccessResult(true);
       }
       
       // Add user to guild
-      const { error: joinError } = await supabase
+      const { error } = await supabase
         .from('guild_members')
         .insert({
           guild_id: guildId,
@@ -97,9 +116,8 @@ export class GuildService {
           role: 'member'
         });
         
-      if (joinError) {
-        console.error('Error joining guild:', joinError);
-        throw joinError;
+      if (error) {
+        return createErrorResult(error);
       }
       
       // Award guild joining achievement
@@ -108,7 +126,7 @@ export class GuildService {
       // Check how many guilds the user has joined
       const { count: guildCount, error: countError } = await supabase
         .from('guild_members')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('user_id', userId);
         
       if (!countError && guildCount) {
@@ -125,13 +143,9 @@ export class GuildService {
         description: 'Você agora é um membro desta guilda.'
       });
       
-      return true;
+      return createSuccessResult(true);
     } catch (error) {
-      console.error('Failed to join guild:', error);
-      toast.error('Erro ao ingressar na guilda', {
-        description: 'Ocorreu um erro ao ingressar na guilda. Tente novamente.'
-      });
-      return false;
+      return createErrorResult(error as Error);
     }
   }
   
@@ -419,11 +433,74 @@ export class GuildService {
       return null;
     }
   }
-
+  
+  /**
+   * Get member details for a guild, including user profiles
+   */
+  static async getGuildMembers(guildId: string): Promise<DatabaseResult<GuildMember[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('guild_members')
+        .select(`
+          id,
+          user_id,
+          guild_id,
+          joined_at,
+          role,
+          profiles:user_id (
+            name,
+            avatar_url,
+            level,
+            xp,
+            workouts_count,
+            streak
+          )
+        `)
+        .eq('guild_id', guildId)
+        .order('joined_at');
+        
+      if (error) {
+        return createErrorResult(error);
+      }
+      
+      // Format the data to put user profile data at the root level
+      const formattedMembers = data.map(member => {
+        const profile = member.profiles as {
+          name: string;
+          avatar_url: string;
+          level: number;
+          xp: number;
+          workouts_count: number;
+          streak: number;
+        };
+        
+        return {
+          id: member.id,
+          user_id: member.user_id,
+          guild_id: member.guild_id,
+          joined_at: member.joined_at,
+          role: member.role,
+          user: {
+            name: profile?.name || 'Unknown',
+            avatar_url: profile?.avatar_url || '',
+            level: profile?.level || 1,
+            xp: profile?.xp || 0,
+            workouts_count: profile?.workouts_count || 0,
+            streak: profile?.streak || 0
+          }
+        };
+      });
+      
+      return createSuccessResult(formattedMembers);
+    } catch (error) {
+      return createErrorResult(error as Error);
+    }
+  }
+  
   /**
    * Format member data for UI display
    */
-  static formatMemberData(memberData: any[]): ServiceResponse<any[]> {
+  static formatMemberData(memberData: any[]): DatabaseResult<any[]> {
     try {
       const formattedMembers = memberData.map(member => ({
         id: member.id,
@@ -436,7 +513,7 @@ export class GuildService {
         joined_at: member.joined_at || new Date().toISOString()
       }));
       
-      return createSuccessResponse(formattedMembers);
+      return createSuccessResult(formattedMembers);
     } catch (error: any) {
       console.error('Error formatting member data:', error);
       return createErrorResponse(error.message);

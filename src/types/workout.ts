@@ -99,8 +99,12 @@ export interface PersonalRecord {
   id?: string;
   user_id?: string;
   exercise_id: string;
-  exercise_name: string;
+  exercise_name?: string;
+  exerciseId?: string; // For compatibility
+  exerciseName?: string; // For compatibility
   weight: number;
   previous_weight: number;
+  previousWeight?: number; // For compatibility
   recorded_at?: string;
+  recordedAt?: string; // For compatibility
 }

@@ -1,126 +1,118 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceResponse, createSuccessResponse, createErrorResponse } from '@/services/common/ErrorHandlingService';
+import { createSuccessResult, createErrorResult } from '@/utils/serviceUtils';
+import { DatabaseResult } from '@/types/workout';
 
 /**
- * Service for fetching achievements from the database
+ * Service for fetching achievement data
  */
 export class AchievementFetchService {
   /**
    * Get all achievements
    */
-  static async getAllAchievements(): Promise<ServiceResponse<any[]>> {
+  static async getAllAchievements() {
     try {
       const { data, error } = await supabase
         .from('achievements')
         .select('*')
         .order('rank');
-      
+        
       if (error) {
-        console.error("Error fetching achievements:", error);
-        return createErrorResponse(error.message);
+        return createErrorResult(error);
       }
       
-      if (!data || data.length === 0) {
-        return createSuccessResponse([]);
-      }
-      
-      // Format the achievements data
-      const formattedAchievements = data.map(item => ({
-        id: item.id,
-        name: item.name,
-        description: item.description,
-        category: item.category,
-        rank: item.rank,
-        points: item.points,
-        xp_reward: item.xp_reward,
-        icon_name: item.icon_name,
-        requirements: item.requirements
-      }));
-      
-      return createSuccessResponse(formattedAchievements);
-    } catch (error: any) {
-      console.error("Exception fetching achievements:", error);
-      return createErrorResponse(error.message);
+      return createSuccessResult(data);
+    } catch (error) {
+      return createErrorResult(error as Error);
     }
   }
   
   /**
-   * Get a specific achievement by ID
+   * Get unlocked achievements for a user
    */
-  static async getAchievementById(achievementId: string): Promise<ServiceResponse<any>> {
+  static async getUnlockedAchievements(userId: string) {
     try {
       const { data, error } = await supabase
-        .from('achievements')
+        .from('user_achievements')
+        .select(`
+          achievement_id,
+          achieved_at,
+          achievements:achievement_id (
+            id,
+            name,
+            description,
+            category,
+            rank,
+            points,
+            xp_reward,
+            icon_name,
+            requirements
+          )
+        `)
+        .eq('user_id', userId)
+        .order('achieved_at', { ascending: false });
+        
+      if (error) {
+        return createErrorResult(error);
+      }
+      
+      return createSuccessResult(data);
+    } catch (error) {
+      return createErrorResult(error as Error);
+    }
+  }
+  
+  /**
+   * Get achievement stats for a user
+   */
+  static async getAchievementStats(userId: string) {
+    try {
+      const { data, error } = await supabase
+        .rpc('get_achievement_stats', { p_user_id: userId });
+        
+      if (error) {
+        return createErrorResult(error);
+      }
+      
+      return createSuccessResult(data);
+    } catch (error) {
+      return createErrorResult(error as Error);
+    }
+  }
+  
+  /**
+   * Check for achievements related to workouts
+   */
+  static async checkWorkoutAchievements(userId: string, workoutId: string) {
+    try {
+      // Get workout details
+      const { data: workoutData, error: workoutError } = await supabase
+        .from('workouts')
         .select('*')
-        .eq('id', achievementId)
+        .eq('id', workoutId)
         .single();
-      
-      if (error) {
-        console.error(`Error fetching achievement with ID ${achievementId}:`, error);
-        return createErrorResponse(error.message);
+        
+      if (workoutError) {
+        return createErrorResult(workoutError);
       }
       
-      if (!data) {
-        return createErrorResponse(`Achievement with ID ${achievementId} not found`);
+      // Get all workouts count for user
+      const { count, error: countError } = await supabase
+        .from('workouts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+        
+      if (countError) {
+        return createErrorResult(countError);
       }
       
-      // Format the achievement data
-      const formattedAchievement = {
-        id: data.id,
-        name: data.name,
-        description: data.description,
-        category: data.category,
-        rank: data.rank,
-        points: data.points,
-        xp_reward: data.xp_reward,
-        icon_name: data.icon_name,
-        requirements: data.requirements
-      };
-      
-      return createSuccessResponse(formattedAchievement);
-    } catch (error: any) {
-      console.error(`Exception fetching achievement with ID ${achievementId}:`, error);
-      return createErrorResponse(error.message);
-    }
-  }
-  
-  /**
-   * Get achievements by category
-   */
-  static async getAchievementsByCategory(category: string): Promise<ServiceResponse<any[]>> {
-    try {
-      const { data, error } = await supabase
-        .from('achievements')
-        .select('*')
-        .eq('category', category)
-        .order('rank');
-      
-      if (error) {
-        console.error(`Error fetching achievements for category ${category}:`, error);
-        return createErrorResponse(error.message);
-      }
-      
-      if (!data || data.length === 0) {
-        return createSuccessResponse([]);
-      }
-      
-      // Format the achievements data
-      const formattedAchievements = data.map(item => ({
-        id: item.id,
-        name: item.name,
-        description: item.description,
-        category: item.category,
-        rank: item.rank,
-        points: item.points,
-        xp_reward: item.xp_reward,
-        icon_name: item.icon_name,
-        requirements: item.requirements
-      }));
-      
-      return createSuccessResponse(formattedAchievements);
-    } catch (error: any) {
-      console.error(`Exception fetching achievements for category ${category}:`, error);
-      return createErrorResponse(error.message);
+      // Return results
+      return createSuccessResult({
+        workoutData,
+        totalWorkouts: count || 0
+      });
+    } catch (error) {
+      return createErrorResult(error as Error);
     }
   }
 }

@@ -1,5 +1,7 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { SetData, DatabaseResult } from '@/types/workoutTypes';
+import { createSuccessResult, createErrorResult, createVoidSuccessResult } from '@/utils/serviceUtils';
 
 /**
  * Service responsible for updating workout sets
@@ -34,7 +36,7 @@ export class SetUpdateService {
         
       if (error) {
         console.error(`[SetUpdateService] Error updating set ${setId}:`, error);
-        return { success: false, error };
+        return createErrorResult(error);
       }
       
       console.log(`[SetUpdateService] Successfully updated set ${setId}`);
@@ -42,16 +44,17 @@ export class SetUpdateService {
       // Format to our SetData interface
       const formattedData: SetData = {
         id: updatedSet.id,
+        exercise_id: updatedSet.exercise_id,
         weight: updatedSet.weight?.toString() || '0',
         reps: updatedSet.reps?.toString() || '0',
         completed: updatedSet.completed || false,
         set_order: updatedSet.set_order
       };
       
-      return { success: true, data: formattedData };
+      return createSuccessResult(formattedData);
     } catch (error) {
       console.error(`[SetUpdateService] Exception updating set ${setId}:`, error);
-      return { success: false, error };
+      return createErrorResult(error as Error);
     }
   }
   
@@ -68,7 +71,7 @@ export class SetUpdateService {
       
       if (!routineId) {
         console.warn("[SetUpdateService] Missing routineId for updating target sets count");
-        return { success: false, error: new Error("Missing routineId") };
+        return createErrorResult(new Error("Missing routineId"));
       }
       
       const { data, error } = await supabase
@@ -80,14 +83,14 @@ export class SetUpdateService {
       
       if (error) {
         console.error("[SetUpdateService] Error updating routine exercise set count:", error);
-        return { success: false, error };
+        return createErrorResult(error);
       }
       
       console.log(`[SetUpdateService] Successfully updated routine exercise target sets to ${setCount}:`, data);
-      return { success: true };
+      return createVoidSuccessResult();
     } catch (error) {
       console.error("[SetUpdateService] Exception updating routine exercise set count:", error);
-      return { success: false, error };
+      return createErrorResult(error as Error);
     }
   }
 
@@ -103,7 +106,7 @@ export class SetUpdateService {
       
       if (!routineId) {
         console.warn("[SetUpdateService] Missing routineId for verifying target sets count");
-        return { success: false, error: new Error("Missing routineId") };
+        return createErrorResult(new Error("Missing routineId"));
       }
       
       const { data, error } = await supabase
@@ -115,14 +118,14 @@ export class SetUpdateService {
       
       if (error) {
         console.error("[SetUpdateService] Error verifying routine exercise set count:", error);
-        return { success: false, error };
+        return createErrorResult(error);
       }
       
       console.log(`[SetUpdateService] Current target sets: ${data.target_sets}`);
-      return { success: true, data: data.target_sets };
+      return createSuccessResult(data.target_sets);
     } catch (error) {
       console.error("[SetUpdateService] Exception verifying routine exercise set count:", error);
-      return { success: false, error };
+      return createErrorResult(error as Error);
     }
   }
 }

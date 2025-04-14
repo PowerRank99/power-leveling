@@ -1,5 +1,5 @@
 
-import { WorkoutExercise, WorkoutSet } from '@/types/workout';
+import { WorkoutExercise, WorkoutSet, PreviousSetData } from '@/types/workout';
 import { ExerciseHistoryService } from '@/services/ExerciseHistoryService';
 
 /**
@@ -50,12 +50,15 @@ export class WorkoutDataFormatter {
           const previousSet = previousExerciseData.find(p => p.set_order === set.set_order) || 
                             previousExerciseData[index] ||
                             { weight: '0', reps: '12' };
-                            
-          // Use exercise history as "previous" values if available
-          const historyValues = historyData ? {
-            weight: historyData.weight.toString(),
-            reps: historyData.reps.toString()
-          } : previousSet;
+          
+          // Create a properly structured PreviousSetData object
+          const previousSetData: PreviousSetData = {
+            id: set.id || `prev-${exercise.id}-${index}`,
+            exercise_id: exercise.id,
+            weight: historyData ? historyData.weight.toString() : previousSet.weight.toString(),
+            reps: historyData ? historyData.reps.toString() : previousSet.reps.toString(),
+            set_order: index
+          };
           
           return {
             id: set.id,
@@ -63,7 +66,8 @@ export class WorkoutDataFormatter {
             reps: set.reps?.toString() || '0',
             completed: set.completed || false,
             set_order: set.set_order,
-            previous: historyValues
+            previous: previousSetData,
+            exercise_id: exercise.id
           };
         });
       } else {
@@ -86,20 +90,27 @@ export class WorkoutDataFormatter {
             reps = historyData.reps.toString();
             console.log(`[WorkoutDataFormatter] Using history for ${exercise.name}: weight=${weight}, reps=${reps}`);
           } else if (previousExerciseData[index]) {
-            weight = previousExerciseData[index].weight;
-            reps = previousExerciseData[index].reps;
+            weight = previousExerciseData[index].weight?.toString() || '0';
+            reps = previousExerciseData[index].reps?.toString() || '12';
           }
+          
+          // Create a properly structured PreviousSetData object
+          const previousSetData: PreviousSetData = {
+            id: `prev-${exercise.id}-${index}`,
+            exercise_id: exercise.id,
+            weight,
+            reps,
+            set_order: index
+          };
           
           return {
             id: `default-${exercise.id}-${index}`,
-            weight: weight,
-            reps: reps,
+            weight,
+            reps,
             completed: false,
             set_order: index,
-            previous: {
-              weight: weight,
-              reps: reps
-            }
+            previous: previousSetData,
+            exercise_id: exercise.id
           };
         });
       }

@@ -1,135 +1,151 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { WorkoutExercise, WorkoutSet } from '@/types/workout';
-import { WorkoutDifficulty } from '@/services/rpg/types/xpTypes';
-import { ServiceResponse } from '@/services/common/ErrorHandlingService';
+import { WorkoutExercise } from '@/types/workout';
+import { toast } from 'sonner';
+import { WorkoutDataFormatter } from './WorkoutDataFormatter';
 
 /**
- * Profile data returned from user query
- */
-interface UserProfileData {
-  class: string | null;
-  streak: number;
-}
-
-/**
- * Routine data returned from routine query
- */
-interface RoutineData {
-  id: string;
-  level?: string;
-  [key: string]: any;
-}
-
-/**
- * Service for fetching and formatting workout data
+ * Service responsible for workout data management
  */
 export class WorkoutDataService {
   /**
-   * Fetch workout exercises for XP calculation
-   * 
-   * @param workoutId - Unique identifier for the workout
-   * @returns Promise resolving to array of workout exercises
+   * Gets a workout along with its exercises and sets
    */
-  static async fetchWorkoutExercises(workoutId: string): Promise<WorkoutExercise[]> {
+  static async getWorkoutWithExercises(
+    workoutId: string
+  ): Promise<WorkoutExercise[]> {
     try {
-      const { data: exerciseSets, error: setsError } = await supabase
+      console.log(`[WorkoutDataService] Getting workout with ID: ${workoutId}`);
+      
+      // Get the workout's routine exercises
+      const { data: workoutData, error: workoutError } = await supabase
+        .from('workouts')
+        .select('routine_id')
+        .eq('id', workoutId)
+        .single();
+        
+      if (workoutError) {
+        console.error("[WorkoutDataService] Error fetching workout:", workoutError);
+        return [];
+      }
+      
+      const routineId = workoutData.routine_id;
+      if (!routineId) {
+        console.error("[WorkoutDataService] Workout has no routine_id");
+        return [];
+      }
+      
+      // Get routine exercises
+      const { data: routineExercises, error: routineError } = await supabase
+        .from('routine_exercises')
+        .select(`
+          id,
+          exercise_id,
+          target_sets,
+          display_order,
+          exercises:exercise_id (
+            id,
+            name,
+            type
+          )
+        `)
+        .eq('routine_id', routineId)
+        .order('display_order');
+        
+      if (routineError) {
+        console.error("[WorkoutDataService] Error fetching routine exercises:", routineError);
+        return [];
+      }
+      
+      // Get all sets for this workout
+      const { data: workoutSets, error: setsError } = await supabase
         .from('workout_sets')
-        .select('id, exercise_id, weight, reps, completed, set_order, exercises(id, name)')
+        .select('*')
         .eq('workout_id', workoutId)
-        .order('set_order', { ascending: true });
-      
-      if (setsError) throw setsError;
-      
-      // Group sets by exercise
-      const exerciseMap: Record<string, WorkoutExercise> = {};
-      
-      exerciseSets.forEach(set => {
-        const exerciseId = set.exercise_id;
-        if (!exerciseId) return;
+        .order('set_order');
         
-        if (!exerciseMap[exerciseId]) {
-          exerciseMap[exerciseId] = {
-            id: exerciseId,
-            name: set.exercises?.name || 'Unknown Exercise',
-            exerciseId: exerciseId,
-            sets: []
-          };
-        }
-        
-        exerciseMap[exerciseId].sets.push({
-          id: set.id,
-          weight: set.weight?.toString() || '0',
-          reps: set.reps?.toString() || '0',
-          completed: set.completed || false,
-          set_order: set.set_order
-        });
-      });
+      if (setsError) {
+        console.error("[WorkoutDataService] Error fetching workout sets:", setsError);
+      }
       
-      return Object.values(exerciseMap);
+      // Query previous workout data for this routine
+      const previousWorkoutData = await this.getPreviousWorkoutData(routineId);
+      
+      // Format the data using the formatter
+      const exercises = await WorkoutDataFormatter.formatWorkoutExercises(
+        routineExercises,
+        workoutSets,
+        previousWorkoutData
+      );
+      
+      // Accessing individual items from an array, not the array itself
+      if (routineExercises && routineExercises.length > 0) {
+        console.log(`Found exercise: ${routineExercises[0].exercises.name}`);
+      }
+      
+      return exercises;
     } catch (error) {
-      console.error("Error fetching workout exercises:", error);
+      console.error("[WorkoutDataService] Error in getWorkoutWithExercises:", error);
+      toast.error("Erro ao carregar o treino", {
+        description: "Não foi possível carregar os exercícios do treino"
+      });
       return [];
     }
   }
   
   /**
-   * Fetch user profile data
-   * 
-   * @param userId - User identifier
-   * @returns Promise resolving to user profile data or null
+   * Gets previous workout data for a routine
    */
-  static async fetchUserProfile(userId: string): Promise<UserProfileData | null> {
+  static async getPreviousWorkoutData(
+    routineId: string
+  ): Promise<Record<string, any[]>> {
     try {
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('class, streak')
-        .eq('id', userId)
+      console.log(`[WorkoutDataService] Getting previous workout data for routine: ${routineId}`);
+      
+      // Get the most recent workout for this routine
+      const { data: previousWorkout, error: previousWorkoutError } = await supabase
+        .from('workouts')
+        .select('id')
+        .eq('routine_id', routineId)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .single();
         
-      if (profileError) throw profileError;
-      return profile;
-    } catch (profileError) {
-      console.error("Error fetching user profile:", profileError);
-      return null;
-    }
-  }
-  
-  /**
-   * Get workout difficulty level from routine
-   * 
-   * @param routineId - Routine identifier
-   * @returns Promise resolving to workout difficulty
-   */
-  static async getWorkoutDifficultyLevel(routineId: string | null): Promise<WorkoutDifficulty> {
-    if (!routineId) return 'intermediario';
-    
-    try {
-      const { data: routineData, error } = await supabase
-        .from('routines')
-        .select('*')
-        .eq('id', routineId)
-        .single();
+      if (previousWorkoutError) {
+        console.error("[WorkoutDataService] Error fetching previous workout:", previousWorkoutError);
+        return {};
+      }
+      
+      if (!previousWorkout) {
+        console.log("[WorkoutDataService] No previous workout found for this routine");
+        return {};
+      }
+      
+      // Get the sets from the previous workout
+      const { data: previousSets, error: previousSetsError } = await supabase
+        .from('workout_sets')
+        .select('exercise_id, weight, reps, set_order')
+        .eq('workout_id', previousWorkout.id);
         
-      if (error || !routineData) {
-        return 'intermediario';
+      if (previousSetsError) {
+        console.error("[WorkoutDataService] Error fetching previous workout sets:", previousSetsError);
+        return {};
       }
       
-      // Map the routine level to our difficulty levels
-      const level = (routineData as RoutineData).level;
-      if (!level) return 'intermediario';
+      // Group the sets by exercise ID
+      const groupedSets: Record<string, any[]> = previousSets.reduce((acc, set) => {
+        if (!acc[set.exercise_id]) {
+          acc[set.exercise_id] = [];
+        }
+        acc[set.exercise_id].push(set);
+        return acc;
+      }, {});
       
-      const levelLower = level.toLowerCase();
-      if (levelLower === 'beginner' || levelLower === 'iniciante') {
-        return 'iniciante';
-      } else if (levelLower === 'advanced' || levelLower === 'avancado') {
-        return 'avancado';
-      } else {
-        return 'intermediario';
-      }
+      console.log(`[WorkoutDataService] Found previous workout data for exercises:`, Object.keys(groupedSets));
+      
+      return groupedSets;
     } catch (error) {
-      console.error("Error fetching routine data:", error);
-      return 'intermediario';
+      console.error("[WorkoutDataService] Error in getPreviousWorkoutData:", error);
+      return {};
     }
   }
 }
