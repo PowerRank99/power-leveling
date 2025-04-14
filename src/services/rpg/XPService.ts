@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise, PersonalRecord } from '@/types/workoutTypes';
 import { XPCalculationService } from './XPCalculationService';
@@ -7,6 +8,7 @@ import { PowerDayService } from './bonus/PowerDayService';
 import { AchievementCheckerService } from './achievements/AchievementCheckerService';
 import { mapToWorkoutExerciseData } from '@/utils/typeMappers';
 import { ServiceResponse } from '@/services/common/ErrorHandlingService';
+import { XPCalculationInput } from './types/xpTypes';
 
 /**
  * Main XP Service that coordinates XP calculations and awards
@@ -38,18 +40,16 @@ export class XPService {
     userClass?: string | null,
     streak: number = 0,
     difficulty: 'iniciante' | 'intermediario' | 'avancado' = 'intermediario'
-  ): {
-    totalXP: number;
-    baseXP: number;
-    bonusBreakdown: { skill: string, amount: number, description: string }[];
-  } {
-    // Pass workout data directly to XPCalculationService using the correct properties
-    return XPCalculationService.calculateWorkoutXP(
+  ) {
+    // Pass workout data as an object to XPCalculationService
+    const input: XPCalculationInput = {
       workout,
       userClass,
       streak,
-      workout.difficulty || difficulty
-    );
+      defaultDifficulty: workout.difficulty || difficulty
+    };
+    
+    return XPCalculationService.calculateWorkoutXP(input);
   }
   
   /**
@@ -103,7 +103,7 @@ export class XPService {
       
       // Check for XP milestone achievements using the unified checker
       if (result) {
-        await AchievementCheckerService.checkXPMilestoneAchievements(userId, amount);
+        await AchievementCheckerService.checkXPMilestoneAchievements(userId);
       }
       
       return result;
@@ -133,7 +133,7 @@ export class XPService {
           difficulty: workout.difficulty || 'intermediario'
         };
         
-        // Get the full breakdown now
+        // Get the full breakdown now with the updated method signature
         const xpData = this.calculateWorkoutXP(workoutObj, null, 0);
         baseXP = xpData.totalXP;
       }
