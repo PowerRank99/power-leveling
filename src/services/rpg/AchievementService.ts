@@ -1,28 +1,29 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { XPService } from './XPService';
 import { toast } from 'sonner';
 import { TransactionService } from '../common/TransactionService';
 import { ServiceResponse, ErrorHandlingService, ErrorCategory, createErrorResponse, createSuccessResponse } from '../common/ErrorHandlingService';
-import { AchievementAwardService } from './achievements/AchievementAwardService';
+import { StandardizedAchievementService } from './achievements/StandardizedAchievementService';
 import { AchievementFetchService } from './achievements/AchievementFetchService';
 import { Achievement } from '@/types/achievementTypes';
+import { AchievementUtils } from '@/constants/AchievementDefinitions';
 
 /**
  * Service for handling achievements
+ * Acts as a facade to more specialized achievement services
  */
 export class AchievementService {
   /**
    * Award an achievement to a user
-   * Delegates to AchievementAwardService
+   * Delegates to StandardizedAchievementService
    */
   static async awardAchievement(userId: string, achievementId: string): Promise<ServiceResponse<boolean>> {
-    return AchievementAwardService.awardAchievement(userId, achievementId);
+    return StandardizedAchievementService.checkAndAwardAchievement(userId, achievementId);
   }
   
   /**
    * Check and award a batch of achievements at once
-   * Delegates to AchievementAwardService
+   * Delegates to StandardizedAchievementService
    */
   static async checkAndAwardAchievements(
     userId: string,
@@ -32,37 +33,34 @@ export class AchievementService {
       async () => {
         if (!userId || !achievementIds.length) return false;
 
-        // Use AchievementAwardService to check and award achievements
-        const result = await AchievementAwardService.checkAndAwardAchievements(userId, achievementIds);
+        // Validate achievement IDs against our standardized definitions
+        const validAchievementIds = achievementIds.filter(id => 
+          AchievementUtils.getAchievementById(id) !== undefined
+        );
+        
+        if (validAchievementIds.length === 0) {
+          console.warn('No valid achievements found to award');
+          return false;
+        }
+
+        // Use StandardizedAchievementService to check and award achievements
+        const result = await StandardizedAchievementService.checkAndAwardMultipleAchievements(userId, validAchievementIds);
         
         if (!result.success) {
           throw new Error(result.message || 'Failed to check achievements');
         }
         
         // Get newly awarded achievements
-        const newlyAwarded = result.data?.successful;
+        const newlyAwarded = result.data;
         
         if (newlyAwarded?.length) {
-          // Fetch full achievement details for awarded achievements
-          const { data: details } = await supabase
-            .from('achievements')
-            .select('name, description, xp_reward, icon_name')
-            .in('id', newlyAwarded);
-          
           // Show toast for each new achievement
-          details?.forEach(achievement => {
-            toast.success('Conquista Desbloqueada! 🏆', {
-              description: achievement.name
-            });
-            
-            // Add XP from achievement if applicable
-            if (achievement.xp_reward > 0) {
-              XPService.awardXP(
-                userId, 
-                achievement.xp_reward, 
-                'achievement',
-                { achievementName: achievement.name }
-              );
+          newlyAwarded.forEach(achievementId => {
+            const achievement = AchievementUtils.getAchievementById(achievementId);
+            if (achievement) {
+              toast.success('Conquista Desbloqueada! 🏆', {
+                description: achievement.name
+              });
             }
           });
         }
@@ -100,10 +98,22 @@ export class AchievementService {
   
   /**
    * Check for achievements related to workouts
-   * Delegates to AchievementFetchService
+   * Delegates to StandardizedAchievementService
    */
   static async checkWorkoutAchievements(userId: string, workoutId: string): Promise<ServiceResponse<any>> {
-    return AchievementFetchService.checkWorkoutAchievements(userId, workoutId);
+    // First use the standardized service to check for workout achievements
+    const workoutAchievementsResult = await StandardizedAchievementService.checkWorkoutAchievements(userId);
+    
+    // Then check streak achievements
+    const streakAchievementsResult = await StandardizedAchievementService.checkStreakAchievements(userId);
+    
+    // Combine results
+    const combinedAchievements = [
+      ...(workoutAchievementsResult.success ? workoutAchievementsResult.data || [] : []),
+      ...(streakAchievementsResult.success ? streakAchievementsResult.data || [] : [])
+    ];
+    
+    return createSuccessResponse(combinedAchievements);
   }
   
   /**
@@ -132,6 +142,16 @@ export class AchievementService {
     targetValue: number, 
     isComplete: boolean
   ): Promise<ServiceResponse<boolean>> {
+    // Validate achievement ID against our standardized definitions
+    const achievement = AchievementUtils.getAchievementById(achievementId);
+    if (!achievement) {
+      return createErrorResponse(
+        'Invalid achievement',
+        `Achievement with ID ${achievementId} not found in definitions`,
+        ErrorCategory.VALIDATION
+      );
+    }
+    
     try {
       const progressData = [{
         achievement_id: achievementId,

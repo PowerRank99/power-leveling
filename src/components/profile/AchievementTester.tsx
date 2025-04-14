@@ -1,15 +1,18 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { Trophy } from 'lucide-react';
 import { achievementPopupStore } from '@/stores/achievementPopupStore';
-import { ACHIEVEMENTS } from '@/constants/AchievementDefinitions';
+import { ACHIEVEMENTS, AchievementUtils } from '@/constants/AchievementDefinitions';
 
 const AchievementTester: React.FC = () => {
   const { showAchievement } = achievementPopupStore();
   
   const testAchievement = () => {
     // Get a real achievement definition from our constants
-    const achievement = ACHIEVEMENTS.WORKOUTS.FIRST_WORKOUT;
+    const achievements = AchievementUtils.getAllAchievements();
+    const randomIndex = Math.floor(Math.random() * achievements.length);
+    const achievement = achievements[randomIndex];
     
     showAchievement({
       id: achievement.id,
@@ -24,8 +27,12 @@ const AchievementTester: React.FC = () => {
 
   return (
     <div className="p-4">
-      <Button onClick={testAchievement} className="bg-purple-500 hover:bg-purple-600">
-        Testar Conquista
+      <Button 
+        onClick={testAchievement} 
+        className="bg-arcane hover:bg-arcane-60 flex items-center"
+      >
+        <Trophy className="mr-2 h-4 w-4" />
+        Testar Conquista Aleatória
       </Button>
     </div>
   );

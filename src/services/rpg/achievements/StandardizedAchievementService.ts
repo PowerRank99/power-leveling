@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 import { AchievementDefinition, AchievementUtils } from '@/constants/AchievementDefinitions';
 import { achievementPopupStore } from '@/stores/achievementPopupStore';
+import { useAchievementNotificationStore } from '@/stores/achievementNotificationStore';
 import { XPService } from '../XPService';
 
 /**
@@ -211,6 +212,7 @@ export class StandardizedAchievementService {
    * Show achievement notification
    */
   private static showAchievementNotification(achievement: AchievementDefinition): void {
+    // First show the achievement popup if a user is viewing it
     const { showAchievement } = achievementPopupStore.getState();
     
     showAchievement({
@@ -222,10 +224,23 @@ export class StandardizedAchievementService {
       rank: achievement.rank,
       bonusText: "Excede o limite diário"
     });
+    
+    // Also queue it in the notification system for persistent display
+    const { queueNotification } = useAchievementNotificationStore.getState();
+    
+    queueNotification({
+      id: achievement.id,
+      title: achievement.name,
+      description: achievement.description,
+      rank: achievement.rank,
+      points: achievement.points,
+      xpReward: achievement.xpReward,
+      timestamp: new Date().toISOString()
+    });
   }
   
   /**
-   * Check for workout-related achievements
+   * Check for workout-related achievements using the standardized definitions
    */
   static async checkWorkoutAchievements(userId: string): Promise<ServiceResponse<string[]>> {
     try {
@@ -292,7 +307,7 @@ export class StandardizedAchievementService {
         .from('profiles')
         .select('streak')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
         
       if (profileError) {
         return createErrorResponse(
@@ -304,7 +319,7 @@ export class StandardizedAchievementService {
       
       const currentStreak = profile?.streak || 0;
       
-      // Get streak achievements
+      // Get streak achievements from standardized definitions
       const streakAchievements = AchievementUtils
         .getAchievementsByCategory('streak')
         .filter(a => a.requirementType === 'streak_days')
