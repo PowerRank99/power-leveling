@@ -1,6 +1,6 @@
 
 import { ServiceResponse } from '@/services/common/ErrorHandlingService';
-import { Achievement } from '@/types/achievementTypes';
+import { Achievement, AchievementProgress } from '@/types/achievementTypes';
 import { AchievementAwardService } from './achievements/services/AchievementAwardService';
 import { AchievementFetchService } from './achievements/services/AchievementFetchService';
 import { AchievementProcessingService } from './achievements/services/AchievementProcessingService';
@@ -37,8 +37,8 @@ export class AchievementService {
     return AchievementFetchService.getAchievementStats(userId);
   }
   
-  static async getAchievementProgress(userId: string, achievementId: string): Promise<ServiceResponse<any>> {
-    return AchievementFetchService.getAchievementProgress(userId, achievementId);
+  static async getAchievementProgress(userId: string, achievementId: string): Promise<ServiceResponse<AchievementProgress | null>> {
+    return AchievementProgressService.getAchievementProgress(userId, achievementId);
   }
   
   static async getAllAchievementProgress(userId: string): Promise<ServiceResponse<any>> {

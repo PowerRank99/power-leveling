@@ -1,8 +1,9 @@
 
 import { ServiceResponse } from '@/services/common/ErrorHandlingService';
 import { AchievementCategory } from '@/types/achievementTypes';
-import { Achievement } from '@/types/achievementTypes';
+import { Achievement, AchievementProgress } from '@/types/achievementTypes';
 import { AchievementProgressFacade } from './AchievementProgressFacade';
+import { ProgressBaseService } from './progress/ProgressBaseService';
 
 /**
  * Service for handling achievement progress updates
@@ -87,5 +88,16 @@ export class AchievementProgressService {
     currentValue: number
   ): Promise<ServiceResponse<boolean>> {
     return AchievementProgressFacade.batchUpdateByCategory(userId, category, requirementType, currentValue);
+  }
+  
+  /**
+   * Get progress for a specific achievement
+   * This delegates to the ProgressBaseService directly
+   */
+  static async getAchievementProgress(
+    userId: string,
+    achievementId: string
+  ): Promise<ServiceResponse<AchievementProgress | null>> {
+    return ProgressBaseService.getProgress(userId, achievementId);
   }
 }
