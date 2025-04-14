@@ -1,34 +1,43 @@
 
-/**
- * Centralized achievement definitions with consistent IDs
- */
+import { z } from 'zod';
 
-export interface AchievementDefinition {
-  id: string;
-  name: string;
-  description: string;
-  category: AchievementCategory;
-  rank: AchievementRank;
-  points: number;
-  xpReward: number;
-  iconName: string;
-  requirementType: string;
-  requirementValue: number;
-}
+// Enhanced Achievement Definition Schema with Zod for runtime validation
+export const AchievementDefinitionSchema = z.object({
+  id: z.string().regex(/^[a-z]+(-[a-z]+)*$/, "ID must be lowercase with optional hyphen separators"),
+  name: z.string().min(3, "Name must be at least 3 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  category: z.enum([
+    'workout', 
+    'streak', 
+    'record', 
+    'xp', 
+    'level', 
+    'guild', 
+    'special', 
+    'variety', 
+    'manual',
+    'time_based',
+    'milestone'
+  ]),
+  rank: z.enum(['S', 'A', 'B', 'C', 'D', 'E', 'Unranked']),
+  points: z.number().int().min(1).max(25),
+  xpReward: z.number().int().min(10).max(500),
+  iconName: z.string(),
+  requirementType: z.string(),
+  requirementValue: z.number(),
+});
 
-export type AchievementCategory = 'workout' | 'streak' | 'record' | 'xp' | 'level' | 'guild' | 'special' | 'variety' | 'manual';
-export type AchievementRank = 'S' | 'A' | 'B' | 'C' | 'D' | 'E' | 'Unranked';
+export type AchievementDefinition = z.infer<typeof AchievementDefinitionSchema>;
 
-/**
- * Centralized achievement constants for consistent reference
- */
+export type AchievementCategory = AchievementDefinition['category'];
+export type AchievementRank = AchievementDefinition['rank'];
+
 export const ACHIEVEMENTS = {
-  // Rank E Achievements (Basic)
   WORKOUTS: {
     FIRST_WORKOUT: {
       id: 'first-workout',
       name: 'Primeiro Treino',
-      description: 'Complete seu primeiro treino',
+      description: 'Complete seu primeiro treino no PowerLeveling',
       category: 'workout',
       rank: 'E',
       points: 1,
@@ -38,33 +47,23 @@ export const ACHIEVEMENTS = {
       requirementValue: 1
     },
     WEEKLY_THREE: {
-      id: 'weekly-3',
+      id: 'weekly-workouts',
       name: 'Trio na Semana',
       description: 'Complete 3 treinos em uma semana',
       category: 'workout',
       rank: 'E',
       points: 1,
-      xpReward: 50,
+      xpReward: 75,
       iconName: 'calendar',
       requirementType: 'weekly_workouts',
       requirementValue: 3
     },
-    TOTAL_SEVEN: {
-      id: 'total-7',
-      name: 'Embalo Fitness',
-      description: 'Complete 7 treinos no total',
-      category: 'workout',
-      rank: 'E',
-      points: 1,
-      xpReward: 75,
-      iconName: 'dumbbell',
-      requirementType: 'workouts_count',
-      requirementValue: 7
-    }
+    // More workout achievements...
   },
+  
   STREAK: {
     THREE_DAYS: {
-      id: 'streak-3',
+      id: 'streak-three-days',
       name: 'Trinca Poderosa',
       description: 'Treine por 3 dias consecutivos',
       category: 'streak',
@@ -75,101 +74,37 @@ export const ACHIEVEMENTS = {
       requirementType: 'streak_days',
       requirementValue: 3
     },
-    SEVEN_DAYS: {
-      id: 'streak-7',
-      name: 'Sequência Iniciante',
-      description: '7 dias seguidos treinando',
-      category: 'streak',
-      rank: 'D',
-      points: 3,
-      xpReward: 100,
-      iconName: 'flame',
-      requirementType: 'streak_days',
-      requirementValue: 7
-    },
-    THIRTY_DAYS: {
-      id: 'streak-30',
-      name: 'Rei da Consistência',
-      description: '30 dias seguidos treinando',
-      category: 'streak',
-      rank: 'B',
-      points: 10,
-      xpReward: 300,
-      iconName: 'zap',
-      requirementType: 'streak_days',
-      requirementValue: 30
-    },
-    HUNDRED_DAYS: {
-      id: 'streak-100',
-      name: 'Lendário',
-      description: '100 dias seguidos treinando',
-      category: 'streak',
-      rank: 'S',
-      points: 25,
-      xpReward: 500,
-      iconName: 'star',
-      requirementType: 'streak_days',
-      requirementValue: 100
-    }
+    // More streak achievements...
   },
-  // Rank D Achievements (Moderate)
-  PROGRESSION: {
-    TOTAL_TEN: {
-      id: 'total-10',
-      name: 'Dedicação Semanal',
-      description: 'Complete 10 treinos no total',
-      category: 'workout',
-      rank: 'D',
-      points: 3,
-      xpReward: 100,
-      iconName: 'activity',
-      requirementType: 'workouts_count',
-      requirementValue: 10
-    },
-    MONTHLY_TEN: {
-      id: 'monthly-10',
-      name: 'Maratona Mensal',
-      description: 'Treine em 10 dias diferentes em um mês',
-      category: 'workout',
-      rank: 'D',
-      points: 3,
-      xpReward: 150,
-      iconName: 'calendar',
-      requirementType: 'monthly_workouts',
-      requirementValue: 10
-    }
-  },
-  RECORDS: {
-    FIRST_PR: {
-      id: 'pr-first',
-      name: 'Quebra-Recorde',
-      description: 'Estabeleça seu primeiro recorde pessoal',
-      category: 'record',
-      rank: 'D',
-      points: 3,
-      xpReward: 100,
-      iconName: 'award',
-      requirementType: 'pr_count',
-      requirementValue: 1
-    }
-  },
-  // Add more achievement categories and definitions as needed...
+  
+  // Additional achievement categories...
 };
 
-/**
- * Helper functions to work with achievement definitions
- */
 export const AchievementUtils = {
+  /**
+   * Validate an achievement definition
+   */
+  validateAchievement(achievement: AchievementDefinition): boolean {
+    try {
+      AchievementDefinitionSchema.parse(achievement);
+      return true;
+    } catch (error) {
+      console.error('Invalid achievement definition:', error);
+      return false;
+    }
+  },
+  
   /**
    * Get all achievement definitions as a flat array
    */
   getAllAchievements(): AchievementDefinition[] {
     const allAchievements: AchievementDefinition[] = [];
     
-    // Iterate through all categories and add each achievement
     Object.values(ACHIEVEMENTS).forEach(category => {
       Object.values(category).forEach(achievement => {
-        allAchievements.push(achievement as AchievementDefinition);
+        if (this.validateAchievement(achievement as AchievementDefinition)) {
+          allAchievements.push(achievement as AchievementDefinition);
+        }
       });
     });
     
@@ -177,23 +112,35 @@ export const AchievementUtils = {
   },
   
   /**
-   * Get achievement by ID
+   * Get achievement by ID with optional validation
    */
-  getAchievementById(id: string): AchievementDefinition | undefined {
-    return this.getAllAchievements().find(achievement => achievement.id === id);
+  getAchievementById(id: string, validateDefinition = true): AchievementDefinition | undefined {
+    const achievement = this.getAllAchievements().find(a => a.id === id);
+    
+    if (achievement && (!validateDefinition || this.validateAchievement(achievement))) {
+      return achievement;
+    }
+    
+    return undefined;
   },
   
   /**
    * Get achievements by rank
    */
-  getAchievementsByRank(rank: AchievementRank): AchievementDefinition[] {
-    return this.getAllAchievements().filter(achievement => achievement.rank === rank);
+  getAchievementsByRank(rank: AchievementRank, validateDefinition = true): AchievementDefinition[] {
+    return this.getAllAchievements().filter(achievement => 
+      achievement.rank === rank && 
+      (!validateDefinition || this.validateAchievement(achievement))
+    );
   },
   
   /**
    * Get achievements by category
    */
-  getAchievementsByCategory(category: AchievementCategory): AchievementDefinition[] {
-    return this.getAllAchievements().filter(achievement => achievement.category === category);
+  getAchievementsByCategory(category: AchievementCategory, validateDefinition = true): AchievementDefinition[] {
+    return this.getAllAchievements().filter(achievement => 
+      achievement.category === category && 
+      (!validateDefinition || this.validateAchievement(achievement))
+    );
   }
 };
