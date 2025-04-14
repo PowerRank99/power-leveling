@@ -1,5 +1,5 @@
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { WorkoutCategoryChecker } from '@/services/rpg/achievements/workout/WorkoutCategoryChecker';
 import { supabase } from '@/integrations/supabase/client';
 
