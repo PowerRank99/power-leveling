@@ -28,21 +28,20 @@ describe('StreakAchievementChecker', () => {
   });
 
   describe('checkAchievements', () => {
-    it('should check streak achievements based on profile data', async () => {
-      const mockProfile = {
-        streak: 7
-      };
-
+    it('should award streak achievements based on profile data', async () => {
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: mockProfile, error: null })
+            single: vi.fn().mockResolvedValue({
+              data: { streak: 7 },
+              error: null
+            })
           })
         })
       } as any);
 
-      await StreakAchievementChecker.checkAchievements(mockUserId);
-
+      const result = await StreakAchievementChecker.checkAchievements(mockUserId);
+      expect(result.success).toBe(true);
       expect(AchievementService.checkAndAwardAchievements).toHaveBeenCalledWith(
         mockUserId,
         expect.arrayContaining(['streak-7'])
@@ -50,20 +49,19 @@ describe('StreakAchievementChecker', () => {
     });
 
     it('should handle multiple streak achievements', async () => {
-      const mockProfile = {
-        streak: 14
-      };
-
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: mockProfile, error: null })
+            single: vi.fn().mockResolvedValue({
+              data: { streak: 14 },
+              error: null
+            })
           })
         })
       } as any);
 
-      await StreakAchievementChecker.checkAchievements(mockUserId);
-
+      const result = await StreakAchievementChecker.checkAchievements(mockUserId);
+      expect(result.success).toBe(true);
       expect(AchievementService.checkAndAwardAchievements).toHaveBeenCalledWith(
         mockUserId,
         expect.arrayContaining(['streak-7', 'streak-14'])
@@ -74,7 +72,10 @@ describe('StreakAchievementChecker', () => {
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: null, error: new Error('DB Error') })
+            single: vi.fn().mockResolvedValue({
+              data: null,
+              error: new Error('Database error')
+            })
           })
         })
       } as any);
