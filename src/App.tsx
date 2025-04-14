@@ -14,6 +14,10 @@ import IndexPage from './pages/Index';
 import AuthPage from './pages/AuthPage';
 import ClassSelectionPage from './pages/class-selection/ClassSelectionPage';
 import AuthRequiredRoute from './components/AuthRequiredRoute';
+import GuildsListPage from './pages/GuildsListPage';
+import GuildQuestsPage from './pages/GuildQuestsPage';
+import CreateQuestPage from './pages/CreateQuestPage';
+import GuildLeaderboardPage from './pages/GuildLeaderboardPage';
 
 function App() {
   return (
@@ -39,6 +43,28 @@ function App() {
         <Route path="/classes" element={
           <AuthRequiredRoute>
             <ClassSelectionPage />
+          </AuthRequiredRoute>
+        } />
+        
+        {/* Guild Routes */}
+        <Route path="/guilds" element={
+          <AuthRequiredRoute>
+            <GuildsListPage />
+          </AuthRequiredRoute>
+        } />
+        <Route path="/guilds/:id/quests" element={
+          <AuthRequiredRoute>
+            <GuildQuestsPage />
+          </AuthRequiredRoute>
+        } />
+        <Route path="/guilds/:guildId/create-quest" element={
+          <AuthRequiredRoute>
+            <CreateQuestPage />
+          </AuthRequiredRoute>
+        } />
+        <Route path="/guilds/:id/leaderboard" element={
+          <AuthRequiredRoute>
+            <GuildLeaderboardPage />
           </AuthRequiredRoute>
         } />
         

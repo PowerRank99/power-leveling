@@ -60,3 +60,12 @@ export interface GuildRaidParticipantResponse {
     level: number;
   };
 }
+
+/**
+ * Guild creation request
+ */
+export interface GuildCreationRequest {
+  name: string;
+  description: string;
+  avatarUrl: string | null;
+}

@@ -1,19 +1,9 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
-import { GuildMemberResponse } from './types';
-
-/**
- * Type for member info returned from the database
- */
-interface MemberData {
-  id: string;
-  name: string | null;
-  avatar_url: string | null;
-  level: number;
-  xp: number;
-  workouts_count: number;
-  streak: number;
-}
+import { GuildMemberResponse, GuildResponse } from './types';
+import { toast } from 'sonner';
+import { AchievementService } from '../AchievementService';
 
 /**
  * Service for managing guild operations
@@ -80,16 +70,7 @@ export class GuildService {
   /**
    * Get guild details
    */
-  static async getGuildDetails(guildId: string): Promise<ServiceResponse<{
-    id: string;
-    name: string;
-    description: string | null;
-    avatarUrl: string | null;
-    createdAt: string;
-    creatorId: string | null;
-    memberCount?: number;
-    role?: string;
-  }>> {
+  static async getGuildDetails(guildId: string): Promise<ServiceResponse<GuildResponse>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
         const { data, error } = await supabase
@@ -117,8 +98,8 @@ export class GuildService {
           avatarUrl: data.avatar_url,
           createdAt: data.created_at,
           creatorId: data.creator_id,
-          memberCount: data.guild_members?.length,
-          role: data.guild_members?.[0]?.role
+          memberCount: data.guild_members?.length || 0,
+          role: data.guild_members?.[0]?.role || 'member'
         };
       },
       'GET_GUILD_DETAILS'
@@ -142,7 +123,8 @@ export class GuildService {
         
         return !!data;
       },
-      'IS_GUILD_MEMBER'
+      'IS_GUILD_MEMBER',
+      { showToast: false }
     );
   }
   
@@ -177,6 +159,11 @@ export class GuildService {
           
         if (error) throw error;
         
+        // Check for first guild achievement
+        await AchievementService.checkAndAwardAchievements(userId, ['primeira-guilda']);
+        
+        toast.success('Você entrou na guilda!');
+        
         return true;
       },
       'ADD_GUILD_MEMBER'
@@ -197,6 +184,8 @@ export class GuildService {
           
         if (error) throw error;
         
+        toast.info('Você saiu da guilda.');
+        
         return true;
       },
       'REMOVE_GUILD_MEMBER'
@@ -211,14 +200,60 @@ export class GuildService {
       async () => {
         const { count, error } = await supabase
           .from('guild_members')
-          .select('*', { count: 'exact' })
+          .select('*', { count: 'exact', head: true })
           .eq('guild_id', guildId);
           
         if (error) throw error;
         
         return count || 0;
       },
-      'GET_GUILD_MEMBER_COUNT'
+      'GET_GUILD_MEMBER_COUNT',
+      { showToast: false }
+    );
+  }
+
+  /**
+   * Create a new guild
+   */
+  static async createGuild(
+    name: string, 
+    description: string, 
+    avatarUrl: string | null, 
+    creatorId: string
+  ): Promise<ServiceResponse<string>> {
+    return ErrorHandlingService.executeWithErrorHandling(
+      async () => {
+        // Insert the new guild
+        const { data, error } = await supabase
+          .from('guilds')
+          .insert({
+            name,
+            description,
+            avatar_url: avatarUrl,
+            creator_id: creatorId
+          })
+          .select('id')
+          .single();
+          
+        if (error) throw error;
+        
+        // Add creator as guild master
+        await supabase
+          .from('guild_members')
+          .insert({
+            guild_id: data.id,
+            user_id: creatorId,
+            role: 'guild_master'
+          });
+        
+        // Check for first guild achievement
+        await AchievementService.checkAndAwardAchievements(creatorId, ['primeira-guilda']);
+        
+        toast.success('Guilda criada com sucesso!');
+        
+        return data.id;
+      },
+      'CREATE_GUILD'
     );
   }
 }
