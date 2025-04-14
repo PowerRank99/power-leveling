@@ -3,13 +3,13 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Trophy } from 'lucide-react';
 import { achievementPopupStore } from '@/stores/achievementPopupStore';
-import { ACHIEVEMENTS, AchievementUtils } from '@/constants/AchievementDefinitions';
+import { AchievementUtils } from '@/constants/AchievementDefinitions';
 
 const AchievementTester: React.FC = () => {
   const { showAchievement } = achievementPopupStore();
   
   const testAchievement = () => {
-    // Get a real achievement definition from our constants
+    // Get a real achievement definition from our centralized system
     const achievements = AchievementUtils.getAllAchievements();
     const randomIndex = Math.floor(Math.random() * achievements.length);
     const achievement = achievements[randomIndex];

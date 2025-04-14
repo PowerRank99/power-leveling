@@ -48,7 +48,7 @@ export class StandardizedAchievementService {
         return createSuccessResponse(false); // Indicates no new achievement
       }
       
-      // Get achievement definition from constants
+      // Get achievement definition from centralized system
       const achievementDef = AchievementUtils.getAchievementById(achievementId);
       
       if (!achievementDef) {
@@ -262,7 +262,7 @@ export class StandardizedAchievementService {
         );
       }
       
-      // Get achievement definitions related to workout counts
+      // Get achievement definitions related to workout counts from centralized system
       const workoutAchievements = AchievementUtils
         .getAchievementsByCategory('workout')
         .filter(a => a.requirementType === 'workouts_count')
@@ -319,7 +319,7 @@ export class StandardizedAchievementService {
       
       const currentStreak = profile?.streak || 0;
       
-      // Get streak achievements from standardized definitions
+      // Get streak achievements from centralized definitions
       const streakAchievements = AchievementUtils
         .getAchievementsByCategory('streak')
         .filter(a => a.requirementType === 'streak_days')

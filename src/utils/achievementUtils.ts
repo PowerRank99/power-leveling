@@ -1,105 +1,121 @@
 
-/**
- * Gets the CSS class for rank color styling
- */
-export function getRankColorClass(rank: string): string {
-  switch (rank) {
-    case 'S':
-      return 'bg-achievement-15 border-achievement-30 text-achievement';
-    case 'A':
-      return 'bg-achievement-15 border-achievement-30 text-achievement';
-    case 'B':
-      return 'bg-valor-15 border-valor-30 text-valor';
-    case 'C':
-      return 'bg-arcane-15 border-arcane-30 text-arcane';
-    case 'D':
-      return 'bg-arcane-15 border-arcane-30 text-arcane';
-    case 'E':
-    default:
-      return 'bg-midnight-elevated border-divider/30 text-text-tertiary';
-  }
-}
+import { AchievementRank } from '@/types/achievementTypes';
 
 /**
- * Gets the CSS class for icon background
+ * Returns the appropriate Tailwind classes for a given achievement rank
  */
-export function getIconBgClass(rank: string): string {
+export const getRankColorClass = (rank: AchievementRank | string): string => {
   switch (rank) {
     case 'S':
+      return 'border-achievement text-achievement';
     case 'A':
-      return 'bg-achievement-15 text-achievement';
+      return 'border-valor text-valor';
     case 'B':
-      return 'bg-valor-15 text-valor';
+      return 'border-valor-60 text-valor-60';  
     case 'C':
+      return 'border-arcane text-arcane';
     case 'D':
-      return 'bg-arcane-15 text-arcane';
+      return 'border-arcane-60 text-arcane-60';
     case 'E':
     default:
-      return 'bg-midnight-elevated text-text-tertiary';
+      return 'border-text-tertiary text-text-tertiary';
   }
-}
+};
 
 /**
- * Gets animation settings based on rank
+ * Returns the appropriate background classes for achievement based on rank
  */
-export function getAnimationSettings(rank: string): { delay: number; duration: number; type: string; stiffness: number } {
+export const getRankBackgroundClass = (rank: AchievementRank | string): string => {
   switch (rank) {
     case 'S':
-      return { delay: 0.15, duration: 0.7, type: 'spring', stiffness: 300 };
+      return 'bg-achievement-15 border-achievement-30';
     case 'A':
-      return { delay: 0.12, duration: 0.6, type: 'spring', stiffness: 250 };
+      return 'bg-valor-15 border-valor-30';
     case 'B':
-      return { delay: 0.1, duration: 0.5, type: 'spring', stiffness: 200 };
+      return 'bg-valor-15/50 border-valor-30/50';  
     case 'C':
+      return 'bg-arcane-15 border-arcane-30';
     case 'D':
-      return { delay: 0.08, duration: 0.4, type: 'easeInOut', stiffness: 150 };
+      return 'bg-arcane-15/50 border-arcane-30/50';
     case 'E':
     default:
-      return { delay: 0.05, duration: 0.3, type: 'easeInOut', stiffness: 100 };
+      return 'bg-midnight-card border-divider/30';
   }
-}
+};
 
 /**
- * Formats timestamp to a readable date
+ * Get the next rank above the current one
  */
-export function formatAchievementDate(timestamp: string): string {
-  if (!timestamp) return '';
+export const getNextRank = (rank: AchievementRank | string): AchievementRank | null => {
+  const ranks: AchievementRank[] = ['E', 'D', 'C', 'B', 'A', 'S'];
+  const currentIndex = ranks.indexOf(rank as AchievementRank);
   
-  const date = new Date(timestamp);
-  return date.toLocaleDateString('pt-BR', { 
-    day: '2-digit', 
-    month: '2-digit', 
-    year: 'numeric' 
-  });
-}
+  if (currentIndex === -1 || currentIndex === ranks.length - 1) {
+    return null; // Invalid rank or already at the highest rank
+  }
+  
+  return ranks[currentIndex + 1];
+};
 
 /**
- * Gets a localized rank display name
+ * Get the display name for a rank
  */
-export function getRankDisplayName(rank: string): string {
+export const getRankDisplayName = (rank: AchievementRank | string): string => {
   switch (rank) {
-    case 'S': return 'Rank S - Lendário';
-    case 'A': return 'Rank A - Mestre';
-    case 'B': return 'Rank B - Especialista';
-    case 'C': return 'Rank C - Avançado';
-    case 'D': return 'Rank D - Intermediário';
-    case 'E': return 'Rank E - Iniciante';
-    default: return 'Sem Classificação';
+    case 'S':
+      return 'Rank S - Lendário';
+    case 'A':
+      return 'Rank A - Mestre';
+    case 'B':
+      return 'Rank B - Experiente';
+    case 'C':
+      return 'Rank C - Intermediário';
+    case 'D':
+      return 'Rank D - Iniciante';
+    case 'E':
+      return 'Rank E - Novato';
+    case 'Unranked':
+    default:
+      return 'Sem Rank';
   }
-}
+};
 
 /**
- * Gets required points for the next rank
+ * Calculate the user's rank based on level and achievement points
+ * Formula: Rank Score = 1.5 × Level + 2 × (Achievement Points)
  */
-export function getNextRankPoints(currentRank: string): number {
-  switch (currentRank) {
-    case 'Unranked': return 20; // To reach E
-    case 'E': return 50; // To reach D
-    case 'D': return 80; // To reach C
-    case 'C': return 120; // To reach B
-    case 'B': return 160; // To reach A
-    case 'A': return 198; // To reach S
-    case 'S': return 0; // Already at highest rank
-    default: return 20;
-  }
-}
+export const calculateUserRank = (level: number, achievementPoints: number): AchievementRank => {
+  const rankScore = 1.5 * level + 2 * achievementPoints;
+  
+  if (rankScore >= 198) return 'S';
+  if (rankScore >= 160) return 'A';
+  if (rankScore >= 120) return 'B';
+  if (rankScore >= 80) return 'C';
+  if (rankScore >= 50) return 'D';
+  if (rankScore >= 20) return 'E';
+  
+  return 'E'; // Default to rank E for new users
+};
+
+/**
+ * Calculate points needed for next rank
+ */
+export const calculatePointsForNextRank = (currentRank: AchievementRank, level: number, achievementPoints: number): number => {
+  const nextRank = getNextRank(currentRank);
+  if (!nextRank) return 0; // Already at max rank
+  
+  const thresholds = {
+    'S': 198,
+    'A': 160,
+    'B': 120,
+    'C': 80,
+    'D': 50,
+    'E': 20,
+  };
+  
+  const currentScore = 1.5 * level + 2 * achievementPoints;
+  const neededScore = thresholds[nextRank];
+  const pointsNeeded = Math.ceil((neededScore - currentScore) / 2);
+  
+  return Math.max(0, pointsNeeded);
+};

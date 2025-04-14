@@ -3,6 +3,7 @@ import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHa
 import { supabase } from '@/integrations/supabase/client';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { BaseProgressService } from './BaseProgressService';
+import { AchievementUtils, ACHIEVEMENTS } from '@/constants/AchievementDefinitions';
 
 /**
  * Service for batch achievement progress updates
@@ -10,7 +11,7 @@ import { BaseProgressService } from './BaseProgressService';
 export class ProgressBatchService extends BaseProgressService {
   /**
    * Update workout count achievement progress
-   * Uses the optimized batch update function
+   * Uses the optimized batch update function and the centralized achievement definitions
    */
   static async updateWorkoutCountProgress(
     userId: string, 
@@ -18,23 +19,17 @@ export class ProgressBatchService extends BaseProgressService {
   ): Promise<ServiceResponse<void>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
-        // Workout count achievements with their targets
-        const workoutAchievements = [
-          { id: 'first-workout', target: 1 },
-          { id: 'total-7', target: 7 },
-          { id: 'total-10', target: 10 },
-          { id: 'total-25', target: 25 },
-          { id: 'total-50', target: 50 },
-          { id: 'total-100', target: 100 },
-          { id: 'total-200', target: 200 }
-        ];
+        // Get workout count achievements from centralized definitions
+        const workoutCountAchievements = AchievementUtils.getAllAchievements()
+          .filter(a => a.category === 'workout' && a.requirementType === 'workouts_count')
+          .sort((a, b) => b.requirementValue - a.requirementValue);
         
         // Prepare batch update data as expected by the stored procedure
-        const progressUpdates = JSON.stringify(workoutAchievements.map(achievement => ({
+        const progressUpdates = JSON.stringify(workoutCountAchievements.map(achievement => ({
           achievement_id: achievement.id,
           current_value: totalCount,
-          target_value: achievement.target,
-          is_complete: totalCount >= achievement.target
+          target_value: achievement.requirementValue,
+          is_complete: totalCount >= achievement.requirementValue
         })));
         
         // Use the batch update function
@@ -48,8 +43,8 @@ export class ProgressBatchService extends BaseProgressService {
         }
         
         // Check which achievements are now complete
-        const completedAchievements = workoutAchievements
-          .filter(achievement => totalCount >= achievement.target)
+        const completedAchievements = workoutCountAchievements
+          .filter(achievement => totalCount >= achievement.requirementValue)
           .map(achievement => achievement.id);
           
         if (completedAchievements.length > 0) {
@@ -63,7 +58,7 @@ export class ProgressBatchService extends BaseProgressService {
   
   /**
    * Update personal record achievement progress
-   * Uses the batch update function
+   * Uses the batch update function and the centralized achievement definitions
    */
   static async updatePersonalRecordProgress(
     userId: string, 
@@ -71,21 +66,17 @@ export class ProgressBatchService extends BaseProgressService {
   ): Promise<ServiceResponse<void>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
-        // PR count achievements with their targets
-        const prAchievements = [
-          { id: 'pr-first', target: 1 },
-          { id: 'pr-5', target: 5 },
-          { id: 'pr-10', target: 10 },
-          { id: 'pr-25', target: 25 },
-          { id: 'pr-50', target: 50 }
-        ];
+        // Get PR achievements from centralized definitions
+        const prAchievements = AchievementUtils.getAllAchievements()
+          .filter(a => a.category === 'record' && a.requirementType === 'pr_count')
+          .sort((a, b) => b.requirementValue - a.requirementValue);
         
         // Prepare batch update data as expected by the stored procedure
         const progressUpdates = JSON.stringify(prAchievements.map(achievement => ({
           achievement_id: achievement.id,
           current_value: totalCount,
-          target_value: achievement.target,
-          is_complete: totalCount >= achievement.target
+          target_value: achievement.requirementValue,
+          is_complete: totalCount >= achievement.requirementValue
         })));
         
         // Use the batch update function
@@ -100,7 +91,7 @@ export class ProgressBatchService extends BaseProgressService {
         
         // Check which achievements are now complete
         const completedAchievements = prAchievements
-          .filter(achievement => totalCount >= achievement.target)
+          .filter(achievement => totalCount >= achievement.requirementValue)
           .map(achievement => achievement.id);
           
         if (completedAchievements.length > 0) {
@@ -114,7 +105,7 @@ export class ProgressBatchService extends BaseProgressService {
   
   /**
    * Update streak achievement progress
-   * Uses the batch update function
+   * Uses the batch update function and the centralized achievement definitions
    */
   static async updateStreakProgress(
     userId: string, 
@@ -122,23 +113,17 @@ export class ProgressBatchService extends BaseProgressService {
   ): Promise<ServiceResponse<void>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
-        // Streak achievements with their targets
-        const streakAchievements = [
-          { id: 'streak-3', target: 3 },
-          { id: 'streak-7', target: 7 },
-          { id: 'streak-14', target: 14 },
-          { id: 'streak-30', target: 30 },
-          { id: 'streak-60', target: 60 },
-          { id: 'streak-100', target: 100 },
-          { id: 'streak-365', target: 365 }
-        ];
+        // Get streak achievements from centralized definitions
+        const streakAchievements = AchievementUtils.getAllAchievements()
+          .filter(a => a.category === 'streak' && a.requirementType === 'streak_days')
+          .sort((a, b) => b.requirementValue - a.requirementValue);
         
         // Prepare batch update data as expected by the stored procedure
         const progressUpdates = JSON.stringify(streakAchievements.map(achievement => ({
           achievement_id: achievement.id,
           current_value: currentStreak,
-          target_value: achievement.target,
-          is_complete: currentStreak >= achievement.target
+          target_value: achievement.requirementValue,
+          is_complete: currentStreak >= achievement.requirementValue
         })));
         
         // Use the batch update function
@@ -153,7 +138,7 @@ export class ProgressBatchService extends BaseProgressService {
         
         // Check which achievements are now complete
         const completedAchievements = streakAchievements
-          .filter(achievement => currentStreak >= achievement.target)
+          .filter(achievement => currentStreak >= achievement.requirementValue)
           .map(achievement => achievement.id);
           
         if (completedAchievements.length > 0) {
