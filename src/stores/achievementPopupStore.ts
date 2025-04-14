@@ -1,6 +1,6 @@
 
 import { create } from 'zustand';
-import { Achievement, AchievementCategory, AchievementRank } from '@/types/achievementTypes';
+import { Achievement } from '@/types/achievementTypes';
 
 interface AchievementPopupState {
   isVisible: boolean;
