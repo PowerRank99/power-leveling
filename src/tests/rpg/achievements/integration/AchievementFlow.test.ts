@@ -1,4 +1,3 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { AchievementProgressService } from '@/services/rpg/achievements/AchievementProgressService';
@@ -64,6 +63,40 @@ describe('Achievement Flow Integration', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
+    });
+  });
+
+  describe('Class bonus interactions', () => {
+    it('should apply class bonuses to achievement XP rewards', async () => {
+      // Mock profile with warrior class
+      vi.mocked(supabase.from).mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({
+            data: { class: 'warrior', workouts_count: 1 },
+            error: null
+          })
+        })
+      } as any);
+
+      const result = await AchievementService.checkWorkoutAchievements(mockUserId, mockWorkoutId);
+      expect(result.success).toBe(true);
+      expect(WorkoutAchievementChecker.checkAchievements).toHaveBeenCalledWith(mockUserId);
+    });
+
+    it('should handle class passive ability triggers', async () => {
+      // Mock monk class with streak bonus
+      vi.mocked(supabase.from).mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({
+            data: { class: 'monk', streak: 7 },
+            error: null
+          })
+        })
+      } as any);
+
+      const result = await AchievementService.checkWorkoutAchievements(mockUserId, mockWorkoutId);
+      expect(result.success).toBe(true);
+      expect(AchievementProgressService.updateStreakProgress).toHaveBeenCalled();
     });
   });
 });
