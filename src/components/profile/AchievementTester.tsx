@@ -8,6 +8,7 @@ const AchievementTester: React.FC = () => {
   
   const testAchievement = () => {
     showAchievement({
+      id: "test-achievement",
       title: "Guerreiro Dedicado",
       description: "Complete 100 treinos",
       xpReward: 50,

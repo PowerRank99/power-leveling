@@ -1,26 +1,11 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { User } from '@supabase/supabase-js';
+import { Database } from '@/integrations/supabase/types';
 
-interface User {
-  id: string;
-  email: string;
-  user_metadata?: {
-    name?: string;
-    avatar_url?: string;
-    [key: string]: any;
-  };
-}
-
-interface Profile {
-  id: string;
-  name?: string;
-  avatar_url?: string;
-  level?: number;
-  xp?: number;
-  class?: string;
-  [key: string]: any;
-}
+// Define Profile type based on the database schema
+export type Profile = Database['public']['Tables']['profiles']['Row'];
 
 interface AuthContextType {
   user: User | null;
@@ -72,11 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.log('Auth state changed:', event, session?.user?.id);
             
             if (session && session.user) {
-              setUser({
-                id: session.user.id,
-                email: session.user.email || '',
-                user_metadata: session.user.user_metadata
-              });
+              setUser(session.user);
               
               // Fetch profile data on auth state change
               // Use setTimeout to prevent blocking the auth callback
@@ -101,11 +82,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         
         if (data.session?.user) {
-          setUser({
-            id: data.session.user.id,
-            email: data.session.user.email || '',
-            user_metadata: data.session.user.user_metadata
-          });
+          setUser(data.session.user);
           
           // Fetch profile data
           await fetchProfile(data.session.user.id);
