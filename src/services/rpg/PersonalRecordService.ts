@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
@@ -33,61 +34,60 @@ export class PersonalRecordService {
       durationSeconds: number;
     }
   ): Promise<DatabaseResult<PersonalRecord[]>> {
-    return ErrorHandlingService.executeWithErrorHandling(
-      async () => {
-        const newRecords: PersonalRecord[] = [];
+    try {
+      const newRecords: PersonalRecord[] = [];
 
-        // Optimize by fetching all current records in a single query
-        const { data: currentRecords, error: recordsError } = await supabase
-          .from('personal_records')
-          .select('exercise_id, weight')
-          .eq('user_id', userId)
-          .in('exercise_id', workout.exercises.map(e => e.exerciseId).filter(Boolean));
+      // Optimize by fetching all current records in a single query
+      const { data: currentRecords, error: recordsError } = await supabase
+        .from('personal_records')
+        .select('exercise_id, weight')
+        .eq('user_id', userId)
+        .in('exercise_id', workout.exercises.map(e => e.exerciseId).filter(Boolean));
 
-        if (recordsError) throw recordsError;
+      if (recordsError) throw recordsError;
 
-        // Create a map for faster lookups
-        const recordsMap = new Map();
-        currentRecords?.forEach(record => {
-          recordsMap.set(record.exercise_id, record.weight);
-        });
+      // Create a map for faster lookups
+      const recordsMap = new Map();
+      currentRecords?.forEach(record => {
+        recordsMap.set(record.exercise_id, record.weight);
+      });
 
-        for (const exercise of workout.exercises) {
-          if (!exercise.exerciseId) continue;
+      for (const exercise of workout.exercises) {
+        if (!exercise.exerciseId) continue;
 
-          // Get the maximum weight lifted in this workout for the exercise
-          let maxWeight = 0;
-          if (Array.isArray(exercise.sets)) {
-            for (const set of exercise.sets) {
-              const weight = parseFloat(set.weight);
-              if (!isNaN(weight) && weight > maxWeight) {
-                maxWeight = weight;
-              }
+        // Get the maximum weight lifted in this workout for the exercise
+        let maxWeight = 0;
+        if (Array.isArray(exercise.sets)) {
+          for (const set of exercise.sets) {
+            const weight = parseFloat(set.weight);
+            if (!isNaN(weight) && weight > maxWeight) {
+              maxWeight = weight;
             }
           }
-
-          if (maxWeight === 0) continue;
-
-          // Compare with current personal record using the map
-          const currentWeight = recordsMap.get(exercise.exerciseId) || 0;
-          
-          if (maxWeight > currentWeight) {
-            newRecords.push({
-              exerciseId: exercise.exerciseId,
-              weight: maxWeight,
-              previousWeight: currentWeight
-            });
-          }
         }
+
+        if (maxWeight === 0) continue;
+
+        // Compare with current personal record using the map
+        const currentWeight = recordsMap.get(exercise.exerciseId) || 0;
         
-        // Make sure the returned records use consistent property names
-        return createSuccessResult(
-          newRecords.map(record => normalizePersonalRecord(record))
-        );
-      }, 
-      'CHECK_PERSONAL_RECORDS',
-      { showToast: false }
-    );
+        if (maxWeight > currentWeight) {
+          newRecords.push({
+            exerciseId: exercise.exerciseId,
+            weight: maxWeight,
+            previousWeight: currentWeight
+          });
+        }
+      }
+      
+      // Make sure the returned records use consistent property names
+      return createSuccessResult(
+        newRecords.map(record => normalizePersonalRecord(record))
+      );
+    } catch (error) {
+      console.error(`Error in CHECK_PERSONAL_RECORDS:`, error);
+      return createErrorResult(error);
+    }
   }
 
   /**
