@@ -1,3 +1,4 @@
+
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { XP_CONSTANTS } from './constants/xpConstants';
 import { EXERCISE_TYPES, CLASS_PASSIVE_SKILLS } from './constants/exerciseTypes';
@@ -121,30 +122,53 @@ export class XPCalculationService {
   }
   
   /**
-   * Check if Bruxo should preserve partial streak using Pijama Arcano
+   * Get streak reduction percentage for Bruxo using Pijama Arcano (updated)
+   * Returns the new streak percentage value (not a factor)
    */
-  static async getStreakReductionFactor(userId: string, userClass: string | null, daysMissed: number): Promise<number> {
-    return PassiveSkillService.getStreakReductionFactor(userId, userClass, daysMissed);
+  static getStreakReductionPercentage(
+    userId: string, 
+    userClass: string | null, 
+    currentStreakPercentage: number,
+    daysMissed: number
+  ): number {
+    return PassiveSkillService.getStreakReductionPercentage(
+      userId, 
+      userClass, 
+      currentStreakPercentage, 
+      daysMissed
+    );
   }
   
   /**
    * Apply Bruxo's achievement points bonus
    */
-  static async applyAchievementPointsBonus(userId: string, userClass: string | null, basePoints: number): Promise<number> {
+  static async applyAchievementPointsBonus(
+    userId: string, 
+    userClass: string | null, 
+    basePoints: number
+  ): Promise<number> {
     return PassiveSkillService.applyAchievementPointsBonus(userId, userClass, basePoints);
   }
   
   /**
    * Apply Druida's rest XP bonus
    */
-  static async applyDruidaRestBonus(userId: string, userClass: string | null, baseXP: number): Promise<number> {
+  static async applyDruidaRestBonus(
+    userId: string, 
+    userClass: string | null, 
+    baseXP: number
+  ): Promise<number> {
     return PassiveSkillService.applyDruidaRestBonus(userId, userClass, baseXP);
   }
   
   /**
    * Get guild contribution bonus multiplier (Paladino passive skill)
    */
-  static getGuildContributionBonus(userId: string, userClass: string | null, contribution: number): number {
+  static getGuildContributionBonus(
+    userId: string, 
+    userClass: string | null, 
+    contribution: number
+  ): number {
     return ClassBonusCalculator.getPaladinoGuildBonus(userId, userClass, contribution);
   }
 }

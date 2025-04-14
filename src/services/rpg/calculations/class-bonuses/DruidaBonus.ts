@@ -74,7 +74,7 @@ export class DruidaBonus {
   }
   
   /**
-   * Check if Druida should receive rest bonus (50% XP on next workout after skipping)
+   * Check if Druida should receive rest bonus (50% XP on next workout after any rest period)
    * @param userId The user's ID
    * @returns Object containing whether bonus applies and bonus multiplier
    */
@@ -85,52 +85,56 @@ export class DruidaBonus {
     if (!userId) return { applyBonus: false, multiplier: 1.0 };
     
     try {
-      // Check if user has Cochilada Mística passive record
-      const { data, error } = await supabase
+      // Check if user has an unused Cochilada Mística bonus ready to apply
+      const { data: bonusData, error: bonusError } = await supabase
         .from('passive_skill_usage')
         .select('*')
         .eq('user_id', userId)
         .eq('skill_name', 'Cochilada Mística')
+        .eq('used', false)
         .single();
       
-      if (error || !data) {
-        // No record found, check if user has skipped a workout day
-        // Get last workout timestamp
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('last_workout_at')
-          .eq('id', userId)
-          .single();
-        
-        if (profileError || !profile.last_workout_at) {
-          return { applyBonus: false, multiplier: 1.0 };
-        }
-        
-        const lastWorkout = new Date(profile.last_workout_at);
-        const today = new Date();
-        const daysSinceLastWorkout = Math.floor((today.getTime() - lastWorkout.getTime()) / (1000 * 60 * 60 * 24));
-        
-        // If user skipped exactly one day, apply bonus
-        if (daysSinceLastWorkout >= 1) {
-          // Record the usage
-          await supabase
-            .from('passive_skill_usage')
-            .insert({
-              user_id: userId,
-              skill_name: 'Cochilada Mística',
-              used_at: new Date().toISOString()
-            });
-          
-          return { applyBonus: true, multiplier: 1.5 }; // 50% bonus
-        }
-      }
-      
-      // If there's an existing record, we need to clear it
-      if (data) {
+      if (!bonusError && bonusData) {
+        // Mark the bonus as used
         await supabase
           .from('passive_skill_usage')
-          .delete()
-          .eq('id', data.id);
+          .update({ used: true })
+          .eq('id', bonusData.id);
+        
+        return { applyBonus: true, multiplier: 1.5 }; // 50% bonus
+      }
+      
+      // If no bonus found, check if user has had any rest days
+      // Get last workout timestamp
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('last_workout_at')
+        .eq('id', userId)
+        .single();
+      
+      if (profileError || !profile.last_workout_at) {
+        // First time user or error - no bonus
+        return { applyBonus: false, multiplier: 1.0 };
+      }
+      
+      const lastWorkout = new Date(profile.last_workout_at);
+      const today = new Date();
+      const daysSinceLastWorkout = Math.floor((today.getTime() - lastWorkout.getTime()) / (1000 * 60 * 60 * 24));
+      
+      // If there's any gap between workouts, create a new bonus for the next workout
+      if (daysSinceLastWorkout >= 1) {
+        // Record the bonus for future use
+        await supabase
+          .from('passive_skill_usage')
+          .insert({
+            user_id: userId,
+            skill_name: 'Cochilada Mística',
+            used: false,
+            used_at: null
+          });
+        
+        // Don't apply the bonus now - it will be applied on the next workout
+        return { applyBonus: false, multiplier: 1.0 };
       }
       
       return { applyBonus: false, multiplier: 1.0 };

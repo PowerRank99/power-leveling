@@ -41,14 +41,21 @@ export class BruxoBonus {
   }
 
   /**
-   * Calculate streak reduction factor for Bruxo's Pijama Arcano
+   * Calculate streak reduction for Bruxo's Pijama Arcano
+   * Reduces streak bonus by 5 percentage points per day missed
+   * 
+   * @param currentStreakPercentage Current streak bonus percentage (not days)
    * @param daysMissed Number of days missed
-   * @returns Reduction factor (0-1)
+   * @returns New streak percentage (0-35)
    */
-  static getStreakReductionFactor(daysMissed: number): number {
-    // Each day missed reduces the streak by 5%
-    const reductionPercentage = Math.min(daysMissed * 0.05, 1.0);
-    return 1 - reductionPercentage;
+  static getStreakReductionPercentage(currentStreakPercentage: number, daysMissed: number): number {
+    // Calculate reduction in percentage points (5 per day)
+    const reductionPoints = daysMissed * 5;
+    
+    // Apply reduction to current streak percentage
+    const newStreakPercentage = Math.max(0, currentStreakPercentage - reductionPoints);
+    
+    return newStreakPercentage;
   }
   
   /**

@@ -122,20 +122,22 @@ export class ClassBonusCalculator {
   }
   
   /**
-   * Get streak reduction factor for Bruxo using Pijama Arcano
+   * Get streak reduction percentage for Bruxo using Pijama Arcano
    * 
    * @param userId - User ID to check
    * @param userClass - User's selected class
+   * @param currentStreakPercentage - Current streak bonus percentage
    * @param daysMissed - Number of days missed
-   * @returns Factor to multiply streak by (0-1)
+   * @returns New streak percentage (0-35)
    */
-  static async getStreakReductionFactor(
+  static getStreakReductionPercentage(
     userId: string, 
     userClass: string | null, 
+    currentStreakPercentage: number,
     daysMissed: number
-  ): Promise<number> {
+  ): number {
     if (!userId || userClass !== 'Bruxo' || daysMissed <= 0) return 0;
-    return BruxoBonus.getStreakReductionFactor(daysMissed);
+    return BruxoBonus.getStreakReductionPercentage(currentStreakPercentage, daysMissed);
   }
   
   /**

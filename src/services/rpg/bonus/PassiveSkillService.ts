@@ -13,22 +13,33 @@ export class PassiveSkillService {
 
   /**
    * Check if Bruxo should preserve partial streak using Pijama Arcano
-   * When Bruxo doesn't train, streak bonus reduced by 5% per day (instead of resetting)
+   * When Bruxo doesn't train, streak bonus reduced by 5 percentage points per day (instead of resetting)
+   * 
+   * @param userId User ID
+   * @param userClass User class
+   * @param currentStreakPercentage Current streak bonus percentage (0-35)
+   * @param daysMissed Number of days missed
+   * @returns New streak percentage (0-35)
    */
-  static async getStreakReductionFactor(userId: string, userClass: string | null, daysMissed: number): Promise<number> {
+  static getStreakReductionPercentage(
+    userId: string, 
+    userClass: string | null, 
+    currentStreakPercentage: number, 
+    daysMissed: number
+  ): number {
     if (!userId || userClass !== 'Bruxo' || daysMissed <= 0) return 0;
     
-    // For Bruxo, calculate streak reduction instead of complete reset
-    const reductionFactor = BruxoBonus.getStreakReductionFactor(daysMissed);
+    // For Bruxo, calculate streak reduction in percentage points
+    const newStreakPercentage = BruxoBonus.getStreakReductionPercentage(currentStreakPercentage, daysMissed);
     
     // Only show a notification if this is actually preserving some streak
-    if (reductionFactor > 0) {
+    if (newStreakPercentage > 0) {
       toast.success('Pijama Arcano Ativado!', {
-        description: `Seu Bruxo preservou ${Math.round(reductionFactor * 100)}% da sua sequência`
+        description: `Seu Bruxo preservou ${newStreakPercentage}% de bônus de sequência`
       });
     }
     
-    return reductionFactor;
+    return newStreakPercentage;
   }
   
   /**
@@ -52,6 +63,7 @@ export class PassiveSkillService {
           .insert({
             user_id: userId,
             skill_name: 'Topo da Montanha',
+            used: true,
             used_at: new Date().toISOString()
           });
         
@@ -90,7 +102,7 @@ export class PassiveSkillService {
         const bonusXP = Math.round(baseXP * (multiplier - 1));
         
         toast.success('Cochilada Mística Ativada!', {
-          description: `Seu Druida ganhou ${bonusXP} XP bônus por descansar ontem`
+          description: `Seu Druida ganhou ${bonusXP} XP bônus por descansar`
         });
         
         return baseXP + bonusXP;

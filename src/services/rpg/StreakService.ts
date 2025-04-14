@@ -1,9 +1,11 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { AchievementCheckerService } from './achievements/AchievementCheckerService';
 import { AchievementProgressService } from './achievements/AchievementProgressService';
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { TransactionService } from '@/services/common/TransactionService';
+import { PassiveSkillService } from './bonus/PassiveSkillService';
 
 export class StreakService {
   /**
@@ -25,7 +27,7 @@ export class StreakService {
         // Get user profile data
         const { data: profile, error: fetchError } = await supabase
           .from('profiles')
-          .select('last_workout_at, streak')
+          .select('last_workout_at, streak, class')
           .eq('id', userId)
           .single();
         
@@ -37,6 +39,7 @@ export class StreakService {
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         let newStreak = 1; // Default to 1 for first workout or streak reset
+        let streakBonusPercentage = 0;
         
         if (profile.last_workout_at) {
           const lastWorkoutDate = new Date(profile.last_workout_at);
@@ -56,6 +59,26 @@ export class StreakService {
           } else if (diffDays === 0) {
             // Already worked out today, keep current streak
             newStreak = profile.streak || 1;
+          } else if (diffDays > 1) {
+            // Streak broken - but check for Bruxo passive
+            if (profile.class === 'Bruxo') {
+              // Current streak percent (max 35% at 7 days)
+              const currentStreakDays = profile.streak || 0;
+              const currentStreakPercent = Math.min(currentStreakDays * 5, 35);
+              
+              // Get reduced percentage
+              streakBonusPercentage = PassiveSkillService.getStreakReductionPercentage(
+                userId,
+                profile.class,
+                currentStreakPercent,
+                diffDays
+              );
+              
+              // Convert percentage back to days (5% per day)
+              if (streakBonusPercentage > 0) {
+                newStreak = Math.ceil(streakBonusPercentage / 5);
+              }
+            }
           }
         }
         
