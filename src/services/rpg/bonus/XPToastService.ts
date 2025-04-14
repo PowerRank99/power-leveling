@@ -65,5 +65,15 @@ export class XPToastService {
       });
     }
   }
+  
+  /**
+   * Legacy method for backward compatibility
+   * @deprecated Use showXPToast instead
+   */
+  static showXPGainToast(
+    amount: number, 
+    source: string = 'workout'
+  ): void {
+    this.showXPToast(amount);
+  }
 }
-

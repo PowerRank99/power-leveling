@@ -53,16 +53,19 @@ export class WorkoutDataService {
         
         // Create or update exercise entry
         if (!exerciseMap.has(exerciseId)) {
-          // Convert the exercise data to expected format
-          const exerciseData = set.exercises as { id: string; name: string; type: string } | null;
+          // Convert the exercise data to expected format - use type assertion to fix the error
+          const exerciseData = set.exercises as any;
+          const exerciseName = exerciseData?.name || `Exercise ${exerciseId.slice(0, 8)}`;
+          const exerciseType = exerciseData?.type || undefined;
           
           exerciseMap.set(exerciseId, {
             id: set.id,
             exercise_id: exerciseId,
-            name: exerciseData?.name || `Exercise ${exerciseId.slice(0, 8)}`,
+            name: exerciseName,
             weight: set.weight,
             reps: set.reps,
-            sets: set.completed ? 1 : 0
+            sets: set.completed ? 1 : 0,
+            type: exerciseType
           });
         } else if (set.completed) {
           const exercise = exerciseMap.get(exerciseId);

@@ -43,8 +43,8 @@ export class XPService {
         return false;
       }
       
-      // Show toast notification
-      XPToastService.showXPGainToast(amount, source);
+      // Show toast notification - using the correct method name
+      XPToastService.showXPToast(amount, undefined, false);
       
       return true;
     } catch (error) {
