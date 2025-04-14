@@ -1,10 +1,10 @@
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
-import { AchievementDefinition, AchievementUtils } from '@/constants/AchievementDefinitions';
+import { AchievementUtils } from '@/constants/achievements';
 import { achievementPopupStore } from '@/stores/achievementPopupStore';
 import { useAchievementNotificationStore } from '@/stores/achievementNotificationStore';
 import { XPService } from '../XPService';
-import { AchievementCategory } from '@/types/achievementTypes';
+import { AchievementCategory, AchievementDefinition } from '@/types/achievementTypes';
 
 /**
  * Standardized achievement service that provides consistent achievement verification and awarding.
