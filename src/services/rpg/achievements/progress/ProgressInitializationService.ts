@@ -1,128 +1,97 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Achievement, AchievementProgress } from '@/types/achievementTypes';
-import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
-import { BaseProgressService } from './BaseProgressService';
+import { Achievement } from '@/types/achievementTypes';
+import { ServiceResponse, ErrorHandlingService, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
+import { TransactionService } from '@/services/common/TransactionService';
+import { ProgressBaseService } from './ProgressBaseService';
 
 /**
  * Service for initializing achievement progress
  */
-export class ProgressInitializationService extends BaseProgressService {
+export class ProgressInitializationService extends ProgressBaseService {
   /**
-   * Initialize progress tracking for an achievement
-   * Creates a new progress entry if one doesn't exist
+   * Initialize progress for one or more achievements
+   * Uses batch operations for efficiency
+   */
+  static async initializeMultipleProgress(
+    userId: string,
+    achievements: Achievement[]
+  ): Promise<ServiceResponse<boolean>> {
+    try {
+      // Validate input
+      if (!userId || !achievements.length) {
+        return createSuccessResponse(true); // Nothing to do
+      }
+      
+      const progressData = achievements.map(achievement => ({
+        achievement_id: achievement.id,
+        current_value: 0,
+        target_value: achievement.requirements.value,
+        is_complete: false
+      }));
+      
+      // Use transaction service for retry logic
+      return TransactionService.executeWithRetry(
+        async () => {
+          const { error } = await supabase
+            .rpc('batch_update_achievement_progress', {
+              p_user_id: userId,
+              p_achievements: JSON.stringify(progressData)
+            });
+            
+          if (error) throw error;
+          return true;
+        },
+        'INITIALIZE_MULTIPLE_PROGRESS',
+        3,
+        'Failed to initialize achievement progress'
+      );
+    } catch (error) {
+      return createErrorResponse(
+        (error as Error).message, 
+        `Exception initializing multiple achievement progress: ${(error as Error).message}`, 
+        ErrorCategory.EXCEPTION
+      );
+    }
+  }
+  
+  /**
+   * Initialize progress for a specific achievement
    */
   static async initializeProgress(
     userId: string,
     achievementId: string,
     targetValue: number
-  ): Promise<ServiceResponse<AchievementProgress | null>> {
-    return ErrorHandlingService.executeWithErrorHandling(
-      async () => {
-        // Check if progress entry already exists
-        const { data, error: checkError } = await supabase
-          .from('achievement_progress')
-          .select('*')
-          .eq('user_id', userId)
-          .eq('achievement_id', achievementId)
-          .maybeSingle();
-          
-        if (checkError) throw checkError;
+  ): Promise<ServiceResponse<boolean>> {
+    try {
+      const progressData = [{
+        achievement_id: achievementId,
+        current_value: 0,
+        target_value: targetValue,
+        is_complete: false
+      }];
+      
+      const { error } = await supabase
+        .rpc('batch_update_achievement_progress', {
+          p_user_id: userId,
+          p_achievements: JSON.stringify(progressData)
+        });
         
-        // If progress entry already exists, return it
-        if (data) {
-          return {
-            id: data.id,
-            current: data.current_value,
-            total: data.target_value,
-            isComplete: data.is_complete
-          };
-        }
-        
-        // Create new progress entry
-        const progressData = {
-          user_id: userId,
-          achievement_id: achievementId,
-          current_value: 0,
-          target_value: targetValue,
-          is_complete: false
-        };
-        
-        const { data: newData, error } = await supabase
-          .from('achievement_progress')
-          .insert(progressData)
-          .select('*')
-          .single();
-          
-        if (error) throw error;
-        
-        return {
-          id: newData.id,
-          current: newData.current_value,
-          total: newData.target_value,
-          isComplete: newData.is_complete
-        };
-      },
-      'INITIALIZE_PROGRESS',
-      { showToast: false }
-    );
-  }
-  
-  /**
-   * Initialize progress for multiple achievements
-   * Uses batching for better performance
-   */
-  static async initializeMultipleProgress(
-    userId: string,
-    achievements: Achievement[]
-  ): Promise<ServiceResponse<void>> {
-    return ErrorHandlingService.executeWithErrorHandling(
-      async () => {
-        if (!achievements || achievements.length === 0) {
-          return;
-        }
-        
-        // Create batches of 10 achievements each
-        const batchSize = 10;
-        const batches = [];
-        
-        for (let i = 0; i < achievements.length; i += batchSize) {
-          batches.push(achievements.slice(i, i + batchSize));
-        }
-        
-        // Process each batch
-        for (const batch of batches) {
-          const progressUpdates = batch.map(achievement => {
-            const requirements = typeof achievement.requirements === 'string'
-              ? JSON.parse(achievement.requirements)
-              : achievement.requirements;
-              
-            const targetValue = requirements.count || requirements.target || 10;
-            
-            return {
-              user_id: userId,
-              achievement_id: achievement.id,
-              current_value: 0,
-              target_value: targetValue,
-              is_complete: false
-            };
-          });
-          
-          // Use a batch insert with conflict handling
-          const { error } = await supabase
-            .from('achievement_progress')
-            .upsert(progressUpdates, { 
-              onConflict: 'user_id,achievement_id',
-              ignoreDuplicates: true
-            });
-            
-          if (error) {
-            throw error;
-          }
-        }
-      },
-      'INITIALIZE_MULTIPLE_PROGRESS',
-      { showToast: false }
-    );
+      if (error) {
+        return createErrorResponse(
+          error.message, 
+          `Failed to initialize achievement progress: ${error.message}`, 
+          ErrorCategory.DATABASE
+        );
+      }
+      
+      return createSuccessResponse(true);
+    } catch (error) {
+      return createErrorResponse(
+        (error as Error).message, 
+        `Exception initializing achievement progress: ${(error as Error).message}`, 
+        ErrorCategory.EXCEPTION
+      );
+    }
   }
 }
