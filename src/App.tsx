@@ -19,6 +19,7 @@ import GuildQuestsPage from './pages/GuildQuestsPage';
 import CreateQuestPage from './pages/CreateQuestPage';
 import GuildLeaderboardPage from './pages/GuildLeaderboardPage';
 import ActiveWorkoutPage from './pages/ActiveWorkoutPage';
+import EditProfilePage from './pages/EditProfilePage';
 
 function App() {
   return (
@@ -35,6 +36,11 @@ function App() {
             <ProfilePage />
           </AuthRequiredRoute>
         } />
+        <Route path="/profile/edit" element={
+          <AuthRequiredRoute>
+            <EditProfilePage />
+          </AuthRequiredRoute>
+        } />
         <Route path="/workout" element={
           <AuthRequiredRoute>
             <WorkoutPage />
@@ -45,6 +51,11 @@ function App() {
         <Route path="/perfil" element={
           <AuthRequiredRoute>
             <ProfilePage />
+          </AuthRequiredRoute>
+        } />
+        <Route path="/perfil/editar" element={
+          <AuthRequiredRoute>
+            <EditProfilePage />
           </AuthRequiredRoute>
         } />
         <Route path="/treino" element={

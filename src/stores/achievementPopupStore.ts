@@ -1,12 +1,12 @@
 
 import { create } from 'zustand';
 
-interface Achievement {
+export interface Achievement {
+  id: string;
   title: string;
   description: string;
   xpReward: number;
   bonusText?: string;
-  points?: number;
 }
 
 interface AchievementPopupState {
@@ -20,5 +20,5 @@ export const achievementPopupStore = create<AchievementPopupState>((set) => ({
   isVisible: false,
   achievement: null,
   showAchievement: (achievement) => set({ isVisible: true, achievement }),
-  hideAchievement: () => set({ isVisible: false }),
+  hideAchievement: () => set({ isVisible: false, achievement: null }),
 }));

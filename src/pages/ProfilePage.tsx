@@ -1,51 +1,106 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
+import ProfileHeader from '@/components/profile/ProfileHeader';
+import ProfileProgressSection from '@/components/profile/ProfileProgressSection';
+import ProfileDataProvider from '@/components/profile/ProfileDataProvider';
+import StreakAchievementsSection from '@/components/profile/StreakAchievementsSection';
+import RecentAchievementsList from '@/components/profile/RecentAchievementsList';
+import { getMockAchievements } from '@/components/profile/MockAchievements';
+import UserDataFormatter from '@/components/profile/UserDataFormatter';
+import ProfileActions from '@/components/profile/ProfileActions';
+import BottomNavBar from '@/components/navigation/BottomNavBar';
+import ClassCard from '@/components/profile/ClassCard';
+import AchievementPopup from '@/components/profile/AchievementPopup';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 const ProfilePage = () => {
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut, loading } = useAuth();
   const navigate = useNavigate();
+  const mockAchievements = getMockAchievements();
 
-  const handleTestClassBonus = () => {
-    navigate('/testing/class-bonus');
-  };
-  
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/login');
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-midnight-deep">
+        <LoadingSpinner size="lg" message="Carregando perfil..." />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-midnight-base p-4">
-      <div className="max-w-lg mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Profile Page</h1>
-        
-        {user ? (
-          <div className="rounded-lg bg-midnight-card p-4 border border-divider/20 space-y-4">
-            <div>
-              <div className="text-text-secondary">Email:</div>
-              <div className="font-semibold">{user.email}</div>
-            </div>
-            
-            <div className="pt-4 space-y-2">
-              <Button onClick={handleTestClassBonus} className="w-full">
-                Test Class XP Bonuses
-              </Button>
-              
-              <Button onClick={handleLogout} variant="outline" className="w-full">
-                Logout
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="text-center py-8">
-            <p className="mb-4">You are not logged in</p>
-            <Button onClick={() => navigate('/login')}>Go to Login</Button>
-          </div>
-        )}
+    <div className="min-h-screen bg-midnight-base pb-20">
+      {/* Profile Header with Actions */}
+      <div className="relative">
+        <UserDataFormatter user={user} profile={profile}>
+          {(userData) => (
+            <ProfileDataProvider userId={user?.id || ''}>
+              {(profileData) => (
+                <>
+                  <div className="flex justify-end absolute right-4 top-4 z-10">
+                    <ProfileActions onSignOut={signOut} />
+                  </div>
+                  
+                  <ProfileHeader
+                    avatar={userData.avatar}
+                    name={userData.name}
+                    username={userData.username}
+                    level={profileData.level}
+                    className={profileData.className}
+                    workoutsCount={userData.workoutsCount}
+                    ranking={profileData.ranking}
+                    currentXP={profileData.currentXP}
+                    nextLevelXP={profileData.nextLevelXP}
+                    rank={profileData.rank}
+                    achievementPoints={profileData.achievementPoints}
+                  />
+                  
+                  <div className="px-4">
+                    {/* Progress Section */}
+                    <ProfileProgressSection
+                      dailyXP={profileData.dailyXP}
+                      dailyXPCap={profileData.dailyXPCap}
+                      lastActivity={profileData.lastActivity}
+                      xpGain={profileData.xpGain}
+                      streak={profileData.streak}
+                    />
+                    
+                    {/* Streak and Achievements Section */}
+                    <StreakAchievementsSection
+                      streak={profileData.streak}
+                      achievementsUnlocked={profileData.achievementPoints}
+                      achievementsTotal={50} // Example total
+                    />
+                    
+                    {/* Class Card */}
+                    <ClassCard
+                      className={profileData.className}
+                      description={profileData.classDescription}
+                      bonuses={[
+                        { description: "Bônus principal", value: "+20% XP em treinos de força" },
+                        { description: "Bônus secundário", value: "+10% XP em dias de recorde" }
+                      ]}
+                      showAvatar={true}
+                    />
+                    
+                    {/* Recent Achievements */}
+                    <RecentAchievementsList
+                      achievements={mockAchievements.slice(0, 4)}
+                    />
+                  </div>
+                </>
+              )}
+            </ProfileDataProvider>
+          )}
+        </UserDataFormatter>
       </div>
+      
+      {/* Bottom Navigation */}
+      <BottomNavBar />
+      
+      {/* Achievement Popup System */}
+      <AchievementPopup />
     </div>
   );
 };
