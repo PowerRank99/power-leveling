@@ -1,29 +1,30 @@
 
 /**
  * Common workout types for the application
- * These types now directly reference src/types/workout.ts for consistency
  */
 
 import { 
-  WorkoutExercise as WorkoutExerciseBase,
-  WorkoutSet as WorkoutSetBase,
-  WorkoutExerciseData as WorkoutExerciseDataBase,
-  SetData as SetDataBase,
-  PreviousSetData as PreviousSetDataBase,
-  ExerciseHistory as ExerciseHistoryBase,
-  DatabaseResult as DatabaseResultBase,
-  PersonalRecord as PersonalRecordBase
+  WorkoutExercise,
+  WorkoutSet,
+  WorkoutExerciseData,
+  SetData,
+  PreviousSetData,
+  ExerciseHistory,
+  DatabaseResult,
+  PersonalRecord
 } from './workout';
 
 // Re-export with more descriptive naming
-export type WorkoutExercise = WorkoutExerciseBase;
-export type WorkoutSet = WorkoutSetBase;
-export type WorkoutExerciseData = WorkoutExerciseDataBase;
-export type SetData = SetDataBase;
-export type PreviousSetData = PreviousSetDataBase;
-export type ExerciseHistory = ExerciseHistoryBase;
-export type DatabaseResult<T> = DatabaseResultBase<T>;
-export type PersonalRecord = PersonalRecordBase;
+export type {
+  WorkoutExercise,
+  WorkoutSet, 
+  WorkoutExerciseData,
+  SetData,
+  PreviousSetData,
+  ExerciseHistory,
+  DatabaseResult,
+  PersonalRecord
+};
 
 /**
  * Additional type definitions for workout module

@@ -12,7 +12,7 @@ export interface Achievement {
   xpReward: number;
   iconName: string;
   requirements: any;
-  isUnlocked?: boolean; // Added to address AchievementGrid error
+  isUnlocked?: boolean;
   achievedAt?: string;
 }
 
@@ -26,9 +26,19 @@ export interface AchievementProgress {
   isComplete: boolean;
 }
 
-// Added to address AchievementNotification errors
+/**
+ * Achievement notification interface
+ */
 export interface AchievementNotification {
-  achievement: Achievement;
+  id: string;
+  achievement?: Achievement;
+  title?: string;
+  description?: string;
+  rank: string;
+  points: number;
+  xpReward: number;
+  bonusText?: string;
+  iconName?: string;
   timestamp: string;
 }
 

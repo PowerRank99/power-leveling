@@ -30,8 +30,8 @@ const AchievementNotificationSystem: React.FC<AchievementNotificationSystemProps
   return (
     <>
       <AchievementNotification
-        title={currentAchievement.title}
-        description={currentAchievement.description}
+        title={currentAchievement.title || "Nova Conquista"}
+        description={currentAchievement.description || "Parabéns pela sua conquista!"}
         rank={currentAchievement.rank as any}
         xpReward={currentAchievement.xpReward}
         bonusText={currentAchievement.bonusText}

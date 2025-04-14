@@ -25,6 +25,9 @@ export interface ServiceResponse<T> {
 // Backward compatibility type alias
 export type ServiceErrorResponse = ServiceResponse<any>;
 
+// Re-export ErrorCategory for external use
+export { ErrorCategory };
+
 /**
  * Service for handling errors consistently
  */
