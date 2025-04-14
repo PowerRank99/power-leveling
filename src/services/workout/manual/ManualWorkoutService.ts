@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { XPService } from '@/services/rpg/XPService';
 import { PowerDayService } from '@/services/rpg/bonus/PowerDayService';
-import { ManualWorkoutData } from '@/types/manualWorkoutTypes';
+import { ManualWorkoutData, ManualWorkout } from '@/types/manualWorkoutTypes';
 import { ServiceResponse } from '@/services/common/ErrorHandlingService';
 
 /**
@@ -110,6 +110,61 @@ export class ManualWorkoutService {
         success: false, 
         error: {
           message: 'Ocorreu um erro ao enviar o treino manual',
+          technical: error.message
+        }
+      };
+    }
+  }
+  
+  /**
+   * Get user's manual workouts
+   */
+  static async getUserManualWorkouts(userId: string): Promise<ManualWorkout[]> {
+    try {
+      const { data, error } = await supabase
+        .rpc('get_user_manual_workouts', {
+          p_user_id: userId
+        });
+      
+      if (error) throw error;
+      
+      return data || [];
+    } catch (error) {
+      console.error('Error getting user manual workouts:', error);
+      return [];
+    }
+  }
+  
+  /**
+   * Delete a manual workout
+   */
+  static async deleteManualWorkout(
+    userId: string, 
+    workoutId: string
+  ): Promise<ServiceResponse<boolean>> {
+    try {
+      const { error } = await supabase
+        .from('manual_workouts')
+        .delete()
+        .eq('id', workoutId)
+        .eq('user_id', userId);
+      
+      if (error) {
+        return {
+          success: false,
+          error: {
+            message: 'Não foi possível excluir o treino',
+            technical: error.message
+          }
+        };
+      }
+      
+      return { success: true, data: true };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: {
+          message: 'Erro ao excluir o treino',
           technical: error.message
         }
       };

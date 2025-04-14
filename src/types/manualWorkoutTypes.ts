@@ -11,6 +11,15 @@ export interface ManualWorkout {
   isPowerDay: boolean;
 }
 
+export interface ManualWorkoutData {
+  description?: string;
+  activityType?: string;
+  exerciseId?: string | null;
+  photoUrl: string;
+  workoutDate: Date | string;
+  usePowerDay?: boolean;
+}
+
 export interface ManualWorkoutSubmissionResult {
   success: boolean;
   error?: string;

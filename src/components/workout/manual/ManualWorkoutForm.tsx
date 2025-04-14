@@ -110,16 +110,17 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
       
       const result = await ManualWorkoutService.submitManualWorkout(
         user.id,
-        publicUrlData.publicUrl,
-        description,
-        selectedExercise.id,
-        selectedExercise.name,
-        selectedExercise.muscle_group || 'Não especificado',
-        parsedDate
+        {
+          photoUrl: publicUrlData.publicUrl,
+          description: description,
+          exerciseId: selectedExercise.id,
+          activityType: selectedExercise.name,
+          workoutDate: parsedDate
+        }
       );
       
       if (!result.success) {
-        throw new Error(result.error || 'Erro ao registrar treino');
+        throw new Error(result.error?.message || 'Erro ao registrar treino');
       }
       
       toast.success('Treino registrado com sucesso!', {
