@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -45,16 +44,13 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
 
   const classes = ['Guerreiro', 'Monge', 'Ninja', 'Bruxo', 'Paladino', 'Druida'];
 
-  // Calculate XP whenever inputs change
   useEffect(() => {
     calculatePotentialXP();
   }, [workoutType, duration, exerciseCount, includePersonalRecord, streak, useClassPassives, selectedClass]);
 
   const calculatePotentialXP = () => {
-    // Convert duration to seconds for API compatibility
     const durationSeconds = duration * 60;
     
-    // Create a mock workout object
     const mockWorkout = {
       id: 'simulation',
       exercises: Array(exerciseCount).fill({
@@ -70,7 +66,6 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
       hasPR: includePersonalRecord
     };
     
-    // Calculate XP
     const result = XPCalculationService.calculateWorkoutXP({
       workout: mockWorkout,
       userClass: useClassPassives ? selectedClass : null,
@@ -79,7 +74,6 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
       userId: userId
     });
     
-    // Extract XP components
     const timeXP = result.components?.timeXP || 0;
     const exerciseXP = result.components?.exerciseXP || 0;
     const setXP = result.components?.setsXP || 0;
@@ -87,7 +81,6 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
     const baseXP = timeXP + exerciseXP + setXP + prBonus;
     const streakMultiplier = XPCalculationService.getStreakMultiplier(streak);
     
-    // Update state
     setTotalXP(result.totalXP);
     setXpBreakdown({
       timeXP,
@@ -103,7 +96,6 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
   const simulateWorkout = async () => {
     setLoading(true);
     try {
-      // Log the simulation details
       const classBonus = useClassPassives ? `Class: ${selectedClass}` : 'No class bonus';
       const workoutDetails = `Type: ${workoutType}, Duration: ${duration}min, Exercises: ${exerciseCount}, PR: ${includePersonalRecord ? 'Yes' : 'No'}, Streak: ${streak}, ${classBonus}`;
       
@@ -116,7 +108,6 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
         });
       }
       
-      // Small delay to simulate processing
       await new Promise(resolve => setTimeout(resolve, 500));
     } catch (error) {
       console.error('Simulation error:', error);
@@ -126,7 +117,6 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
     }
   };
 
-  // Get class-specific bonus descriptions
   const getClassSpecificDescription = () => {
     if (!useClassPassives || !selectedClass) return "No class selected";
     
@@ -148,7 +138,6 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-4">
-            {/* Workout Configuration Section */}
             <div className="space-y-2">
               <Label htmlFor="workoutType">Workout Type</Label>
               <Select value={workoutType} onValueChange={setWorkoutType}>
@@ -254,7 +243,6 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
           </div>
           
           <div className="space-y-4 flex flex-col">
-            {/* XP Calculation Result Section */}
             <div className="bg-midnight-card border border-divider/30 rounded-lg p-4 space-y-4 flex-grow">
               <h3 className="font-orbitron text-text-primary">XP Calculation</h3>
               
@@ -316,7 +304,7 @@ const WorkoutSimulation: React.FC<WorkoutSimulationProps> = ({ userId, addLogEnt
               onClick={simulateWorkout} 
               className="w-full h-12 text-base" 
               disabled={loading || !userId}
-              variant="gradient"
+              variant="arcane"
             >
               {loading ? 'Simulating...' : 'Simulate Workout'}
             </Button>
