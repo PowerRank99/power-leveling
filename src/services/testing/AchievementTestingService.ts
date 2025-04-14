@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 import { AchievementService } from '@/services/rpg/AchievementService';
@@ -15,7 +14,7 @@ export interface AchievementTestResult {
   achievementId: string;
   name: string;
   category: AchievementCategory;
-  rank: AchievementRank;
+  rank: AchievementRank | string;
   success: boolean;
   errorMessage?: string;
   testDurationMs: number;

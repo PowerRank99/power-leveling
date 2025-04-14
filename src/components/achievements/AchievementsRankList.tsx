@@ -1,7 +1,7 @@
 
 import React, { useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Achievement } from '@/types/achievementTypes';
+import { Achievement, AchievementRank } from '@/types/achievementTypes';
 import AchievementRankSection from './AchievementRankSection';
 
 interface AchievementsRankListProps {
@@ -15,7 +15,14 @@ const AchievementsRankList: React.FC<AchievementsRankListProps> = ({
   expandedRank,
   onToggleRank
 }) => {
-  const ranks = ['S', 'A', 'B', 'C', 'D', 'E'] as const;
+  const ranks = [
+    AchievementRank.S, 
+    AchievementRank.A, 
+    AchievementRank.B, 
+    AchievementRank.C, 
+    AchievementRank.D, 
+    AchievementRank.E
+  ];
 
   const achievementsByRank = useCallback(() => {
     const grouped: Record<string, Achievement[]> = {};

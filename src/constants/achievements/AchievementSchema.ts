@@ -20,7 +20,15 @@ export const AchievementDefinitionSchema = z.object({
     AchievementCategory.TIME_BASED,
     AchievementCategory.MILESTONE
   ]),
-  rank: z.enum(['S', 'A', 'B', 'C', 'D', 'E', 'Unranked']),
+  rank: z.enum([
+    AchievementRank.S,
+    AchievementRank.A,
+    AchievementRank.B,
+    AchievementRank.C,
+    AchievementRank.D,
+    AchievementRank.E,
+    AchievementRank.UNRANKED
+  ]),
   points: z.number().int().min(1).max(25),
   xpReward: z.number().int().min(10).max(500),
   iconName: z.string(),

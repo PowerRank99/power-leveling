@@ -6,17 +6,17 @@ import { AchievementRank } from '@/types/achievementTypes';
  */
 export const getRankColorClass = (rank: AchievementRank | string): string => {
   switch (rank) {
-    case 'S':
+    case AchievementRank.S:
       return 'border-achievement text-achievement';
-    case 'A':
+    case AchievementRank.A:
       return 'border-valor text-valor';
-    case 'B':
+    case AchievementRank.B:
       return 'border-valor-60 text-valor-60';  
-    case 'C':
+    case AchievementRank.C:
       return 'border-arcane text-arcane';
-    case 'D':
+    case AchievementRank.D:
       return 'border-arcane-60 text-arcane-60';
-    case 'E':
+    case AchievementRank.E:
     default:
       return 'border-text-tertiary text-text-tertiary';
   }
@@ -27,17 +27,17 @@ export const getRankColorClass = (rank: AchievementRank | string): string => {
  */
 export const getRankBackgroundClass = (rank: AchievementRank | string): string => {
   switch (rank) {
-    case 'S':
+    case AchievementRank.S:
       return 'bg-achievement-15 border-achievement-30';
-    case 'A':
+    case AchievementRank.A:
       return 'bg-valor-15 border-valor-30';
-    case 'B':
+    case AchievementRank.B:
       return 'bg-valor-15/50 border-valor-30/50';  
-    case 'C':
+    case AchievementRank.C:
       return 'bg-arcane-15 border-arcane-30';
-    case 'D':
+    case AchievementRank.D:
       return 'bg-arcane-15/50 border-arcane-30/50';
-    case 'E':
+    case AchievementRank.E:
     default:
       return 'bg-midnight-card border-divider/30';
   }
@@ -47,7 +47,14 @@ export const getRankBackgroundClass = (rank: AchievementRank | string): string =
  * Get the next rank above the current one
  */
 export const getNextRank = (rank: AchievementRank | string): AchievementRank | null => {
-  const ranks: AchievementRank[] = ['E', 'D', 'C', 'B', 'A', 'S'];
+  const ranks: AchievementRank[] = [
+    AchievementRank.E, 
+    AchievementRank.D, 
+    AchievementRank.C, 
+    AchievementRank.B, 
+    AchievementRank.A, 
+    AchievementRank.S
+  ];
   const currentIndex = ranks.indexOf(rank as AchievementRank);
   
   if (currentIndex === -1 || currentIndex === ranks.length - 1) {
@@ -62,19 +69,19 @@ export const getNextRank = (rank: AchievementRank | string): AchievementRank | n
  */
 export const getRankDisplayName = (rank: AchievementRank | string): string => {
   switch (rank) {
-    case 'S':
+    case AchievementRank.S:
       return 'Rank S - Lendário';
-    case 'A':
+    case AchievementRank.A:
       return 'Rank A - Mestre';
-    case 'B':
+    case AchievementRank.B:
       return 'Rank B - Experiente';
-    case 'C':
+    case AchievementRank.C:
       return 'Rank C - Intermediário';
-    case 'D':
+    case AchievementRank.D:
       return 'Rank D - Iniciante';
-    case 'E':
+    case AchievementRank.E:
       return 'Rank E - Novato';
-    case 'Unranked':
+    case AchievementRank.UNRANKED:
     default:
       return 'Sem Rank';
   }
@@ -87,14 +94,14 @@ export const getRankDisplayName = (rank: AchievementRank | string): string => {
 export const calculateUserRank = (level: number, achievementPoints: number): AchievementRank => {
   const rankScore = 1.5 * level + 2 * achievementPoints;
   
-  if (rankScore >= 198) return 'S';
-  if (rankScore >= 160) return 'A';
-  if (rankScore >= 120) return 'B';
-  if (rankScore >= 80) return 'C';
-  if (rankScore >= 50) return 'D';
-  if (rankScore >= 20) return 'E';
+  if (rankScore >= 198) return AchievementRank.S;
+  if (rankScore >= 160) return AchievementRank.A;
+  if (rankScore >= 120) return AchievementRank.B;
+  if (rankScore >= 80) return AchievementRank.C;
+  if (rankScore >= 50) return AchievementRank.D;
+  if (rankScore >= 20) return AchievementRank.E;
   
-  return 'E'; // Default to rank E for new users
+  return AchievementRank.E; // Default to rank E for new users
 };
 
 /**
@@ -105,12 +112,12 @@ export const calculatePointsForNextRank = (currentRank: AchievementRank, level: 
   if (!nextRank) return 0; // Already at max rank
   
   const thresholds = {
-    'S': 198,
-    'A': 160,
-    'B': 120,
-    'C': 80,
-    'D': 50,
-    'E': 20,
+    [AchievementRank.S]: 198,
+    [AchievementRank.A]: 160,
+    [AchievementRank.B]: 120,
+    [AchievementRank.C]: 80,
+    [AchievementRank.D]: 50,
+    [AchievementRank.E]: 20,
   };
   
   const currentScore = 1.5 * level + 2 * achievementPoints;
@@ -125,17 +132,17 @@ export const calculatePointsForNextRank = (currentRank: AchievementRank, level: 
  */
 export const getIconBgClass = (rank: AchievementRank | string): string => {
   switch (rank) {
-    case 'S':
+    case AchievementRank.S:
       return 'bg-achievement-15';
-    case 'A':
+    case AchievementRank.A:
       return 'bg-valor-15';
-    case 'B':
+    case AchievementRank.B:
       return 'bg-valor-15/50';
-    case 'C':
+    case AchievementRank.C:
       return 'bg-arcane-15';
-    case 'D':
+    case AchievementRank.D:
       return 'bg-arcane-15/50';
-    case 'E':
+    case AchievementRank.E:
     default:
       return 'bg-midnight-elevated';
   }
@@ -146,36 +153,36 @@ export const getIconBgClass = (rank: AchievementRank | string): string => {
  */
 export const getAnimationSettings = (rank: AchievementRank | string) => {
   switch (rank) {
-    case 'S':
+    case AchievementRank.S:
       return {
         delay: 0.1,
         duration: 0.8,
         type: 'spring',
         stiffness: 120
       };
-    case 'A':
+    case AchievementRank.A:
       return {
         delay: 0.09,
         duration: 0.7,
         type: 'spring',
         stiffness: 110
       };
-    case 'B':
+    case AchievementRank.B:
       return {
         delay: 0.08,
         duration: 0.6,
         type: 'spring',
         stiffness: 100
       };
-    case 'C':
+    case AchievementRank.C:
       return {
         delay: 0.07,
         duration: 0.5,
         type: 'spring',
         stiffness: 90
       };
-    case 'D':
-    case 'E':
+    case AchievementRank.D:
+    case AchievementRank.E:
     default:
       return {
         delay: 0.05,

@@ -19,9 +19,17 @@ export enum AchievementCategory {
 }
 
 /**
- * Achievement rank type with clear definitions
+ * Achievement rank enum with clear definitions
  */
-export type AchievementRank = 'S' | 'A' | 'B' | 'C' | 'D' | 'E' | 'Unranked';
+export enum AchievementRank {
+  S = 'S',
+  A = 'A',
+  B = 'B',
+  C = 'C',
+  D = 'D',
+  E = 'E',
+  UNRANKED = 'Unranked'
+}
 
 /**
  * Strongly typed requirement structure
@@ -40,7 +48,7 @@ export interface Achievement {
   name: string;
   description: string;
   category: AchievementCategory | string;
-  rank: AchievementRank;
+  rank: AchievementRank | string;
   points: number;
   xpReward: number;
   iconName: string;
@@ -84,8 +92,8 @@ export interface AchievementStats {
   total: number;
   unlocked: number;
   points: number;
-  byRank: Record<AchievementRank, number>;
-  byCategory: Partial<Record<AchievementCategory, number>>;
+  byRank: Record<AchievementRank | string, number>;
+  byCategory: Partial<Record<AchievementCategory | string, number>>;
   recentlyUnlocked?: Achievement[];
 }
 
