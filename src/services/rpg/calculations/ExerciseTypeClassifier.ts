@@ -1,4 +1,3 @@
-
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { EXERCISE_TYPES } from '../constants/exerciseTypes';
 
@@ -12,9 +11,7 @@ export class ExerciseTypeClassifier {
    * @returns True if the exercise should receive Guerreiro bonus
    */
   static isGuerreiroExercise(exercise: WorkoutExercise): boolean {
-    const exerciseName = exercise.name.toLowerCase();
-    return (exercise as any).type === 'Musculação' || 
-           EXERCISE_TYPES.COMPOUND_LIFTS.some(term => exerciseName.includes(term));
+    return (exercise as any).type === 'Musculação';
   }
   
   /**
