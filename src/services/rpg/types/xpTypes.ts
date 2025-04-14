@@ -31,6 +31,17 @@ export interface XPBonusItem {
 }
 
 /**
+ * XP calculation components breakdown
+ */
+export interface XPComponents {
+  timeXP: number;
+  exerciseXP: number;
+  setsXP: number;
+  prBonus: number;
+  totalBaseXP: number;
+}
+
+/**
  * Input for XP calculation
  */
 export interface XPCalculationInput {
@@ -54,4 +65,5 @@ export interface XPCalculationResult {
   totalXP: number;
   baseXP: number;
   bonusBreakdown: XPBonusItem[];
+  components?: XPComponents;
 }

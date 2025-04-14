@@ -1,6 +1,6 @@
-
 import { XP_CONSTANTS } from '../constants/xpConstants';
-import { XPTimeTier } from '../types/xpTypes';
+import { XPTimeTier, XPComponents } from '../types/xpTypes';
+import { WorkoutExercise } from '@/types/workoutTypes';
 
 /**
  * Core XP calculation service that handles basic XP computations
@@ -59,5 +59,56 @@ export class BaseXPCalculator {
     }
     
     return Math.round(totalXP);
+  }
+  
+  /**
+   * Calculate XP components (time, exercises, sets) separately
+   * This allows for targeted class bonuses
+   * 
+   * @param workout - Workout data with exercises and duration
+   * @param difficulty - Workout difficulty level
+   * @returns XP components breakdown
+   */
+  static calculateXPComponents(
+    workout: {
+      exercises: WorkoutExercise[];
+      durationSeconds: number;
+    },
+    difficulty: string = 'intermediario'
+  ): XPComponents {
+    // Calculate time-based XP
+    const timeMinutes = Math.floor(workout.durationSeconds / 60);
+    const timeXP = this.calculateTimeXP(timeMinutes);
+    
+    // Calculate exercise completion XP
+    const exerciseXP = workout.exercises.length * XP_CONSTANTS.BASE_EXERCISE_XP;
+    
+    // Calculate set completion XP
+    const completedSets = workout.exercises.reduce((sum, ex) => {
+      if (Array.isArray(ex.sets)) {
+        return sum + ex.sets.filter(set => set.completed).length;
+      }
+      return sum;
+    }, 0);
+    
+    // Cap sets XP at maximum allowed
+    const cappedCompletedSets = Math.min(completedSets, XP_CONSTANTS.MAX_XP_CONTRIBUTING_SETS);
+    const setsXP = cappedCompletedSets * XP_CONSTANTS.BASE_SET_XP;
+    
+    // Apply difficulty modifier to exercise and set XP only
+    const difficultyMultiplier = 
+      XP_CONSTANTS.DIFFICULTY_MULTIPLIERS[difficulty as keyof typeof XP_CONSTANTS.DIFFICULTY_MULTIPLIERS] || 1.0;
+    
+    const adjustedExerciseXP = Math.round(exerciseXP * difficultyMultiplier);
+    const adjustedSetsXP = Math.round(setsXP * difficultyMultiplier);
+    
+    // Return all components
+    return {
+      timeXP,
+      exerciseXP: adjustedExerciseXP,
+      setsXP: adjustedSetsXP,
+      prBonus: 0, // Will be added later if applicable
+      totalBaseXP: timeXP + adjustedExerciseXP + adjustedSetsXP
+    };
   }
 }

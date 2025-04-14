@@ -1,4 +1,3 @@
-
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { XP_CONSTANTS } from './constants/xpConstants';
 import { EXERCISE_TYPES, CLASS_PASSIVE_SKILLS } from './constants/exerciseTypes';
@@ -56,48 +55,30 @@ export class XPCalculationService {
     userId
   }: XPCalculationInput): XPCalculationResult {
     try {
-      // Calculate time-based XP with diminishing returns
-      const timeMinutes = Math.floor((workout.durationSeconds || 0) / 60);
-      const timeXP = this.calculateTimeXP(timeMinutes);
-      
-      // Exercise completion XP
-      const exerciseXP = workout.exercises.length * this.BASE_EXERCISE_XP; // 5 XP per exercise
-      
-      // Set completion XP - capped at MAX_XP_CONTRIBUTING_SETS sets (10 by default)
-      const completedSets = workout.exercises.reduce((sum, ex) => {
-        // Check if sets is an array and has a filter method
-        if (Array.isArray(ex.sets)) {
-          return sum + ex.sets.filter(set => set.completed).length;
-        }
-        return sum;
-      }, 0);
-      
-      // Cap the number of sets that contribute to XP
-      const cappedCompletedSets = Math.min(completedSets, this.MAX_XP_CONTRIBUTING_SETS);
-      const setsXP = cappedCompletedSets * this.BASE_SET_XP; // 2 XP per completed set, max 10 sets
-      
-      // Personal Record bonus if applicable
-      const prBonus = workout.hasPR ? this.PR_BONUS_XP : 0;
-      
-      // Sum base XP
-      let baseXP = timeXP + exerciseXP + setsXP + prBonus;
-      
-      // Apply difficulty modifier if available
+      // Get workout difficulty
       const workoutDifficulty = workout.difficulty || defaultDifficulty;
-      const difficultyMultiplier = this.DIFFICULTY_MULTIPLIERS[workoutDifficulty];
-      if (difficultyMultiplier) {
-        baseXP = Math.round(baseXP * difficultyMultiplier);
+      
+      // Calculate XP components (time, exercises, sets)
+      const components = BaseXPCalculator.calculateXPComponents(
+        workout, 
+        workoutDifficulty
+      );
+      
+      // Add PR bonus if applicable
+      if (workout.hasPR) {
+        components.prBonus = this.PR_BONUS_XP;
+        components.totalBaseXP += components.prBonus;
       }
       
       // Create a bonusBreakdown array to track all bonuses
       let bonusBreakdown: { skill: string, amount: number, description: string }[] = [];
       
-      // First apply streak multiplier
+      // Apply streak multiplier
       const streakMultiplier = this.getStreakMultiplier(streak);
       let streakBonusXP = 0;
       
       if (streak > 0) {
-        streakBonusXP = Math.round(baseXP * (streakMultiplier - 1));
+        streakBonusXP = Math.round(components.totalBaseXP * (streakMultiplier - 1));
         bonusBreakdown.push({
           skill: 'Streak',
           amount: streakBonusXP,
@@ -106,11 +87,11 @@ export class XPCalculationService {
       }
       
       // Add streak bonus to XP
-      let totalXPAfterStreak = baseXP + streakBonusXP;
+      let totalXPAfterStreak = components.totalBaseXP + streakBonusXP;
       
       // Apply class-specific bonuses with breakdown
       const { totalXP, bonusBreakdown: classBonusBreakdown } = ClassBonusCalculator.applyClassBonuses(
-        totalXPAfterStreak, 
+        components,
         workout, 
         userClass, 
         streak,
@@ -125,8 +106,9 @@ export class XPCalculationService {
       
       return {
         totalXP: cappedXP,
-        baseXP,
-        bonusBreakdown
+        baseXP: components.totalBaseXP,
+        bonusBreakdown,
+        components
       };
     } catch (error) {
       console.error('Error calculating workout XP:', error);

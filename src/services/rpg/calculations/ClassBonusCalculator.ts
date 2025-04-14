@@ -8,7 +8,8 @@ import { NinjaBonus } from './class-bonuses/NinjaBonus';
 import { BruxoBonus } from './class-bonuses/BruxoBonus';
 import { PaladinoBonus } from './class-bonuses/PaladinoBonus';
 import { DruidaBonus } from './class-bonuses/DruidaBonus';
-import { XPCalculationInput } from '../types/xpTypes';
+import { XPCalculationInput, XPComponents } from '../types/xpTypes';
+import { ExerciseTypeClassifier } from './ExerciseTypeClassifier';
 
 /**
  * Service that coordinates class-specific XP bonus calculations
@@ -24,14 +25,14 @@ export class ClassBonusCalculator {
   /**
    * Apply class-specific bonuses to XP
    * 
-   * @param baseXP - Base XP amount before class bonuses
+   * @param components - XP components breakdown (time, exercises, sets)
    * @param workout - Workout data including exercises and duration
    * @param userClass - User's selected class (Guerreiro, Monge, etc.)
    * @param streak - Current streak count in days
    * @returns Total XP after applying class bonuses and breakdown of bonuses applied
    */
   static applyClassBonuses(
-    baseXP: number,
+    components: XPComponents,
     workout: {
       id: string;
       exercises: WorkoutExercise[];
@@ -42,50 +43,75 @@ export class ClassBonusCalculator {
     streak: number = 0,
     userId?: string
   ): { totalXP: number, bonusBreakdown: ClassBonusBreakdown[] } {
-    if (!userClass) return { totalXP: baseXP, bonusBreakdown: [] };
+    if (!userClass) return { totalXP: components.totalBaseXP, bonusBreakdown: [] };
     
-    let totalXP = baseXP;
+    let totalXP = components.totalBaseXP;
     let bonusBreakdown: ClassBonusBreakdown[] = [];
     
     // Apply class-specific bonuses by delegating to appropriate class calculator
     switch(userClass) {
       case 'Guerreiro': {
-        const { bonusXP, bonusBreakdown: breakdown } = GuerreiroBonus.applyBonuses(baseXP, workout);
+        const { bonusXP, bonusBreakdown: breakdown } = GuerreiroBonus.applyBonuses(
+          components,
+          workout,
+          ExerciseTypeClassifier.isGuerreiroExercise
+        );
         totalXP += bonusXP;
         bonusBreakdown = breakdown;
         break;
       }
         
       case 'Monge': {
-        const { bonusXP, bonusBreakdown: breakdown } = MongeBonus.applyBonuses(baseXP, workout, streak);
+        const { bonusXP, bonusBreakdown: breakdown } = MongeBonus.applyBonuses(
+          components,
+          workout,
+          streak,
+          ExerciseTypeClassifier.isMongeExercise
+        );
         totalXP += bonusXP;
         bonusBreakdown = breakdown;
         break;
       }
         
       case 'Ninja': {
-        const { bonusXP, bonusBreakdown: breakdown } = NinjaBonus.applyBonuses(baseXP, workout);
+        const { bonusXP, bonusBreakdown: breakdown } = NinjaBonus.applyBonuses(
+          components,
+          workout,
+          ExerciseTypeClassifier.isNinjaExercise
+        );
         totalXP += bonusXP;
         bonusBreakdown = breakdown;
         break;
       }
         
       case 'Bruxo': {
-        const { bonusXP, bonusBreakdown: breakdown } = BruxoBonus.applyBonuses(baseXP, workout);
+        const { bonusXP, bonusBreakdown: breakdown } = BruxoBonus.applyBonuses(
+          components,
+          workout
+        );
         totalXP += bonusXP;
         bonusBreakdown = breakdown;
         break;
       }
         
       case 'Paladino': {
-        const { bonusXP, bonusBreakdown: breakdown } = PaladinoBonus.applyBonuses(baseXP, workout);
+        const { bonusXP, bonusBreakdown: breakdown } = PaladinoBonus.applyBonuses(
+          components,
+          workout,
+          ExerciseTypeClassifier.isPaladinoExercise
+        );
         totalXP += bonusXP;
         bonusBreakdown = breakdown;
         break;
       }
         
       case 'Druida': {
-        const { bonusXP, bonusBreakdown: breakdown } = DruidaBonus.applyBonuses(baseXP, workout, userId);
+        const { bonusXP, bonusBreakdown: breakdown } = DruidaBonus.applyBonuses(
+          components,
+          workout,
+          userId,
+          ExerciseTypeClassifier.isDruidaExercise
+        );
         totalXP += bonusXP;
         bonusBreakdown = breakdown;
         break;

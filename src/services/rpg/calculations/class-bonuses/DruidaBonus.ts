@@ -3,6 +3,8 @@ import { EXERCISE_TYPES, CLASS_PASSIVE_SKILLS } from '../../constants/exerciseTy
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { ClassBonusBreakdown } from '../../types/classTypes';
 import { supabase } from '@/integrations/supabase/client';
+import { XPComponents } from '../../types/xpTypes';
+import { ExerciseTypeClassifier } from '../ExerciseTypeClassifier';
 
 /**
  * Calculates Druida class-specific bonuses
@@ -12,31 +14,52 @@ export class DruidaBonus {
    * Apply Druida-specific bonuses to XP
    */
   static applyBonuses(
-    baseXP: number,
+    components: XPComponents,
     workout: {
       id: string;
       exercises: WorkoutExercise[];
     },
-    userId?: string
+    userId?: string,
+    isQualifyingExercise: (exercise: WorkoutExercise) => boolean
   ): { bonusXP: number; bonusBreakdown: ClassBonusBreakdown[] } {
     const bonusBreakdown: ClassBonusBreakdown[] = [];
     let bonusXP = 0;
     
-    const exerciseNames = workout.exercises.map(ex => ex.name.toLowerCase());
-    
-    // Check for mobility/flexibility exercises - Ritmo da Natureza
-    const hasMobility = exerciseNames.some(name => 
-      EXERCISE_TYPES.MOBILITY.some(mobility => name.includes(mobility))
+    // Calculate number of qualifying exercises (Flexibility & Mobility type)
+    const qualifyingExercisesCount = ExerciseTypeClassifier.countQualifyingExercises(
+      workout.exercises, 
+      isQualifyingExercise
     );
     
-    if (hasMobility) {
-      const mobilityBonus = Math.round(baseXP * 0.40);
-      bonusBreakdown.push({
-        skill: CLASS_PASSIVE_SKILLS.DRUIDA.PRIMARY,
-        amount: mobilityBonus,
-        description: '+40% XP de exercícios de mobilidade e flexibilidade'
-      });
-      bonusXP += mobilityBonus;
+    // Calculate completed sets from qualifying exercises
+    const qualifyingSetsCount = ExerciseTypeClassifier.countQualifyingSets(
+      workout.exercises,
+      isQualifyingExercise
+    );
+    
+    // Only apply bonus if there are qualifying exercises
+    if (qualifyingExercisesCount > 0) {
+      // Calculate exercise XP that qualifies for the bonus
+      const qualifyingExerciseXP = qualifyingExercisesCount * 5; // 5 XP per exercise
+      
+      // Calculate sets XP that qualifies for the bonus (capped at MAX_XP_CONTRIBUTING_SETS)
+      const cappedQualifyingSets = Math.min(qualifyingSetsCount, 10); // Cap at 10 sets
+      const qualifyingSetsXP = cappedQualifyingSets * 2; // 2 XP per set
+      
+      // Calculate total qualifying XP
+      const totalQualifyingXP = qualifyingExerciseXP + qualifyingSetsXP;
+      
+      // Apply 40% bonus to qualifying XP
+      const mobilityBonus = Math.round(totalQualifyingXP * 0.40);
+      
+      if (mobilityBonus > 0) {
+        bonusBreakdown.push({
+          skill: CLASS_PASSIVE_SKILLS.DRUIDA.PRIMARY,
+          amount: mobilityBonus,
+          description: '+40% XP de exercícios de mobilidade e flexibilidade'
+        });
+        bonusXP += mobilityBonus;
+      }
     }
     
     // Check if user has skipped workout days - Cochilada Mística
