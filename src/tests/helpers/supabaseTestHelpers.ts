@@ -10,6 +10,8 @@ export function createMockDbResponse<T>(data: T | null = null, error: any = null
     data,
     error,
     count: data ? (Array.isArray(data) ? data.length : 1) : 0,
+    status: 200,
+    statusText: 'OK',
   };
 }
 
