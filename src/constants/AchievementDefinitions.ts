@@ -1,5 +1,6 @@
+
 import { z } from 'zod';
-import { AchievementCategory, AchievementRank } from '@/types/achievementTypes';
+import { AchievementCategory, AchievementRank, Achievement, AchievementRequirement } from '@/types/achievementTypes';
 
 // Enhanced Achievement Definition Schema with Zod for runtime validation
 export const AchievementDefinitionSchema = z.object({
@@ -718,7 +719,7 @@ export const AchievementUtils = {
       id: definition.id,
       name: definition.name,
       description: definition.description,
-      category: definition.category,
+      category: definition.category as AchievementCategory,
       rank: definition.rank as AchievementRank,
       points: definition.points,
       xpReward: definition.xpReward,
@@ -740,7 +741,7 @@ export const AchievementUtils = {
       id: achievement.id,
       name: achievement.name,
       description: achievement.description,
-      category: achievement.category as any,
+      category: achievement.category,
       rank: achievement.rank,
       points: achievement.points,
       xpReward: achievement.xpReward,

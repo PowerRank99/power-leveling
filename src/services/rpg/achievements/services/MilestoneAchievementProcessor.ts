@@ -2,6 +2,7 @@
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { AchievementUtils } from '@/constants/AchievementDefinitions';
+import { AchievementCategory } from '@/types/achievementTypes';
 
 /**
  * Service for processing milestone-related achievements (level, XP)
@@ -15,7 +16,7 @@ export class MilestoneAchievementProcessor {
       async () => {
         // Get level achievements from centralized definitions
         const levelAchievements = AchievementUtils
-          .getAchievementsByCategory('level')
+          .getAchievementsByCategory(AchievementCategory.LEVEL)
           .filter(a => a.requirementType === 'level')
           .sort((a, b) => b.requirementValue - a.requirementValue);
         
@@ -51,7 +52,7 @@ export class MilestoneAchievementProcessor {
       async () => {
         // Get XP achievements from centralized definitions
         const xpAchievements = AchievementUtils
-          .getAchievementsByCategory('xp')
+          .getAchievementsByCategory(AchievementCategory.XP)
           .filter(a => a.requirementType === 'total_xp')
           .sort((a, b) => b.requirementValue - a.requirementValue);
         

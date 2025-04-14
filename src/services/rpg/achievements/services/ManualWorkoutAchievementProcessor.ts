@@ -3,6 +3,7 @@ import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHa
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { AchievementUtils } from '@/constants/AchievementDefinitions';
 import { supabase } from '@/integrations/supabase/client';
+import { AchievementCategory } from '@/types/achievementTypes';
 
 /**
  * Service for processing manual workout achievements
@@ -24,7 +25,7 @@ export class ManualWorkoutAchievementProcessor {
         
         // Get manual workout achievements from centralized definitions
         const manualAchievements = AchievementUtils
-          .getAchievementsByCategory('manual')
+          .getAchievementsByCategory(AchievementCategory.MANUAL)
           .filter(a => a.requirementType === 'manual_count')
           .sort((a, b) => b.requirementValue - a.requirementValue);
         

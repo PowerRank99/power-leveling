@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, createSuccessResponse } from '@/services/common/ErrorHandlingService';
-import { Achievement, UserAchievementData } from '@/types/achievementTypes';
+import { Achievement, UserAchievementData, AchievementRank, AchievementCategory } from '@/types/achievementTypes';
 import { BaseAchievementFetchService } from './BaseAchievementFetchService';
 
 /**
@@ -27,8 +27,8 @@ export class AchievementListService extends BaseAchievementFetchService {
         id: achievement.id,
         name: achievement.name,
         description: achievement.description,
-        category: achievement.category,
-        rank: achievement.rank,
+        category: achievement.category as AchievementCategory,
+        rank: achievement.rank as AchievementRank,
         points: achievement.points,
         xpReward: achievement.xp_reward,
         iconName: achievement.icon_name,
@@ -77,8 +77,8 @@ export class AchievementListService extends BaseAchievementFetchService {
         id: item.achievement_id,
         name: item.achievements.name,
         description: item.achievements.description,
-        category: item.achievements.category,
-        rank: item.achievements.rank,
+        category: item.achievements.category as AchievementCategory,
+        rank: item.achievements.rank as AchievementRank,
         points: item.achievements.points,
         xpReward: item.achievements.xp_reward,
         iconName: item.achievements.icon_name,

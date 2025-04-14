@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 import { AchievementDefinition, AchievementUtils } from '@/constants/AchievementDefinitions';
@@ -264,7 +263,7 @@ export class StandardizedAchievementService {
       
       // Get achievement definitions related to workout counts from centralized system
       const workoutAchievements = AchievementUtils
-        .getAchievementsByCategory('workout')
+        .getAchievementsByCategory(AchievementCategory.WORKOUT)
         .filter(a => a.requirementType === 'workouts_count')
         .sort((a, b) => b.requirementValue - a.requirementValue); // Sort descending
       
@@ -321,7 +320,7 @@ export class StandardizedAchievementService {
       
       // Get streak achievements from centralized definitions
       const streakAchievements = AchievementUtils
-        .getAchievementsByCategory('streak')
+        .getAchievementsByCategory(AchievementCategory.STREAK)
         .filter(a => a.requirementType === 'streak_days')
         .sort((a, b) => b.requirementValue - a.requirementValue); // Sort descending
       
