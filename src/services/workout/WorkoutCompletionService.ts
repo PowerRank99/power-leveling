@@ -1,8 +1,8 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise, PersonalRecord } from '@/types/workoutTypes';
-import { mapToWorkoutExerciseData } from '@/utils/typeMappers';
-import { ServiceResponse } from '@/services/common/ErrorHandlingService';
 import { XPService } from '@/services/rpg/XPService';
+import { ServiceResponse } from '@/services/common/ErrorHandlingService';
 
 /**
  * Service for completing workouts and handling related operations
@@ -12,60 +12,129 @@ export class WorkoutCompletionService {
    * Complete a workout and perform all related operations
    * 
    * @param workoutId The ID of the workout to complete
+   * @param durationSeconds Optional duration in seconds
    * @returns A ServiceResponse indicating success or failure
    */
-  static async completeWorkout(workoutId: string): Promise<ServiceResponse<boolean>> {
+  static async finishWorkout(workoutId: string, durationSeconds?: number): Promise<boolean> {
     try {
       // Start a database transaction
-      await supabase.rpc('start_transaction');
+      await supabase.rpc('begin_transaction');
       
       // Fetch workout data
       const { data: workout, error: workoutError } = await supabase
         .from('workouts')
-        .select('user_id, exercises, duration_seconds')
+        .select('user_id, routine_id')
         .eq('id', workoutId)
         .single();
       
       if (workoutError || !workout) {
         await supabase.rpc('rollback_transaction');
         console.error('Error fetching workout:', workoutError);
-        return { success: false, error: 'Workout not found' };
+        return false;
       }
       
       const userId = workout.user_id;
-      const workoutExercises = mapToWorkoutExerciseData(workout.exercises as any[]);
-      const workoutDuration = workout.duration_seconds || 0;
+      
+      // Fetch workout exercises data
+      const { data: exercisesData, error: exercisesError } = await supabase
+        .from('workout_sets')
+        .select('*')
+        .eq('workout_id', workoutId)
+        .order('set_order', { ascending: true });
+        
+      if (exercisesError) {
+        await supabase.rpc('rollback_transaction');
+        console.error('Error fetching workout exercises:', exercisesError);
+        return false;
+      }
+      
+      // Process exercises data into a format suitable for XP calculation
+      const exerciseMap = new Map();
+      exercisesData?.forEach(set => {
+        if (!exerciseMap.has(set.exercise_id)) {
+          exerciseMap.set(set.exercise_id, {
+            id: set.exercise_id,
+            sets: []
+          });
+        }
+        
+        exerciseMap.get(set.exercise_id).sets.push({
+          id: set.id,
+          weight: set.weight,
+          reps: set.reps,
+          completed: set.completed
+        });
+      });
+      
+      const workoutExercises: WorkoutExercise[] = Array.from(exerciseMap.values());
       
       // Check for personal records
       const personalRecords = await XPService.checkForPersonalRecords(userId, {
         id: workoutId,
         exercises: workoutExercises,
-        durationSeconds: workoutDuration
+        durationSeconds: durationSeconds || 0
       });
       
-      // Handle streak calculations
-      await this.handleStreakAndXP(userId, workoutExercises, workoutDuration, personalRecords);
+      // Handle streak calculations and XP award
+      await this.handleStreakAndXP(userId, workoutExercises, durationSeconds || 0, personalRecords);
       
       // Update workout completion status
       const { error: updateError } = await supabase
         .from('workouts')
-        .update({ completed: true })
+        .update({ 
+          completed_at: new Date().toISOString(),
+          duration_seconds: durationSeconds
+        })
         .eq('id', workoutId);
       
       if (updateError) {
         await supabase.rpc('rollback_transaction');
         console.error('Error updating workout completion status:', updateError);
-        return { success: false, error: 'Failed to update workout completion status' };
+        return false;
       }
       
       // Commit the transaction
       await supabase.rpc('commit_transaction');
       
-      return { success: true, data: true };
+      return true;
     } catch (error) {
       await supabase.rpc('rollback_transaction');
       console.error('Error completing workout:', error);
-      return { success: false, error: 'Failed to complete workout' };
+      return false;
+    }
+  }
+
+  /**
+   * Discard a workout
+   */
+  static async discardWorkout(workoutId: string): Promise<boolean> {
+    try {
+      // Delete the workout sets first (due to foreign key constraints)
+      const { error: setsError } = await supabase
+        .from('workout_sets')
+        .delete()
+        .eq('workout_id', workoutId);
+        
+      if (setsError) {
+        console.error('Error deleting workout sets:', setsError);
+        return false;
+      }
+      
+      // Delete the workout
+      const { error: workoutError } = await supabase
+        .from('workouts')
+        .delete()
+        .eq('id', workoutId);
+        
+      if (workoutError) {
+        console.error('Error deleting workout:', workoutError);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error discarding workout:', error);
+      return false;
     }
   }
 
@@ -102,7 +171,7 @@ export class WorkoutCompletionService {
         hasPR: personalRecords.length > 0
       };
       
-      // Use the new awardWorkoutXP method from XPService
+      // Use the awardWorkoutXP method from XPService
       const xpAwarded = await XPService.awardWorkoutXP(
         userId,
         workoutData,
