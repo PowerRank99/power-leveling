@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise, PersonalRecord } from '@/types/workoutTypes';
 import { XPCalculationService } from './XPCalculationService';
