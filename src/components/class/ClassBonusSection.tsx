@@ -1,40 +1,28 @@
 
 import React from 'react';
-import { Shield } from 'lucide-react';
-import ClassBonusItem from './ClassBonusItem';
-
-interface ClassBonus {
-  bonus_type: string;
-  bonus_value: number;
-  description: string;
-  formattedText: string;
-  skill_name?: string;
-}
 
 interface ClassBonusSectionProps {
-  bonuses: ClassBonus[];
+  bonuses: { description: string; value: string; skillName?: string }[];
   accentColor: string;
 }
 
-const ClassBonusSection: React.FC<ClassBonusSectionProps> = ({ bonuses, accentColor }) => {
+const ClassBonusSection: React.FC<ClassBonusSectionProps> = ({ 
+  bonuses, 
+  accentColor 
+}) => {
+  if (!bonuses || bonuses.length === 0) {
+    return null;
+  }
+
   return (
-    <div className="mt-4">
-      <div className="flex items-center mb-3">
-        <span className={`${accentColor} rounded-full p-1.5 mr-2 border border-white/30`}>
-          <Shield className={`h-4 w-4 text-white`} />
-        </span>
-        <span className={`text-sm font-medium text-white/90`}>Bônus Passivos</span>
-      </div>
-      
-      <div className="space-y-3">
-        {bonuses.map((bonus, index) => (
-          <ClassBonusItem 
-            key={index} 
-            bonus={bonus} 
-            accentColor={accentColor} 
-          />
-        ))}
-      </div>
+    <div className="space-y-1">
+      <h4 className="font-bold text-xs uppercase tracking-wide mb-2 opacity-70">Passive Skills</h4>
+      {bonuses.map((bonus, index) => (
+        <div key={index} className="flex justify-between text-xs items-center">
+          <span className="truncate pr-2">{bonus.description}</span>
+          <span className={`font-bold ${accentColor}`}>{bonus.value}</span>
+        </div>
+      ))}
     </div>
   );
 };

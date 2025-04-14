@@ -7,6 +7,7 @@ import { ClassBonusCalculator } from './calculations/ClassBonusCalculator';
 
 /**
  * Service responsible for XP calculations and constants
+ * Acts as a facade for the various calculation services
  */
 export class XPCalculationService {
   // Re-export constants for backward compatibility
@@ -22,6 +23,7 @@ export class XPCalculationService {
   
   /**
    * Calculate the streak multiplier (5% per day up to 35% at 7 days)
+   * Delegates to BaseXPCalculator
    */
   static getStreakMultiplier(streak: number): number {
     return BaseXPCalculator.getStreakMultiplier(streak);
@@ -29,6 +31,7 @@ export class XPCalculationService {
   
   /**
    * Calculate time-based XP with diminishing returns
+   * Delegates to BaseXPCalculator
    */
   static calculateTimeXP(durationMinutes: number): number {
     return BaseXPCalculator.calculateTimeXP(durationMinutes);
@@ -36,6 +39,13 @@ export class XPCalculationService {
   
   /**
    * Calculate XP for a completed workout with bonus breakdown
+   * Orchestrates the XP calculation process using various calculators
+   * 
+   * @param workout - Workout data including exercises, duration, and difficulty
+   * @param userClass - User's selected class (Guerreiro, Monge, etc.)
+   * @param streak - Current streak count in days
+   * @param difficulty - Workout difficulty level
+   * @returns Total XP, base XP, and breakdown of all bonuses applied
    */
   static calculateWorkoutXP(
     workout: {
@@ -136,6 +146,7 @@ export class XPCalculationService {
   
   /**
    * Should preserve streak (Bruxo passive skill)
+   * Delegates to ClassBonusCalculator
    */
   static async shouldPreserveStreak(userId: string, userClass: string | null): Promise<boolean> {
     return ClassBonusCalculator.shouldPreserveStreak(userId, userClass);
@@ -143,6 +154,7 @@ export class XPCalculationService {
   
   /**
    * Get guild contribution bonus multiplier (Paladino passive skill)
+   * Delegates to ClassBonusCalculator
    */
   static getGuildContributionBonus(userId: string, userClass: string | null, contribution: number): number {
     return ClassBonusCalculator.getPaladinoGuildBonus(userId, userClass, contribution);

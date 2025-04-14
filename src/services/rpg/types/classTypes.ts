@@ -9,7 +9,7 @@ export interface ClassBonusBreakdown {
 }
 
 /**
- * Interface for class information
+ * Interface for class information with camelCase properties
  */
 export interface ClassInfo {
   className: string;
@@ -20,7 +20,7 @@ export interface ClassInfo {
 }
 
 /**
- * Interface for class bonus
+ * Interface for class bonus with camelCase properties
  */
 export interface ClassBonus {
   bonusType: string;
@@ -48,6 +48,15 @@ export interface ClassMetadata {
   color: string;
 }
 
+/**
+ * Interface for formatted bonus display
+ */
+export interface FormattedBonus {
+  description: string;
+  value: string;
+  skillName?: string;
+}
+
 // For backward compatibility with components that still use snake_case
 export interface LegacyClassInfo {
   class_name: string;
@@ -60,4 +69,21 @@ export interface LegacyClassInfo {
     description: string;
     skill_name?: string;
   }[];
+}
+
+/**
+ * Type for workout difficulty levels
+ */
+export type WorkoutDifficulty = 'iniciante' | 'intermediario' | 'avancado';
+
+/**
+ * Enum for class names
+ */
+export enum ClassName {
+  GUERREIRO = 'Guerreiro',
+  MONGE = 'Monge',
+  NINJA = 'Ninja',
+  BRUXO = 'Bruxo',
+  PALADINO = 'Paladino',
+  // DRUIDA = 'Druida' // To be implemented in the future
 }

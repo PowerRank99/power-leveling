@@ -2,11 +2,15 @@
 import { XP_CONSTANTS } from '../constants/xpConstants';
 
 /**
- * Service for basic XP calculations
+ * Service for basic XP calculations that are not class-specific
+ * Handles core XP calculations like streak multipliers and time-based XP
  */
 export class BaseXPCalculator {
   /**
    * Calculate the streak multiplier (5% per day up to 35% at 7 days)
+   * 
+   * @param streak - Current streak count in days
+   * @returns Multiplier as a decimal (e.g., 1.35 for 35% bonus)
    */
   static getStreakMultiplier(streak: number): number {
     const maxStreakBonus = XP_CONSTANTS.MAX_STREAK_DAYS;
@@ -21,6 +25,9 @@ export class BaseXPCalculator {
    * 30-60 minutes: +30 XP
    * 60-90 minutes: +20 XP
    * Beyond 90 minutes: no additional XP
+   * 
+   * @param durationMinutes - Workout duration in minutes
+   * @returns XP amount for the time component
    */
   static calculateTimeXP(durationMinutes: number): number {
     let totalXP = 0;
