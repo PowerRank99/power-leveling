@@ -1,28 +1,11 @@
 
 import { create } from 'zustand';
-import { Achievement, AchievementRank } from '@/types/achievementTypes';
-
-/**
- * Interface for achievement popup data with only required display properties
- */
-export interface AchievementPopupData {
-  id: string;
-  name: string;
-  description: string;
-  xpReward: number;
-  points: number;
-  rank: AchievementRank;
-  metadata?: Record<string, any>;
-  // These properties are not needed for display but included for type compatibility
-  category?: string;
-  iconName?: string;
-  requirements?: any;
-}
+import { Achievement, AchievementCategory, AchievementRank } from '@/types/achievementTypes';
 
 interface AchievementPopupState {
   isVisible: boolean;
-  achievement: AchievementPopupData | null;
-  showAchievement: (achievement: AchievementPopupData) => void;
+  achievement: Achievement | null;
+  showAchievement: (achievement: Achievement) => void;
   hideAchievement: () => void;
 }
 

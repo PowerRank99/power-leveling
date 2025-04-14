@@ -2,8 +2,9 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Trophy } from 'lucide-react';
-import { achievementPopupStore, AchievementPopupData } from '@/stores/achievementPopupStore';
+import { achievementPopupStore } from '@/stores/achievementPopupStore';
 import { AchievementUtils } from '@/constants/AchievementDefinitions';
+import { Achievement, AchievementCategory } from '@/types/achievementTypes';
 
 const AchievementTester: React.FC = () => {
   const { showAchievement } = achievementPopupStore();
@@ -12,28 +13,28 @@ const AchievementTester: React.FC = () => {
     // Get a real achievement definition from our centralized system
     const achievements = AchievementUtils.getAllAchievements();
     const randomIndex = Math.floor(Math.random() * achievements.length);
-    const achievement = achievements[randomIndex];
+    const achievementDef = achievements[randomIndex];
     
-    // Create a popup-compatible achievement object
-    const popupData: AchievementPopupData = {
-      id: achievement.id,
-      name: achievement.name,
-      description: achievement.description,
-      xpReward: achievement.xpReward,
-      points: achievement.points,
-      rank: achievement.rank,
-      category: achievement.category, // Added for completeness
-      iconName: achievement.iconName, // Added for completeness
-      requirements: { // Added for completeness
-        type: achievement.requirementType,
-        value: achievement.requirementValue
+    // Create a fully compliant Achievement object
+    const achievement: Achievement = {
+      id: achievementDef.id,
+      name: achievementDef.name,
+      description: achievementDef.description,
+      category: achievementDef.category || AchievementCategory.SPECIAL,
+      rank: achievementDef.rank,
+      points: achievementDef.points,
+      xpReward: achievementDef.xpReward,
+      iconName: achievementDef.iconName || 'award',
+      requirements: {
+        type: achievementDef.requirementType,
+        value: achievementDef.requirementValue
       },
       metadata: {
         bonusText: "Excede o limite diário"
       }
     };
     
-    showAchievement(popupData);
+    showAchievement(achievement);
   };
 
   return (
