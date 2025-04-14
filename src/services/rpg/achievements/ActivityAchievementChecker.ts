@@ -5,6 +5,7 @@ import { AchievementChecker } from './AchievementCheckerInterface';
 import { BaseAchievementChecker } from './BaseAchievementChecker';
 import { AchievementService } from '../AchievementService';
 import { TransactionService } from '../../common/TransactionService';
+import { ACHIEVEMENT_IDS, ACHIEVEMENT_REQUIREMENTS } from './AchievementConstants';
 
 /**
  * Checker for activity-related achievements (variety of exercises, etc.)
@@ -72,9 +73,9 @@ export class ActivityAchievementChecker extends BaseAchievementChecker implement
         
         const achievementChecks: string[] = [];
         
-        // Check achievement criteria
-        if (count && count >= 3) achievementChecks.push('manual-3');
-        if (count && count >= 10) achievementChecks.push('manual-10');
+        // Check achievement criteria using constants
+        if (count && count >= 3) achievementChecks.push(ACHIEVEMENT_IDS.E.manual[0]); // manual-3
+        if (count && count >= 10) achievementChecks.push(ACHIEVEMENT_IDS.D.manual[0]); // manual-10
         
         // Award achievements
         if (achievementChecks.length > 0) {
@@ -115,9 +116,9 @@ export class ActivityAchievementChecker extends BaseAchievementChecker implement
       
       const achievementChecks: string[] = [];
       
-      // Check for achievements based on variety
-      if (distinctCount >= 3) achievementChecks.push('activity-variety-3');
-      if (distinctCount >= 5) achievementChecks.push('activity-variety-5');
+      // Check for achievements based on variety using constants
+      if (distinctCount >= 3) achievementChecks.push(ACHIEVEMENT_IDS.E.variety[0]); // activity-variety-3
+      if (distinctCount >= 5) achievementChecks.push(ACHIEVEMENT_IDS.D.variety[0]); // activity-variety-5
       
       // Award achievements
       if (achievementChecks.length > 0) {
@@ -156,10 +157,10 @@ export class ActivityAchievementChecker extends BaseAchievementChecker implement
       
       const achievementChecks: string[] = [];
       
-      // Check for achievements based on variety
-      if (distinctCount >= 3) achievementChecks.push('exercise-variety-3');
-      if (distinctCount >= 5) achievementChecks.push('exercise-variety-5');
-      if (distinctCount >= 10) achievementChecks.push('exercise-variety-10');
+      // Check for achievements based on variety using constants
+      if (distinctCount >= 3) achievementChecks.push(ACHIEVEMENT_IDS.D.variety[1]); // exercise-variety-3
+      if (distinctCount >= 5) achievementChecks.push(ACHIEVEMENT_IDS.C.variety[0]); // exercise-variety-5
+      if (distinctCount >= 10) achievementChecks.push(ACHIEVEMENT_IDS.B.variety[0]); // exercise-variety-10
       
       // Award achievements
       if (achievementChecks.length > 0) {

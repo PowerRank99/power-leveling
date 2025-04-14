@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, ErrorHandlingService, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 import { BaseAchievementChecker } from './BaseAchievementChecker';
 import { AchievementService } from '@/services/rpg/AchievementService';
+import { ACHIEVEMENT_IDS, ACHIEVEMENT_REQUIREMENTS } from '../AchievementConstants';
 import { WorkoutStatsService } from '../workout/WorkoutStatsService';
 import { RankEAchievementChecker } from '../workout/RankEAchievementChecker';
 import { RankDAchievementChecker } from '../workout/RankDAchievementChecker';
@@ -36,12 +37,12 @@ export class WorkoutCheckerService extends BaseAchievementChecker {
         await HigherRankAchievementChecker.checkRankCAchievements(userId, workoutStats, userProfile);
         await HigherRankAchievementChecker.checkHigherRankAchievements(userId, workoutStats, userProfile);
         
-        // Define some basic achievements to check directly
+        // Define some basic achievements to check directly using constants
         const achievementsToCheck: string[] = [];
         
-        if (workoutStats.totalCount >= 1) achievementsToCheck.push('first-workout');
-        if (workoutStats.totalCount >= 7) achievementsToCheck.push('total-7');
-        if (workoutStats.weeklyCount >= 3) achievementsToCheck.push('weekly-3');
+        if (workoutStats.totalCount >= 1) achievementsToCheck.push(ACHIEVEMENT_IDS.E.workout[0]); // first-workout
+        if (workoutStats.totalCount >= 7) achievementsToCheck.push(ACHIEVEMENT_IDS.E.workout[2]); // total-7
+        if (workoutStats.weeklyCount >= 3) achievementsToCheck.push(ACHIEVEMENT_IDS.E.workout[1]); // weekly-3
         
         // Award these direct achievements
         const newlyAwarded = await this.awardAchievementsBatch(userId, achievementsToCheck);

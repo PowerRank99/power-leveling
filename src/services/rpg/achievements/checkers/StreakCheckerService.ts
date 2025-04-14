@@ -4,7 +4,7 @@ import { BaseAchievementChecker } from './BaseAchievementChecker';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { supabase } from '@/integrations/supabase/client';
 import { AchievementCategory } from '@/types/achievementTypes';
-import { ACHIEVEMENT_IDS } from '../AchievementConstants';
+import { ACHIEVEMENT_IDS, ACHIEVEMENT_REQUIREMENTS } from '../AchievementConstants';
 
 /**
  * Service specifically for checking streak-related achievements 
