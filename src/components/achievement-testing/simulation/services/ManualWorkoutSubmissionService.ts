@@ -67,17 +67,15 @@ export class ManualWorkoutSubmissionService {
       if (error) throw error;
       
       // Award XP with class bonus metadata if applicable
-      await XPService.awardXP(this.userId, xpAwarded, 'manual_workout', {
-        activityType,
-        isPowerDay,
-        ...(useClassPassives && classBonus > 0 ? {
-          classBonus: {
-            class: selectedClass,
-            amount: classBonus,
-            description: classBonusDescription
-          }
-        } : {})
-      });
+      const classMetadata = useClassPassives && classBonus > 0 ? {
+        classBonus: {
+          class: selectedClass,
+          amount: classBonus,
+          description: classBonusDescription
+        }
+      } : undefined;
+      
+      await XPService.awardXP(this.userId, xpAwarded, 'manual_workout', classMetadata);
       
       // Build detailed log entry
       let logDetails = `Type: ${activityType}, XP: ${xpAwarded}`;

@@ -45,18 +45,25 @@ export class XPService {
       
       // Show toast notification with class bonuses if available
       if (metadata?.classBonus) {
-        XPToastService.showXPToast(
-          amount, 
-          [{ 
-            skill: metadata.classBonus.class, 
+        // Create an XPBreakdown object with the class bonus
+        const breakdown = {
+          base: amount - (metadata.classBonus.amount || 0),
+          classBonus: metadata.classBonus.amount || 0,
+          streakBonus: 0,
+          recordBonus: 0,
+          weeklyBonus: 0,
+          monthlyBonus: 0,
+          bonusDetails: [{
+            skill: metadata.classBonus.class,
             amount: metadata.classBonus.amount,
-            description: metadata.classBonus.description 
-          }],
-          false
-        );
+            description: metadata.classBonus.description
+          }]
+        };
+        
+        XPToastService.showXPToast(amount, breakdown, false);
       } else {
-        // Standard XP toast
-        XPToastService.showXPToast(amount, undefined, false);
+        // Standard XP toast without breakdown
+        XPToastService.showXPToast(amount);
       }
       
       return true;
