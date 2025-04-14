@@ -1,56 +1,75 @@
-
 import { create } from 'zustand';
-import { AchievementNotification } from '@/types/achievementTypes';
 
-interface AchievementNotificationStore {
-  isVisible: boolean;
-  queue: AchievementNotification[];
-  currentAchievement: AchievementNotification | null;
-  addNotification: (achievement: AchievementNotification) => void;
-  hideNotification: () => void;
+/**
+ * Standardized achievement notification interface
+ */
+export interface AchievementNotification {
+  id: string;
+  title: string;
+  description: string;
+  rank: string;
+  points: number;
+  xpReward: number;
+  bonusText?: string;
+  timestamp: string;
 }
 
-export const useAchievementNotificationStore = create<AchievementNotificationStore>((set, get) => ({
+interface AchievementNotificationState {
+  isVisible: boolean;
+  currentAchievement: AchievementNotification | null;
+  queue: AchievementNotification[];
+  showNotification: (achievement: AchievementNotification) => void;
+  hideNotification: () => void;
+  queueNotification: (achievement: AchievementNotification) => void;
+}
+
+export const useAchievementNotificationStore = create<AchievementNotificationState>((set, get) => ({
   isVisible: false,
-  queue: [],
   currentAchievement: null,
+  queue: [],
   
-  addNotification: (achievement) => {
-    const { isVisible, queue } = get();
-    
-    if (isVisible || queue.length > 0) {
-      // Add to queue if a notification is already showing
-      set((state) => ({
-        queue: [...state.queue, achievement]
-      }));
-    } else {
-      // Show immediately if no notification is active
-      set({
-        isVisible: true,
-        currentAchievement: achievement
-      });
-    }
+  showNotification: (achievement) => {
+    set({ 
+      isVisible: true, 
+      currentAchievement: achievement 
+    });
   },
   
   hideNotification: () => {
     const { queue } = get();
     
+    // Process queue
     if (queue.length > 0) {
-      // Show next notification in queue
-      const nextQueue = [...queue];
-      const nextAchievement = nextQueue.shift();
+      const nextAchievement = queue[0];
+      const remainingQueue = queue.slice(1);
       
-      set({
-        queue: nextQueue,
-        currentAchievement: nextAchievement,
-        isVisible: true
+      set({ 
+        currentAchievement: nextAchievement, 
+        queue: remainingQueue,
+        isVisible: true 
       });
     } else {
-      // No more notifications, hide
-      set({
-        isVisible: false,
-        currentAchievement: null
+      set({ 
+        isVisible: false, 
+        currentAchievement: null 
       });
+    }
+  },
+  
+  queueNotification: (achievement) => {
+    const { isVisible, queue } = get();
+    
+    if (!isVisible && queue.length === 0) {
+      // If no active notification, show immediately
+      set({ 
+        isVisible: true, 
+        currentAchievement: achievement 
+      });
+    } else {
+      // Otherwise add to queue
+      set(state => ({ 
+        queue: [...state.queue, achievement] 
+      }));
     }
   }
 }));

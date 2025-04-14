@@ -6,6 +6,8 @@ export interface Achievement {
   title: string;
   description: string;
   xpReward: number;
+  points?: number;
+  rank?: string;
   bonusText?: string;
 }
 

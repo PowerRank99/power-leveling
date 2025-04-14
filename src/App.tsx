@@ -20,10 +20,14 @@ import CreateQuestPage from './pages/CreateQuestPage';
 import GuildLeaderboardPage from './pages/GuildLeaderboardPage';
 import ActiveWorkoutPage from './pages/ActiveWorkoutPage';
 import EditProfilePage from './pages/EditProfilePage';
+import AchievementNotificationSystem from './components/achievements/AchievementNotificationSystem';
 
 function App() {
   return (
     <AuthProvider>
+      {/* Global Achievement Notification System */}
+      <AchievementNotificationSystem />
+      
       <Routes>
         <Route path="/" element={<IndexPage />} />
         <Route path="/login" element={<LoginPage />} />

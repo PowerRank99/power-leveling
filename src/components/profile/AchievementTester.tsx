@@ -2,16 +2,22 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { achievementPopupStore } from '@/stores/achievementPopupStore';
+import { ACHIEVEMENTS } from '@/constants/AchievementDefinitions';
 
 const AchievementTester: React.FC = () => {
   const { showAchievement } = achievementPopupStore();
   
   const testAchievement = () => {
+    // Get a real achievement definition from our constants
+    const achievement = ACHIEVEMENTS.WORKOUTS.FIRST_WORKOUT;
+    
     showAchievement({
-      id: "test-achievement",
-      title: "Guerreiro Dedicado",
-      description: "Complete 100 treinos",
-      xpReward: 50,
+      id: achievement.id,
+      title: achievement.name,
+      description: achievement.description,
+      xpReward: achievement.xpReward,
+      points: achievement.points,
+      rank: achievement.rank,
       bonusText: "Excede o limite diário"
     });
   };

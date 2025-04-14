@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import AchievementNotification from './AchievementNotification';
 import { useAchievementNotificationStore } from '@/stores/achievementNotificationStore';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface AchievementNotificationSystemProps {
   queueCount?: number;
@@ -12,26 +12,23 @@ const AchievementNotificationSystem: React.FC<AchievementNotificationSystemProps
   queueCount
 }) => {
   const { isVisible, currentAchievement, hideNotification, queue } = useAchievementNotificationStore();
-  const { toast } = useToast();
   
   // Display queue status
   useEffect(() => {
     if (queue.length > 1) {
-      toast({
-        title: "Novas conquistas",
-        description: `${queue.length} conquistas aguardando para serem reveladas`,
-        duration: 3000,
-      });
+      toast.info(
+        `${queue.length} conquistas aguardando para serem reveladas`
+      );
     }
-  }, [queue.length, toast]);
+  }, [queue.length]);
   
   if (!currentAchievement) return null;
   
   return (
     <>
       <AchievementNotification
-        title={currentAchievement.title || "Nova Conquista"}
-        description={currentAchievement.description || "Parabéns pela sua conquista!"}
+        title={currentAchievement.title}
+        description={currentAchievement.description}
         rank={currentAchievement.rank as any}
         xpReward={currentAchievement.xpReward}
         bonusText={currentAchievement.bonusText}
