@@ -3,9 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { XPService } from './XPService';
 import { toast } from 'sonner';
 import { TransactionService } from '../common/TransactionService';
-import { ServiceResponse, ErrorHandlingService } from '../common/ErrorHandlingService';
+import { ServiceResponse, ErrorHandlingService, ErrorCategory, createErrorResponse, createSuccessResponse } from '../common/ErrorHandlingService';
 import { AchievementAwardService } from './achievements/AchievementAwardService';
 import { AchievementFetchService } from './achievements/AchievementFetchService';
+import { Achievement } from '@/types/achievementTypes';
 
 /**
  * Service for handling achievements
@@ -74,10 +75,18 @@ export class AchievementService {
   }
   
   /**
+   * Get all achievements
+   * Delegates to AchievementFetchService
+   */
+  static async getAllAchievements(): Promise<ServiceResponse<Achievement[]>> {
+    return AchievementFetchService.getAllAchievements();
+  }
+  
+  /**
    * Get unlocked achievements for a user
    * Delegates to AchievementFetchService
    */
-  static async getUnlockedAchievements(userId: string) {
+  static async getUnlockedAchievements(userId: string): Promise<ServiceResponse<Achievement[]>> {
     return AchievementFetchService.getUnlockedAchievements(userId);
   }
   
@@ -85,14 +94,73 @@ export class AchievementService {
    * Get achievement stats for a user
    * Delegates to AchievementFetchService
    */
-  static async getAchievementStats(userId: string) {
+  static async getAchievementStats(userId: string): Promise<ServiceResponse<any>> {
     return AchievementFetchService.getAchievementStats(userId);
   }
   
   /**
    * Check for achievements related to workouts
+   * Delegates to AchievementFetchService
    */
-  static async checkWorkoutAchievements(userId: string, workoutId: string) {
+  static async checkWorkoutAchievements(userId: string, workoutId: string): Promise<ServiceResponse<any>> {
     return AchievementFetchService.checkWorkoutAchievements(userId, workoutId);
+  }
+  
+  /**
+   * Get achievement progress for a user
+   * Delegates to AchievementFetchService
+   */
+  static async getAchievementProgress(userId: string, achievementId: string): Promise<ServiceResponse<any>> {
+    return AchievementFetchService.getAchievementProgress(userId, achievementId);
+  }
+  
+  /**
+   * Get all achievement progress for a user
+   * Delegates to AchievementFetchService
+   */
+  static async getAllAchievementProgress(userId: string): Promise<ServiceResponse<any>> {
+    return AchievementFetchService.getAllAchievementProgress(userId);
+  }
+  
+  /**
+   * Create or update achievement progress
+   */
+  static async updateAchievementProgress(
+    userId: string, 
+    achievementId: string, 
+    currentValue: number, 
+    targetValue: number, 
+    isComplete: boolean
+  ): Promise<ServiceResponse<boolean>> {
+    try {
+      const progressData = [{
+        achievement_id: achievementId,
+        current_value: currentValue,
+        target_value: targetValue,
+        is_complete: isComplete
+      }];
+      
+      const { data, error } = await supabase
+        .rpc('batch_update_achievement_progress', {
+          p_user_id: userId,
+          p_achievements: progressData
+        });
+        
+      if (error) {
+        return createErrorResponse(
+          error.message, 
+          `Failed to update achievement progress: ${error.message}`, 
+          ErrorCategory.DATABASE
+        );
+      }
+      
+      return createSuccessResponse(true);
+    } catch (error) {
+      return createErrorResponse(
+        (error as Error).message, 
+        `Exception updating achievement progress: ${(error as Error).message}`, 
+        ErrorCategory.EXCEPTION
+      );
+    }
   }
 }

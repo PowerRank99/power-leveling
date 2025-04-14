@@ -42,4 +42,16 @@ export interface AchievementNotification {
   timestamp: string;
 }
 
-export type AchievementRank = 'E' | 'D' | 'C' | 'B' | 'A' | 'S';
+/**
+ * Achievement rank type
+ */
+export type AchievementRank = 'S' | 'A' | 'B' | 'C' | 'D' | 'E';
+
+/**
+ * Achievement service response interface
+ */
+export interface AchievementBatchResult {
+  successful?: string[];
+  failed?: string[];
+  alreadyAwarded?: string[];
+}
