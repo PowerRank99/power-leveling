@@ -18,7 +18,7 @@ const AchievementNotificationTester: React.FC = () => {
     const achievement = allAchievements[randomIndex];
     
     // Ensure rank is a valid AchievementRank
-    const validRank: AchievementRank = achievement.rank === 'Unranked' ? 'E' : achievement.rank as AchievementRank;
+    const validRank: AchievementRank = achievement.rank === 'Unranked' ? AchievementRank.E : achievement.rank as AchievementRank;
     
     queueNotification({
       id: achievement.id,
@@ -72,12 +72,12 @@ const AchievementNotificationTester: React.FC = () => {
       </Button>
       
       <div className="grid grid-cols-2 gap-2">
-        <Button onClick={() => testRandomRankAchievement('S')} className="bg-achievement hover:bg-achievement-60 flex items-center">
+        <Button onClick={() => testRandomRankAchievement(AchievementRank.S)} className="bg-achievement hover:bg-achievement-60 flex items-center">
           <Sparkles className="mr-2 h-4 w-4" />
           Rank S
         </Button>
         
-        <Button onClick={() => testRandomRankAchievement('E')} className="bg-midnight-elevated hover:bg-midnight-card flex items-center">
+        <Button onClick={() => testRandomRankAchievement(AchievementRank.E)} className="bg-midnight-elevated hover:bg-midnight-card flex items-center">
           <Zap className="mr-2 h-4 w-4" />
           Rank E
         </Button>
