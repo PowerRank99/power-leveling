@@ -2,20 +2,52 @@
 import { ServiceResponse } from '@/services/common/ErrorHandlingService';
 
 /**
+ * Achievement categories enum for better type safety
+ */
+export enum AchievementCategory {
+  WORKOUT = 'workout',
+  STREAK = 'streak',
+  RECORD = 'record',
+  XP = 'xp',
+  LEVEL = 'level',
+  GUILD = 'guild',
+  SPECIAL = 'special',
+  VARIETY = 'variety',
+  MANUAL = 'manual',
+  TIME_BASED = 'time_based',
+  MILESTONE = 'milestone'
+}
+
+/**
+ * Achievement rank type with clear definitions
+ */
+export type AchievementRank = 'S' | 'A' | 'B' | 'C' | 'D' | 'E' | 'Unranked';
+
+/**
+ * Strongly typed requirement structure
+ */
+export interface AchievementRequirement {
+  type: string;
+  value: number;
+  metadata?: Record<string, any>;
+}
+
+/**
  * Achievement interface for consistent usage across the app
  */
 export interface Achievement {
   id: string;
   name: string;
   description: string;
-  category: string;
-  rank: string;
+  category: AchievementCategory | string;
+  rank: AchievementRank;
   points: number;
   xpReward: number;
   iconName: string;
-  requirements: any;
+  requirements: AchievementRequirement;
   isUnlocked?: boolean;
   achievedAt?: string;
+  metadata?: Record<string, any>; // For future extensibility
 }
 
 /**
@@ -26,6 +58,7 @@ export interface AchievementProgress {
   current: number;
   total: number;
   isComplete: boolean;
+  lastUpdated?: string;
 }
 
 /**
@@ -36,7 +69,7 @@ export interface AchievementNotification {
   achievement?: Achievement;
   title?: string;
   description?: string;
-  rank: string;
+  rank: AchievementRank | string;
   points: number;
   xpReward: number;
   bonusText?: string;
@@ -45,9 +78,16 @@ export interface AchievementNotification {
 }
 
 /**
- * Achievement rank type
+ * Achievement stats interface for user profiles
  */
-export type AchievementRank = 'S' | 'A' | 'B' | 'C' | 'D' | 'E';
+export interface AchievementStats {
+  total: number;
+  unlocked: number;
+  points: number;
+  byRank: Record<AchievementRank, number>;
+  byCategory: Partial<Record<AchievementCategory, number>>;
+  recentlyUnlocked?: Achievement[];
+}
 
 /**
  * Achievement service response interface
@@ -71,6 +111,6 @@ export interface UserAchievementData {
     points: number;
     xp_reward: number;
     icon_name: string;
-    requirements: any;
+    requirements: AchievementRequirement;
   };
 }

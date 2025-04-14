@@ -1,5 +1,5 @@
-
 import { z } from 'zod';
+import { AchievementCategory, AchievementRank } from '@/types/achievementTypes';
 
 // Enhanced Achievement Definition Schema with Zod for runtime validation
 export const AchievementDefinitionSchema = z.object({
@@ -7,17 +7,17 @@ export const AchievementDefinitionSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   category: z.enum([
-    'workout', 
-    'streak', 
-    'record', 
-    'xp', 
-    'level', 
-    'guild', 
-    'special', 
-    'variety', 
-    'manual',
-    'time_based',
-    'milestone'
+    AchievementCategory.WORKOUT,
+    AchievementCategory.STREAK, 
+    AchievementCategory.RECORD, 
+    AchievementCategory.XP, 
+    AchievementCategory.LEVEL, 
+    AchievementCategory.GUILD, 
+    AchievementCategory.SPECIAL, 
+    AchievementCategory.VARIETY, 
+    AchievementCategory.MANUAL,
+    AchievementCategory.TIME_BASED,
+    AchievementCategory.MILESTONE
   ]),
   rank: z.enum(['S', 'A', 'B', 'C', 'D', 'E', 'Unranked']),
   points: z.number().int().min(1).max(25),
@@ -25,12 +25,10 @@ export const AchievementDefinitionSchema = z.object({
   iconName: z.string(),
   requirementType: z.string(),
   requirementValue: z.number(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export type AchievementDefinition = z.infer<typeof AchievementDefinitionSchema>;
-
-export type AchievementCategory = AchievementDefinition['category'];
-export type AchievementRank = AchievementDefinition['rank'];
 
 // Comprehensive achievement definitions organized by category
 export const ACHIEVEMENTS = {
@@ -709,5 +707,47 @@ export const AchievementUtils = {
     };
     
     return pointsMap[rank] || 0;
+  },
+  
+  /**
+   * Convert AchievementDefinition to Achievement interface
+   * Provides a standardized way to convert between the two formats
+   */
+  convertToAchievement(definition: AchievementDefinition): Achievement {
+    return {
+      id: definition.id,
+      name: definition.name,
+      description: definition.description,
+      category: definition.category,
+      rank: definition.rank as AchievementRank,
+      points: definition.points,
+      xpReward: definition.xpReward,
+      iconName: definition.iconName,
+      requirements: {
+        type: definition.requirementType,
+        value: definition.requirementValue,
+        metadata: definition.metadata
+      },
+      metadata: definition.metadata
+    };
+  },
+  
+  /**
+   * Convert Achievement to AchievementDefinition
+   */
+  convertToDefinition(achievement: Achievement): AchievementDefinition {
+    return {
+      id: achievement.id,
+      name: achievement.name,
+      description: achievement.description,
+      category: achievement.category as any,
+      rank: achievement.rank,
+      points: achievement.points,
+      xpReward: achievement.xpReward,
+      iconName: achievement.iconName,
+      requirementType: achievement.requirements.type,
+      requirementValue: achievement.requirements.value,
+      metadata: achievement.metadata
+    };
   }
 };
