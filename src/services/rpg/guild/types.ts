@@ -1,22 +1,62 @@
 
-import { toast } from 'sonner';
-import { AchievementService } from '@/services/rpg/AchievementService';
-
-export type GuildRole = 'member' | 'moderator' | 'guild_master';
-
-export interface CreateGuildParams {
+/**
+ * Response type for guild member data
+ */
+export interface GuildMemberResponse {
+  id: string;
   name: string;
-  description?: string;
-  avatarUrl?: string;
+  avatarUrl: string | null;
+  level: number;
+  role: string;
+  joinedAt: string;
+  xp: number;
+  workoutsCount: number;
+  streak: number;
 }
 
-export interface CreateRaidParams {
+/**
+ * Guild data response
+ */
+export interface GuildResponse {
+  id: string;
   name: string;
-  description?: string;
-  startDate?: Date;
-  endDate: Date;
+  description: string | null;
+  avatarUrl: string | null;
+  createdAt: string;
+  creatorId: string | null;
+  memberCount?: number;
+  role?: string;
+}
+
+/**
+ * Guild raid response
+ */
+export interface GuildRaidResponse {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
   daysRequired: number;
+  createdBy: string;
+  createdAt: string;
+  guildId: string;
+  isActive: boolean;
+  isCompleted: boolean;
+  currentProgress?: number;
+  totalParticipants?: number;
 }
 
-// Export toast and AchievementService to be used in guild service
-export { toast, AchievementService };
+/**
+ * Guild raid participant response
+ */
+export interface GuildRaidParticipantResponse {
+  id: string;
+  userId: string;
+  daysCompleted: number;
+  completed: boolean;
+  userInfo?: {
+    name: string;
+    avatarUrl: string | null;
+    level: number;
+  };
+}

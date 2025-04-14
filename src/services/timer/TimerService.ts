@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { DatabaseResult } from '@/types/workoutTypes';
+import { createSuccessResult, createErrorResult, createVoidSuccessResult } from '@/utils/serviceUtils';
 
 /**
  * Service for managing exercise-specific rest timers
@@ -33,14 +34,14 @@ export class TimerService {
         }
         
         console.error("[TimerService] Error fetching timer:", error);
-        return { success: false, error };
+        return createErrorResult(error);
       }
       
       console.log(`[TimerService] Found timer duration: ${data.duration_seconds} seconds`);
-      return { success: true, data: data.duration_seconds };
+      return createSuccessResult(data.duration_seconds);
     } catch (error) {
       console.error("[TimerService] Exception fetching timer:", error);
-      return { success: false, error };
+      return createErrorResult(error);
     }
   }
   
@@ -61,18 +62,18 @@ export class TimerService {
         
       if (error) {
         console.error("[TimerService] Error fetching default timer:", error);
-        return { success: false, error };
+        return createErrorResult(error);
       }
       
       if (data && typeof data.default_rest_timer_seconds === 'number') {
         console.log(`[TimerService] Default timer duration: ${data.default_rest_timer_seconds} seconds`);
-        return { success: true, data: data.default_rest_timer_seconds };
+        return createSuccessResult(data.default_rest_timer_seconds);
       } else {
-        return { success: true, data: 90 }; // Default fallback if somehow not in DB
+        return createSuccessResult(90); // Default fallback if somehow not in DB
       }
     } catch (error) {
       console.error("[TimerService] Exception fetching default timer:", error);
-      return { success: false, error: error };
+      return createErrorResult(error);
     }
   }
   
@@ -102,14 +103,14 @@ export class TimerService {
         
       if (error) {
         console.error("[TimerService] Error saving timer:", error);
-        return { success: false, error };
+        return createErrorResult(error);
       }
       
       console.log(`[TimerService] Timer saved successfully`);
-      return { success: true };
+      return createVoidSuccessResult();
     } catch (error) {
       console.error("[TimerService] Exception saving timer:", error);
-      return { success: false, error };
+      return createErrorResult(error);
     }
   }
   
@@ -130,14 +131,14 @@ export class TimerService {
         
       if (error) {
         console.error("[TimerService] Error saving default timer:", error);
-        return { success: false, error };
+        return createErrorResult(error);
       }
       
       console.log(`[TimerService] Default timer saved successfully`);
-      return { success: true };
+      return createVoidSuccessResult();
     } catch (error) {
       console.error("[TimerService] Exception saving default timer:", error);
-      return { success: false, error };
+      return createErrorResult(error);
     }
   }
   
@@ -166,7 +167,7 @@ export class TimerService {
         
       if (error) {
         console.error("[TimerService] Error fetching timer settings:", error);
-        return { success: false, error };
+        return createErrorResult(error);
       }
       
       // Ensure we have default values if any field is missing
@@ -177,10 +178,10 @@ export class TimerService {
         default_rest_timer_seconds: data?.default_rest_timer_seconds ?? 90
       };
       
-      return { success: true, data: settings };
+      return createSuccessResult(settings);
     } catch (error) {
       console.error("[TimerService] Exception fetching timer settings:", error);
-      return { success: false, error };
+      return createErrorResult(error);
     }
   }
   
@@ -206,14 +207,14 @@ export class TimerService {
         
       if (error) {
         console.error("[TimerService] Error saving timer settings:", error);
-        return { success: false, error };
+        return createErrorResult(error);
       }
       
       console.log(`[TimerService] Timer settings saved successfully`);
-      return { success: true };
+      return createVoidSuccessResult();
     } catch (error) {
       console.error("[TimerService] Exception saving timer settings:", error);
-      return { success: false, error };
+      return createErrorResult(error);
     }
   }
 }

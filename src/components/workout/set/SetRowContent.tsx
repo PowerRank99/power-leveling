@@ -32,8 +32,8 @@ const SetRowContent: React.FC<SetRowContentProps> = ({
   const previousValue: PreviousSetData = set.previous || {
     id: set.id,
     exercise_id: set.exercise_id,
-    weight: typeof set.weight === 'number' ? set.weight.toString() : set.weight.toString(),
-    reps: typeof set.reps === 'number' ? set.reps.toString() : set.reps.toString(),
+    weight: set.weight,
+    reps: set.reps,
     set_order: set.set_order
   };
 
@@ -45,7 +45,7 @@ const SetRowContent: React.FC<SetRowContentProps> = ({
       
       <div className="col-span-3">
         <InputField
-          value={typeof set.weight === 'number' ? set.weight.toString() : set.weight}
+          value={set.weight}
           onChange={onWeightChange}
           inputMode="decimal"
           disabled={isCompleted}
@@ -54,7 +54,7 @@ const SetRowContent: React.FC<SetRowContentProps> = ({
       
       <div className="col-span-3">
         <InputField
-          value={typeof set.reps === 'number' ? set.reps.toString() : set.reps}
+          value={set.reps}
           onChange={onRepsChange}
           inputMode="numeric"
           disabled={isCompleted}

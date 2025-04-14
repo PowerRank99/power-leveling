@@ -1,5 +1,7 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workout';
+import { WorkoutExerciseData } from '@/types/workout/WorkoutExerciseData';
 import { toast } from 'sonner';
 import { WorkoutDataFormatter } from './WorkoutDataFormatter';
 
@@ -78,7 +80,7 @@ export class WorkoutDataService {
       );
       
       // Accessing individual items from an array, not the array itself
-      if (routineExercises && routineExercises.length > 0) {
+      if (routineExercises && routineExercises.length > 0 && routineExercises[0].exercises) {
         console.log(`Found exercise: ${routineExercises[0].exercises.name}`);
       }
       

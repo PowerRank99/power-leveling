@@ -37,7 +37,7 @@ export class SetCreationService {
         
       if (error) {
         console.error("[SetCreationService] Error creating set:", error);
-        return createErrorResult<SetData>(error);
+        return createErrorResult(error);
       }
       
       console.log(`[SetCreationService] Successfully created set with ID: ${data.id}`);
@@ -52,10 +52,10 @@ export class SetCreationService {
         set_order: data.set_order
       };
       
-      return createSuccessResult<SetData>(formattedData);
+      return createSuccessResult(formattedData);
     } catch (error: any) {
       console.error("[SetCreationService] Exception creating set:", error);
-      return createErrorResult<SetData>(error);
+      return createErrorResult(error);
     }
   }
   
@@ -72,13 +72,13 @@ export class SetCreationService {
         
       if (error) {
         console.error(`[SetCreationService] Set verification failed for ID ${setId}:`, error);
-        return createErrorResult<boolean>(error);
+        return createErrorResult(error);
       }
       
-      return createSuccessResult<boolean>(true);
+      return createSuccessResult(true);
     } catch (error: any) {
       console.error(`[SetCreationService] Exception verifying set ${setId}:`, error);
-      return createErrorResult<boolean>(error);
+      return createErrorResult(error);
     }
   }
 }

@@ -26,7 +26,7 @@ export function createVoidSuccessResult(): DatabaseResult<void> {
 /**
  * Creates an error result with the given error
  */
-export function createErrorResult(error: Error | any): DatabaseResult<any> {
+export function createErrorResult<T>(error: Error | any): DatabaseResult<T> {
   return {
     success: false,
     data: null,
