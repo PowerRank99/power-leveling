@@ -26,7 +26,7 @@ export interface WorkoutSet {
   id: string;
   exercise_id?: string;
   weight: string;  // Explicitly string to match database
-  reps: string;   // Explicitly string to match database
+  reps: string;    // Explicitly string to match database
   completed: boolean;
   set_order?: number;
   previous?: PreviousSetData;

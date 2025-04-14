@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { WorkoutExercise, SetData } from '@/types/workout';
-import { useSetAdder } from './useAddSet';
+import { useSetAdder } from './useSetAdder';
 import { useRemoveSet } from './useRemoveSet';
 import { useUpdateSet } from './useUpdateSet';
 
@@ -36,6 +36,7 @@ export const useWorkoutSetsManagement = (
         return null;
       }
       
+      // Fixed: Properly map WorkoutExercise sets to SetData
       const exerciseSets = currentExercise.sets.map(set => ({
         id: set.id,
         exercise_id: set.exercise_id || currentExercise.exerciseId,
@@ -92,7 +93,7 @@ export const useWorkoutSetsManagement = (
         return null;
       }
       
-      // Extract the sets and convert to SetData
+      // Fixed: Properly map WorkoutExercise sets to SetData
       const exerciseSets = currentExercise.sets.map(set => ({
         id: set.id,
         exercise_id: set.exercise_id || currentExercise.exerciseId,
@@ -159,7 +160,7 @@ export const useWorkoutSetsManagement = (
         return null;
       }
       
-      // Extract the sets and convert to SetData
+      // Fixed: Properly map WorkoutExercise sets to SetData
       const exerciseSets = currentExercise.sets.map(set => ({
         id: set.id,
         exercise_id: set.exercise_id || currentExercise.exerciseId,
