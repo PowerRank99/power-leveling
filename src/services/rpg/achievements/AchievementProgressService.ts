@@ -1,11 +1,14 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, ErrorHandlingService, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
-import { AchievementUtils } from '@/constants/achievements';
+import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 import { Achievement, AchievementCategory } from '@/types/achievementTypes';
+import { ProgressBatchService } from './progress/ProgressBatchService';
+import { TransactionService } from '@/services/common/TransactionService';
 
 /**
  * Service for handling achievement progress updates
+ * Uses optimized batch operations to minimize database calls
  */
 export class AchievementProgressService {
   /**
@@ -19,6 +22,16 @@ export class AchievementProgressService {
     isComplete: boolean
   ): Promise<ServiceResponse<boolean>> {
     try {
+      // Validate achievement exists
+      const achievement = AchievementUtils.getAchievementById(achievementId);
+      if (!achievement) {
+        return createErrorResponse(
+          'Invalid achievement',
+          `Achievement with ID ${achievementId} not found in definitions`,
+          ErrorCategory.VALIDATION
+        );
+      }
+      
       const progressData = [{
         achievement_id: achievementId,
         current_value: currentValue,
@@ -29,7 +42,7 @@ export class AchievementProgressService {
       const { data, error } = await supabase
         .rpc('batch_update_achievement_progress', {
           p_user_id: userId,
-          p_achievements: progressData
+          p_achievements: JSON.stringify(progressData)
         });
         
       if (error) {
@@ -52,12 +65,18 @@ export class AchievementProgressService {
   
   /**
    * Initialize progress for one or more achievements
+   * Uses batch operations for efficiency
    */
   static async initializeMultipleProgress(
     userId: string,
     achievements: Achievement[]
   ): Promise<ServiceResponse<boolean>> {
     try {
+      // Validate input
+      if (!userId || !achievements.length) {
+        return createSuccessResponse(true); // Nothing to do
+      }
+      
       const progressData = achievements.map(achievement => ({
         achievement_id: achievement.id,
         current_value: 0,
@@ -65,25 +84,22 @@ export class AchievementProgressService {
         is_complete: false
       }));
       
-      if (progressData.length === 0) {
-        return createSuccessResponse(true);
-      }
-      
-      const { data, error } = await supabase
-        .rpc('batch_update_achievement_progress', {
-          p_user_id: userId,
-          p_achievements: progressData
-        });
-        
-      if (error) {
-        return createErrorResponse(
-          error.message, 
-          `Failed to initialize multiple achievement progress: ${error.message}`, 
-          ErrorCategory.DATABASE
-        );
-      }
-      
-      return createSuccessResponse(true);
+      // Use transaction service for retry logic
+      return TransactionService.executeWithRetry(
+        async () => {
+          const { error } = await supabase
+            .rpc('batch_update_achievement_progress', {
+              p_user_id: userId,
+              p_achievements: JSON.stringify(progressData)
+            });
+            
+          if (error) throw error;
+          return true;
+        },
+        'INITIALIZE_MULTIPLE_PROGRESS',
+        3,
+        'Failed to initialize achievement progress'
+      );
     } catch (error) {
       return createErrorResponse(
         (error as Error).message, 
@@ -107,6 +123,11 @@ export class AchievementProgressService {
     }>
   ): Promise<ServiceResponse<boolean>> {
     try {
+      // Validate input
+      if (!userId || !progressUpdates.length) {
+        return createSuccessResponse(true); // Nothing to do
+      }
+      
       // Transform to match the expected format for the RPC function
       const progressData = progressUpdates.map(update => ({
         achievement_id: update.achievementId,
@@ -115,25 +136,22 @@ export class AchievementProgressService {
         is_complete: update.isComplete
       }));
       
-      if (progressData.length === 0) {
-        return createSuccessResponse(true);
-      }
-      
-      const { data, error } = await supabase
-        .rpc('batch_update_achievement_progress', {
-          p_user_id: userId,
-          p_achievements: progressData
-        });
-        
-      if (error) {
-        return createErrorResponse(
-          error.message, 
-          `Failed to update multiple achievement progress values: ${error.message}`, 
-          ErrorCategory.DATABASE
-        );
-      }
-      
-      return createSuccessResponse(true);
+      // Use transaction service for retry logic
+      return TransactionService.executeWithRetry(
+        async () => {
+          const { error } = await supabase
+            .rpc('batch_update_achievement_progress', {
+              p_user_id: userId,
+              p_achievements: JSON.stringify(progressData)
+            });
+            
+          if (error) throw error;
+          return true;
+        },
+        'UPDATE_MULTIPLE_PROGRESS',
+        3,
+        'Failed to update achievement progress values'
+      );
     } catch (error) {
       return createErrorResponse(
         (error as Error).message, 
@@ -145,81 +163,67 @@ export class AchievementProgressService {
   
   /**
    * Update streak progress for relevant achievements
+   * Delegates to ProgressBatchService for optimized processing
    */
   static async updateStreakProgress(
     userId: string,
     currentStreak: number
   ): Promise<ServiceResponse<boolean>> {
-    return ErrorHandlingService.executeWithErrorHandling(
-      async () => {
-        const streakAchievements = AchievementUtils
-          .getAchievementsByCategory(AchievementCategory.STREAK)
-          .filter(a => a.requirementType === 'streak_days');
-          
-        const progressUpdates = streakAchievements.map(achievement => ({
-          achievementId: achievement.id,
-          currentValue: currentStreak,
-          targetValue: achievement.requirementValue,
-          isComplete: currentStreak >= achievement.requirementValue
-        }));
-        
-        return this.updateMultipleProgressValues(userId, progressUpdates).then(result => result.success);
-      },
-      'UPDATE_STREAK_PROGRESS',
-      { showToast: false }
-    );
+    const result = await ProgressBatchService.updateStreakProgress(userId, currentStreak);
+    return createSuccessResponse(result.success);
   }
   
   /**
    * Update workout count progress for relevant achievements
+   * Delegates to ProgressBatchService for optimized processing
    */
   static async updateWorkoutCountProgress(
     userId: string,
     workoutCount: number
   ): Promise<ServiceResponse<boolean>> {
-    return ErrorHandlingService.executeWithErrorHandling(
-      async () => {
-        const workoutAchievements = AchievementUtils
-          .getAchievementsByCategory(AchievementCategory.WORKOUT)
-          .filter(a => a.requirementType === 'workouts_count');
-          
-        const progressUpdates = workoutAchievements.map(achievement => ({
-          achievementId: achievement.id,
-          currentValue: workoutCount,
-          targetValue: achievement.requirementValue,
-          isComplete: workoutCount >= achievement.requirementValue
-        }));
-        
-        return this.updateMultipleProgressValues(userId, progressUpdates).then(result => result.success);
-      },
-      'UPDATE_WORKOUT_COUNT_PROGRESS',
-      { showToast: false }
-    );
+    const result = await ProgressBatchService.updateWorkoutCountProgress(userId, workoutCount);
+    return createSuccessResponse(result.success);
   }
   
   /**
    * Update personal record progress for relevant achievements
+   * Delegates to ProgressBatchService for optimized processing
    */
   static async updatePersonalRecordProgress(
     userId: string,
     recordCount: number
   ): Promise<ServiceResponse<boolean>> {
+    const result = await ProgressBatchService.updatePersonalRecordProgress(userId, recordCount);
+    return createSuccessResponse(result.success);
+  }
+  
+  /**
+   * Batch update progress for achievements by category
+   * Use for category-specific updates
+   */
+  static async batchUpdateByCategory(
+    userId: string,
+    category: AchievementCategory,
+    requirementType: string,
+    currentValue: number
+  ): Promise<ServiceResponse<boolean>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
-        const recordAchievements = AchievementUtils
-          .getAchievementsByCategory(AchievementCategory.RECORD)
-          .filter(a => a.requirementType === 'pr_count');
+        // Get matching achievements from centralized definitions
+        const relevantAchievements = AchievementUtils
+          .getAchievementsByCategory(category)
+          .filter(a => a.requirementType === requirementType);
           
-        const progressUpdates = recordAchievements.map(achievement => ({
+        const progressUpdates = relevantAchievements.map(achievement => ({
           achievementId: achievement.id,
-          currentValue: recordCount,
+          currentValue: currentValue,
           targetValue: achievement.requirementValue,
-          isComplete: recordCount >= achievement.requirementValue
+          isComplete: currentValue >= achievement.requirementValue
         }));
         
         return this.updateMultipleProgressValues(userId, progressUpdates).then(result => result.success);
       },
-      'UPDATE_RECORD_PROGRESS',
+      `UPDATE_${category.toUpperCase()}_${requirementType.toUpperCase()}_PROGRESS`,
       { showToast: false }
     );
   }

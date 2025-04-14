@@ -4,13 +4,16 @@ import { BaseAchievementChecker } from './BaseAchievementChecker';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { supabase } from '@/integrations/supabase/client';
 import { ACHIEVEMENT_IDS, ACHIEVEMENT_REQUIREMENTS } from '../AchievementConstants';
+import { TransactionService } from '@/services/common/TransactionService';
 
 /**
  * Service specifically for checking XP-related achievements
+ * Uses optimized batch operations
  */
 export class XPCheckerService extends BaseAchievementChecker {
   /**
    * Implementation of abstract method from BaseAchievementChecker
+   * Optimized to reduce database calls
    */
   async checkAchievements(userId: string, totalXP?: number): Promise<ServiceResponse<string[]>> {
     return this.executeWithErrorHandling(
@@ -41,8 +44,46 @@ export class XPCheckerService extends BaseAchievementChecker {
         if (totalXP >= xpMilestones[3]) achievementsToCheck.push(ACHIEVEMENT_IDS.S.xp[0]); // xp-50000
         if (totalXP >= xpMilestones[4]) achievementsToCheck.push(ACHIEVEMENT_IDS.S.xp[1]); // xp-100000
         
+        // If no achievements to check, return empty array
+        if (achievementsToCheck.length === 0) {
+          return [];
+        }
+        
+        // Update progress in batch first
+        const progressUpdates = achievementsToCheck.map(achievementId => {
+          const milestone = ACHIEVEMENT_REQUIREMENTS.XP.MILESTONES[
+            Object.values(ACHIEVEMENT_IDS.C.xp).indexOf(achievementId) !== -1 ? 0 :
+            Object.values(ACHIEVEMENT_IDS.B.xp).indexOf(achievementId) !== -1 ? 1 :
+            Object.values(ACHIEVEMENT_IDS.A.xp).indexOf(achievementId) !== -1 ? 2 :
+            Object.values(ACHIEVEMENT_IDS.S.xp).indexOf(achievementId) !== -1 ? 3 : 4
+          ];
+          
+          return {
+            achievementId,
+            currentValue: totalXP,
+            targetValue: milestone,
+            isComplete: totalXP >= milestone
+          };
+        });
+        
+        // Update progress first
+        const progressResult = await TransactionService.executeWithRetry(
+          async () => {
+            const result = await AchievementService.updateMultipleProgressValues(userId, progressUpdates);
+            if (!result.success) throw new Error(result.message || 'Failed to update XP achievement progress');
+            return true;
+          },
+          'UPDATE_XP_ACHIEVEMENT_PROGRESS',
+          3,
+          'Failed to update XP achievement progress'
+        );
+        
+        if (!progressResult.success) {
+          console.error('Failed to update XP achievement progress:', progressResult.error);
+        }
+        
         // Award achievements and return the IDs of awarded achievements
-        return await this.awardAchievementsBatch(userId, achievementsToCheck);
+        return this.awardAchievementsBatch(userId, achievementsToCheck);
       },
       'XP_MILESTONE_ACHIEVEMENTS'
     );
