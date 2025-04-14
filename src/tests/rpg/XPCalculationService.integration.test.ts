@@ -1,6 +1,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { XPCalculationService } from '@/services/rpg/XPCalculationService';
+import { PowerDayService } from '@/services/rpg/bonus/PowerDayService';
 import { createMockSupabaseClient } from '../helpers/supabaseTestHelpers';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -36,7 +37,7 @@ describe('XPCalculationService Integration Tests', () => {
         streak: 7
       });
 
-      expect(result.totalXP).toBeLessThanOrEqual(XPCalculationService.POWER_DAY_XP_CAP);
+      expect(result.totalXP).toBeLessThanOrEqual(PowerDayService.POWER_DAY_CAP);
     });
   });
 
