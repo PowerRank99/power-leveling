@@ -3,7 +3,7 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Achievement } from '@/types/achievementTypes';
-import { PlayCircle, FilePlus, Tool } from 'lucide-react';
+import { PlayCircle, FilePlus, Wrench } from 'lucide-react'; // Changed Tool to Wrench
 import RequirementGapAnalyzer from './RequirementGapAnalyzer';
 import { useTestingDashboard } from '@/contexts/TestingDashboardContext';
 
@@ -63,7 +63,7 @@ const RequirementGapAnalysis: React.FC<RequirementGapAnalysisProps> = ({
           onClick={onRepairData}
           className="flex-1"
         >
-          <Tool className="h-4 w-4 mr-2" />
+          <Wrench className="h-4 w-4 mr-2" /> {/* Changed Tool to Wrench */}
           Repair Data
         </Button>
       </div>

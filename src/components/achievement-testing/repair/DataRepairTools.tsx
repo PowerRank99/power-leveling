@@ -151,7 +151,7 @@ const DataRepairTools: React.FC<DataRepairToolsProps> = ({ userId, addLogEntry }
                   <span className="font-medium">{issue.type}</span>
                   <Badge variant={
                     issue.severity === 'high' ? 'valor' :
-                    issue.severity === 'medium' ? 'warning' :
+                    issue.severity === 'medium' ? 'achievement' : // Changed from 'warning' to 'achievement'
                     'outline'
                   }>
                     {issue.severity}
