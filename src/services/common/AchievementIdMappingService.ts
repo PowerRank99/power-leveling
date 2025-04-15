@@ -1,9 +1,9 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ACHIEVEMENT_IDS } from '@/constants/achievements/AchievementConstants';
 
 export class AchievementIdMappingService {
   private static idMap: Map<string, string> = new Map();
+  private static unmappedIds: Set<string> = new Set();
   private static initialized: boolean = false;
   private static initializationPromise: Promise<void> | null = null;
   
@@ -20,7 +20,28 @@ export class AchievementIdMappingService {
     this.initializationPromise = null;
   }
   
-  private static async doInitialize(): Promise<void> {
+  private static logUnmappedIds() {
+    if (this.unmappedIds.size > 0) {
+      console.warn(
+        '[AchievementIdMapping] Unmapped Achievement IDs:', 
+        Array.from(this.unmappedIds)
+      );
+    }
+  }
+
+  static getUnmappedIds(): string[] {
+    return Array.from(this.unmappedIds);
+  }
+
+  private static normalizeId(id: string): string {
+    return id.toLowerCase()
+      .replace(/[-_\s]/g, '') // Remove dashes, underscores, and spaces
+      .normalize('NFD')       // Normalize accented characters
+      .replace(/[\u0300-\u036f]/g, '') // Remove accent marks
+      .replace(/[^a-z0-9]/g, ''); // Remove any remaining non-alphanumeric characters
+  }
+
+  static async doInitialize(): Promise<void> {
     try {
       const { data: achievements, error } = await supabase
         .from('achievements')
@@ -36,39 +57,47 @@ export class AchievementIdMappingService {
         return;
       }
       
-      // Create mapping from string IDs to UUIDs
+      // Clear previous mappings and unmapped IDs
+      this.idMap.clear();
+      this.unmappedIds.clear();
+      
+      // Create mapping from string IDs to UUIDs with improved matching
       achievements.forEach(achievement => {
         const normalizedName = this.normalizeId(achievement.name);
         
-        // Find matching achievement ID from constants
+        let matched = false;
+        
+        // Search through all achievement constants
         for (const rank in ACHIEVEMENT_IDS) {
           for (const category in ACHIEVEMENT_IDS[rank]) {
             const stringIds = ACHIEVEMENT_IDS[rank][category];
             const matchingStringId = stringIds.find(id => 
               this.normalizeId(id) === normalizedName ||
-              this.normalizeId(achievement.name).includes(this.normalizeId(id))
+              normalizedName.includes(this.normalizeId(id))
             );
             
             if (matchingStringId) {
               this.idMap.set(matchingStringId, achievement.id);
-              console.log(`[AchievementIdMapping] Mapped ${matchingStringId} to ${achievement.id}`);
+              matched = true;
+              break;
             }
           }
+          
+          if (matched) break;
+        }
+        
+        // Track unmapped achievements
+        if (!matched) {
+          this.unmappedIds.add(achievement.name);
         }
       });
       
+      // Log unmapped IDs for debugging
+      this.logUnmappedIds();
+      
       this.initialized = true;
-      console.log(`[AchievementIdMapping] Initialized with ${this.idMap.size} mappings`);
-      
-      // Log unmapped achievements for debugging
-      const allStringIds = this.getAllStringIds();
-      const unmappedIds = allStringIds.filter(id => !this.idMap.has(id));
-      if (unmappedIds.length > 0) {
-        console.warn('[AchievementIdMapping] Unmapped achievement IDs:', unmappedIds);
-      }
-      
     } catch (error) {
-      console.error('[AchievementIdMapping] Failed to initialize:', error);
+      console.error('[AchievementIdMapping] Initialization failed:', error);
       throw error;
     }
   }
@@ -88,12 +117,6 @@ export class AchievementIdMappingService {
   
   static getAllMappings(): Map<string, string> {
     return new Map(this.idMap);
-  }
-  
-  private static normalizeId(id: string): string {
-    return id.toLowerCase()
-      .replace(/[-_\s]/g, '') // Remove dashes, underscores, and spaces
-      .replace(/[^a-z0-9]/g, ''); // Remove any non-alphanumeric characters
   }
   
   private static getAllStringIds(): string[] {
