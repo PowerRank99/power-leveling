@@ -12,7 +12,7 @@ export enum ErrorCategory {
   EXCEPTION = 'exception',
   UNKNOWN = 'unknown',
   PROCESSING_ERROR = 'processing_error',
-  PROCESSING = 'processing', // Added missing value
+  PROCESSING = 'processing',
   NOT_FOUND = 'not_found',
   INITIALIZATION_ERROR = 'initialization_error',
   DATA_MAPPING_ERROR = 'data_mapping_error'

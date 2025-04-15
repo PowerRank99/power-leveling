@@ -1,37 +1,27 @@
-// Create proper AchievementUtils exports
 
 import * as AchievementDatabaseService from '@/services/common/AchievementDatabaseService';
 
-// Export as a namespace for backward compatibility
-export const AchievementUtils = {
-  // Re-export all functionality from the database service
-  getAllAchievements: AchievementDatabaseService.getAllAchievements,
-  getAchievementById: AchievementDatabaseService.getAchievementById,
-  getAchievementsByCategory: AchievementDatabaseService.getAchievementsByCategory,
-  getAchievementHierarchy: AchievementDatabaseService.getAchievementHierarchy,
-  getNextAchievements: AchievementDatabaseService.getNextAchievements,
-  
-  // Add extra utility methods that might be needed
-  getAllAchievementsSync: function() {
-    // If we have a cached value, return it
-    if (AchievementDatabaseService.getCachedAchievements) {
-      return AchievementDatabaseService.getCachedAchievements() || [];
-    }
-    
-    // Otherwise, return an empty array and log a warning
-    console.warn('Attempted to access achievements synchronously before cache was populated');
-    return [];
-  },
-  
-  clearCache: function() {
-    if (AchievementDatabaseService.clearCache) {
-      AchievementDatabaseService.clearCache();
-    }
+// Export directly to avoid issues with default exports
+export const getAllAchievements = AchievementDatabaseService.getAllAchievements;
+export const getAchievementById = AchievementDatabaseService.getAchievementById;
+export const getAchievementsByCategory = AchievementDatabaseService.getAchievementsByCategory;
+export const getAchievementHierarchy = AchievementDatabaseService.getAchievementHierarchy;
+export const getNextAchievements = AchievementDatabaseService.getNextAchievements;
+export const getAllAchievementsSync = () => {
+  if (AchievementDatabaseService.getCachedAchievements) {
+    return AchievementDatabaseService.getCachedAchievements() || [];
+  }
+  console.warn('Attempted to access achievements synchronously before cache was populated');
+  return [];
+};
+export const clearCache = () => {
+  if (AchievementDatabaseService.clearCache) {
+    AchievementDatabaseService.clearCache();
   }
 };
 
-// Also export individual functions for modern imports
-export const {
+// Export as a namespace for backward compatibility
+export const AchievementUtils = {
   getAllAchievements,
   getAchievementById,
   getAchievementsByCategory,
@@ -39,4 +29,4 @@ export const {
   getNextAchievements,
   getAllAchievementsSync,
   clearCache
-} = AchievementUtils;
+};
