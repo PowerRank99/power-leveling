@@ -54,7 +54,11 @@ export function AchievementIdDebugger() {
     setIsValidating(true);
     try {
       const count = await AchievementStandardizationService.migrateUnmappedAchievements();
-      toast.success(`Migrated ${count} achievement mappings`);
+      if (count === 0) {
+        toast.success('All achievements have string IDs - no migration needed');
+      } else {
+        toast.success(`Migrated ${count} achievement mappings`);
+      }
       await runValidation();
     } catch (error) {
       console.error('Migration failed:', error);
