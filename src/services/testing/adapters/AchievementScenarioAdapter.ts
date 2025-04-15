@@ -3,29 +3,72 @@ import { Achievement } from '@/types/achievementTypes';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 
 /**
- * Adapter to help scenarios work with the new async achievement system
+ * Adapter service for testing scenarios to interact with achievements
  */
 export class AchievementScenarioAdapter {
+  private static achievementCache: Map<string, Achievement> = new Map();
+  
   /**
-   * Get achievement by ID for scenarios
+   * Get an achievement by ID, with caching for performance
    */
   static async getAchievementById(id: string): Promise<Achievement | null> {
-    return AchievementUtils.getAchievementByStringId(id);
+    // Check cache first
+    if (this.achievementCache.has(id)) {
+      return this.achievementCache.get(id) || null;
+    }
+    
+    try {
+      // Fetch all achievements
+      const achievements = await AchievementUtils.getAllAchievements();
+      
+      // Find the achievement by ID
+      const achievement = achievements.find(a => a.id === id);
+      
+      // Cache for future use
+      if (achievement) {
+        this.achievementCache.set(id, achievement);
+      }
+      
+      return achievement || null;
+    } catch (error) {
+      console.error(`Error fetching achievement ${id}:`, error);
+      return null;
+    }
   }
   
   /**
-   * Map achievements for scenario
+   * Get all achievements matching a specific predicate
    */
-  static async mapAchievements<T>(mapper: (achievements: Achievement[]) => T): Promise<T> {
-    const achievements = await AchievementUtils.getAllAchievements();
-    return mapper(achievements);
+  static async getAchievementsByPredicate(
+    predicate: (achievement: Achievement) => boolean
+  ): Promise<Achievement[]> {
+    try {
+      const achievements = await AchievementUtils.getAllAchievements();
+      return achievements.filter(predicate);
+    } catch (error) {
+      console.error('Error filtering achievements:', error);
+      return [];
+    }
   }
   
   /**
-   * Sort achievements for scenario
+   * Get all achievements by category
    */
-  static async sortAchievements<T>(sorter: (achievements: Achievement[]) => T): Promise<T> {
-    const achievements = await AchievementUtils.getAllAchievements();
-    return sorter(achievements);
+  static async getAchievementsByCategory(category: string): Promise<Achievement[]> {
+    return this.getAchievementsByPredicate(a => a.category === category);
+  }
+  
+  /**
+   * Get all achievements by rank
+   */
+  static async getAchievementsByRank(rank: string): Promise<Achievement[]> {
+    return this.getAchievementsByPredicate(a => a.rank === rank);
+  }
+  
+  /**
+   * Clear the achievement cache
+   */
+  static clearCache(): void {
+    this.achievementCache.clear();
   }
 }

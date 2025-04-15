@@ -1,65 +1,72 @@
 
-import { ScenarioAchievementAdapter } from '@/services/rpg/achievements/progress/ScenarioAchievementAdapter';
+import { BaseScenario } from '../scenarios';
+import { AchievementScenarioAdapter } from '../adapters/AchievementScenarioAdapter';
 
 /**
- * Helper utility to patch scenario classes to work with promised-based achievements
+ * Helper class to patch scenario classes to properly handle async achievement data
  */
 export class ScenarioAchievementPatcher {
   /**
-   * Patch a scenario class instance to handle promised-based achievements
+   * Patch all provided scenarios to handle async achievement data
    */
-  static patchScenario(scenarioInstance: any): void {
-    // Add logging action method if missing
-    if (!scenarioInstance.addAction) {
-      scenarioInstance.addAction = function(action: string, details: string) {
-        console.log(`${action}: ${details}`);
-        return this;
-      };
+  static patchScenarios(scenarios: BaseScenario[]): void {
+    for (const scenario of scenarios) {
+      this.patchScenario(scenario);
+    }
+  }
+  
+  /**
+   * Patch a single scenario to handle async achievement data
+   */
+  static patchScenario(scenario: BaseScenario): void {
+    // Add the async-aware logAction and addAction methods if they don't exist
+    if (!scenario.hasOwnProperty('asyncGetAchievementName')) {
+      Object.defineProperty(scenario, 'asyncGetAchievementName', {
+        value: async function(achievementId: string): Promise<string> {
+          try {
+            const achievement = await AchievementScenarioAdapter.getAchievementById(achievementId);
+            return achievement?.name || achievementId;
+          } catch (error) {
+            console.error(`Error fetching achievement name for ${achievementId}:`, error);
+            return achievementId;
+          }
+        },
+        writable: false
+      });
     }
     
-    // Patch any achievement handling methods
-    this.patchCommonMethods(scenarioInstance);
-  }
-  
-  /**
-   * Patch common achievement handling methods
-   */
-  private static patchCommonMethods(instance: any): void {
-    // Add helper methods for achievement operations
-    instance.resolveAchievement = async function(achievement: any) {
-      return ScenarioAchievementAdapter.resolveAchievement(achievement);
-    };
+    // Add method to handle achievement name resolution for logging
+    if (!scenario.hasOwnProperty('addAction')) {
+      Object.defineProperty(scenario, 'addAction', {
+        value: function(action: any): void {
+          if (Array.isArray(this.actions)) {
+            this.actions.push(action);
+          }
+        },
+        writable: false
+      });
+    }
     
-    instance.getAchievementName = async function(achievement: any) {
-      return ScenarioAchievementAdapter.getAchievementName(achievement);
-    };
-    
-    instance.getAchievementRank = async function(achievement: any) {
-      return ScenarioAchievementAdapter.getAchievementRank(achievement);
-    };
-    
-    // Add methods for Promise<Achievement[]> handling
-    instance.resolveAchievements = async function(achievementPromises: any) {
-      return ScenarioAchievementAdapter.resolveAchievementArray(achievementPromises);
-    };
-    
-    instance.mapAchievements = async function(achievementPromises: any, mapFn: any) {
-      return ScenarioAchievementAdapter.mapAchievementPromises(achievementPromises, mapFn);
-    };
-    
-    instance.filterAchievements = async function(achievementPromises: any, filterFn: any) {
-      return ScenarioAchievementAdapter.filterAchievementPromises(achievementPromises, filterFn);
-    };
-    
-    instance.sortAchievements = async function(achievementPromises: any, compareFn: any) {
-      return ScenarioAchievementAdapter.sortAchievementPromises(achievementPromises, compareFn);
-    };
-  }
-  
-  /**
-   * Patch an array of scenarios at once
-   */
-  static patchScenarios(scenarios: any[]): void {
-    scenarios.forEach(scenario => this.patchScenario(scenario));
+    // Ensure we have a safe way to handle achievement properties
+    if (!scenario.hasOwnProperty('safeGetAchievementProperty')) {
+      Object.defineProperty(scenario, 'safeGetAchievementProperty', {
+        value: async function<T>(
+          promise: Promise<any>,
+          propertyName: string,
+          defaultValue: T
+        ): Promise<T> {
+          try {
+            const result = await promise;
+            return result && result[propertyName] !== undefined 
+              ? result[propertyName] 
+              : defaultValue;
+          } catch (error) {
+            console.error(`Error accessing property ${propertyName}:`, error);
+            return defaultValue;
+          }
+        },
+        writable: false
+      });
+    }
   }
 }

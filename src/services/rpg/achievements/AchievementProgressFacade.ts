@@ -56,8 +56,11 @@ export class AchievementProgressFacade {
     userId: string,
     currentStreak: number
   ): Promise<ServiceResponse<boolean>> {
-    const result = await ProgressBatchService.updateStreakProgress(userId, currentStreak);
-    return createSuccessResponse(result.success);
+    return CategoryProgressService.updateCategoryProgress(
+      userId, 
+      AchievementCategory.STREAK, 
+      currentStreak
+    );
   }
   
   /**
@@ -67,8 +70,11 @@ export class AchievementProgressFacade {
     userId: string,
     workoutCount: number
   ): Promise<ServiceResponse<boolean>> {
-    const result = await ProgressBatchService.updateWorkoutCountProgress(userId, workoutCount);
-    return createSuccessResponse(result.success);
+    return CategoryProgressService.updateCategoryProgress(
+      userId, 
+      AchievementCategory.WORKOUT_COUNT, 
+      workoutCount
+    );
   }
   
   /**
@@ -78,8 +84,11 @@ export class AchievementProgressFacade {
     userId: string,
     recordCount: number
   ): Promise<ServiceResponse<boolean>> {
-    const result = await ProgressBatchService.updatePersonalRecordProgress(userId, recordCount);
-    return createSuccessResponse(result.success);
+    return CategoryProgressService.updateCategoryProgress(
+      userId, 
+      AchievementCategory.PERSONAL_RECORD, 
+      recordCount
+    );
   }
   
   /**

@@ -63,4 +63,39 @@ export class CategoryProgressService {
       { showToast: false }
     );
   }
+  
+  /**
+   * Batch update progress by category and requirement type
+   */
+  static async batchUpdateByCategory(
+    userId: string,
+    category: AchievementCategory,
+    requirementType: string,
+    currentValue: number
+  ): Promise<ServiceResponse<boolean>> {
+    return ErrorHandlingService.executeWithErrorHandling(
+      async () => {
+        const achievements = await AsyncAchievementAdapter.filterAchievements(
+          a => a.category === category && a.requirements?.type === requirementType
+        );
+        
+        for (const achievement of achievements) {
+          const requirementValue = achievement.requirements?.value || 0;
+          const isCompleted = currentValue >= requirementValue;
+          
+          await AchievementProgressService.updateProgress(
+            userId,
+            achievement.id,
+            currentValue,
+            requirementValue,
+            isCompleted
+          );
+        }
+        
+        return true;
+      },
+      'BATCH_UPDATE_BY_CATEGORY',
+      { showToast: false }
+    );
+  }
 }

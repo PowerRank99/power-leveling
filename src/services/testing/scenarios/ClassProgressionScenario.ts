@@ -1,3 +1,4 @@
+
 /**
  * Class Progression Scenario
  * 
@@ -193,10 +194,11 @@ export class ClassProgressionScenario extends BaseScenario {
       }
       
       // Get achievement names for better logging
-      const achievementNames = this.achievementsUnlocked.map(id => {
-        const achievement = AchievementUtils.getAchievementById(id);
-        return achievement ? achievement.name : id;
-      });
+      const achievementNames = [];
+      for (const id of this.achievementsUnlocked) {
+        const name = await this.asyncGetAchievementName(id);
+        achievementNames.push(name);
+      }
       
       this.logAction('ACHIEVEMENTS_UNLOCKED', `Unlocked ${achievementNames.length} achievements`, { achievements: achievementNames });
       
@@ -228,21 +230,11 @@ export class ClassProgressionScenario extends BaseScenario {
     // Use the adapter to get achievement and check unlocking
     const achievement = await AchievementScenarioAdapter.getAchievementById(achievementId);
     if (!achievement) {
-      this.addAction({
-        type: 'ERROR',
-        description: `Achievement not found: ${achievementId}`,
-        timestamp: new Date(),
-        success: false
-      });
+      this.logAction('ERROR', `Achievement not found: ${achievementId}`, {}, false);
       return false;
     }
     
-    this.addAction({
-      type: 'CHECK_ACHIEVEMENT',
-      description: `Checking if achievement "${achievement.name}" is unlocked`,
-      timestamp: new Date(),
-      success: true
-    });
+    this.logAction('CHECK_ACHIEVEMENT', `Checking if achievement "${achievement.name}" is unlocked`);
     
     return true;
   }
