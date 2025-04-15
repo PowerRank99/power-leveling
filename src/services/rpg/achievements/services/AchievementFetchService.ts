@@ -48,9 +48,9 @@ export class AchievementFetchService {
         .select(`
           rank,
           count(*)
-        `)
+        `, { count: 'exact' })
         .in('id', achievementIds)
-        .group_by('rank');
+        .groupBy('rank');
         
       if (error) throw error;
       
