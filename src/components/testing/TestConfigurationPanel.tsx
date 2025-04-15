@@ -28,17 +28,17 @@ const TestConfigurationPanel: React.FC<TestConfigurationPanelProps> = ({
   isLoading
 }) => {
   return (
-    <Card>
+    <Card className="bg-midnight-card border-divider/30">
       <CardHeader>
-        <CardTitle className="text-lg">Test Configuration</CardTitle>
-        <CardDescription>
+        <CardTitle className="text-lg text-text-primary">Test Configuration</CardTitle>
+        <CardDescription className="text-text-secondary">
           Configure how tests are executed and what happens after each test
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="cleanup" className="cursor-pointer">Cleanup After Tests</Label>
+            <Label htmlFor="cleanup" className="cursor-pointer text-text-primary">Cleanup After Tests</Label>
             <Switch 
               id="cleanup" 
               checked={useCleanup}
@@ -53,7 +53,7 @@ const TestConfigurationPanel: React.FC<TestConfigurationPanelProps> = ({
         
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="transaction" className="cursor-pointer">Use Transactions</Label>
+            <Label htmlFor="transaction" className="cursor-pointer text-text-primary">Use Transactions</Label>
             <Switch 
               id="transaction" 
               checked={useTransaction}
@@ -68,7 +68,7 @@ const TestConfigurationPanel: React.FC<TestConfigurationPanelProps> = ({
         
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="verbose" className="cursor-pointer">Verbose Logging</Label>
+            <Label htmlFor="verbose" className="cursor-pointer text-text-primary">Verbose Logging</Label>
             <Switch 
               id="verbose" 
               checked={verbose}
@@ -83,7 +83,7 @@ const TestConfigurationPanel: React.FC<TestConfigurationPanelProps> = ({
         
         <Button 
           variant="outline"
-          className="w-full mt-4"
+          className="w-full mt-4 bg-midnight-elevated border-arcane-30 text-text-primary hover:bg-arcane-15"
           onClick={onUpdateConfig}
           disabled={isLoading}
         >

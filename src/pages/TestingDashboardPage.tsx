@@ -178,7 +178,7 @@ const TestingDashboardPage: React.FC = () => {
             </TabsContent>
             
             <TabsContent value="runner">
-              <Card className="p-4">
+              <Card className="p-4 bg-midnight-card border-divider/30">
                 <AchievementTestRunner 
                   userId={user?.id || ''}
                   onResultsChange={(newResults) => {
@@ -197,7 +197,7 @@ const TestingDashboardPage: React.FC = () => {
             </TabsContent>
             
             <TabsContent value="results">
-              <Card className="p-4">
+              <Card className="p-4 bg-midnight-card border-divider/30">
                 <TestResultViewer
                   results={results}
                   onClearResults={handleClearResults}
@@ -207,7 +207,7 @@ const TestingDashboardPage: React.FC = () => {
             </TabsContent>
             
             <TabsContent value="configuration">
-              <Card className="p-4">
+              <Card className="p-4 bg-midnight-card border-divider/30">
                 <TestConfigurationPanel
                   useCleanup={testConfig.useCleanup}
                   useTransaction={testConfig.useTransaction}

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -84,9 +83,9 @@ export function TestResultViewer({ results, onClearResults, onExportResults }: T
   
   return (
     <div className="space-y-4">
-      <Card>
+      <Card className="bg-midnight-card border-divider/30">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex justify-between items-center">
+          <CardTitle className="text-lg flex justify-between items-center text-text-primary">
             <span>Test Results ({results.length})</span>
             <div className="flex space-x-2">
               <Button 
@@ -94,6 +93,7 @@ export function TestResultViewer({ results, onClearResults, onExportResults }: T
                 size="sm" 
                 onClick={onClearResults}
                 disabled={results.length === 0}
+                className="bg-midnight-elevated border-divider/30 text-text-primary hover:bg-valor-15"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Clear
@@ -103,6 +103,7 @@ export function TestResultViewer({ results, onClearResults, onExportResults }: T
                 size="sm" 
                 onClick={onExportResults}
                 disabled={results.length === 0}
+                className="bg-midnight-elevated border-divider/30 text-text-primary hover:bg-arcane-15"
               >
                 <Download className="mr-2 h-4 w-4" />
                 Export
@@ -161,7 +162,7 @@ export function TestResultViewer({ results, onClearResults, onExportResults }: T
               </TabsList>
               
               <TabsContent value={activeTab} className="mt-4">
-                <ScrollArea className="h-[500px] rounded-md border border-divider/30 p-2">
+                <ScrollArea className="h-[500px] rounded-md border border-divider/30 p-2 bg-midnight-elevated">
                   {displayedResults.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-[400px] text-text-secondary">
                       <Filter className="h-10 w-10 mb-2 opacity-40" />

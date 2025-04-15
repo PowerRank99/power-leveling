@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import ScenarioRunnerComponent from '@/components/testing/scenarios/ScenarioRunnerComponent';
@@ -16,19 +15,19 @@ const ScenarioTestingTab: React.FC<ScenarioTestingTabProps> = ({ userId }) => {
   
   return (
     <div className="space-y-4">
-      <Alert className="mb-4">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Test Scenarios</AlertTitle>
-        <AlertDescription>
+      <Alert className="mb-4 bg-midnight-elevated border-arcane-30">
+        <AlertCircle className="h-4 w-4 text-arcane" />
+        <AlertTitle className="text-text-primary">Test Scenarios</AlertTitle>
+        <AlertDescription className="text-text-secondary">
           These scenarios simulate real user journeys to test achievement unlocking conditions.
           Each scenario will create test data that can be automatically cleaned up afterward.
         </AlertDescription>
       </Alert>
       
-      <Card>
+      <Card className="bg-midnight-card border-divider/30">
         <CardHeader>
-          <CardTitle>Achievement Test Scenarios</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-text-primary">Achievement Test Scenarios</CardTitle>
+          <CardDescription className="text-text-secondary">
             Run pre-configured scenarios to test achievements across different user journeys
           </CardDescription>
         </CardHeader>
