@@ -15,18 +15,18 @@ const ScenarioTestingTab: React.FC<ScenarioTestingTabProps> = ({ userId }) => {
   
   return (
     <div className="space-y-4">
-      <Alert className="mb-4 bg-midnight-elevated border-arcane-30">
+      <Alert className="bg-midnight-elevated border-arcane-30">
         <AlertCircle className="h-4 w-4 text-arcane" />
-        <AlertTitle className="text-text-primary">Test Scenarios</AlertTitle>
+        <AlertTitle className="text-text-primary font-orbitron">Test Scenarios</AlertTitle>
         <AlertDescription className="text-text-secondary">
           These scenarios simulate real user journeys to test achievement unlocking conditions.
           Each scenario will create test data that can be automatically cleaned up afterward.
         </AlertDescription>
       </Alert>
       
-      <Card className="bg-midnight-card border-divider/30">
+      <Card className="bg-midnight-elevated border-divider/30">
         <CardHeader>
-          <CardTitle className="text-text-primary">Achievement Test Scenarios</CardTitle>
+          <CardTitle className="text-text-primary font-orbitron">Achievement Test Scenarios</CardTitle>
           <CardDescription className="text-text-secondary">
             Run pre-configured scenarios to test achievements across different user journeys
           </CardDescription>

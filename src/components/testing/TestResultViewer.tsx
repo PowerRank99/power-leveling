@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -83,17 +84,19 @@ export function TestResultViewer({ results, onClearResults, onExportResults }: T
   
   return (
     <div className="space-y-4">
-      <Card className="bg-midnight-card border-divider/30">
+      <Card className="bg-midnight-elevated border-divider/30">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex justify-between items-center text-text-primary">
-            <span>Test Results ({results.length})</span>
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-lg font-orbitron text-text-primary">
+              Test Results ({results.length})
+            </CardTitle>
             <div className="flex space-x-2">
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={onClearResults}
                 disabled={results.length === 0}
-                className="bg-midnight-elevated border-divider/30 text-text-primary hover:bg-valor-15"
+                className="bg-midnight-card border-valor-30 text-text-primary hover:bg-valor-15"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Clear
@@ -103,13 +106,13 @@ export function TestResultViewer({ results, onClearResults, onExportResults }: T
                 size="sm" 
                 onClick={onExportResults}
                 disabled={results.length === 0}
-                className="bg-midnight-elevated border-divider/30 text-text-primary hover:bg-arcane-15"
+                className="bg-midnight-card border-arcane-30 text-text-primary hover:bg-arcane-15"
               >
                 <Download className="mr-2 h-4 w-4" />
                 Export
               </Button>
             </div>
-          </CardTitle>
+          </div>
         </CardHeader>
         
         <CardContent>
@@ -132,16 +135,16 @@ export function TestResultViewer({ results, onClearResults, onExportResults }: T
               />
               
               <div className="flex items-center gap-2">
-                <Badge variant="outline">
+                <Badge variant="outline" className="bg-midnight-card text-text-secondary">
                   {filteredResults.length} results
                 </Badge>
                 {passedCount > 0 && (
-                  <Badge variant="success" className="px-2">
+                  <Badge variant="outline" className="bg-green-900/20 text-green-500 border-green-900/30">
                     {passedCount} passed
                   </Badge>
                 )}
                 {failedCount > 0 && (
-                  <Badge variant="valor" className="px-2">
+                  <Badge variant="outline" className="bg-red-900/20 text-red-500 border-red-900/30">
                     {failedCount} failed
                   </Badge>
                 )}
@@ -149,20 +152,29 @@ export function TestResultViewer({ results, onClearResults, onExportResults }: T
             </div>
             
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="all">
+              <TabsList className="grid w-full grid-cols-3 bg-midnight-card">
+                <TabsTrigger 
+                  value="all"
+                  className="data-[state=active]:bg-arcane-15 data-[state=active]:text-arcane"
+                >
                   All ({sortedResults.length})
                 </TabsTrigger>
-                <TabsTrigger value="passed">
+                <TabsTrigger 
+                  value="passed"
+                  className="data-[state=active]:bg-green-900/20 data-[state=active]:text-green-500"
+                >
                   Passed ({sortedResults.filter(r => r.success).length})
                 </TabsTrigger>
-                <TabsTrigger value="failed">
+                <TabsTrigger 
+                  value="failed"
+                  className="data-[state=active]:bg-red-900/20 data-[state=active]:text-red-500"
+                >
                   Failed ({sortedResults.filter(r => !r.success).length})
                 </TabsTrigger>
               </TabsList>
               
               <TabsContent value={activeTab} className="mt-4">
-                <ScrollArea className="h-[500px] rounded-md border border-divider/30 p-2 bg-midnight-elevated">
+                <ScrollArea className="h-[500px] rounded-md border border-divider/30 p-2 bg-midnight-card">
                   {displayedResults.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-[400px] text-text-secondary">
                       <Filter className="h-10 w-10 mb-2 opacity-40" />
@@ -173,7 +185,7 @@ export function TestResultViewer({ results, onClearResults, onExportResults }: T
                       {displayedResults.map(result => (
                         <TestResultCard 
                           key={`${result.achievementId}-${result.testedAt}`} 
-                          result={result} 
+                          result={result}
                         />
                       ))}
                     </div>

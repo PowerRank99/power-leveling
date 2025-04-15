@@ -28,62 +28,73 @@ const TestConfigurationPanel: React.FC<TestConfigurationPanelProps> = ({
   isLoading
 }) => {
   return (
-    <Card className="bg-midnight-card border-divider/30">
-      <CardHeader>
-        <CardTitle className="text-lg text-text-primary">Test Configuration</CardTitle>
+    <Card className="bg-midnight-elevated border-divider/30">
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-lg font-orbitron text-text-primary">Test Configuration</CardTitle>
         <CardDescription className="text-text-secondary">
           Configure how tests are executed and what happens after each test
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="cleanup" className="cursor-pointer text-text-primary">Cleanup After Tests</Label>
-            <Switch 
-              id="cleanup" 
-              checked={useCleanup}
-              onCheckedChange={onCleanupChange}
-              disabled={isLoading}
-            />
+      <CardContent className="space-y-6">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="cleanup" className="cursor-pointer text-text-primary hover:text-text-primary/90">
+                Cleanup After Tests
+              </Label>
+              <Switch 
+                id="cleanup" 
+                checked={useCleanup}
+                onCheckedChange={onCleanupChange}
+                disabled={isLoading}
+                className="data-[state=checked]:bg-arcane"
+              />
+            </div>
+            <p className="text-xs text-text-secondary">
+              When enabled, test data will be cleaned up after each test
+            </p>
           </div>
-          <p className="text-xs text-text-secondary">
-            When enabled, test data will be cleaned up after each test to prevent interference between tests
-          </p>
-        </div>
-        
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="transaction" className="cursor-pointer text-text-primary">Use Transactions</Label>
-            <Switch 
-              id="transaction" 
-              checked={useTransaction}
-              onCheckedChange={onTransactionChange}
-              disabled={isLoading}
-            />
+          
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="transaction" className="cursor-pointer text-text-primary hover:text-text-primary/90">
+                Use Transactions
+              </Label>
+              <Switch 
+                id="transaction" 
+                checked={useTransaction}
+                onCheckedChange={onTransactionChange}
+                disabled={isLoading}
+                className="data-[state=checked]:bg-arcane"
+              />
+            </div>
+            <p className="text-xs text-text-secondary">
+              When enabled, each test will run in a database transaction
+            </p>
           </div>
-          <p className="text-xs text-text-secondary">
-            When enabled, each test will run in a database transaction for better isolation
-          </p>
-        </div>
-        
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="verbose" className="cursor-pointer text-text-primary">Verbose Logging</Label>
-            <Switch 
-              id="verbose" 
-              checked={verbose}
-              onCheckedChange={onVerboseChange}
-              disabled={isLoading}
-            />
+          
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="verbose" className="cursor-pointer text-text-primary hover:text-text-primary/90">
+                Verbose Logging
+              </Label>
+              <Switch 
+                id="verbose" 
+                checked={verbose}
+                onCheckedChange={onVerboseChange}
+                disabled={isLoading}
+                className="data-[state=checked]:bg-arcane"
+              />
+            </div>
+            <p className="text-xs text-text-secondary">
+              Enable detailed logging to console during test execution
+            </p>
           </div>
-          <p className="text-xs text-text-secondary">
-            Enable detailed logging to console during test execution
-          </p>
         </div>
         
         <Button 
           variant="outline"
-          className="w-full mt-4 bg-midnight-elevated border-arcane-30 text-text-primary hover:bg-arcane-15"
+          className="w-full bg-midnight-card border-arcane-30 text-text-primary hover:bg-arcane-15 transition-colors"
           onClick={onUpdateConfig}
           disabled={isLoading}
         >
