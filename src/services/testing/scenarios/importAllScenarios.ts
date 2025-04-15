@@ -1,4 +1,3 @@
-
 /**
  * This file's sole purpose is to import all scenario files
  * to ensure they're loaded and registered with the scenario runner.

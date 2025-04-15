@@ -181,8 +181,10 @@ export class CompletionistScenario extends BaseScenario {
       testDataTag: options?.testDataTag || CompletionistScenario.TEST_DATA_TAG
     };
 
-    // Get achievement list
-    let achievementsList = await this.getRequiredAchievements();
+    // Get achievement list - safely await the promise
+    let achievementsList: string[] = [];
+    const requiredAchievements = await this.getRequiredAchievements();
+    achievementsList = requiredAchievements;
     
     // Filter by rank if specified
     const rankOrder: Record<AchievementRank, number> = {
@@ -209,8 +211,8 @@ export class CompletionistScenario extends BaseScenario {
     
     // Optimize order if requested
     if (config.optimizeOrder) {
-      achievementsList = await this.optimizeAchievementOrder();
-      achievementsList = achievementsList.slice(0, targetCount);
+      const optimizedList = await this.optimizeAchievementOrder();
+      achievementsList = optimizedList.slice(0, targetCount);
     }
 
     // Calculate total actions for progress tracking

@@ -1,72 +1,48 @@
 
-import { BaseScenario, TestScenario } from '../scenarios';
-import { AchievementScenarioAdapter } from '../adapters/AchievementScenarioAdapter';
-
 /**
- * Helper class to patch scenario classes to properly handle async achievement data
+ * ScenarioAchievementPatcher
+ * 
+ * This utility patches TestScenario instances to correctly handle asynchronous achievement operations
+ * by adding methods that safely wrap Promise-based achievement operations.
  */
+import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
+import { Achievement } from '@/types/achievementTypes';
+import { TestScenario } from '../scenarios';
+
 export class ScenarioAchievementPatcher {
   /**
-   * Patch all provided scenarios to handle async achievement data
+   * Patches a TestScenario instance to handle async achievement operations
    */
-  static patchScenarios(scenarios: (BaseScenario | TestScenario)[]): void {
-    for (const scenario of scenarios) {
-      this.patchScenario(scenario);
-    }
-  }
-  
-  /**
-   * Patch a single scenario to handle async achievement data
-   */
-  static patchScenario(scenario: BaseScenario | TestScenario): void {
-    // Add the async-aware logAction and addAction methods if they don't exist
-    if (!scenario.hasOwnProperty('asyncGetAchievementName')) {
-      Object.defineProperty(scenario, 'asyncGetAchievementName', {
-        value: async function(achievementId: string): Promise<string> {
-          try {
-            const achievement = await AchievementScenarioAdapter.getAchievementById(achievementId);
-            return achievement?.name || achievementId;
-          } catch (error) {
-            console.error(`Error fetching achievement name for ${achievementId}:`, error);
-            return achievementId;
-          }
-        },
-        writable: false
-      });
-    }
-    
-    // Add method to handle achievement name resolution for logging
-    if (!scenario.hasOwnProperty('addAction')) {
-      Object.defineProperty(scenario, 'addAction', {
-        value: function(action: any): void {
-          if (Array.isArray((this as any).actions)) {
-            (this as any).actions.push(action);
-          }
-        },
-        writable: false
-      });
-    }
-    
-    // Ensure we have a safe way to handle achievement properties
-    if (!scenario.hasOwnProperty('safeGetAchievementProperty')) {
-      Object.defineProperty(scenario, 'safeGetAchievementProperty', {
-        value: async function<T>(
-          promise: Promise<any>,
-          propertyName: string,
-          defaultValue: T
-        ): Promise<T> {
-          try {
-            const result = await promise;
-            return result && result[propertyName] !== undefined 
-              ? result[propertyName] 
-              : defaultValue;
-          } catch (error) {
-            console.error(`Error accessing property ${propertyName}:`, error);
-            return defaultValue;
-          }
-        },
-        writable: false
-      });
-    }
+  static patchScenario(scenario: TestScenario): void {
+    // Add method to get achievement name asynchronously
+    (scenario as any).asyncGetAchievementName = async (achievementId: string): Promise<string> => {
+      try {
+        const achievement = await AchievementUtils.getAchievementById(achievementId);
+        return achievement?.name || achievementId;
+      } catch (error) {
+        console.error(`Error getting achievement name for ${achievementId}:`, error);
+        return achievementId;
+      }
+    };
+
+    // Add utility method to safely resolve achievement promises
+    (scenario as any).safelyAwaitAchievements = async (achievementsPromise: Promise<Achievement[]>): Promise<Achievement[]> => {
+      try {
+        return await achievementsPromise;
+      } catch (error) {
+        console.error('Error resolving achievements promise:', error);
+        return [];
+      }
+    };
+
+    // Add utility method to safely get achievement by ID
+    (scenario as any).safelyGetAchievementById = async (achievementId: string): Promise<Achievement | null> => {
+      try {
+        return await AchievementUtils.getAchievementById(achievementId);
+      } catch (error) {
+        console.error(`Error getting achievement ${achievementId}:`, error);
+        return null;
+      }
+    };
   }
 }
