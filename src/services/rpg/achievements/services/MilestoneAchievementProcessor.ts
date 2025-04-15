@@ -1,82 +1,67 @@
-
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
-import { AchievementService } from '@/services/rpg/AchievementService';
-import { AchievementUtils } from '@/constants/achievements';
 import { AchievementCategory } from '@/types/achievementTypes';
+import { AchievementProgressService } from '../AchievementProgressService';
+import { AsyncAchievementAdapter } from '../progress/AsyncAchievementAdapter';
 
 /**
- * Service for processing milestone achievements (level, XP, etc.)
+ * Service for processing milestone achievements
  */
 export class MilestoneAchievementProcessor {
   /**
-   * Process level up achievements
+   * Check for workout milestones
    */
-  static async processLevelUp(userId: string, currentLevel: number): Promise<ServiceResponse<string[]>> {
+  static async checkForWorkoutMilestones(userId: string, workoutCount: number): Promise<ServiceResponse<string[]>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
-        // Get level achievements from centralized definitions
-        const levelAchievements = AchievementUtils
-          .getAchievementsByCategory(AchievementCategory.LEVEL)
-          .filter(a => a.requirementType === 'level')
-          .sort((a, b) => b.requirementValue - a.requirementValue);
+        const unlockedAchievementIds: string[] = [];
         
-        // Find achievements to award
-        const achievementsToCheck: string[] = [];
+        // Get workout milestone achievements
+        const milestoneAchievements = await AsyncAchievementAdapter.filterAchievements(
+          a => a.category === AchievementCategory.MILESTONE && a.requirements?.type === 'workout_count'
+        );
         
-        for (const achievement of levelAchievements) {
-          if (currentLevel >= achievement.requirementValue) {
-            achievementsToCheck.push(achievement.id);
+        for (const achievement of milestoneAchievements) {
+          if (workoutCount >= (achievement.requirements?.value || 0)) {
+            // Update progress and award achievement
+            await AchievementProgressService.completeAchievement(userId, achievement.id);
+            unlockedAchievementIds.push(achievement.id);
           }
         }
         
-        // Award achievements
-        if (achievementsToCheck.length > 0) {
-          const result = await AchievementService.checkAndAwardAchievements(userId, achievementsToCheck);
-          if (result.success && result.data) {
-            return Array.isArray(result.data) ? result.data : [];
-          }
-        }
-        
-        return [];
+        return unlockedAchievementIds;
       },
-      'PROCESS_LEVEL_UP',
+      'CHECK_WORKOUT_MILESTONES',
       { showToast: false }
     );
   }
   
   /**
-   * Process XP milestone achievements
+   * Check for streak milestones
    */
-  static async processXPMilestone(userId: string, totalXP: number): Promise<ServiceResponse<string[]>> {
+  static async checkForStreakMilestones(userId: string, streakCount: number): Promise<ServiceResponse<string[]>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
-        // Get XP achievements from centralized definitions
-        const xpAchievements = AchievementUtils
-          .getAchievementsByCategory(AchievementCategory.XP)
-          .filter(a => a.requirementType === 'total_xp')
-          .sort((a, b) => b.requirementValue - a.requirementValue);
+        const unlockedAchievementIds: string[] = [];
         
-        // Find achievements to award
-        const achievementsToCheck: string[] = [];
+        // Get streak milestone achievements
+        const streakAchievements = await AsyncAchievementAdapter.filterAchievements(
+          a => a.category === AchievementCategory.MILESTONE && a.requirements?.type === 'streak_count'
+        );
         
-        for (const achievement of xpAchievements) {
-          if (totalXP >= achievement.requirementValue) {
-            achievementsToCheck.push(achievement.id);
+        for (const achievement of streakAchievements) {
+          if (streakCount >= (achievement.requirements?.value || 0)) {
+            // Update progress and award achievement
+            await AchievementProgressService.completeAchievement(userId, achievement.id);
+            unlockedAchievementIds.push(achievement.id);
           }
         }
         
-        // Award achievements
-        if (achievementsToCheck.length > 0) {
-          const result = await AchievementService.checkAndAwardAchievements(userId, achievementsToCheck);
-          if (result.success && result.data) {
-            return Array.isArray(result.data) ? result.data : [];
-          }
-        }
-        
-        return [];
+        return unlockedAchievementIds;
       },
-      'PROCESS_XP_MILESTONE',
+      'CHECK_STREAK_MILESTONES',
       { showToast: false }
     );
   }
+  
+  // Add other milestone checks here (e.g., XP, level, etc.)
 }

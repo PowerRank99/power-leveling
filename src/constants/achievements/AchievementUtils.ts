@@ -1,4 +1,3 @@
-
 import { Achievement, AchievementCategory, AchievementRank } from '@/types/achievementTypes';
 import { AchievementStandardizationService } from '@/services/common/AchievementStandardizationService';
 import { AchievementDatabaseService } from '@/services/common/AchievementDatabaseService';
@@ -204,7 +203,7 @@ export class AchievementUtils {
         type: def.requirementType || 'generic',
         value: def.requirementValue || 1
       },
-      stringId: def.stringId || AchievementStandardizationService.standardizeAchievementId(def.id)
+      stringId: def.stringId || def.id.toLowerCase().replace(/\s+/g, '-')
     };
   }
 }

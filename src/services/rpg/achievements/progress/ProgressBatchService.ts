@@ -1,62 +1,39 @@
-
-import { ServiceResponse } from '@/services/common/ErrorHandlingService';
-import { BaseProgressService } from './BaseProgressService';
+import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { WorkoutProgressBatchService } from './WorkoutProgressBatchService';
-import { RecordProgressBatchService } from './RecordProgressBatchService';
 import { StreakProgressBatchService } from './StreakProgressBatchService';
-import { GenericProgressBatchService } from './GenericProgressBatchService';
+import { RecordProgressBatchService } from './RecordProgressBatchService';
 
 /**
- * Facade service for batch achievement progress updates
- * Delegates to specialized services for different achievement types
+ * Batch processing service for achievement progress
  */
-export class ProgressBatchService extends BaseProgressService {
+export class ProgressBatchService {
   /**
-   * Update workout count achievement progress
-   * Delegates to WorkoutProgressBatchService
+   * Process all achievement types in a single batch operation
    */
-  static async updateWorkoutCountProgress(
-    userId: string, 
-    totalCount: number
-  ): Promise<ServiceResponse<void>> {
-    return WorkoutProgressBatchService.updateWorkoutCountProgress(userId, totalCount);
+  static async processAllAchievementProgress(userId: string): Promise<void> {
+    // Fix method reference
+    await WorkoutProgressBatchService.updateAllWorkoutProgress(userId);
+    await StreakProgressBatchService.updateAllStreakProgress(userId);
+    await RecordProgressBatchService.updateAllRecordProgress(userId);
+    
+    try {
+      // Additional processing can be added here
+    } catch (error) {
+      console.error('Error in processAllAchievementProgress:', error);
+    }
   }
   
   /**
-   * Update personal record achievement progress
-   * Delegates to RecordProgressBatchService
+   * Update progress for all achievement types
    */
-  static async updatePersonalRecordProgress(
-    userId: string, 
-    totalCount: number
-  ): Promise<ServiceResponse<void>> {
-    return RecordProgressBatchService.updatePersonalRecordProgress(userId, totalCount);
-  }
-  
-  /**
-   * Update streak achievement progress
-   * Delegates to StreakProgressBatchService
-   */
-  static async updateStreakProgress(
-    userId: string, 
-    currentStreak: number
-  ): Promise<ServiceResponse<void>> {
-    return StreakProgressBatchService.updateStreakProgress(userId, currentStreak);
-  }
-  
-  /**
-   * Generic batch update method for achievements
-   * Delegates to GenericProgressBatchService
-   */
-  static async batchUpdateProgress(
-    userId: string,
-    achievements: Array<{
-      achievementId: string,
-      currentValue: number,
-      targetValue: number,
-      isComplete: boolean
-    }>
-  ): Promise<ServiceResponse<void>> {
-    return GenericProgressBatchService.batchUpdateProgress(userId, achievements);
+  static async updateAllProgress(userId: string): Promise<ServiceResponse<boolean>> {
+    return ErrorHandlingService.executeWithErrorHandling(
+      async () => {
+        await this.processAllAchievementProgress(userId);
+        return true;
+      },
+      'UPDATE_ALL_ACHIEVEMENT_PROGRESS',
+      { showToast: false }
+    );
   }
 }

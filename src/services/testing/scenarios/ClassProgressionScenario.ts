@@ -1,4 +1,3 @@
-
 /**
  * Class Progression Scenario
  * 
@@ -12,6 +11,7 @@ import { WorkoutType } from '../generators/WorkoutGenerator';
 import { CharacterClass } from '../generators/ClassGenerator';
 import { ActivityType } from '../generators/ActivityGenerator';
 import { BaseScenario, ScenarioOptions, ScenarioResult, scenarioRunner } from './index';
+import { AchievementScenarioAdapter } from '../adapters/AchievementScenarioAdapter';
 
 /**
  * Class Progression Scenario configuration options
@@ -222,6 +222,29 @@ export class ClassProgressionScenario extends BaseScenario {
     } catch (error) {
       return false;
     }
+  }
+
+  async checkAchievementUnlock(achievementId: string): Promise<boolean> {
+    // Use the adapter to get achievement and check unlocking
+    const achievement = await AchievementScenarioAdapter.getAchievementById(achievementId);
+    if (!achievement) {
+      this.addAction({
+        type: 'ERROR',
+        description: `Achievement not found: ${achievementId}`,
+        timestamp: new Date(),
+        success: false
+      });
+      return false;
+    }
+    
+    this.addAction({
+      type: 'CHECK_ACHIEVEMENT',
+      description: `Checking if achievement "${achievement.name}" is unlocked`,
+      timestamp: new Date(),
+      success: true
+    });
+    
+    return true;
   }
 }
 

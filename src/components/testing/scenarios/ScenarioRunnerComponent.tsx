@@ -42,6 +42,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { AchievementScenarioAdapter } from '@/services/testing/adapters/AchievementScenarioAdapter';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
+import { Achievement } from '@/types/achievementTypes';
 
 interface ScenarioRunnerProps {
   userId?: string;
