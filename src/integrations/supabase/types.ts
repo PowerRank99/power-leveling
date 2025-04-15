@@ -106,6 +106,7 @@ export type Database = {
           points: number
           rank: string
           requirements: Json
+          string_id: string | null
           xp_reward: number
         }
         Insert: {
@@ -117,6 +118,7 @@ export type Database = {
           points?: number
           rank?: string
           requirements: Json
+          string_id?: string | null
           xp_reward: number
         }
         Update: {
@@ -128,6 +130,7 @@ export type Database = {
           points?: number
           rank?: string
           requirements?: Json
+          string_id?: string | null
           xp_reward?: number
         }
         Relationships: []

@@ -7,7 +7,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AchievementStandardizationService } from '@/services/common/AchievementStandardizationService';
 import { AchievementIdMappingService } from '@/services/common/AchievementIdMappingService';
-import { toast } from 'sonner'; // Using sonner instead of react-toastify
+import { toast } from 'sonner';
 
 interface StandardizationResult {
   valid: string[];
@@ -88,7 +88,7 @@ export function AchievementIdDebugger() {
           </Button>
         </div>
       </div>
-      
+
       <Card className="p-4">
         <h4 className="font-medium mb-2">Current Mappings</h4>
         <ScrollArea className="h-[200px]">
@@ -102,7 +102,7 @@ export function AchievementIdDebugger() {
           </div>
         </ScrollArea>
       </Card>
-      
+
       <div className="grid grid-cols-3 gap-4">
         <Card className="p-4">
           <h4 className="font-medium mb-2 flex items-center gap-2">
@@ -167,7 +167,7 @@ export function AchievementIdDebugger() {
               {results.suggestions.map((suggestion, index) => (
                 <Alert 
                   key={index} 
-                  variant={suggestion.issue.includes('Automatic match') ? 'default' : 'default'}
+                  variant="default"
                   className={`text-sm ${suggestion.issue.includes('Automatic match') ? 'border-green-500/30 bg-green-500/10' : ''}`}
                 >
                   <AlertTitle>{suggestion.id}</AlertTitle>
