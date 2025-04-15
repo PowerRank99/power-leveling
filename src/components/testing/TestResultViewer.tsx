@@ -2,14 +2,14 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Download, Trash2, Search, Filter, ChevronDown, ChevronUp, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Download, Trash2, Filter } from 'lucide-react';
 import { AchievementTestResult } from '@/services/testing/AchievementTestingService';
-import { AchievementCategory } from '@/types/achievementTypes';
+import { TestResultFilters } from './result-viewer/TestResultFilters';
+import { TestResultSortControls } from './result-viewer/TestResultSortControls';
+import { TestResultCard } from './result-viewer/TestResultCard';
 
 interface TestResultViewerProps {
   results: AchievementTestResult[];
@@ -31,19 +31,16 @@ export function TestResultViewer({ results, onClearResults, onExportResults }: T
   
   // Apply filters and sort
   const filteredResults = results.filter(result => {
-    // Text search
     const matchesSearch = 
       searchQuery === '' || 
       result.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       result.achievementId.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // Status filter
     const matchesStatus = 
       statusFilter === 'all' || 
       (statusFilter === 'passed' && result.success) ||
       (statusFilter === 'failed' && !result.success);
     
-    // Category filter
     const matchesCategory = 
       categoryFilter === 'all' || 
       result.category === categoryFilter;
@@ -113,81 +110,41 @@ export function TestResultViewer({ results, onClearResults, onExportResults }: T
             </div>
           </CardTitle>
         </CardHeader>
+        
         <CardContent>
           <div className="space-y-4">
-            <div className="flex flex-wrap gap-3">
-              <div className="relative flex-1 min-w-[200px]">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-text-tertiary" />
-                <Input
-                  placeholder="Search tests..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 w-full bg-midnight-elevated border-divider"
-                />
-              </div>
-              
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[160px] bg-midnight-elevated border-divider">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All statuses</SelectItem>
-                  <SelectItem value="passed">Passed only</SelectItem>
-                  <SelectItem value="failed">Failed only</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-[160px] bg-midnight-elevated border-divider">
-                  <SelectValue placeholder="Filter by category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All categories</SelectItem>
-                  {Object.values(AchievementCategory).map(category => (
-                    <SelectItem key={category} value={category}>{category}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              
-              <div className="flex">
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="rounded-r-none border-r-0 bg-midnight-elevated border-divider">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="recent">Most recent</SelectItem>
-                    <SelectItem value="name">Name</SelectItem>
-                    <SelectItem value="duration">Duration</SelectItem>
-                    <SelectItem value="category">Category</SelectItem>
-                    <SelectItem value="rank">Rank</SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  className="rounded-l-none bg-midnight-elevated border-divider"
-                  onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                >
-                  {sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </Button>
-              </div>
-            </div>
+            <TestResultFilters
+              searchQuery={searchQuery}
+              statusFilter={statusFilter}
+              categoryFilter={categoryFilter}
+              onSearchChange={setSearchQuery}
+              onStatusChange={setStatusFilter}
+              onCategoryChange={setCategoryFilter}
+            />
             
-            <div className="flex items-center gap-2">
-              <Badge variant="outline">
-                {filteredResults.length} results
-              </Badge>
-              {passedCount > 0 && (
-                <Badge variant="success" className="px-2">
-                  {passedCount} passed
+            <div className="flex justify-between items-center">
+              <TestResultSortControls
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSortByChange={setSortBy}
+                onSortOrderChange={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+              />
+              
+              <div className="flex items-center gap-2">
+                <Badge variant="outline">
+                  {filteredResults.length} results
                 </Badge>
-              )}
-              {failedCount > 0 && (
-                <Badge variant="valor" className="px-2">
-                  {failedCount} failed
-                </Badge>
-              )}
+                {passedCount > 0 && (
+                  <Badge variant="success" className="px-2">
+                    {passedCount} passed
+                  </Badge>
+                )}
+                {failedCount > 0 && (
+                  <Badge variant="valor" className="px-2">
+                    {failedCount} failed
+                  </Badge>
+                )}
+              </div>
             </div>
             
             <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -213,49 +170,10 @@ export function TestResultViewer({ results, onClearResults, onExportResults }: T
                   ) : (
                     <div className="space-y-2">
                       {displayedResults.map(result => (
-                        <Card key={`${result.achievementId}-${result.testedAt}`} className="p-3 hover:bg-midnight-elevated">
-                          <div className="flex items-start justify-between">
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                {result.success ? (
-                                  <CheckCircle2 className="h-5 w-5 text-success" />
-                                ) : (
-                                  <XCircle className="h-5 w-5 text-valor" />
-                                )}
-                                <span className="font-semibold">{result.name}</span>
-                              </div>
-                              
-                              <div className="flex items-center gap-2 text-xs text-text-secondary">
-                                <Badge variant="outline" className="px-2 py-0">
-                                  {result.category}
-                                </Badge>
-                                <Badge variant="outline" className="px-2 py-0">
-                                  Rank {result.rank}
-                                </Badge>
-                                <span className="flex items-center">
-                                  <Clock className="h-3 w-3 mr-1" />
-                                  {result.testDurationMs}ms
-                                </span>
-                                <span>
-                                  {new Date(result.testedAt).toLocaleString()}
-                                </span>
-                              </div>
-                              
-                              {!result.success && result.errorMessage && (
-                                <div className="mt-2 text-sm text-valor bg-valor/10 p-2 rounded">
-                                  {result.errorMessage}
-                                </div>
-                              )}
-                            </div>
-                            
-                            <Badge 
-                              variant={result.success ? "success" : "valor"}
-                              className="ml-2"
-                            >
-                              {result.success ? 'Passed' : 'Failed'}
-                            </Badge>
-                          </div>
-                        </Card>
+                        <TestResultCard 
+                          key={`${result.achievementId}-${result.testedAt}`} 
+                          result={result} 
+                        />
                       ))}
                     </div>
                   )}
