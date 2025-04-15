@@ -50,7 +50,7 @@ export class AchievementFetchService {
           count(*)
         `)
         .in('id', achievementIds)
-        .groupBy('rank');
+        .group_by('rank');
         
       if (error) throw error;
       
