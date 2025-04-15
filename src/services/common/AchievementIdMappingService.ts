@@ -1,12 +1,13 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ACHIEVEMENT_IDS } from '@/constants/achievements/AchievementConstants';
 import { Achievement } from '@/types/achievementTypes';
+import { ServiceErrorHandler } from '@/services/common/ServiceErrorHandler';
 
 export class AchievementIdMappingService {
   private static idMap: Map<string, { uuid: string; achievement: Achievement }> = new Map();
   private static unmappedIds: Set<string> = new Set();
   private static initialized: boolean = false;
+  private static logger = new ServiceErrorHandler('AchievementIdMappingService');
 
   static async initialize(): Promise<void> {
     if (this.initialized) return;
@@ -17,7 +18,7 @@ export class AchievementIdMappingService {
         .select('id, name, category, rank, points, xp_reward, icon_name');
 
       if (error) {
-        console.error('Failed to fetch achievements:', error);
+        this.logger.logError('Initialization failed', error);
         throw error;
       }
 
@@ -26,8 +27,6 @@ export class AchievementIdMappingService {
 
       achievements.forEach(achievement => {
         const normalizedName = this.normalizeId(achievement.name);
-        
-        // Find matching achievement in constants
         const matchingAchievement = this.findMatchingAchievement(normalizedName);
 
         if (matchingAchievement) {
@@ -40,13 +39,13 @@ export class AchievementIdMappingService {
           });
         } else {
           this.unmappedIds.add(achievement.name);
+          this.logger.logWarning(`Unmapped Achievement: ${achievement.name}`);
         }
       });
 
-      this.logUnmappedIds();
       this.initialized = true;
     } catch (error) {
-      console.error('[AchievementIdMapping] Initialization failed:', error);
+      this.logger.logError('Initialization failed', error);
       throw error;
     }
   }
@@ -85,28 +84,39 @@ export class AchievementIdMappingService {
     }
   }
 
-  // Enhanced method to validate all mappings
   static validateMappings(): {
     valid: number;
     invalid: number;
     unmapped: string[];
+    missingDatabaseEntries: string[];
   } {
     if (!this.initialized) {
       throw new Error('AchievementIdMapping not initialized');
     }
 
-    const validCount = this.idMap.size;
-    const invalidCount = this.unmappedIds.size;
-    const unmappedList = Array.from(this.unmappedIds);
+    const allConstantIds = this.getAllConstantIds();
+    const missingDatabaseEntries = allConstantIds.filter(id => 
+      !Array.from(this.idMap.keys()).includes(id)
+    );
 
     return {
-      valid: validCount,
-      invalid: invalidCount,
-      unmapped: unmappedList
+      valid: this.idMap.size,
+      invalid: this.unmappedIds.size,
+      unmapped: Array.from(this.unmappedIds),
+      missingDatabaseEntries
     };
   }
 
-  // Enhanced method to get achievement UUID and full details
+  private static getAllConstantIds(): string[] {
+    const ids: string[] = [];
+    Object.values(ACHIEVEMENT_IDS).forEach(rankAchievements => {
+      Object.values(rankAchievements).forEach(categoryAchievements => {
+        ids.push(...categoryAchievements.map(a => a.id));
+      });
+    });
+    return ids;
+  }
+
   static getAchievementDetails(stringId: string): { uuid?: string; achievement?: Achievement } {
     if (!this.initialized) {
       console.warn('[AchievementIdMapping] Service not initialized');
@@ -147,7 +157,19 @@ export class AchievementIdMappingService {
     return mappings;
   }
 
-  // Optional: Method to force re-initialization
+  static async syncDatabaseEntries(): Promise<void> {
+    const missingEntries = this.validateMappings().missingDatabaseEntries;
+    
+    if (missingEntries.length > 0) {
+      try {
+        // Future implementation: Bulk insert missing achievements
+        this.logger.logInfo(`Syncing ${missingEntries.length} missing achievement entries`);
+      } catch (error) {
+        this.logger.logError('Database sync failed', error);
+      }
+    }
+  }
+
   static async reset(): Promise<void> {
     this.initialized = false;
     this.idMap.clear();
@@ -158,4 +180,3 @@ export class AchievementIdMappingService {
 
 // Automatically initialize on import
 AchievementIdMappingService.initialize().catch(console.error);
-
