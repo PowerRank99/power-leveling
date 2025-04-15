@@ -91,7 +91,7 @@ export interface TestScenario {
   /** Detailed description of what the scenario tests */
   description: string;
   /** List of achievements that should be unlocked by this scenario */
-  getRequiredAchievements(): string[];
+  getRequiredAchievements(): Promise<string[]> | string[];
   /** Estimated duration of the scenario in milliseconds */
   getEstimatedDuration(): number;
   /** Run the scenario for a specific user */
@@ -134,7 +134,7 @@ export abstract class BaseScenario implements TestScenario {
   /**
    * Get all achievements that should be unlocked by this scenario
    */
-  abstract getRequiredAchievements(): string[];
+  abstract getRequiredAchievements(): Promise<string[]> | string[];
 
   /**
    * Get estimated execution time in milliseconds
@@ -296,7 +296,7 @@ export class ScenarioRunner {
    */
   registerScenario(scenario: TestScenario): void {
     // Patch the scenario to work with promised-based achievements
-    ScenarioAchievementPatcher.patchScenario(scenario as any);
+    ScenarioAchievementPatcher.patchScenario(scenario);
     this.scenarios.push(scenario);
   }
   
