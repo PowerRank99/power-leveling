@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, ErrorHandlingService, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 import { Achievement, UserAchievementData } from '@/types/achievementTypes';
-import { AchievementUtils } from '@/constants/achievements';
+import { AchievementDatabaseService } from '@/services/common/AchievementDatabaseService';
 
 /**
  * Service for fetching achievement lists
@@ -14,11 +14,14 @@ export class AchievementListService {
   static async getAllAchievements(): Promise<ServiceResponse<Achievement[]>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
-        // Use the centralized achievement definitions
-        const achievements = AchievementUtils.getAllAchievements()
-          .map(def => AchievementUtils.convertToAchievement(def));
+        // Use the database service to fetch achievements
+        const response = await AchievementDatabaseService.getAllAchievements();
         
-        return achievements;
+        if (!response.success) {
+          throw new Error(response.message);
+        }
+        
+        return response.data;
       },
       'GET_ALL_ACHIEVEMENTS',
       { showToast: false }
@@ -47,7 +50,7 @@ export class AchievementListService {
             achieved_at,
             achievements:achievement_id (
               id, name, description, category, rank, 
-              points, xp_reward, icon_name, requirements
+              points, xp_reward, icon_name, requirements, string_id
             )
           `)
           .eq('user_id', userId)
@@ -70,6 +73,7 @@ export class AchievementListService {
             xpReward: ua.achievements.xp_reward,
             iconName: ua.achievements.icon_name,
             requirements: ua.achievements.requirements,
+            stringId: ua.achievements.string_id,
             isUnlocked: true,
             achievedAt: ua.achieved_at
           }));

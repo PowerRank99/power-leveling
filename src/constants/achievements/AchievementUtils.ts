@@ -1,7 +1,10 @@
 
-import { Achievement, AchievementCategory, AchievementRank, AchievementRequirement } from '@/types/achievementTypes';
+import { Achievement, AchievementCategory, AchievementRank } from '@/types/achievementTypes';
 import { AchievementDefinition, AchievementDefinitionSchema } from './AchievementSchema';
-import { ACHIEVEMENTS } from './index';
+import { AchievementDatabaseService } from '@/services/common/AchievementDatabaseService';
+
+// Cache achievements for performance
+let achievementsCache: Achievement[] | null = null;
 
 export const AchievementUtils = {
   /**
@@ -18,30 +21,46 @@ export const AchievementUtils = {
   },
   
   /**
-   * Get all achievement definitions as a flat array
+   * Get all achievements from the database
+   * This is now the single source of truth
    */
-  getAllAchievements(): AchievementDefinition[] {
-    const allAchievements: AchievementDefinition[] = [];
+  async getAllAchievements(): Promise<AchievementDefinition[]> {
+    // Use cache if available
+    if (achievementsCache) {
+      return achievementsCache.map(a => this.convertToDefinition(a));
+    }
     
-    Object.values(ACHIEVEMENTS).forEach(category => {
-      Object.values(category).forEach(achievement => {
-        if (this.validateAchievement(achievement as AchievementDefinition)) {
-          allAchievements.push(achievement as AchievementDefinition);
-        }
-      });
-    });
+    // Fetch from database
+    const response = await AchievementDatabaseService.getAllAchievements();
     
-    return allAchievements;
+    if (response.success && response.data) {
+      // Update cache
+      achievementsCache = response.data;
+      return response.data.map(a => this.convertToDefinition(a));
+    }
+    
+    // Return empty array if fetch failed
+    console.error('Failed to fetch achievements:', response.message);
+    return [];
   },
   
   /**
    * Get achievement by ID with optional validation
    */
-  getAchievementById(id: string, validateDefinition = true): AchievementDefinition | undefined {
-    const achievement = this.getAllAchievements().find(a => a.id === id);
+  async getAchievementById(id: string): Promise<AchievementDefinition | undefined> {
+    // Check cache first
+    if (achievementsCache) {
+      const achievement = achievementsCache.find(a => a.stringId === id || a.id === id);
+      if (achievement) {
+        return this.convertToDefinition(achievement);
+      }
+    }
     
-    if (achievement && (!validateDefinition || this.validateAchievement(achievement))) {
-      return achievement;
+    // Fetch from database
+    const response = await AchievementDatabaseService.getAchievementByStringId(id);
+    
+    if (response.success && response.data) {
+      return this.convertToDefinition(response.data);
     }
     
     return undefined;
@@ -50,28 +69,48 @@ export const AchievementUtils = {
   /**
    * Get achievements by rank
    */
-  getAchievementsByRank(rank: AchievementRank, validateDefinition = true): AchievementDefinition[] {
-    return this.getAllAchievements().filter(achievement => 
-      achievement.rank === rank && 
-      (!validateDefinition || this.validateAchievement(achievement))
-    );
+  async getAchievementsByRank(rank: AchievementRank): Promise<AchievementDefinition[]> {
+    // Check cache first
+    if (achievementsCache) {
+      const achievements = achievementsCache.filter(a => a.rank === rank);
+      return achievements.map(a => this.convertToDefinition(a));
+    }
+    
+    // Fetch from database
+    const response = await AchievementDatabaseService.getAchievementsByRank(rank);
+    
+    if (response.success && response.data) {
+      return response.data.map(a => this.convertToDefinition(a));
+    }
+    
+    return [];
   },
   
   /**
    * Get achievements by category
    */
-  getAchievementsByCategory(category: AchievementCategory, validateDefinition = true): AchievementDefinition[] {
-    return this.getAllAchievements().filter(achievement => 
-      achievement.category === category && 
-      (!validateDefinition || this.validateAchievement(achievement))
-    );
+  async getAchievementsByCategory(category: AchievementCategory): Promise<AchievementDefinition[]> {
+    // Check cache first
+    if (achievementsCache) {
+      const achievements = achievementsCache.filter(a => a.category === category);
+      return achievements.map(a => this.convertToDefinition(a));
+    }
+    
+    // Fetch from database
+    const response = await AchievementDatabaseService.getAchievementsByCategory(category);
+    
+    if (response.success && response.data) {
+      return response.data.map(a => this.convertToDefinition(a));
+    }
+    
+    return [];
   },
   
   /**
    * Get achievement requirements
    */
-  getAchievementRequirements(id: string): { type: string, value: number } | undefined {
-    const achievement = this.getAchievementById(id);
+  async getAchievementRequirements(id: string): Promise<{ type: string, value: number } | undefined> {
+    const achievement = await this.getAchievementById(id);
     
     if (achievement) {
       return {
@@ -101,8 +140,14 @@ export const AchievementUtils = {
   },
   
   /**
+   * Clear achievements cache
+   */
+  clearCache() {
+    achievementsCache = null;
+  },
+  
+  /**
    * Convert AchievementDefinition to Achievement interface
-   * Provides a standardized way to convert between the two formats
    */
   convertToAchievement(definition: AchievementDefinition): Achievement {
     return {
@@ -119,6 +164,7 @@ export const AchievementUtils = {
         value: definition.requirementValue,
         metadata: definition.metadata
       },
+      stringId: definition.id, // Use the string ID directly
       metadata: definition.metadata
     };
   },
@@ -128,7 +174,7 @@ export const AchievementUtils = {
    */
   convertToDefinition(achievement: Achievement): AchievementDefinition {
     return {
-      id: achievement.id,
+      id: achievement.stringId || achievement.id, // Prefer string ID
       name: achievement.name,
       description: achievement.description,
       category: achievement.category as AchievementCategory,

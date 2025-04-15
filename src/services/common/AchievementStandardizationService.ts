@@ -1,7 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ACHIEVEMENTS } from '@/constants/achievements';
-import { AchievementIdMappingService } from './AchievementIdMappingService';
+import { AchievementUtils } from '@/constants/achievements';
 
 export class AchievementStandardizationService {
   static async validateAndStandardize() {
@@ -24,72 +23,42 @@ export class AchievementStandardizationService {
 
       if (error) throw error;
 
-      // Get all string IDs from constants
-      const stringIds = Object.values(ACHIEVEMENTS)
-        .flatMap(category => Object.values(category))
-        .map(achievement => typeof achievement === 'string' ? achievement : achievement.id);
+      // Check for achievements with missing string_id
+      const missingStringIds = dbAchievements.filter(a => !a.string_id);
+      
+      for (const achievement of missingStringIds) {
+        result.missing.push(achievement.id);
+        result.suggestions.push({
+          id: achievement.id,
+          issue: 'Missing string_id',
+          suggestion: `Generate string_id for "${achievement.name}"`
+        });
+      }
+      
+      // Check for achievements with proper string_ids
+      const validStringIds = dbAchievements.filter(a => !!a.string_id);
+      for (const achievement of validStringIds) {
+        result.valid.push(achievement.string_id);
+      }
+      
+      // Get automatic matches for missing string_ids
+      if (missingStringIds.length > 0) {
+        const { data: matches, error: matchError } = await supabase
+          .rpc('match_achievement_by_name');
 
-      // Get current ID mappings
-      await AchievementIdMappingService.initialize();
-      const mappings = AchievementIdMappingService.getAllMappings();
+        if (matchError) throw matchError;
 
-      // Validate string IDs against mappings
-      for (const stringId of stringIds) {
-        const uuid = mappings.get(stringId);
-        if (uuid) {
-          // Check if UUID exists in database
-          const achievementExists = dbAchievements?.some(a => a.id === uuid);
-          if (achievementExists) {
-            result.valid.push(stringId);
-          } else {
-            result.invalid.push(stringId);
+        // Add automatic matches to suggestions
+        matches?.forEach((match: any) => {
+          if (!result.suggestions.some(s => s.id === match.uuid)) {
             result.suggestions.push({
-              id: stringId,
-              issue: 'UUID exists in mapping but not in database',
-              suggestion: 'Create achievement record with ID: ' + uuid
+              id: match.uuid,
+              issue: 'Automatic match found',
+              suggestion: `Set string_id to "${match.string_id}" for achievement "${match.name}"`
             });
           }
-        } else {
-          result.invalid.push(stringId);
-          result.suggestions.push({
-            id: stringId,
-            issue: 'Missing database entry',
-            suggestion: 'Create database entry with ID: ' + stringId
-          });
-        }
+        });
       }
-
-      // Find database achievements without string ID mappings
-      const dbUuids = dbAchievements?.map(a => a.id) || [];
-      const mappedUuids = Array.from(mappings.values());
-      
-      for (const dbUuid of dbUuids) {
-        if (!mappedUuids.includes(dbUuid)) {
-          result.missing.push(dbUuid);
-          result.suggestions.push({
-            id: dbUuid,
-            issue: 'Missing constant definition',
-            suggestion: 'Add constant definition for ID: ' + dbUuid
-          });
-        }
-      }
-
-      // Call database function to attempt automatic matching
-      const { data: matches, error: matchError } = await supabase
-        .rpc('match_achievement_by_name');
-
-      if (matchError) throw matchError;
-
-      // Add automatic matches to suggestions
-      matches?.forEach((match: any) => {
-        if (!result.suggestions.some(s => s.id === match.string_id)) {
-          result.suggestions.push({
-            id: match.string_id,
-            issue: 'Automatic match found',
-            suggestion: `Map to achievement "${match.name}" (${match.uuid})`
-          });
-        }
-      });
 
       return result;
     } catch (error) {
@@ -104,7 +73,10 @@ export class AchievementStandardizationService {
         .rpc('complete_achievement_id_migration');
 
       if (error) throw error;
-
+      
+      // Clear the AchievementUtils cache
+      AchievementUtils.clearCache();
+      
       return count;
     } catch (error) {
       console.error('Migration failed:', error);

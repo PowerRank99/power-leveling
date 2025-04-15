@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AchievementStandardizationService } from '@/services/common/AchievementStandardizationService';
-import { AchievementIdMappingService } from '@/services/common/AchievementIdMappingService';
 import { toast } from 'sonner';
 
 interface StandardizationResult {
@@ -28,23 +27,19 @@ export function AchievementIdDebugger() {
     suggestions: []
   });
   const [isValidating, setIsValidating] = useState(false);
-  const [mappings, setMappings] = useState<{[key: string]: string}>({});
   
   const runValidation = async () => {
     setIsValidating(true);
     try {
-      await AchievementIdMappingService.initialize();
-      
-      const currentMappings: {[key: string]: string} = {};
-      AchievementIdMappingService.getAllMappings().forEach((value, key) => {
-        currentMappings[key] = value;
-      });
-      setMappings(currentMappings);
-      
       const validationResults = await AchievementStandardizationService.validateAndStandardize();
       setResults(validationResults);
+      
+      if (validationResults.valid.length > 0 && validationResults.missing.length === 0) {
+        toast.success('All achievements have valid string IDs!');
+      }
     } catch (error) {
       console.error('Validation failed:', error);
+      toast.error('Validation failed');
     } finally {
       setIsValidating(false);
     }
@@ -93,20 +88,6 @@ export function AchievementIdDebugger() {
         </div>
       </div>
 
-      <Card className="p-4">
-        <h4 className="font-medium mb-2">Current Mappings</h4>
-        <ScrollArea className="h-[200px]">
-          <div className="space-y-1">
-            {Object.entries(mappings).map(([stringId, uuid]) => (
-              <div key={stringId} className="text-sm p-1 border-b last:border-0">
-                <span className="font-mono">{stringId}</span>: 
-                <span className="ml-2 text-text-secondary">{uuid}</span>
-              </div>
-            ))}
-          </div>
-        </ScrollArea>
-      </Card>
-
       <div className="grid grid-cols-3 gap-4">
         <Card className="p-4">
           <h4 className="font-medium mb-2 flex items-center gap-2">
@@ -146,7 +127,7 @@ export function AchievementIdDebugger() {
         
         <Card className="p-4">
           <h4 className="font-medium mb-2 flex items-center gap-2">
-            Missing Mappings
+            Missing String IDs
             <Badge variant="arcane" className="ml-2">
               {results.missing.length}
             </Badge>

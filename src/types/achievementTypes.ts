@@ -53,6 +53,7 @@ export interface Achievement {
   xpReward: number;
   iconName: string;
   requirements: AchievementRequirement;
+  stringId?: string; // Added to support the database as source of truth
   isUnlocked?: boolean;
   achievedAt?: string;
   metadata?: Record<string, any>; // For future extensibility
@@ -119,6 +120,7 @@ export interface UserAchievementData {
     points: number;
     xp_reward: number;
     icon_name: string;
+    string_id?: string; // Added to support string IDs
     requirements: AchievementRequirement;
   };
 }
