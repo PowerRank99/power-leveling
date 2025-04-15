@@ -49,7 +49,7 @@ export class WorkoutCheckerService extends BaseAchievementChecker {
                 'workout',
                 profile.workouts_count,
                 Math.max(profile.workouts_count + 5, 10),
-                false // Adding the missing isComplete parameter
+                false // Required parameter for isComplete
               );
             }
             

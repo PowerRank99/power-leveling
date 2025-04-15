@@ -49,7 +49,7 @@ export class StreakCheckerService extends BaseAchievementChecker {
                 'streak',
                 profile.streak,
                 Math.max(profile.streak + 5, 7),
-                false // Adding the missing isComplete parameter
+                false // Required parameter for isComplete
               );
             }
             
