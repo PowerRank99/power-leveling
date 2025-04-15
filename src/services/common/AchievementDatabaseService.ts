@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Achievement, AchievementCategory, AchievementRank } from '@/types/achievementTypes';
 import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
@@ -95,7 +94,7 @@ export class AchievementDatabaseService {
   }
   
   /**
-   * Get a specific achievement by its string ID (for backward compatibility)
+   * Get a specific achievement by its string ID (enhanced version)
    */
   static async getAchievementByStringId(stringId: string): Promise<ServiceResponse<Achievement | null>> {
     try {
@@ -116,6 +115,7 @@ export class AchievementDatabaseService {
       if (error) throw error;
       
       if (!achievement) {
+        console.warn(`No achievement found with string ID: ${stringId}`);
         return createSuccessResponse(null);
       }
       
@@ -134,7 +134,7 @@ export class AchievementDatabaseService {
       
       return createSuccessResponse(formattedAchievement);
     } catch (error) {
-      console.error('Failed to fetch achievement by string ID:', error);
+      console.error(`Error fetching achievement by string ID ${stringId}:`, error);
       return createErrorResponse(
         'Failed to fetch achievement by string ID',
         error instanceof Error ? error.message : 'Unknown error',

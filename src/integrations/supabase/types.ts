@@ -9,48 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      achievement_id_mappings: {
-        Row: {
-          string_id: string
-          uuid: string
-        }
-        Insert: {
-          string_id: string
-          uuid?: string
-        }
-        Update: {
-          string_id?: string
-          uuid?: string
-        }
-        Relationships: []
-      }
-      achievement_id_migration: {
-        Row: {
-          created_at: string | null
-          id: number
-          migrated: boolean | null
-          name: string
-          string_id: string
-          uuid: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: number
-          migrated?: boolean | null
-          name: string
-          string_id: string
-          uuid: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: number
-          migrated?: boolean | null
-          name?: string
-          string_id?: string
-          uuid?: string
-        }
-        Relationships: []
-      }
       achievement_progress: {
         Row: {
           achievement_id: string | null
@@ -106,7 +64,7 @@ export type Database = {
           points: number
           rank: string
           requirements: Json
-          string_id: string | null
+          string_id: string
           xp_reward: number
         }
         Insert: {
@@ -118,7 +76,7 @@ export type Database = {
           points?: number
           rank?: string
           requirements: Json
-          string_id?: string | null
+          string_id: string
           xp_reward: number
         }
         Update: {
@@ -130,7 +88,7 @@ export type Database = {
           points?: number
           rank?: string
           requirements?: Json
-          string_id?: string | null
+          string_id?: string
           xp_reward?: number
         }
         Relationships: []
