@@ -1,3 +1,4 @@
+
 import { ServiceResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 import { Achievement } from '@/types/achievementTypes';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,8 +32,8 @@ export class AchievementFetchService {
         .eq('user_achievements.user_id', userId)
         .join('user_achievements', { 
           sourceColumn: 'id',
-          foreignTable: 'user_achievements',
-          foreignColumn: 'achievement_id'
+          targetColumn: 'achievement_id',
+          foreignTable: 'user_achievements'
         })
         .group_by('rank');
         
