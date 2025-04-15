@@ -1,59 +1,65 @@
 
-import { Achievement, AchievementCategory } from '@/types/achievementTypes';
-import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
+import { AchievementCategory } from '@/types/achievementTypes';
+import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { AsyncAchievementAdapter } from './AsyncAchievementAdapter';
-import { ServiceResponse, ErrorHandlingService, createSuccessResponse } from '@/services/common/ErrorHandlingService';
 import { AchievementProgressService } from '../AchievementProgressService';
 
 /**
- * Service for handling achievement progress related to specific categories
+ * Service for batch processing category-related achievement progress
  */
 export class CategoryProgressService {
   /**
-   * Get achievements by category with async support
+   * Update progress for all achievements in a specific category
    */
-  static async getAchievementsByCategory(category: AchievementCategory): Promise<Achievement[]> {
-    return AsyncAchievementAdapter.filterAchievements(a => a.category === category);
-  }
-  
-  /**
-   * Batch update progress for achievements by category
-   */
-  static async batchUpdateByCategory(
-    userId: string,
-    category: AchievementCategory,
-    requirementType: string,
+  static async updateCategoryProgress(
+    userId: string, 
+    category: AchievementCategory, 
     currentValue: number
   ): Promise<ServiceResponse<boolean>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
-        const achievements = await this.getAchievementsByCategory(category);
-        
-        const relevantAchievements = achievements.filter(a => 
-          a.requirements?.type === requirementType
+        const achievements = await AsyncAchievementAdapter.filterAchievements(
+          a => a.category === category
         );
         
-        // Prepare progress updates
-        const progressUpdates = relevantAchievements.map(achievement => {
+        for (const achievement of achievements) {
           const requirementValue = achievement.requirements?.value || 0;
-          const isComplete = currentValue >= requirementValue;
+          const isCompleted = currentValue >= requirementValue;
           
-          return {
-            achievementId: achievement.id,
-            currentValue: Math.min(currentValue, requirementValue),
-            targetValue: requirementValue,
-            isComplete
-          };
-        });
-        
-        // Update progress in a batch
-        if (progressUpdates.length > 0) {
-          await AchievementProgressService.updateMultipleProgressValues(userId, progressUpdates);
+          await AchievementProgressService.updateProgress(
+            userId,
+            achievement.id,
+            currentValue,
+            requirementValue,
+            isCompleted
+          );
         }
         
-        return createSuccessResponse(true);
+        return true;
       },
-      'BATCH_UPDATE_BY_CATEGORY',
+      'UPDATE_CATEGORY_PROGRESS',
+      { showToast: false }
+    );
+  }
+  
+  /**
+   * Batch update progress for multiple categories at once
+   */
+  static async batchUpdateCategoryProgress(
+    userId: string,
+    categoryValues: Record<AchievementCategory, number>
+  ): Promise<ServiceResponse<boolean>> {
+    return ErrorHandlingService.executeWithErrorHandling(
+      async () => {
+        const categories = Object.entries(categoryValues) as [AchievementCategory, number][];
+        
+        for (const [category, value] of categories) {
+          await this.updateCategoryProgress(userId, category, value);
+        }
+        
+        return true;
+      },
+      'BATCH_UPDATE_CATEGORY_PROGRESS',
       { showToast: false }
     );
   }

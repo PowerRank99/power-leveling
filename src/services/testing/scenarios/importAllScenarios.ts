@@ -7,11 +7,21 @@
  * and the base classes in index.ts.
  */
 
+// Import scenario runner and helpers for patching
+import { scenarioRunner } from './index';
+import { ScenarioAchievementPatcher } from '../helpers/ScenarioAchievementPatcher';
+
 // Import all scenario files
+// Importing them here makes them register with the scenarioRunner via their side effects
 import './NewUserScenario';
 import './PowerUserScenario';
 import './StreakScenario';
 import './ClassProgressionScenario';
 import './CompletionistScenario';
 
-// This file doesn't export anything - it's just for importing
+// Ensure all scenario instances are properly patched with the achievement adapter utilities
+(function initializeScenarioPatches() {
+  const allScenarios = scenarioRunner.getScenarios();
+  ScenarioAchievementPatcher.patchScenarios(allScenarios);
+  console.log(`Initialized and patched ${allScenarios.length} test scenarios`);
+})();

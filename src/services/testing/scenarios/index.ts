@@ -1,3 +1,4 @@
+
 /**
  * Achievement Testing Scenarios
  * 
@@ -286,15 +287,118 @@ export abstract class BaseScenario implements TestScenario {
  * ScenarioRunner class for executing test scenarios
  */
 export class ScenarioRunner {
-  private scenarios: any[] = [];
+  private scenarios: TestScenario[] = [];
+  private currentScenario: TestScenario | null = null;
+  private progressCallback: ((progress: ScenarioProgress) => void) | null = null;
   
-  registerScenario(scenario: any): void {
+  /**
+   * Register a scenario with the runner
+   */
+  registerScenario(scenario: TestScenario): void {
     // Patch the scenario to work with promised-based achievements
     ScenarioAchievementPatcher.patchScenario(scenario);
     this.scenarios.push(scenario);
   }
   
-  // Other scenario runner methods would be here
+  /**
+   * Get all registered scenarios
+   */
+  getScenarios(): TestScenario[] {
+    return this.scenarios;
+  }
+  
+  /**
+   * Get a specific scenario by ID
+   */
+  getScenario(id: string): TestScenario | null {
+    return this.scenarios.find(s => s.id === id) || null;
+  }
+  
+  /**
+   * Set the progress callback function
+   */
+  setProgressCallback(callback: (progress: ScenarioProgress) => void): void {
+    this.progressCallback = callback;
+    
+    // If there's an active scenario, update its callback too
+    if (this.currentScenario) {
+      this.currentScenario.setProgressCallback(callback);
+    }
+  }
+  
+  /**
+   * Run a scenario by ID
+   */
+  async runScenario(
+    scenarioId: string, 
+    userId: string, 
+    options?: ScenarioOptions
+  ): Promise<ScenarioResult> {
+    const scenario = this.getScenario(scenarioId);
+    
+    if (!scenario) {
+      return {
+        success: false,
+        error: `Scenario with ID "${scenarioId}" not found`,
+        achievementsUnlocked: [],
+        actions: [],
+        executionTimeMs: 0
+      };
+    }
+    
+    try {
+      // Set the current scenario and apply progress callback
+      this.currentScenario = scenario;
+      
+      if (this.progressCallback) {
+        scenario.setProgressCallback(this.progressCallback);
+      }
+      
+      // Run the scenario
+      const result = await scenario.run(userId, options);
+      
+      // Handle auto-cleanup if enabled
+      if (options?.autoCleanup && result.success) {
+        try {
+          await scenario.cleanup(userId, { silent: options.silent });
+        } catch (cleanupError) {
+          console.error('Error during auto-cleanup:', cleanupError);
+        }
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error running scenario:', error);
+      
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        achievementsUnlocked: [],
+        actions: [],
+        executionTimeMs: 0
+      };
+    } finally {
+      this.currentScenario = null;
+    }
+  }
+  
+  /**
+   * Pause the currently running scenario
+   */
+  pauseCurrentScenario(): void {
+    if (this.currentScenario) {
+      this.currentScenario.pause();
+    }
+  }
+  
+  /**
+   * Resume the currently paused scenario
+   */
+  resumeCurrentScenario(): void {
+    if (this.currentScenario) {
+      this.currentScenario.resume();
+    }
+  }
 }
 
 export const scenarioRunner = new ScenarioRunner();

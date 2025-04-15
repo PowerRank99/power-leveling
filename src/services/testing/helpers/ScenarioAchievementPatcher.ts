@@ -37,6 +37,23 @@ export class ScenarioAchievementPatcher {
     instance.getAchievementRank = async function(achievement: any) {
       return ScenarioAchievementAdapter.getAchievementRank(achievement);
     };
+    
+    // Add methods for Promise<Achievement[]> handling
+    instance.resolveAchievements = async function(achievementPromises: any) {
+      return ScenarioAchievementAdapter.resolveAchievementArray(achievementPromises);
+    };
+    
+    instance.mapAchievements = async function(achievementPromises: any, mapFn: any) {
+      return ScenarioAchievementAdapter.mapAchievementPromises(achievementPromises, mapFn);
+    };
+    
+    instance.filterAchievements = async function(achievementPromises: any, filterFn: any) {
+      return ScenarioAchievementAdapter.filterAchievementPromises(achievementPromises, filterFn);
+    };
+    
+    instance.sortAchievements = async function(achievementPromises: any, compareFn: any) {
+      return ScenarioAchievementAdapter.sortAchievementPromises(achievementPromises, compareFn);
+    };
   }
   
   /**

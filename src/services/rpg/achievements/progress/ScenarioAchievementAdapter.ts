@@ -33,15 +33,22 @@ export class ScenarioAchievementAdapter {
   /**
    * Map an array of achievement promises to their resolved values
    */
-  static async resolveAchievementArray(promises: Promise<Achievement>[] | Achievement[]): Promise<Achievement[]> {
-    return Promise.all(promises.map(p => this.resolveAchievement(p)));
+  static async resolveAchievementArray(promises: (Promise<Achievement> | Achievement)[] | Promise<Achievement[]> | Achievement[]): Promise<Achievement[]> {
+    // Handle the case where the input is a Promise<Achievement[]>
+    if (promises instanceof Promise) {
+      const resolvedArray = await promises;
+      return Promise.all(resolvedArray.map(a => this.resolveAchievement(a)));
+    }
+    
+    // Handle the case where the input is an array of Promise<Achievement> or Achievement
+    return Promise.all((promises as any[]).map(p => this.resolveAchievement(p)));
   }
   
   /**
    * Filter an array of achievement promises based on a predicate
    */
   static async filterAchievementPromises(
-    promises: Promise<Achievement>[] | Achievement[],
+    promises: (Promise<Achievement> | Achievement)[] | Promise<Achievement[]> | Achievement[],
     predicate: (achievement: Achievement) => boolean
   ): Promise<Achievement[]> {
     const resolved = await this.resolveAchievementArray(promises);
@@ -52,7 +59,7 @@ export class ScenarioAchievementAdapter {
    * Map an array of achievement promises using a transform function
    */
   static async mapAchievementPromises<T>(
-    promises: Promise<Achievement>[] | Achievement[],
+    promises: (Promise<Achievement> | Achievement)[] | Promise<Achievement[]> | Achievement[],
     transform: (achievement: Achievement) => T
   ): Promise<T[]> {
     const resolved = await this.resolveAchievementArray(promises);
@@ -63,7 +70,7 @@ export class ScenarioAchievementAdapter {
    * Sort an array of achievement promises using a comparator
    */
   static async sortAchievementPromises(
-    promises: Promise<Achievement>[] | Achievement[],
+    promises: (Promise<Achievement> | Achievement)[] | Promise<Achievement[]> | Achievement[],
     comparator: (a: Achievement, b: Achievement) => number
   ): Promise<Achievement[]> {
     const resolved = await this.resolveAchievementArray(promises);
