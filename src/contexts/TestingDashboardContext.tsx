@@ -6,6 +6,7 @@ import { TestCoverageService } from '@/services/testing/TestCoverageService';
 import { testDataGenerator } from '@/services/testing/generators/TestDataGeneratorService';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 // Define the context type
 interface TestingDashboardContextType {
@@ -166,7 +167,15 @@ export const TestingDashboardProvider: React.FC<{
       const service = new AchievementTestingService(userId);
       
       // Set up progress and result callbacks
-      service.onProgress(progress => setTestProgress(progress));
+      service.onProgress(progress => {
+        // Set default value for currentTest if it's undefined
+        const updatedProgress = {
+          ...progress,
+          currentTest: progress.currentTest || undefined
+        };
+        setTestProgress(updatedProgress);
+      });
+      
       service.onResult(result => {
         setTestResults(prev => [...prev.filter(r => r.achievementId !== result.achievementId), result]);
       });
@@ -373,25 +382,34 @@ export const TestingDashboardProvider: React.FC<{
     if (!userId) return;
     
     try {
-      const response = await AchievementUtils.getUserAchievements(userId);
-      if (response.success && response.data) {
-        const userAchievementMap: Record<string, { isUnlocked: boolean; unlockedAt?: string }> = {};
+      // Fetch user's unlocked achievements directly from the database
+      const { data, error } = await supabase
+        .from('user_achievements')
+        .select('achievement_id, achieved_at')
+        .eq('user_id', userId);
         
-        // Set all as locked by default
-        allAchievements.forEach(achievement => {
-          userAchievementMap[achievement.id] = { isUnlocked: false };
-        });
-        
-        // Update with unlocked achievements
-        response.data.forEach(ua => {
+      if (error) {
+        throw new Error(`Error fetching user achievements: ${error.message}`);
+      }
+      
+      const userAchievementMap: Record<string, { isUnlocked: boolean; unlockedAt?: string }> = {};
+      
+      // Set all as locked by default
+      allAchievements.forEach(achievement => {
+        userAchievementMap[achievement.id] = { isUnlocked: false };
+      });
+      
+      // Update with unlocked achievements
+      if (data) {
+        data.forEach(ua => {
           userAchievementMap[ua.achievement_id] = { 
             isUnlocked: true, 
             unlockedAt: ua.achieved_at 
           };
         });
-        
-        setUserAchievements(userAchievementMap);
       }
+      
+      setUserAchievements(userAchievementMap);
     } catch (error) {
       console.error('Error fetching user achievements:', error);
     }
