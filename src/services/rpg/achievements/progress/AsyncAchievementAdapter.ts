@@ -1,51 +1,87 @@
 
-import { Achievement } from '@/types/achievementTypes';
+import { Achievement, AchievementCategory } from '@/types/achievementTypes';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 
 /**
- * Helper class for adapting achievement batch operations to work with async data
+ * Adapter for handling asynchronous achievement operations
+ * Provides a consistent interface for accessing achievement data
  */
 export class AsyncAchievementAdapter {
+  // Cache for achievements to avoid repeated database calls
+  private static achievementsCache: Achievement[] | null = null;
+  
   /**
-   * Filter achievements by a predicate function, handling async achievements
+   * Get all achievements with caching support
+   */
+  static async getAllAchievements(): Promise<Achievement[]> {
+    // Use cache if available
+    if (this.achievementsCache) {
+      return this.achievementsCache;
+    }
+    
+    // Fetch achievements and update cache
+    const achievements = await AchievementUtils.getAllAchievements();
+    this.achievementsCache = achievements;
+    
+    return achievements;
+  }
+  
+  /**
+   * Reset the cache to force fresh data on next request
+   */
+  static resetCache(): void {
+    this.achievementsCache = null;
+  }
+  
+  /**
+   * Filter achievements based on a predicate function
    */
   static async filterAchievements(
     predicate: (achievement: Achievement) => boolean
   ): Promise<Achievement[]> {
-    const achievements = await AchievementUtils.getAllAchievements();
+    const achievements = await this.getAllAchievements();
     return achievements.filter(predicate);
   }
   
   /**
-   * Map achievements using a mapping function, handling async achievements
+   * Get a single achievement by ID
    */
-  static async mapAchievements<T>(
-    mapper: (achievement: Achievement) => T
-  ): Promise<T[]> {
-    const achievements = await AchievementUtils.getAllAchievements();
-    return achievements.map(mapper);
+  static async getAchievementById(id: string): Promise<Achievement | null> {
+    const achievements = await this.getAllAchievements();
+    return achievements.find(a => a.id === id) || null;
   }
   
   /**
-   * Sort achievements using a comparator function, handling async achievements
+   * Map achievements using a transform function
+   */
+  static async mapAchievements<T>(
+    transform: (achievement: Achievement) => T
+  ): Promise<T[]> {
+    const achievements = await this.getAllAchievements();
+    return achievements.map(transform);
+  }
+  
+  /**
+   * Sort achievements using a comparator function
    */
   static async sortAchievements(
     comparator: (a: Achievement, b: Achievement) => number
   ): Promise<Achievement[]> {
-    const achievements = await AchievementUtils.getAllAchievements();
+    const achievements = await this.getAllAchievements();
     return [...achievements].sort(comparator);
   }
   
   /**
-   * Safely get an achievement by ID and perform an operation on it
+   * Get achievements by category
    */
-  static async withAchievement<T>(
-    achievementId: string,
-    operation: (achievement: Achievement) => T,
-    defaultValue: T
-  ): Promise<T> {
-    const achievement = await AchievementUtils.getAchievementByStringId(achievementId);
-    if (!achievement) return defaultValue;
-    return operation(achievement);
+  static async getAchievementsByCategory(category: AchievementCategory): Promise<Achievement[]> {
+    return this.filterAchievements(a => a.category === category);
+  }
+  
+  /**
+   * Simulate awaiting an achievement for backward compatibility with scenario testing
+   */
+  static async simulateAchievementPromise(achievement: Achievement): Promise<Achievement> {
+    return Promise.resolve(achievement);
   }
 }

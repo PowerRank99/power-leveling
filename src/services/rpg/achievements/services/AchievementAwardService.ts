@@ -1,10 +1,8 @@
+
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { supabase } from '@/integrations/supabase/client';
-import { Achievement, AchievementNotification } from '@/types/achievementTypes';
+import { Achievement } from '@/types/achievementTypes';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
-import { NotificationService } from '@/services/common/NotificationService';
-import { ProfileService } from '@/services/user/ProfileService';
-import { XPService } from '@/services/rpg/XPService';
 import { AsyncAchievementAdapter } from '../progress/AsyncAchievementAdapter';
 
 /**
@@ -36,65 +34,12 @@ export class AchievementAwardService {
         // Update profile stats and award XP
         await this.updateProfileForAchievement(userId, achievement);
         
-        // Create notification
-        await NotificationService.createAchievementNotification(userId, {
-          achievement: achievement,
-          title: `Conquista Desbloqueada!`,
-          description: achievement.name,
-          rank: achievement.rank,
-          points: achievement.points,
-          xpReward: achievement.xpReward,
-          iconName: achievement.iconName,
-          timestamp: new Date().toISOString()
-        });
+        // Create notification (simplified version)
+        await this.createAchievementNotification(userId, achievement);
         
         return true;
       },
       'AWARD_ACHIEVEMENT',
-      { showToast: false }
-    );
-  }
-  
-  /**
-   * Award an achievement and update user profile
-   */
-  static async awardAchievementAndUpdateProfile(userId: string, achievementId: string): Promise<ServiceResponse<boolean>> {
-    return ErrorHandlingService.executeWithErrorHandling(
-      async () => {
-        // Rest of the method with fixed async achievement handling
-        const achievement = await AchievementUtils.getAchievementByStringId(achievementId);
-        if (!achievement) {
-          throw new Error(`Achievement not found: ${achievementId}`);
-        }
-        
-        // Updated method with await
-        const { data: existingAchievements } = await this.getUserAchievementIds(userId);
-        
-        if (existingAchievements.includes(achievementId)) {
-          return false;
-        }
-        
-        // Award achievement
-        await this.insertAchievement(userId, achievementId);
-        
-        // Update profile stats and award XP
-        await this.updateProfileForAchievement(userId, achievement);
-        
-        // Create notification
-        await NotificationService.createAchievementNotification(userId, {
-          achievement: achievement,
-          title: `Conquista Desbloqueada!`,
-          description: achievement.name,
-          rank: achievement.rank,
-          points: achievement.points,
-          xpReward: achievement.xpReward,
-          iconName: achievement.iconName,
-          timestamp: new Date().toISOString()
-        });
-        
-        return true;
-      },
-      'AWARD_ACHIEVEMENT_AND_UPDATE_PROFILE',
       { showToast: false }
     );
   }
@@ -162,12 +107,42 @@ export class AchievementAwardService {
    * Update user profile with achievement stats
    */
   private static async updateProfileForAchievement(userId: string, achievement: Achievement): Promise<void> {
-    // Update achievement points
-    await ProfileService.incrementAchievementPoints(userId, achievement.points);
+    // Increment achievement points (simplified version)
+    await supabase.rpc('increment_profile_counter', {
+      user_id_param: userId,
+      counter_name: 'achievement_points',
+      increment_amount: achievement.points
+    });
     
-    // Award XP
+    // Award XP (simplified version)
     if (achievement.xpReward > 0) {
-      await XPService.awardXP(userId, achievement.xpReward, `Achievement: ${achievement.name}`);
+      await supabase.rpc('award_xp', {
+        user_id_param: userId,
+        xp_amount: achievement.xpReward,
+        source: `Achievement: ${achievement.name}`
+      });
     }
+  }
+  
+  /**
+   * Create achievement notification (simplified version)
+   */
+  private static async createAchievementNotification(userId: string, achievement: Achievement): Promise<void> {
+    await supabase
+      .from('notifications')
+      .insert({
+        user_id: userId,
+        type: 'achievement',
+        title: 'Achievement Unlocked',
+        description: achievement.name,
+        metadata: {
+          achievementId: achievement.id,
+          rank: achievement.rank,
+          points: achievement.points,
+          xpReward: achievement.xpReward
+        },
+        read: false,
+        created_at: new Date().toISOString()
+      });
   }
 }

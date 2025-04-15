@@ -2,7 +2,7 @@
 import { ServiceResponse, createSuccessResponse, createErrorResponse } from '@/services/common/ErrorHandlingService';
 import { AchievementProgressService } from '../AchievementProgressService';
 import { AchievementCategory } from '@/types/achievementTypes';
-import { AchievementAsyncAdapterService } from '../AchievementAsyncAdapterService';
+import { AsyncAchievementAdapter } from './AsyncAchievementAdapter';
 
 /**
  * Service for updating workout-related achievement progress in batches
@@ -13,12 +13,14 @@ export class WorkoutProgressBatchService {
    */
   static async updateAllWorkoutProgress(
     userId: string,
-    workoutCount: number,
-    streakDays: number
+    workoutCount: number = 0,
+    streakDays: number = 0
   ): Promise<ServiceResponse<boolean>> {
     try {
       // Get all workout-related achievements
-      const workoutAchievements = await AchievementAsyncAdapterService.getAchievementsByCategory(AchievementCategory.WORKOUT);
+      const workoutAchievements = await AsyncAchievementAdapter.filterAchievements(
+        a => a.category === AchievementCategory.WORKOUT
+      );
       
       // Prepare progress updates
       const progressUpdates = workoutAchievements.map(achievement => {
