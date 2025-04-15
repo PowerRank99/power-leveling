@@ -32,27 +32,48 @@ const TestingDashboardPage: React.FC = () => {
   const [testService, setTestService] = useState<AchievementTestingService | null>(null);
   const [results, setResults] = useState<AchievementTestResult[]>(savedResults);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [testConfig, setTestConfig] = useState({
     useCleanup: true,
     useTransaction: true,
     verbose: true
   });
   
-  // Initialize the test service
+  // Initialize test coverage service and test service
   useEffect(() => {
-    if (user?.id) {
-      const service = new AchievementTestingService(user.id, testConfig);
-      setTestService(service);
-    }
+    const initialize = async () => {
+      try {
+        // Initialize the TestCoverageService first
+        await TestCoverageService.initialize();
+        
+        if (user?.id) {
+          const service = new AchievementTestingService(user.id, testConfig);
+          setTestService(service);
+        }
+        
+        setIsInitialized(true);
+      } catch (error) {
+        console.error('Error initializing testing services:', error);
+        toast.error('Failed to initialize testing services');
+      }
+    };
+    
+    initialize();
   }, [user?.id, testConfig]);
   
-  // Calculate stats from results
-  const stats = {
+  // Calculate stats from results using cached data
+  const stats = isInitialized ? {
     totalAchievements: TestCoverageService.generateCoverageReport().totalAchievements,
     testedAchievements: TestCoverageService.generateCoverageReport().testedAchievements,
     passedTests: results.filter(r => r.success).length,
     failedTests: results.filter(r => !r.success).length,
     coveragePercentage: TestCoverageService.generateCoverageReport().coveragePercentage
+  } : {
+    totalAchievements: 0,
+    testedAchievements: 0,
+    passedTests: 0,
+    failedTests: 0,
+    coveragePercentage: 0
   };
   
   const handleRunAllTests = async () => {
@@ -156,71 +177,80 @@ const TestingDashboardPage: React.FC = () => {
         />
         
         <div className="p-4 space-y-4">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full mb-4 bg-midnight-card border border-divider/30 shadow-subtle overflow-x-auto flex-nowrap">
-              <TabsTrigger value="dashboard" className="flex-1">Dashboard</TabsTrigger>
-              <TabsTrigger value="runner" className="flex-1">Test Runner</TabsTrigger>
-              <TabsTrigger value="scenarios" className="flex-1">Scenarios</TabsTrigger>
-              <TabsTrigger value="results" className="flex-1">Results</TabsTrigger>
-              <TabsTrigger value="configuration" className="flex-1">Configuration</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="dashboard">
-              <TestingDashboard 
-                stats={stats}
-                results={results.slice(-5)}
-                onRunAllTests={handleRunAllTests}
-                onRunCategoryTests={handleRunCategoryTests}
-                onClearResults={handleClearResults}
-                onExportResults={handleExportResults}
-                isLoading={isLoading}
-              />
-            </TabsContent>
-            
-            <TabsContent value="runner">
-              <Card className="p-4 bg-midnight-card border-divider/30">
-                <AchievementTestRunner 
-                  userId={user?.id || ''}
-                  onResultsChange={(newResults) => {
-                    setResults(newResults);
-                    saveResults(newResults);
-                  }}
-                  results={results}
-                  isLoading={isLoading}
-                  setIsLoading={setIsLoading}
-                />
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="scenarios">
-              <ScenarioTestingTab userId={user?.id || ''} />
-            </TabsContent>
-            
-            <TabsContent value="results">
-              <Card className="p-4 bg-midnight-card border-divider/30">
-                <TestResultViewer
-                  results={results}
+          {!isInitialized ? (
+            <Card className="p-4 bg-midnight-card border-divider/30">
+              <div className="flex items-center justify-center p-8">
+                <div className="animate-spin h-8 w-8 border-4 border-arcane border-t-transparent rounded-full"></div>
+                <span className="ml-3 text-text-secondary">Initializing...</span>
+              </div>
+            </Card>
+          ) : (
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="w-full mb-4 bg-midnight-card border border-divider/30 shadow-subtle overflow-x-auto flex-nowrap">
+                <TabsTrigger value="dashboard" className="flex-1">Dashboard</TabsTrigger>
+                <TabsTrigger value="runner" className="flex-1">Test Runner</TabsTrigger>
+                <TabsTrigger value="scenarios" className="flex-1">Scenarios</TabsTrigger>
+                <TabsTrigger value="results" className="flex-1">Results</TabsTrigger>
+                <TabsTrigger value="configuration" className="flex-1">Configuration</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="dashboard">
+                <TestingDashboard 
+                  stats={stats}
+                  results={results.slice(-5)}
+                  onRunAllTests={handleRunAllTests}
+                  onRunCategoryTests={handleRunCategoryTests}
                   onClearResults={handleClearResults}
                   onExportResults={handleExportResults}
-                />
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="configuration">
-              <Card className="p-4 bg-midnight-card border-divider/30">
-                <TestConfigurationPanel
-                  useCleanup={testConfig.useCleanup}
-                  useTransaction={testConfig.useTransaction}
-                  verbose={testConfig.verbose}
-                  onCleanupChange={(value) => setTestConfig(prev => ({ ...prev, useCleanup: value }))}
-                  onTransactionChange={(value) => setTestConfig(prev => ({ ...prev, useTransaction: value }))}
-                  onVerboseChange={(value) => setTestConfig(prev => ({ ...prev, verbose: value }))}
-                  onUpdateConfig={handleUpdateConfig}
                   isLoading={isLoading}
                 />
-              </Card>
-            </TabsContent>
-          </Tabs>
+              </TabsContent>
+              
+              <TabsContent value="runner">
+                <Card className="p-4 bg-midnight-card border-divider/30">
+                  <AchievementTestRunner 
+                    userId={user?.id || ''}
+                    onResultsChange={(newResults) => {
+                      setResults(newResults);
+                      saveResults(newResults);
+                    }}
+                    results={results}
+                    isLoading={isLoading}
+                    setIsLoading={setIsLoading}
+                  />
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="scenarios">
+                <ScenarioTestingTab userId={user?.id || ''} />
+              </TabsContent>
+              
+              <TabsContent value="results">
+                <Card className="p-4 bg-midnight-card border-divider/30">
+                  <TestResultViewer
+                    results={results}
+                    onClearResults={handleClearResults}
+                    onExportResults={handleExportResults}
+                  />
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="configuration">
+                <Card className="p-4 bg-midnight-card border-divider/30">
+                  <TestConfigurationPanel
+                    useCleanup={testConfig.useCleanup}
+                    useTransaction={testConfig.useTransaction}
+                    verbose={testConfig.verbose}
+                    onCleanupChange={(value) => setTestConfig(prev => ({ ...prev, useCleanup: value }))}
+                    onTransactionChange={(value) => setTestConfig(prev => ({ ...prev, useTransaction: value }))}
+                    onVerboseChange={(value) => setTestConfig(prev => ({ ...prev, verbose: value }))}
+                    onUpdateConfig={handleUpdateConfig}
+                    isLoading={isLoading}
+                  />
+                </Card>
+              </TabsContent>
+            </Tabs>
+          )}
         </div>
         
         <BottomNavBar />

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Achievement, AchievementCategory, AchievementRank } from '@/types/achievementTypes';
 import { AchievementTestingService, AchievementTestResult } from '@/services/testing/AchievementTestingService';
@@ -8,22 +7,14 @@ import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
-// Define the context type
 interface TestingDashboardContextType {
-  // User State
   userId: string;
-  
-  // Achievements
   allAchievements: Achievement[];
   filteredAchievements: Achievement[];
   selectedAchievements: Set<string>;
-  
-  // Filters
   searchQuery: string;
   selectedCategory: string;
   selectedRank: string;
-  
-  // Test Progress & Results
   testResults: AchievementTestResult[];
   testProgress: {
     total: number;
@@ -33,26 +24,16 @@ interface TestingDashboardContextType {
     isRunning: boolean;
     currentTest?: string;
   };
-  
-  // Test Service
   testService: AchievementTestingService | null;
-  
-  // Status Flags
   isLoading: boolean;
   isDataGenerating: boolean;
   isDataCleaning: boolean;
-  
-  // User Achievement Data
   userAchievements: Record<string, { isUnlocked: boolean; unlockedAt?: string }>;
-  
-  // UI State
   expandedCategories: Set<string>;
   showSuccessful: boolean;
   showFailed: boolean;
   showPending: boolean;
   notificationsQueue: Achievement[];
-  
-  // Functions
   setSearchQuery: (query: string) => void;
   setSelectedCategory: (category: string) => void;
   setSelectedRank: (rank: string) => void;
@@ -77,7 +58,6 @@ interface TestingDashboardContextType {
   logAction: (action: string, details: string) => void;
 }
 
-// Create context with default values
 const TestingDashboardContext = createContext<TestingDashboardContextType>({
   userId: '',
   allAchievements: [],
@@ -128,13 +108,11 @@ const TestingDashboardContext = createContext<TestingDashboardContextType>({
   logAction: () => {}
 });
 
-// Provider component
 export const TestingDashboardProvider: React.FC<{
   userId: string;
   children: ReactNode;
   logAction?: (action: string, details: string) => void;
 }> = ({ userId, children, logAction }) => {
-  // State management
   const [testService, setTestService] = useState<AchievementTestingService | null>(null);
   const [allAchievements, setAllAchievements] = useState<Achievement[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -161,57 +139,54 @@ export const TestingDashboardProvider: React.FC<{
     currentTest: undefined as string | undefined
   });
   
-  // Initialize test service when userId changes
   useEffect(() => {
-    if (userId) {
-      const service = new AchievementTestingService(userId);
-      
-      // Set up progress and result callbacks
-      service.onProgress(progress => {
-        // Set default value for currentTest if it's undefined
-        const updatedProgress = {
-          ...progress,
-          currentTest: progress.currentTest || undefined
-        };
-        setTestProgress(updatedProgress);
-      });
-      
-      service.onResult(result => {
-        setTestResults(prev => [...prev.filter(r => r.achievementId !== result.achievementId), result]);
-      });
-      
-      setTestService(service);
-      
-      // Fetch all achievements
-      const achievements = AchievementUtils.getAllAchievements()
-        .map(def => AchievementUtils.convertToAchievement(def));
-      setAllAchievements(achievements);
-      
-      // Expand first category by default
-      if (achievements.length > 0) {
-        const firstCategory = achievements[0].category;
-        setExpandedCategories(new Set([firstCategory]));
+    const initialize = async () => {
+      if (userId) {
+        const service = new AchievementTestingService(userId);
+        
+        service.onProgress(progress => {
+          const updatedProgress = {
+            ...progress,
+            currentTest: progress.currentTest || undefined
+          };
+          setTestProgress(updatedProgress);
+        });
+        
+        service.onResult(result => {
+          setTestResults(prev => [...prev.filter(r => r.achievementId !== result.achievementId), result]);
+        });
+        
+        setTestService(service);
+        
+        try {
+          const achievements = await AchievementUtils.getAllAchievements();
+          setAllAchievements(achievements);
+          
+          if (achievements.length > 0) {
+            const firstCategory = achievements[0].category;
+            setExpandedCategories(new Set([firstCategory]));
+          }
+          
+          await refreshUserAchievements();
+        } catch (error) {
+          console.error('Error initializing achievements:', error);
+          toast.error('Failed to load achievements');
+        }
       }
-      
-      // Fetch user's unlocked achievements
-      refreshUserAchievements();
-    }
+    };
+    
+    initialize();
   }, [userId]);
   
-  // Filter achievements based on search and filters
   const filteredAchievements = allAchievements.filter(achievement => {
-    // Filter by search query
     const matchesSearch = searchQuery === '' || 
       achievement.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       achievement.description.toLowerCase().includes(searchQuery.toLowerCase());
       
-    // Filter by category
     const matchesCategory = selectedCategory === 'all' || achievement.category === selectedCategory;
     
-    // Filter by rank
     const matchesRank = selectedRank === 'all' || achievement.rank === selectedRank;
     
-    // Filter by test result if applicable
     const matchesResultFilter = (
       (showSuccessful && testResults.some(r => r.achievementId === achievement.id && r.success)) ||
       (showFailed && testResults.some(r => r.achievementId === achievement.id && !r.success)) ||
@@ -221,7 +196,6 @@ export const TestingDashboardProvider: React.FC<{
     return matchesSearch && matchesCategory && matchesRank && matchesResultFilter;
   });
   
-  // Helper functions for category expansion
   const toggleCategoryExpansion = (category: string) => {
     setExpandedCategories(prev => {
       const newSet = new Set(prev);
@@ -234,7 +208,6 @@ export const TestingDashboardProvider: React.FC<{
     });
   };
   
-  // Helper functions for achievement selection
   const toggleAchievementSelection = (achievementId: string) => {
     setSelectedAchievements(prev => {
       const newSet = new Set(prev);
@@ -281,7 +254,6 @@ export const TestingDashboardProvider: React.FC<{
     setSelectedAchievements(new Set());
   };
   
-  // Test execution functions
   const runTests = async (achievementIds?: string[]) => {
     if (!testService) return;
     
@@ -290,7 +262,6 @@ export const TestingDashboardProvider: React.FC<{
       const idsToTest = achievementIds || Array.from(selectedAchievements);
       
       if (idsToTest.length === 0) {
-        // If no specific IDs, run all or filtered tests
         if (selectedCategory !== 'all') {
           await testService.runCategoryTests(selectedCategory as AchievementCategory);
         } else if (selectedRank !== 'all') {
@@ -299,7 +270,6 @@ export const TestingDashboardProvider: React.FC<{
           await testService.runAllTests();
         }
       } else {
-        // Run specific achievement tests
         for (const id of idsToTest) {
           await testService.testAchievement(id);
         }
@@ -322,8 +292,6 @@ export const TestingDashboardProvider: React.FC<{
   };
   
   const stopTests = () => {
-    // Currently not implemented in the service
-    // Would need to add a cancel mechanism to the test service
     toast.info('Test interruption requested');
   };
   
@@ -332,7 +300,6 @@ export const TestingDashboardProvider: React.FC<{
     toast.info('Test results cleared');
   };
   
-  // Data generation functions
   const generateTestData = async () => {
     if (!userId) return;
     
@@ -377,12 +344,10 @@ export const TestingDashboardProvider: React.FC<{
     }
   };
   
-  // User achievement data
   const refreshUserAchievements = async () => {
     if (!userId) return;
     
     try {
-      // Fetch user's unlocked achievements directly from the database
       const { data, error } = await supabase
         .from('user_achievements')
         .select('achievement_id, achieved_at')
@@ -394,12 +359,10 @@ export const TestingDashboardProvider: React.FC<{
       
       const userAchievementMap: Record<string, { isUnlocked: boolean; unlockedAt?: string }> = {};
       
-      // Set all as locked by default
       allAchievements.forEach(achievement => {
         userAchievementMap[achievement.id] = { isUnlocked: false };
       });
       
-      // Update with unlocked achievements
       if (data) {
         data.forEach(ua => {
           userAchievementMap[ua.achievement_id] = { 
@@ -415,7 +378,6 @@ export const TestingDashboardProvider: React.FC<{
     }
   };
   
-  // Notification handling for simulation
   const pushNotification = (achievement: Achievement) => {
     setNotificationsQueue(prev => [...prev, achievement]);
   };
@@ -435,12 +397,10 @@ export const TestingDashboardProvider: React.FC<{
     }
   };
   
-  // Toggle filter states
   const toggleShowSuccessful = () => setShowSuccessful(prev => !prev);
   const toggleShowFailed = () => setShowFailed(prev => !prev);
   const toggleShowPending = () => setShowPending(prev => !prev);
   
-  // Provide the context value
   const contextValue: TestingDashboardContextType = {
     userId,
     allAchievements,
@@ -492,10 +452,8 @@ export const TestingDashboardProvider: React.FC<{
   );
 };
 
-// Hook to use the context
 export const useTestingDashboard = () => useContext(TestingDashboardContext);
 
-// Helper hook to get achievement by id
 export const useAchievementDetails = (achievementId: string) => {
   const { allAchievements, userAchievements, testResults } = useTestingDashboard();
   

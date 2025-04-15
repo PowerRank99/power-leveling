@@ -16,6 +16,7 @@ export interface TestCoverageReport {
 
 export class TestCoverageService {
   private static testedAchievements = new Set<string>();
+  private static cachedAchievements: Achievement[] | null = null;
 
   /**
    * Record a tested achievement
@@ -29,14 +30,49 @@ export class TestCoverageService {
    */
   static clearCoverage(): void {
     this.testedAchievements.clear();
+    this.cachedAchievements = null;
+  }
+  
+  /**
+   * Get all achievements, caching results for performance
+   */
+  static async getAllAchievements(): Promise<Achievement[]> {
+    if (this.cachedAchievements) {
+      return this.cachedAchievements;
+    }
+    
+    try {
+      const achievements = await AchievementUtils.getAllAchievements();
+      this.cachedAchievements = achievements;
+      return achievements;
+    } catch (error) {
+      console.error('Error fetching achievements for test coverage:', error);
+      return [];
+    }
   }
 
   /**
-   * Generate coverage report
+   * Generate coverage report (synchronous version that uses cached data)
    */
   static generateCoverageReport(): TestCoverageReport {
-    const allAchievementDefinitions = AchievementUtils.getAllAchievements();
-    const allAchievements = allAchievementDefinitions.map(def => AchievementUtils.convertToAchievement(def));
+    // If we don't have cached achievements yet, return an empty report
+    if (!this.cachedAchievements) {
+      // Initialize with empty data
+      const emptyCategoryStats = Object.values(AchievementCategory).reduce((acc, category) => ({
+        ...acc,
+        [category]: { total: 0, tested: 0, coverage: 0 }
+      }), {} as Record<AchievementCategory, { total: number; tested: number; coverage: number }>);
+      
+      return {
+        totalAchievements: 0,
+        testedAchievements: 0,
+        coveragePercentage: 0,
+        byCategory: emptyCategoryStats,
+        untestedAchievements: []
+      };
+    }
+    
+    const allAchievements = this.cachedAchievements;
     
     const byCategory: Record<AchievementCategory, { total: number; tested: number; coverage: number }> = 
       Object.values(AchievementCategory).reduce((acc, category) => ({
@@ -47,9 +83,11 @@ export class TestCoverageService {
     // Count achievements by category
     allAchievements.forEach(achievement => {
       const category = achievement.category as AchievementCategory;
-      byCategory[category].total++;
-      if (this.testedAchievements.has(achievement.id)) {
-        byCategory[category].tested++;
+      if (byCategory[category]) {
+        byCategory[category].total++;
+        if (this.testedAchievements.has(achievement.id)) {
+          byCategory[category].tested++;
+        }
       }
     });
 
@@ -69,5 +107,12 @@ export class TestCoverageService {
       byCategory,
       untestedAchievements
     };
+  }
+  
+  /**
+   * Initialize the service by preloading achievements
+   */
+  static async initialize(): Promise<void> {
+    await this.getAllAchievements();
   }
 }
