@@ -1,121 +1,143 @@
+
 import React, { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Microscope, AlignStartHorizontal } from 'lucide-react';
+import { 
+  Tabs, TabsContent, TabsList, TabsTrigger 
+} from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTestingDashboard } from '@/contexts/TestingDashboardContext';
-import AchievementDependencyGraph from './requirements/AchievementDependencyGraph';
 import RequirementGapAnalysis from './requirements/RequirementGapAnalysis';
+import AchievementDependencyGraph from './requirements/AchievementDependencyGraph';
+import CustomRequirementDefinition from './requirements/CustomRequirementDefinition';
 
 interface TestRequirementsTabProps {
   userId: string;
 }
 
 const TestRequirementsTab: React.FC<TestRequirementsTabProps> = ({ userId }) => {
-  const { 
-    allAchievements, 
-    userAchievements, 
-    runTests, 
-    generateTestData
-  } = useTestingDashboard();
+  const { allAchievements, userAchievements } = useTestingDashboard();
+  const [selectedAchievement, setSelectedAchievement] = useState<string | null>(null);
   
-  const [selectedAchievementId, setSelectedAchievementId] = useState<string | undefined>();
-  
-  const selectedAchievement = allAchievements.find(a => a.id === selectedAchievementId);
-  
-  const handleRunTest = () => {
-    if (selectedAchievementId) {
-      runTests([selectedAchievementId]);
-    }
-  };
-  
-  const handleGenerateData = () => {
-    // In a real implementation, we would generate targeted data for the selected achievement
-    generateTestData();
-  };
-  
-  const handleRepairData = () => {
-    // This would be a specialized repair function for the selected achievement
-    // For now, we'll just call the general data generation function
-    generateTestData();
-  };
+  // Find the selected achievement object
+  const achievementObject = selectedAchievement 
+    ? allAchievements.find(a => a.id === selectedAchievement) 
+    : null;
   
   return (
     <div className="space-y-4">
-      <Alert className="bg-arcane-15 border-arcane-30">
-        <Microscope className="h-4 w-4 text-arcane" />
-        <AlertTitle>Requirements Analysis</AlertTitle>
-        <AlertDescription>
-          Analyze achievement requirements, identify gaps in user progress, and visualize dependencies between achievements.
-        </AlertDescription>
-      </Alert>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2">
-          <AchievementDependencyGraph 
-            achievements={allAchievements} 
-            selectedAchievementId={selectedAchievementId}
-            onSelectAchievement={setSelectedAchievementId}
-          />
-        </div>
+      <Tabs defaultValue="gap-analysis">
+        <TabsList>
+          <TabsTrigger value="gap-analysis">Gap Analysis</TabsTrigger>
+          <TabsTrigger value="dependencies">Dependencies</TabsTrigger>
+          <TabsTrigger value="patterns">Custom Patterns</TabsTrigger>
+        </TabsList>
         
-        <div>
-          <Card className="h-full">
-            <CardContent className="p-3 h-full">
-              <div className="flex flex-col h-full">
-                <h3 className="text-md font-orbitron mb-3 flex items-center">
-                  <AlignStartHorizontal className="mr-2 h-4 w-4 text-arcane" />
-                  Achievement Details
-                </h3>
+        <TabsContent value="gap-analysis" className="space-y-4 pt-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <Card className="lg:col-span-1">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Achievement Selection</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                <select 
+                  className="w-full p-2 rounded-md border border-divider/30 bg-midnight-card"
+                  value={selectedAchievement || ''}
+                  onChange={(e) => setSelectedAchievement(e.target.value)}
+                >
+                  <option value="">Select an achievement</option>
+                  {allAchievements.map(achievement => (
+                    <option 
+                      key={achievement.id} 
+                      value={achievement.id}
+                    >
+                      {achievement.name}
+                    </option>
+                  ))}
+                </select>
                 
-                {selectedAchievement ? (
-                  <ScrollArea className="flex-grow">
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <h4 className="text-lg font-semibold">{selectedAchievement.name}</h4>
-                        <p className="text-text-secondary text-sm">{selectedAchievement.description}</p>
-                        <div className="flex space-x-2 text-sm">
-                          <span className="text-text-tertiary">Category: </span>
-                          <span>{selectedAchievement.category}</span>
-                        </div>
-                        <div className="flex space-x-2 text-sm">
-                          <span className="text-text-tertiary">Rank: </span>
-                          <span>{selectedAchievement.rank}</span>
-                        </div>
-                        <div className="flex space-x-2 text-sm">
-                          <span className="text-text-tertiary">Points: </span>
-                          <span>{selectedAchievement.points}</span>
-                        </div>
-                        <div className="flex space-x-2 text-sm">
-                          <span className="text-text-tertiary">XP Reward: </span>
-                          <span>{selectedAchievement.xpReward}</span>
-                        </div>
-                      </div>
-                      
-                      <RequirementGapAnalysis
-                        achievement={selectedAchievement}
-                        onGenerateData={handleGenerateData}
-                        onRepairData={handleRepairData}
-                        onRunTest={handleRunTest}
-                      />
-                    </div>
-                  </ScrollArea>
-                ) : (
-                  <div className="flex-grow flex items-center justify-center text-text-tertiary text-center p-4">
+                {achievementObject && (
+                  <div className="mt-4 space-y-4">
                     <div>
-                      <p>No achievement selected</p>
-                      <p className="text-sm mt-2">
-                        Click on any achievement in the dependency graph to view its details
-                        and analyze its requirements.
+                      <h3 className="text-lg font-medium">{achievementObject.name}</h3>
+                      <p className="text-sm text-text-secondary mt-1">
+                        {achievementObject.description}
                       </p>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span>Category:</span>
+                        <span className="font-medium capitalize">{achievementObject.category}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Rank:</span>
+                        <span className="font-medium">{achievementObject.rank}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>XP Reward:</span>
+                        <span className="font-medium">{achievementObject.xp_reward}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Points:</span>
+                        <span className="font-medium">{achievementObject.points}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Status:</span>
+                        <span className={`font-medium ${userAchievements[achievementObject.id]?.isUnlocked ? 'text-success' : 'text-text-tertiary'}`}>
+                          {userAchievements[achievementObject.id]?.isUnlocked ? 'Unlocked' : 'Locked'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 )}
-              </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="lg:col-span-2">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Requirement Analysis</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                {achievementObject ? (
+                  <RequirementGapAnalysis 
+                    achievement={achievementObject}
+                    onGenerateData={() => {
+                      // Add generate data logic here
+                      console.log('Generate data for', achievementObject.id);
+                    }}
+                    onRepairData={() => {
+                      // Add repair data logic here
+                      console.log('Repair data for', achievementObject.id);
+                    }}
+                    onRunTest={() => {
+                      // Add test run logic here
+                      console.log('Run test for', achievementObject.id);
+                    }}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-[200px] text-text-secondary">
+                    <p>Select an achievement to analyze its requirements</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="dependencies" className="pt-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Achievement Dependencies</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
+              <AchievementDependencyGraph userId={userId} />
             </CardContent>
           </Card>
-        </div>
-      </div>
+        </TabsContent>
+        
+        <TabsContent value="patterns" className="pt-4">
+          <CustomRequirementDefinition />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
