@@ -1,4 +1,3 @@
-
 /**
  * Achievement Testing Scenarios
  * 
@@ -8,7 +7,7 @@
 import { toast } from 'sonner';
 import { TestDataGeneratorService } from '../generators/TestDataGeneratorService';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
-import { ScenarioAchievementPatcher } from '../helpers/ScenarioAchievementPatcher';
+import { ScenarioAchievementPatcher } from '@/services/helpers/ScenarioAchievementPatcher';
 
 /**
  * Interface for scenario configuration options
