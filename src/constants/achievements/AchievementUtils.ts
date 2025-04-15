@@ -46,6 +46,24 @@ export class AchievementUtils {
     }
   }
 
+  static getAllAchievementsSync(): Achievement[] {
+    // Try to get from memory cache first
+    if (this.achievementsCache) {
+      return this.achievementsCache;
+    }
+    
+    // Then try to get from persistent cache
+    const cached = CachingService.get<Achievement[]>(this.CACHE_KEY_ALL);
+    if (cached) {
+      this.achievementsCache = cached;
+      return cached;
+    }
+    
+    // If no cache is available, return an empty array
+    console.warn('No cached achievements available in synchronous method');
+    return [];
+  }
+
   static async getAchievementsByCategory(category: AchievementCategory): Promise<Achievement[]> {
     try {
       // Check category cache first
