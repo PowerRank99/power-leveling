@@ -3,7 +3,6 @@ import { ServiceResponse, ErrorHandlingService, createSuccessResponse, createErr
 import { BaseAchievementChecker } from './BaseAchievementChecker';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { supabase } from '@/integrations/supabase/client';
-import { ACHIEVEMENT_REQUIREMENTS } from '@/constants/achievements/AchievementConstants';
 import { Achievement } from '@/types/achievementTypes';
 
 export class XPCheckerService extends BaseAchievementChecker {
@@ -39,9 +38,8 @@ export class XPCheckerService extends BaseAchievementChecker {
         // Filter achievements based on current XP
         const achievementsToCheck = xpAchievements
           .filter((achievement: Achievement) => {
-            // Access the total_xp property from the JSONB requirements column
-            const requiredXP = achievement.requirements ? 
-              (achievement.requirements.total_xp || 0) : 0;
+            // Safely access total_xp from requirements, defaulting to 0 if not found
+            const requiredXP = achievement.requirements?.value || 0;
             return totalXP >= requiredXP;
           })
           .map((achievement: Achievement) => achievement.id);
@@ -57,8 +55,7 @@ export class XPCheckerService extends BaseAchievementChecker {
           return {
             achievementId,
             currentValue: totalXP,
-            targetValue: achievement?.requirements ? 
-              (achievement.requirements.total_xp || 0) : 0,
+            targetValue: achievement?.requirements?.value || 0,
             isComplete: true
           };
         });
