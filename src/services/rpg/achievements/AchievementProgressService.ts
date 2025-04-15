@@ -4,6 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { AchievementProgress } from '@/types/achievementTypes';
 
 export class AchievementProgressService {
+  /**
+   * Update progress for an achievement
+   */
   static async updateProgress(
     userId: string,
     achievementId: string,
@@ -65,6 +68,9 @@ export class AchievementProgressService {
     }
   }
   
+  /**
+   * Check if a user has unlocked an achievement
+   */
   static async hasUnlockedAchievement(userId: string, achievementId: string): Promise<ServiceResponse<boolean>> {
     try {
       const { count, error } = await supabase
@@ -85,6 +91,9 @@ export class AchievementProgressService {
     }
   }
   
+  /**
+   * Get achievement progress
+   */
   static async getProgress(userId: string, achievementId: string): Promise<ServiceResponse<AchievementProgress | null>> {
     try {
       const { data, error } = await supabase
@@ -103,7 +112,19 @@ export class AchievementProgressService {
         
       if (error) throw error;
       
-      return createSuccessResponse(data || null);
+      if (!data) return createSuccessResponse(null);
+      
+      // Transform to match AchievementProgress type
+      const progress: AchievementProgress = {
+        id: data.id,
+        achievementId: data.achievement_id,
+        current: data.current_value,
+        total: data.target_value,
+        isComplete: data.is_complete,
+        updatedAt: data.updated_at
+      };
+      
+      return createSuccessResponse(progress);
     } catch (error) {
       return createErrorResponse(
         'Failed to get achievement progress',
@@ -113,6 +134,9 @@ export class AchievementProgressService {
     }
   }
   
+  /**
+   * Update multiple achievement progress values
+   */
   static async updateMultipleProgressValues(
     userId: string,
     progressUpdates: Array<{
@@ -147,76 +171,48 @@ export class AchievementProgressService {
     }
   }
   
+  /**
+   * Initialize multiple achievement progress entries
+   */
+  static async initializeMultipleProgress(
+    userId: string,
+    achievements: any[]
+  ): Promise<ServiceResponse<boolean>> {
+    // Delegate to the AchievementProgressFacade
+    const { AchievementProgressFacade } = await import('./AchievementProgressFacade');
+    return AchievementProgressFacade.initializeMultipleProgress(userId, achievements);
+  }
+  
+  /**
+   * Update streak progress
+   */
   static async updateStreakProgress(userId: string, currentStreak: number): Promise<ServiceResponse<boolean>> {
-    try {
-      // Get streak achievements
-      const { data: achievements, error } = await supabase
-        .from('achievements')
-        .select('id, requirements')
-        .eq('category', 'streak')
-        .order('requirements->days', { ascending: true });
-        
-      if (error) throw error;
-      
-      // Update progress for each streak achievement
-      for (const achievement of achievements) {
-        const requiredDays = achievement.requirements?.days || 0;
-        const isComplete = currentStreak >= requiredDays;
-        
-        await this.updateProgress(
-          userId,
-          achievement.id,
-          currentStreak,
-          requiredDays,
-          isComplete
-        );
-      }
-      
-      return createSuccessResponse(true);
-    } catch (error) {
-      return createErrorResponse(
-        'Failed to update streak progress',
-        error instanceof Error ? error.message : String(error),
-        ErrorCategory.DATABASE
-      );
-    }
+    // Delegate to the AchievementProgressFacade
+    const { AchievementProgressFacade } = await import('./AchievementProgressFacade');
+    return AchievementProgressFacade.updateStreakProgress(userId, currentStreak);
   }
   
+  /**
+   * Update workout count progress
+   */
+  static async updateWorkoutCountProgress(userId: string, workoutCount: number): Promise<ServiceResponse<boolean>> {
+    // Delegate to the AchievementProgressFacade
+    const { AchievementProgressFacade } = await import('./AchievementProgressFacade');
+    return AchievementProgressFacade.updateWorkoutCountProgress(userId, workoutCount);
+  }
+  
+  /**
+   * Update personal record progress
+   */
   static async updatePersonalRecordProgress(userId: string, recordCount: number): Promise<ServiceResponse<boolean>> {
-    try {
-      // Get personal record achievements
-      const { data: achievements, error } = await supabase
-        .from('achievements')
-        .select('id, requirements')
-        .eq('category', 'record')
-        .order('requirements->count', { ascending: true });
-        
-      if (error) throw error;
-      
-      // Update progress for each record achievement
-      for (const achievement of achievements) {
-        const requiredCount = achievement.requirements?.count || 0;
-        const isComplete = recordCount >= requiredCount;
-        
-        await this.updateProgress(
-          userId,
-          achievement.id,
-          recordCount,
-          requiredCount,
-          isComplete
-        );
-      }
-      
-      return createSuccessResponse(true);
-    } catch (error) {
-      return createErrorResponse(
-        'Failed to update personal record progress',
-        error instanceof Error ? error.message : String(error),
-        ErrorCategory.DATABASE
-      );
-    }
+    // Delegate to the AchievementProgressFacade
+    const { AchievementProgressFacade } = await import('./AchievementProgressFacade');
+    return AchievementProgressFacade.updatePersonalRecordProgress(userId, recordCount);
   }
   
+  /**
+   * Get achievement progress by ID
+   */
   static async getAchievementProgress(userId: string, achievementId: string): Promise<ServiceResponse<AchievementProgress | null>> {
     return this.getProgress(userId, achievementId);
   }

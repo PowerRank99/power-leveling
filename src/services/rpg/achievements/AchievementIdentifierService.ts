@@ -1,65 +1,87 @@
 
+import { AchievementIdMigration } from '@/types/achievementTypes';
 import { supabase } from '@/integrations/supabase/client';
-import { CachingService } from '@/services/common/CachingService';
 import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 
 /**
- * Service for mapping between achievement string IDs and database UUIDs
- * Uses caching for performance optimization
+ * Service for working with achievement string IDs and their UUIDs
+ * This service replaces the old AchievementIdMappingService with improved caching
  */
 export class AchievementIdentifierService {
-  private static readonly CACHE_KEY = 'achievement_identifiers';
-  private static readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-  
-  private static identifiersCache: Map<string, string> | null = null;
+  // Cache for mapping between string IDs and UUIDs
+  private static mappingCache: Map<string, string> = new Map();
+  private static reverseMappingCache: Map<string, string> = new Map();
+  private static cacheInitialized: boolean = false;
   
   /**
-   * Get achievement database UUID by string ID
+   * Initialize cache from database
    */
-  static async getIdByStringId(stringId: string): Promise<ServiceResponse<string>> {
+  private static async initializeCache(): Promise<void> {
     try {
-      await this.ensureCache();
-      const id = this.identifiersCache?.get(stringId);
+      if (this.cacheInitialized) return;
       
-      if (!id) {
-        return createErrorResponse(
-          'Achievement ID not found',
-          `No achievement found with string ID: ${stringId}`,
-          ErrorCategory.NOT_FOUND
-        );
+      const { data: mappings, error } = await supabase
+        .from('achievements')
+        .select('id, string_id');
+        
+      if (error) throw error;
+      
+      if (mappings && mappings.length > 0) {
+        this.mappingCache.clear();
+        this.reverseMappingCache.clear();
+        
+        mappings.forEach(mapping => {
+          if (mapping.string_id && mapping.id) {
+            this.mappingCache.set(mapping.string_id, mapping.id);
+            this.reverseMappingCache.set(mapping.id, mapping.string_id);
+          }
+        });
       }
       
-      return createSuccessResponse(id);
+      this.cacheInitialized = true;
     } catch (error) {
-      return createErrorResponse(
-        'Failed to get achievement ID',
-        error instanceof Error ? error.message : String(error),
-        ErrorCategory.DATABASE
-      );
+      console.error('Failed to initialize achievement ID mapping cache:', error);
+      // Don't set cacheInitialized to true on error so we'll retry next time
     }
   }
   
   /**
-   * Get achievement string ID by database UUID
+   * Convert a string ID to a UUID
    */
-  static async getStringIdById(id: string): Promise<ServiceResponse<string>> {
+  static async getUuidFromStringId(stringId: string): Promise<ServiceResponse<string>> {
     try {
-      await this.ensureCache();
+      await this.initializeCache();
       
-      for (const [stringId, uuid] of this.identifiersCache?.entries() || []) {
-        if (uuid === id) {
-          return createSuccessResponse(stringId);
-        }
+      // Check cache first
+      const cachedUuid = this.mappingCache.get(stringId);
+      if (cachedUuid) {
+        return createSuccessResponse(cachedUuid);
+      }
+      
+      // If not in cache, try to get from database
+      const { data, error } = await supabase
+        .from('achievements')
+        .select('id')
+        .eq('string_id', stringId)
+        .maybeSingle();
+        
+      if (error) throw error;
+      
+      if (data && data.id) {
+        // Update cache
+        this.mappingCache.set(stringId, data.id);
+        this.reverseMappingCache.set(data.id, stringId);
+        return createSuccessResponse(data.id);
       }
       
       return createErrorResponse(
-        'Achievement string ID not found',
-        `No achievement found with ID: ${id}`,
+        `Achievement string ID not found: ${stringId}`,
+        `No UUID found for string ID: ${stringId}`,
         ErrorCategory.NOT_FOUND
       );
     } catch (error) {
       return createErrorResponse(
-        'Failed to get achievement string ID',
+        'Failed to convert string ID to UUID',
         error instanceof Error ? error.message : String(error),
         ErrorCategory.DATABASE
       );
@@ -67,149 +89,148 @@ export class AchievementIdentifierService {
   }
   
   /**
-   * Batch convert string IDs to UUIDs
+   * Convert multiple string IDs to UUIDs in a batch operation
    */
-  static async convertToIds(stringIds: string[]): Promise<ServiceResponse<string[]>> {
+  static async getUuidsFromStringIds(stringIds: string[]): Promise<ServiceResponse<Record<string, string>>> {
     try {
-      await this.ensureCache();
-      const ids: string[] = [];
-      const notFound: string[] = [];
+      await this.initializeCache();
       
+      const result: Record<string, string> = {};
+      const missingIds: string[] = [];
+      
+      // First check cache for all IDs
       for (const stringId of stringIds) {
-        const id = this.identifiersCache?.get(stringId);
-        if (id) {
-          ids.push(id);
+        const cachedUuid = this.mappingCache.get(stringId);
+        if (cachedUuid) {
+          result[stringId] = cachedUuid;
         } else {
-          notFound.push(stringId);
+          missingIds.push(stringId);
         }
       }
       
-      if (notFound.length > 0) {
-        console.warn(`Some achievement IDs were not found: ${notFound.join(', ')}`);
-      }
-      
-      return createSuccessResponse(ids);
-    } catch (error) {
-      return createErrorResponse(
-        'Failed to convert achievement IDs',
-        error instanceof Error ? error.message : String(error),
-        ErrorCategory.DATABASE
-      );
-    }
-  }
-  
-  /**
-   * Fill in missing string IDs in the achievements table
-   */
-  static async fillMissingMappings(): Promise<{ added: number, total: number }> {
-    try {
-      // Find achievements without string_ids
-      const { data: missingIds, error: findError } = await supabase
-        .from('achievements')
-        .select('id, name')
-        .is('string_id', null);
-        
-      if (findError) throw findError;
-      
-      const total = missingIds?.length || 0;
-      let added = 0;
-      
-      // Generate and set string IDs
-      for (const achievement of (missingIds || [])) {
-        // Generate a string ID from the name
-        const stringId = achievement.name
-          .toLowerCase()
-          .replace(/[^\w\s-]/g, '')  // Remove special characters
-          .replace(/\s+/g, '-')      // Replace spaces with hyphens
-          .replace(/-+/g, '-')       // Remove duplicate hyphens
-          .replace(/^-+|-+$/g, '');  // Remove leading/trailing hyphens
-          
-        // Update the achievement with the generated string ID
-        const { error: updateError } = await supabase
+      // If any IDs weren't in cache, fetch them from database
+      if (missingIds.length > 0) {
+        const { data, error } = await supabase
           .from('achievements')
-          .update({ string_id: stringId })
-          .eq('id', achievement.id);
+          .select('id, string_id')
+          .in('string_id', missingIds);
           
-        if (!updateError) {
-          added++;
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          for (const mapping of data) {
+            if (mapping.string_id && mapping.id) {
+              result[mapping.string_id] = mapping.id;
+              // Update cache
+              this.mappingCache.set(mapping.string_id, mapping.id);
+              this.reverseMappingCache.set(mapping.id, mapping.string_id);
+            }
+          }
         }
       }
       
-      // Clear the cache to ensure fresh data
-      this.clearCache();
-      
-      return { added, total };
-    } catch (error) {
-      console.error('Failed to fill missing mappings:', error);
-      return { added: 0, total: 0 };
-    }
-  }
-  
-  /**
-   * Ensure the cache is loaded with fresh data
-   */
-  private static async ensureCache(): Promise<void> {
-    if (this.identifiersCache) return;
-    
-    const cached = CachingService.get<Map<string, string>>(this.CACHE_KEY);
-    if (cached) {
-      this.identifiersCache = cached;
-      return;
-    }
-    
-    const { data: achievements, error } = await supabase
-      .from('achievements')
-      .select('id, string_id');
-      
-    if (error) {
-      throw new Error(`Failed to load achievement identifiers: ${error.message}`);
-    }
-    
-    this.identifiersCache = new Map(
-      achievements
-        .filter(a => a.string_id)
-        .map(a => [a.string_id, a.id])
-    );
-    
-    CachingService.set(this.CACHE_KEY, this.identifiersCache, this.CACHE_DURATION);
-  }
-  
-  /**
-   * Clear the cache to force a refresh
-   */
-  static clearCache(): void {
-    this.identifiersCache = null;
-    CachingService.clear(this.CACHE_KEY);
-  }
-  
-  /**
-   * Validate that all required achievement IDs exist
-   */
-  static async validateRequiredAchievements(requiredIds: string[]): Promise<ServiceResponse<{
-    valid: string[];
-    missing: string[];
-  }>> {
-    try {
-      await this.ensureCache();
-      
-      const valid: string[] = [];
-      const missing: string[] = [];
-      
-      for (const id of requiredIds) {
-        if (this.identifiersCache?.has(id)) {
-          valid.push(id);
-        } else {
-          missing.push(id);
-        }
-      }
-      
-      return createSuccessResponse({ valid, missing });
+      return createSuccessResponse(result);
     } catch (error) {
       return createErrorResponse(
-        'Failed to validate achievements',
+        'Failed to convert string IDs to UUIDs',
         error instanceof Error ? error.message : String(error),
         ErrorCategory.DATABASE
       );
     }
+  }
+  
+  /**
+   * Convert a UUID to a string ID
+   */
+  static async getStringIdFromUuid(uuid: string): Promise<ServiceResponse<string>> {
+    try {
+      await this.initializeCache();
+      
+      // Check cache first
+      const cachedStringId = this.reverseMappingCache.get(uuid);
+      if (cachedStringId) {
+        return createSuccessResponse(cachedStringId);
+      }
+      
+      // If not in cache, try to get from database
+      const { data, error } = await supabase
+        .from('achievements')
+        .select('string_id')
+        .eq('id', uuid)
+        .maybeSingle();
+        
+      if (error) throw error;
+      
+      if (data && data.string_id) {
+        // Update cache
+        this.mappingCache.set(data.string_id, uuid);
+        this.reverseMappingCache.set(uuid, data.string_id);
+        return createSuccessResponse(data.string_id);
+      }
+      
+      return createErrorResponse(
+        `Achievement UUID not found: ${uuid}`,
+        `No string ID found for UUID: ${uuid}`,
+        ErrorCategory.NOT_FOUND
+      );
+    } catch (error) {
+      return createErrorResponse(
+        'Failed to convert UUID to string ID',
+        error instanceof Error ? error.message : String(error),
+        ErrorCategory.DATABASE
+      );
+    }
+  }
+  
+  /**
+   * Fill any missing mappings from achievement names
+   */
+  static async fillMissingMappings(): Promise<ServiceResponse<AchievementIdMigration[]>> {
+    try {
+      const { data: result, error } = await supabase
+        .rpc('match_achievement_by_name');
+        
+      if (error) throw error;
+      
+      const migrations: AchievementIdMigration[] = result || [];
+      
+      // Update our cache with the new mappings
+      migrations.forEach(mapping => {
+        if (mapping.string_id && mapping.uuid) {
+          this.mappingCache.set(mapping.string_id, mapping.uuid);
+          this.reverseMappingCache.set(mapping.uuid, mapping.string_id);
+        }
+      });
+      
+      return createSuccessResponse(migrations);
+    } catch (error) {
+      return createErrorResponse(
+        'Failed to fill missing achievement ID mappings',
+        error instanceof Error ? error.message : String(error),
+        ErrorCategory.DATABASE
+      );
+    }
+  }
+  
+  /**
+   * Validate that a string ID exists in the database
+   */
+  static async validateStringId(stringId: string): Promise<ServiceResponse<boolean>> {
+    const uuidResult = await this.getUuidFromStringId(stringId);
+    return {
+      success: uuidResult.success,
+      data: uuidResult.success,
+      message: uuidResult.message,
+      error: uuidResult.error
+    };
+  }
+  
+  /**
+   * Invalidate cache to force reload from database
+   */
+  static invalidateCache(): void {
+    this.mappingCache.clear();
+    this.reverseMappingCache.clear();
+    this.cacheInitialized = false;
   }
 }

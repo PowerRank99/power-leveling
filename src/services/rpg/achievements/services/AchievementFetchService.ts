@@ -29,7 +29,11 @@ export class AchievementFetchService {
           rank,
           count(*)
         `)
-        .inner_join('user_achievements', { achievement_id: 'id' })
+        .join('user_achievements', { 
+          foreignTable: 'user_achievements',
+          column: 'achievement_id',
+          foreignColumn: 'id',
+        })
         .eq('user_achievements.user_id', userId)
         .group_by('rank');
         
