@@ -9,8 +9,10 @@ import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 import { StandardizedAchievementService } from '@/services/rpg/achievements/StandardizedAchievementService';
 import { WorkoutType } from '../generators/WorkoutGenerator';
 import { CharacterClass } from '../generators/ClassGenerator';
-import { AchievementRank, AchievementCategory } from '@/types/achievementTypes';
+import { AchievementRank, AchievementCategory, Achievement } from '@/types/achievementTypes';
 import { BaseScenario, ScenarioOptions, ScenarioResult, scenarioRunner } from './index';
+import { AsyncAchievementAdapter } from '@/services/rpg/achievements/progress/AsyncAchievementAdapter';
+import { ScenarioAchievementAdapter } from '@/services/rpg/achievements/progress/ScenarioAchievementAdapter';
 
 /**
  * Completionist Scenario configuration options
@@ -78,9 +80,9 @@ export class CompletionistScenario extends BaseScenario {
   /**
    * Calculate optimal achievement sequence
    */
-  private optimizeAchievementOrder(): string[] {
+  private async optimizeAchievementOrder(): Promise<string[]> {
     // Get all achievements
-    const achievements = AchievementUtils.getAllAchievements();
+    const achievements = await AchievementUtils.getAllAchievements();
     
     // Sort by rank (easiest first)
     const rankOrder: Record<AchievementRank, number> = {
@@ -96,11 +98,11 @@ export class CompletionistScenario extends BaseScenario {
     return achievements
       .sort((a, b) => {
         // First sort by rank
-        const rankDiff = rankOrder[a.rank] - rankOrder[b.rank];
+        const rankDiff = rankOrder[a.rank as AchievementRank] - rankOrder[b.rank as AchievementRank];
         if (rankDiff !== 0) return rankDiff;
         
         // Then sort by requirement value (smaller first)
-        return a.requirementValue - b.requirementValue;
+        return (a.requirements?.value || 0) - (b.requirements?.value || 0);
       })
       .map(a => a.id);
   }
@@ -193,11 +195,12 @@ export class CompletionistScenario extends BaseScenario {
       'Unranked': 0
     };
     
+    const allAchievements = await AchievementUtils.getAllAchievements();
     achievementsList = achievementsList.filter(id => {
-      const achievement = AchievementUtils.getAchievementById(id);
+      const achievement = allAchievements.find(a => a.id === id);
       if (!achievement) return false;
       
-      return rankOrder[achievement.rank] <= rankOrder[config.maxRank];
+      return rankOrder[achievement.rank as AchievementRank] <= rankOrder[config.maxRank];
     });
     
     // Apply completion target
@@ -206,7 +209,8 @@ export class CompletionistScenario extends BaseScenario {
     
     // Optimize order if requested
     if (config.optimizeOrder) {
-      achievementsList = this.optimizeAchievementOrder().slice(0, targetCount);
+      achievementsList = await this.optimizeAchievementOrder();
+      achievementsList = achievementsList.slice(0, targetCount);
     }
 
     // Calculate total actions for progress tracking
@@ -238,13 +242,13 @@ export class CompletionistScenario extends BaseScenario {
       this.logAction('PERSONAL_RECORDS', 'Generating personal records for multiple exercises');
       
       // Get the set of requirements to try to satisfy
-      const workoutAchievements = AchievementUtils.getAchievementsByCategory(AchievementCategory.WORKOUT);
-      const prAchievements = AchievementUtils.getAchievementsByCategory(AchievementCategory.RECORD);
-      const streakAchievements = AchievementUtils.getAchievementsByCategory(AchievementCategory.STREAK);
+      const workoutAchievements = await AchievementUtils.getAchievementsByCategory(AchievementCategory.WORKOUT);
+      const prAchievements = await AchievementUtils.getAchievementsByCategory(AchievementCategory.RECORD);
+      const streakAchievements = await AchievementUtils.getAchievementsByCategory(AchievementCategory.STREAK);
       
       // Find the highest PR count requirement
       const highestPrCount = Math.max(
-        ...prAchievements.map(a => a.requirementValue),
+        ...prAchievements.map(a => a.requirements?.value || 0),
         10 // Minimum of 10 PRs
       );
       
@@ -263,7 +267,7 @@ export class CompletionistScenario extends BaseScenario {
       
       // Find the highest streak requirement
       const highestStreakDays = Math.max(
-        ...streakAchievements.map(a => a.requirementValue),
+        ...streakAchievements.map(a => a.requirements?.value || 0),
         7 // Minimum of 7 days
       );
       
@@ -304,10 +308,17 @@ export class CompletionistScenario extends BaseScenario {
       }
       
       // Get achievement names for better logging
-      const achievementNames = this.achievementsUnlocked.map(id => {
-        const achievement = AchievementUtils.getAchievementById(id);
-        return achievement ? achievement.name : id;
-      });
+      const achievementNames: string[] = [];
+      for (const id of this.achievementsUnlocked) {
+        try {
+          // Access the asyncGetAchievementName method that's patched onto this object
+          const name = await (this as any).asyncGetAchievementName(id);
+          achievementNames.push(name);
+        } catch (error) {
+          console.error('Error getting achievement name:', error);
+          achievementNames.push(id); // Fallback to ID if name can't be retrieved
+        }
+      }
       
       // Calculate completion percentage
       const targetAchievements = new Set(achievementsList);

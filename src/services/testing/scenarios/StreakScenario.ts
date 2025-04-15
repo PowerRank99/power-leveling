@@ -1,4 +1,3 @@
-
 /**
  * Streak Scenario
  * 
@@ -246,10 +245,17 @@ export class StreakScenario extends BaseScenario {
       }
       
       // Get achievement names for better logging
-      const achievementNames = this.achievementsUnlocked.map(id => {
-        const achievement = AchievementUtils.getAchievementById(id);
-        return achievement ? achievement.name : id;
-      });
+      const achievementNames: string[] = [];
+      for (const id of this.achievementsUnlocked) {
+        try {
+          // Access the asyncGetAchievementName method that's patched onto this object
+          const name = await (this as any).asyncGetAchievementName(id);
+          achievementNames.push(name);
+        } catch (error) {
+          console.error('Error getting achievement name:', error);
+          achievementNames.push(id); // Fallback to ID if name can't be retrieved
+        }
+      }
       
       this.logAction('ACHIEVEMENTS_UNLOCKED', `Unlocked ${achievementNames.length} achievements`, { achievements: achievementNames });
       

@@ -1,4 +1,3 @@
-
 /**
  * Class Progression Scenario
  * 
@@ -194,7 +193,7 @@ export class ClassProgressionScenario extends BaseScenario {
       }
       
       // Get achievement names for better logging
-      const achievementNames = [];
+      const achievementNames: string[] = [];
       for (const id of this.achievementsUnlocked) {
         try {
           // Access the asyncGetAchievementName method that's patched onto this object

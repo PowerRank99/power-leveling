@@ -92,7 +92,8 @@ export class CategoryProgressService {
           );
         }
         
-        return createSuccessResponse(true);
+        // Important fix: Return true directly, not wrapped in another ServiceResponse
+        return true;
       },
       'BATCH_UPDATE_BY_CATEGORY',
       { showToast: false }
