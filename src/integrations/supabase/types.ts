@@ -57,36 +57,42 @@ export type Database = {
       achievements: {
         Row: {
           category: string
+          category_type: string | null
           description: string
           icon_name: string
           id: string
           name: string
           points: number
           rank: string
+          requirement_type: string | null
           requirements: Json
           string_id: string
           xp_reward: number
         }
         Insert: {
           category: string
+          category_type?: string | null
           description: string
           icon_name: string
           id?: string
           name: string
           points?: number
           rank?: string
+          requirement_type?: string | null
           requirements: Json
           string_id: string
           xp_reward: number
         }
         Update: {
           category?: string
+          category_type?: string | null
           description?: string
           icon_name?: string
           id?: string
           name?: string
           points?: number
           rank?: string
+          requirement_type?: string | null
           requirements?: Json
           string_id?: string
           xp_reward?: number

@@ -6,22 +6,11 @@ import { BaseAchievementChecker } from './BaseAchievementChecker';
 import { AchievementService } from '../AchievementService';
 import { TransactionService } from '../../common/TransactionService';
 
-/**
- * Checker for activity-related achievements (variety of exercises, etc.)
- */
 export class ActivityAchievementChecker extends BaseAchievementChecker implements AchievementChecker {
-  /**
-   * Check all achievements related to activity variety
-   * Implementation of abstract method from BaseAchievementChecker
-   */
   async checkAchievements(userId: string): Promise<ServiceResponse<string[]>> {
     return ActivityAchievementChecker.checkAchievements(userId);
   }
   
-  /**
-   * Static implementation of checkAchievements
-   * Checks for achievements related to activity variety
-   */
   static async checkAchievements(userId: string): Promise<ServiceResponse<string[]>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
@@ -31,192 +20,123 @@ export class ActivityAchievementChecker extends BaseAchievementChecker implement
         
         await TransactionService.executeWithRetry(
           async () => {
-            // Check different types of activity variety achievements
-            const varietyResults = await Promise.all([
+            const [manualResults, varietyResults, exerciseResults] = await Promise.all([
+              this.checkManualWorkoutAchievements(userId),
               this.checkActivityVarietyAchievements(userId),
               this.checkExerciseTypeVarietyAchievements(userId)
             ]);
             
-            // Collect awarded achievements
-            varietyResults.forEach(result => {
-              if (Array.isArray(result)) {
-                awardedAchievements.push(...result);
-              }
-            });
+            awardedAchievements.push(
+              ...(manualResults?.data || []),
+              ...(varietyResults?.data || []),
+              ...(exerciseResults?.data || [])
+            );
+            
+            if (awardedAchievements.length > 0) {
+              await AchievementService.checkAndAwardAchievements(userId, awardedAchievements);
+            }
           }, 
-          'activity_variety_achievements', 
+          'activity_achievements', 
           3,
-          'Failed to check activity variety achievements'
+          'Failed to check activity achievements'
         );
         
         return awardedAchievements;
       },
-      'CHECK_ACTIVITY_VARIETY_ACHIEVEMENTS',
+      'CHECK_ACTIVITY_ACHIEVEMENTS',
       { showToast: false }
     );
   }
   
-  /**
-   * Check for manual workout achievements
-   */
-  static async checkManualWorkoutAchievements(userId: string): Promise<ServiceResponse<string[]>> {
-    return ErrorHandlingService.executeWithErrorHandling(
-      async () => {
-        // Get count of manual workouts
-        const { count, error } = await supabase
-          .from('manual_workouts')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', userId);
-          
-        if (error) throw error;
-        
-        // Fetch manual workout achievements from database
-        const { data: manualAchievements, error: achievementsError } = await supabase
-          .from('achievements')
-          .select('id, requirements')
-          .eq('category', 'manual')
-          .order('requirements->count', { ascending: true });
-          
-        if (achievementsError) throw achievementsError;
-        
-        const achievementsToCheck: string[] = [];
-        
-        // Check each achievement's requirements
-        if (manualAchievements) {
-          manualAchievements.forEach(achievement => {
-            const requiredCount = achievement.requirements?.count || 0;
-            if (count && count >= requiredCount) {
-              achievementsToCheck.push(achievement.id);
-            }
-          });
-        }
-        
-        // Award achievements
-        if (achievementsToCheck.length > 0) {
-          const result = await AchievementService.checkAndAwardAchievements(userId, achievementsToCheck);
-          return result.success ? achievementsToCheck : [];
-        }
-        
-        return [];
-      },
-      'CHECK_MANUAL_WORKOUT_ACHIEVEMENTS',
-      { showToast: false }
-    );
+  private static async checkManualWorkoutAchievements(userId: string): Promise<ServiceResponse<string[]>> {
+    const { count, error: countError } = await supabase
+      .from('manual_workouts')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId);
+      
+    if (countError) throw countError;
+    
+    const { data: achievements, error: achievementsError } = await supabase
+      .from('achievements')
+      .select('id, requirements')
+      .eq('category', 'manual')
+      .order('requirements->count', { ascending: true });
+      
+    if (achievementsError) throw achievementsError;
+    
+    const achievementsToCheck: string[] = [];
+    
+    achievements?.forEach(achievement => {
+      const requiredCount = achievement.requirements?.count || 0;
+      if (count && count >= requiredCount) {
+        achievementsToCheck.push(achievement.id);
+      }
+    });
+    
+    return { success: true, data: achievementsToCheck };
   }
   
-  /**
-   * Check for activity variety achievements (different types of workouts)
-   */
-  private static async checkActivityVarietyAchievements(userId: string): Promise<string[]> {
-    try {
-      // Use a custom query to get distinct activity types
-      const { data, error } = await supabase
-        .from('manual_workouts')
-        .select('activity_type')
-        .eq('user_id', userId)
-        .not('activity_type', 'is', null);
-        
-      if (error) throw error;
+  private static async checkActivityVarietyAchievements(userId: string): Promise<ServiceResponse<string[]>> {
+    const { data, error } = await supabase
+      .from('manual_workouts')
+      .select('activity_type')
+      .eq('user_id', userId)
+      .not('activity_type', 'is', null);
       
-      // Count unique activity types
-      const distinctTypes = new Set();
-      if (data) {
-        data.forEach(item => {
-          if (item.activity_type) distinctTypes.add(item.activity_type);
-        });
+    if (error) throw error;
+    
+    const distinctTypes = new Set(data?.map(item => item.activity_type));
+    const distinctCount = distinctTypes.size;
+    
+    const { data: achievements, error: achievementsError } = await supabase
+      .from('achievements')
+      .select('id, requirements')
+      .eq('category', 'variety')
+      .order('requirements->count', { ascending: true });
+      
+    if (achievementsError) throw achievementsError;
+    
+    const achievementsToCheck: string[] = [];
+    
+    achievements?.forEach(achievement => {
+      const requiredCount = achievement.requirements?.count || 0;
+      if (distinctCount >= requiredCount) {
+        achievementsToCheck.push(achievement.id);
       }
-      
-      const distinctCount = distinctTypes.size;
-      
-      // Fetch variety achievements from database
-      const { data: varietyAchievements, error: achievementsError } = await supabase
-        .from('achievements')
-        .select('id, requirements')
-        .eq('category', 'variety')
-        .order('requirements->count', { ascending: true });
-        
-      if (achievementsError) throw achievementsError;
-      
-      const achievementsToCheck: string[] = [];
-      
-      // Check each achievement's requirements
-      if (varietyAchievements) {
-        varietyAchievements.forEach(achievement => {
-          const requiredCount = achievement.requirements?.count || 0;
-          if (distinctCount >= requiredCount) {
-            achievementsToCheck.push(achievement.id);
-          }
-        });
-      }
-      
-      // Award achievements
-      if (achievementsToCheck.length > 0) {
-        const result = await AchievementService.checkAndAwardAchievements(userId, achievementsToCheck);
-        return result.success ? achievementsToCheck : [];
-      }
-      
-      return [];
-    } catch (error) {
-      console.error('Error checking activity variety achievements:', error);
-      return [];
-    }
+    });
+    
+    return { success: true, data: achievementsToCheck };
   }
   
-  /**
-   * Check for exercise type variety achievements (different types of exercises)
-   */
-  private static async checkExerciseTypeVarietyAchievements(userId: string): Promise<string[]> {
-    try {
-      // Query to get distinct exercise types from completed workouts
-      const { data, error } = await supabase
-        .from('workout_sets')
-        .select('exercise_id, workouts!inner(user_id)')
-        .eq('workouts.user_id', userId)
-        .eq('completed', true);
-        
-      if (error) throw error;
+  private static async checkExerciseTypeVarietyAchievements(userId: string): Promise<ServiceResponse<string[]>> {
+    const { data, error } = await supabase
+      .from('workout_sets')
+      .select('exercise_id, workouts!inner(user_id)')
+      .eq('workouts.user_id', userId)
+      .eq('completed', true);
       
-      // Get unique exercise IDs
-      const uniqueExerciseIds = new Set();
-      if (data) {
-        data.forEach(item => {
-          if (item.exercise_id) uniqueExerciseIds.add(item.exercise_id);
-        });
+    if (error) throw error;
+    
+    const uniqueExerciseIds = new Set(data?.map(item => item.exercise_id).filter(Boolean));
+    const distinctCount = uniqueExerciseIds.size;
+    
+    const { data: achievements, error: achievementsError } = await supabase
+      .from('achievements')
+      .select('id, requirements')
+      .eq('category', 'exercise_variety')
+      .order('requirements->count', { ascending: true });
+      
+    if (achievementsError) throw achievementsError;
+    
+    const achievementsToCheck: string[] = [];
+    
+    achievements?.forEach(achievement => {
+      const requiredCount = achievement.requirements?.count || 0;
+      if (distinctCount >= requiredCount) {
+        achievementsToCheck.push(achievement.id);
       }
-      
-      const distinctCount = uniqueExerciseIds.size;
-      
-      // Fetch exercise variety achievements
-      const { data: exerciseAchievements, error: achievementsError } = await supabase
-        .from('achievements')
-        .select('id, requirements')
-        .eq('category', 'exercise_variety')
-        .order('requirements->count', { ascending: true });
-        
-      if (achievementsError) throw achievementsError;
-      
-      const achievementsToCheck: string[] = [];
-      
-      // Check each achievement's requirements
-      if (exerciseAchievements) {
-        exerciseAchievements.forEach(achievement => {
-          const requiredCount = achievement.requirements?.count || 0;
-          if (distinctCount >= requiredCount) {
-            achievementsToCheck.push(achievement.id);
-          }
-        });
-      }
-      
-      // Award achievements
-      if (achievementsToCheck.length > 0) {
-        const result = await AchievementService.checkAndAwardAchievements(userId, achievementsToCheck);
-        return result.success ? achievementsToCheck : [];
-      }
-      
-      return [];
-    } catch (error) {
-      console.error('Error checking exercise type variety achievements:', error);
-      return [];
-    }
+    });
+    
+    return { success: true, data: achievementsToCheck };
   }
 }

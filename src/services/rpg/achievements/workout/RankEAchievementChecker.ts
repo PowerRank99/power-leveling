@@ -4,13 +4,7 @@ import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHa
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { UserWorkoutStats, UserProfileData } from '../AchievementCheckerInterface';
 
-/**
- * Checker specifically for Rank E (basic starter) workout achievements
- */
 export class RankEAchievementChecker {
-  /**
-   * Check Rank E achievements (basic starter achievements)
-   */
   static async checkAchievements(
     userId: string,
     workoutStats: UserWorkoutStats,
@@ -18,10 +12,10 @@ export class RankEAchievementChecker {
   ): Promise<ServiceResponse<void>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
-        // Fetch Rank E achievements from database
-        const { data: rankEAchievements, error: achievementsError } = await supabase
+        // Fetch Rank E achievements
+        const { data: achievements, error: achievementsError } = await supabase
           .from('achievements')
-          .select('id, requirements')
+          .select('id, requirements, requirement_type')
           .eq('rank', 'E')
           .eq('category', 'workout');
           
@@ -29,37 +23,36 @@ export class RankEAchievementChecker {
         
         const achievementChecks: string[] = [];
         
-        // Check each achievement's requirements
-        if (rankEAchievements) {
-          rankEAchievements.forEach(achievement => {
-            // Check for total workout count requirement
-            if (achievement.requirements?.total_count && workoutStats.totalCount >= achievement.requirements.total_count) {
+        if (achievements) {
+          achievements.forEach(achievement => {
+            if (achievement.requirement_type === 'total_count' && 
+                workoutStats.totalCount >= (achievement.requirements?.total_count || 0)) {
               achievementChecks.push(achievement.id);
             }
             
-            // Check for weekly workout count requirement
-            if (achievement.requirements?.weekly_count && workoutStats.weeklyCount >= achievement.requirements.weekly_count) {
+            if (achievement.requirement_type === 'weekly_count' && 
+                workoutStats.weeklyCount >= (achievement.requirements?.weekly_count || 0)) {
               achievementChecks.push(achievement.id);
             }
           });
         }
         
-        // Check for first guild joined - special case
-        const { count: guildCount, error: guildError } = await supabase
-          .from('guild_members')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId);
+        // Check for first guild achievement
+        const { data: guildAchievement, error: guildAchievementError } = await supabase
+          .from('achievements')
+          .select('id')
+          .eq('rank', 'E')
+          .eq('category', 'guild')
+          .eq('requirement_type', 'first_guild')
+          .single();
           
-        if (!guildError && guildCount && guildCount > 0) {
-          // Fetch guild-related achievement
-          const { data: guildAchievement } = await supabase
-            .from('achievements')
-            .select('id')
-            .eq('rank', 'E')
-            .eq('category', 'guild')
-            .single();
+        if (!guildAchievementError && guildAchievement) {
+          const { count: guildCount } = await supabase
+            .from('guild_members')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userId);
             
-          if (guildAchievement) {
+          if (guildCount && guildCount > 0) {
             achievementChecks.push(guildAchievement.id);
           }
         }

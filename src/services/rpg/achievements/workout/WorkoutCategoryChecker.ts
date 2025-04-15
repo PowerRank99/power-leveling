@@ -1,9 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-/**
- * Service for checking workout category-specific achievements
- */
 export class WorkoutCategoryChecker {
   static async checkWorkoutCategoryAchievements(
     userId: string, 
@@ -25,7 +22,7 @@ export class WorkoutCategoryChecker {
         categoryCounts[category] = (categoryCounts[category] || 0) + 1;
       });
       
-      // Fetch category-specific achievements from database
+      // Fetch category-specific achievements
       const { data: categoryAchievements, error: achievementsError } = await supabase
         .from('achievements')
         .select('id, category_type, requirements')
@@ -34,21 +31,14 @@ export class WorkoutCategoryChecker {
       if (achievementsError) throw achievementsError;
       
       // Check for category-specific achievements
-      if (categoryAchievements) {
-        categoryAchievements.forEach(achievement => {
-          const categoryType = achievement.category_type;
-          const requiredCount = achievement.requirements?.count || 0;
-          
-          if (categoryType && categoryCounts[categoryType] && categoryCounts[categoryType] >= requiredCount) {
-            achievementsToCheck.push(achievement.id);
-          }
-          
-          // Special case for first sport workout
-          if (categoryType === 'sport' && requiredCount === 1 && categoryCounts['sport'] && categoryCounts['sport'] >= 1) {
-            achievementsToCheck.push(achievement.id);
-          }
-        });
-      }
+      categoryAchievements?.forEach(achievement => {
+        const categoryType = achievement.category_type;
+        const requiredCount = achievement.requirements?.count || 0;
+        
+        if (categoryType && categoryCounts[categoryType] && categoryCounts[categoryType] >= requiredCount) {
+          achievementsToCheck.push(achievement.id);
+        }
+      });
     } catch (error) {
       console.error('Error checking workout category achievements:', error);
     }
