@@ -1,8 +1,12 @@
+import { 
+  Achievement, 
+  AchievementCategory, 
+  AchievementRank 
+} from '@/types/achievementTypes';
+
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 import { AchievementService } from '@/services/rpg/AchievementService';
-import { Achievement, AchievementCategory, AchievementProgress, AchievementRank } from '@/types/achievementTypes';
-import { ACHIEVEMENTS } from '@/constants/achievements';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 import { EXERCISE_TYPES } from '@/services/rpg/constants/exerciseTypes';
 import { XPService } from '@/services/rpg/XPService';
