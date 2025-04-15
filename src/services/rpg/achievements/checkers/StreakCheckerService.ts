@@ -1,76 +1,75 @@
 
-import { ServiceResponse, ErrorHandlingService, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
+import { supabase } from '@/integrations/supabase/client';
+import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { BaseAchievementChecker } from './BaseAchievementChecker';
 import { AchievementService } from '@/services/rpg/AchievementService';
-import { supabase } from '@/integrations/supabase/client';
-import { AchievementCategory } from '@/types/achievementTypes';
-import { ACHIEVEMENT_IDS, ACHIEVEMENT_REQUIREMENTS } from '../AchievementConstants';
+import { TransactionService } from '@/services/common/TransactionService';
 
 /**
- * Service specifically for checking streak-related achievements 
- * Extends the BaseAchievementChecker abstract class
+ * Service specifically for checking streak-related achievements
  */
 export class StreakCheckerService extends BaseAchievementChecker {
   /**
-   * Implementation of abstract method from BaseAchievementChecker
+   * Check streak-related achievements
    */
   async checkAchievements(userId: string): Promise<ServiceResponse<string[]>> {
     return this.executeWithErrorHandling(
       async () => {
+        if (!userId) throw new Error('User ID is required');
+        
         // Get user's current streak
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('streak')
           .eq('id', userId)
-          .maybeSingle();
+          .single();
           
-        if (profileError) {
-          throw new Error(`Failed to get user profile for streak check: ${profileError.message}`);
-        }
+        if (profileError) throw profileError;
+
+        // Get streak achievements from database
+        const { data: streakAchievements, error: achievementsError } = await supabase
+          .from('achievements')
+          .select('id, requirements')
+          .eq('category', 'streak')
+          .order('requirements->days', { ascending: true });
+          
+        if (achievementsError) throw achievementsError;
+
+        const awardedAchievements: string[] = [];
+
+        // Use transaction service for consistency
+        await TransactionService.executeWithRetry(
+          async () => {
+            // Check each achievement's requirements
+            streakAchievements.forEach(achievement => {
+              const requiredDays = achievement.requirements?.days || 0;
+              if (profile.streak >= requiredDays) {
+                awardedAchievements.push(achievement.id);
+              }
+            });
+            
+            // Award achievements
+            if (awardedAchievements.length > 0) {
+              await AchievementService.checkAndAwardAchievements(userId, awardedAchievements);
+            }
+          }, 
+          'streak_achievements', 
+          3,
+          'Failed to check streak achievements'
+        );
         
-        const currentStreak = profile?.streak || 0;
-        
-        // Define achievements to check based on streak count
-        const achievementsToCheck: string[] = [];
-        
-        // Check for E rank achievements
-        if (currentStreak >= 3 && ACHIEVEMENT_IDS.E.streak.includes('streak-3')) {
-          achievementsToCheck.push('streak-3');
-        }
-        
-        // Check for D rank achievements
-        if (currentStreak >= 7 && ACHIEVEMENT_IDS.D.streak.includes('streak-7')) {
-          achievementsToCheck.push('streak-7');
-        }
-        
-        // Check for C rank achievements
-        if (currentStreak >= 14 && ACHIEVEMENT_IDS.C.streak.includes('streak-14')) {
-          achievementsToCheck.push('streak-14');
-        }
-        
-        // Check for B rank achievements
-        if (currentStreak >= 30 && ACHIEVEMENT_IDS.B.streak.includes('streak-30')) {
-          achievementsToCheck.push('streak-30');
-        }
-        
-        // Check for A rank achievements
-        if (currentStreak >= 60 && ACHIEVEMENT_IDS.A.streak.includes('streak-60')) {
-          achievementsToCheck.push('streak-60');
-        }
-        
-        // Check for S rank achievements
-        if (currentStreak >= 100 && ACHIEVEMENT_IDS.S.streak.includes('streak-100')) {
-          achievementsToCheck.push('streak-100');
-        }
-        
-        if (currentStreak >= 365 && ACHIEVEMENT_IDS.S.streak.includes('streak-365')) {
-          achievementsToCheck.push('streak-365');
-        }
-        
-        // Award achievements and return the IDs of newly awarded achievements
-        return await this.awardAchievementsBatch(userId, achievementsToCheck);
+        return awardedAchievements;
       },
-      'STREAK_ACHIEVEMENTS'
+      'CHECK_STREAK_ACHIEVEMENTS',
+      { showToast: false }
     );
+  }
+
+  /**
+   * Static method to check streak achievements
+   */
+  static async checkStreakAchievements(userId: string): Promise<ServiceResponse<string[]>> {
+    const checker = new StreakCheckerService();
+    return checker.checkAchievements(userId);
   }
 }
