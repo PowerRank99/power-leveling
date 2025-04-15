@@ -3,7 +3,7 @@ import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCateg
 import { ProgressBaseService } from './ProgressBaseService';
 import { ProgressUpdateService } from './ProgressUpdateService';
 import { ProgressInitializationService } from './ProgressInitializationService';
-import { Achievement, AchievementCategory, AchievementProgress } from '@/types/achievementTypes';
+import { Achievement, AchievementCategory, AchievementProgress, AchievementRank } from '@/types/achievementTypes';
 
 export class AchievementProgressService extends ProgressBaseService {
   /**
@@ -59,7 +59,7 @@ export class AchievementProgressService extends ProgressBaseService {
       name: 'Placeholder',
       description: 'Placeholder',
       category: AchievementCategory.MILESTONE,
-      rank: 'E',
+      rank: AchievementRank.E,
       points: 1,
       xpReward: 10,
       iconName: 'achievement',

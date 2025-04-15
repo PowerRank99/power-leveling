@@ -1,6 +1,8 @@
+
 import { Achievement, AchievementCategory, AchievementRank, UserAchievementData } from '@/types/achievementTypes';
-import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
+import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { supabase } from '@/integrations/supabase/client';
+import { mapToAchievementCategory, mapToAchievementRank } from '@/types/achievementMappers';
 
 /**
  * Service for fetching achievement lists
@@ -12,14 +14,30 @@ export class AchievementListService {
   static async getAllAchievements(): Promise<ServiceResponse<Achievement[]>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
-        // Use the database service to fetch achievements
-        const response = await AchievementDatabaseService.getAllAchievements();
-        
-        if (!response.success) {
-          throw new Error(response.message);
+        // Fetch achievements directly from supabase
+        const { data: achievementsData, error } = await supabase
+          .from('achievements')
+          .select('*');
+          
+        if (error) {
+          throw new Error(`Failed to fetch achievements: ${error.message}`);
         }
         
-        return response.data;
+        // Transform the data to match Achievement interface
+        const formattedAchievements: Achievement[] = achievementsData.map(a => ({
+          id: a.id,
+          name: a.name,
+          description: a.description,
+          category: mapToAchievementCategory(a.category),
+          rank: mapToAchievementRank(a.rank),
+          points: a.points,
+          xpReward: a.xp_reward,
+          iconName: a.icon_name,
+          requirements: a.requirements,
+          stringId: a.string_id
+        }));
+          
+        return formattedAchievements;
       },
       'GET_ALL_ACHIEVEMENTS',
       { showToast: false }
@@ -46,7 +64,7 @@ export class AchievementListService {
           .select(`
             achievement_id,
             achieved_at,
-            achievements:achievement_id (
+            achievement:achievement_id (
               id, name, description, category, rank, 
               points, xp_reward, icon_name, requirements, string_id
             )
@@ -60,18 +78,18 @@ export class AchievementListService {
         
         // Transform the data to match Achievement interface
         const formattedAchievements: Achievement[] = (userAchievements as unknown as UserAchievementData[])
-          .filter(ua => ua.achievements) // Filter out any null achievements
+          .filter(ua => ua.achievement) // Filter out any null achievements
           .map(ua => ({
-            id: ua.achievements.id,
-            name: ua.achievements.name,
-            description: ua.achievements.description,
-            category: ua.achievements.category,
-            rank: ua.achievements.rank as any,
-            points: ua.achievements.points,
-            xpReward: ua.achievements.xp_reward,
-            iconName: ua.achievements.icon_name,
-            requirements: ua.achievements.requirements,
-            stringId: ua.achievements.string_id,
+            id: ua.achievement.id,
+            name: ua.achievement.name,
+            description: ua.achievement.description,
+            category: mapToAchievementCategory(ua.achievement.category),
+            rank: mapToAchievementRank(ua.achievement.rank),
+            points: ua.achievement.points,
+            xpReward: ua.achievement.xp_reward,
+            iconName: ua.achievement.icon_name,
+            requirements: ua.achievement.requirements,
+            stringId: ua.achievement.string_id,
             isUnlocked: true,
             achievedAt: ua.achieved_at
           }));

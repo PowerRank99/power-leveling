@@ -1,6 +1,8 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
+import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { Achievement, AchievementCategory, AchievementRank, AchievementStats } from '@/types/achievementTypes';
+import { mapToAchievementCategory, mapToAchievementRank } from '@/types/achievementMappers';
 
 /**
  * Service for fetching achievement statistics
@@ -28,7 +30,7 @@ export class AchievementStatsService {
           .select(`
             achievement_id,
             achieved_at,
-            achievements (
+            achievement:achievement_id (
               id, name, description, category, rank, points, xp_reward, icon_name, requirements
             )
           `)
@@ -45,16 +47,16 @@ export class AchievementStatsService {
         
         if (recentAchievements) {
           // Process each achievement with safe type handling
-          recentAchievements.forEach(item => {
-            if (item.achievements) {
-              const achievementData = item.achievements as Record<string, any>;
+          recentAchievements.forEach((item: any) => {
+            if (item.achievement) {
+              const achievementData = item.achievement as Record<string, any>;
               
               recentlyUnlocked.push({
                 id: achievementData.id,
                 name: achievementData.name,
                 description: achievementData.description,
-                category: achievementData.category as AchievementCategory,
-                rank: achievementData.rank as AchievementRank,
+                category: mapToAchievementCategory(achievementData.category),
+                rank: mapToAchievementRank(achievementData.rank),
                 points: achievementData.points,
                 xpReward: achievementData.xp_reward,
                 iconName: achievementData.icon_name,
@@ -87,8 +89,8 @@ export class AchievementStatsService {
       id: achievement.id,
       name: achievement.name,
       description: achievement.description,
-      category: achievement.category,
-      rank: achievement.rank,
+      category: mapToAchievementCategory(achievement.category),
+      rank: mapToAchievementRank(achievement.rank),
       points: achievement.points,
       xpReward: achievement.xp_reward,
       iconName: achievement.icon_name,

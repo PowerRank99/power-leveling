@@ -1,5 +1,6 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
+import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { Achievement, AchievementProgress } from '@/types/achievementTypes';
 import { CachingService } from '@/services/common/CachingService';
 
@@ -28,6 +29,7 @@ export class ProgressBaseService {
         if (!data) return null;
         
         const progress: AchievementProgress = {
+          id: data.id,
           current: data.current_value,
           total: data.target_value,
           isComplete: data.is_complete
@@ -60,6 +62,7 @@ export class ProgressBaseService {
         if (data) {
           Object.entries(data).forEach(([achievementId, progressData]: [string, any]) => {
             progressMap[achievementId] = {
+              id: progressData.id,
               current: progressData.current,
               total: progressData.total,
               isComplete: progressData.isComplete

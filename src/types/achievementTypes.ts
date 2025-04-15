@@ -89,14 +89,15 @@ export const AchievementSchema = z.object({
 
 export type Achievement = z.infer<typeof AchievementSchema>;
 
-// Add the missing AchievementProgress type
+// Add the AchievementProgress type with an id field
 export interface AchievementProgress {
+  id?: string;  // Added id as optional
   current: number;
   total: number;
   isComplete?: boolean;
 }
 
-// Add the missing AchievementStats type
+// Add the AchievementStats type
 export interface AchievementStats {
   total: number;
   unlocked: number;
@@ -105,8 +106,20 @@ export interface AchievementStats {
   byCategory?: Record<AchievementCategory, number>;
 }
 
-// Add the missing UserAchievementData type
+// Fix the UserAchievementData type to match the database structure
 export interface UserAchievementData {
-  achievement: Achievement;
-  achievedAt: string;
+  achievement_id: string;
+  achieved_at: string;
+  achievement: {
+    id: string;
+    name: string;
+    description: string;
+    category: string;
+    rank: string;
+    points: number;
+    xp_reward: number;
+    icon_name: string;
+    requirements: any;
+    string_id?: string;
+  };
 }
