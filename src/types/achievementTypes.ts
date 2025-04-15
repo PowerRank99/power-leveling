@@ -1,4 +1,3 @@
-import { ServiceResponse } from '@/services/common/ErrorHandlingService';
 
 /**
  * Achievement categories enum for better type safety
@@ -54,7 +53,7 @@ export interface Achievement {
   xpReward: number;
   iconName: string;
   requirements: AchievementRequirement;
-  stringId?: string; // Added to support the database as source of truth
+  stringId?: string; // For backward compatibility
   isUnlocked?: boolean;
   achievedAt?: string;
   metadata?: Record<string, any>; // For future extensibility
@@ -121,7 +120,7 @@ export interface UserAchievementData {
     points: number;
     xp_reward: number;
     icon_name: string;
-    string_id?: string; // Added to support string IDs
+    string_id?: string;
     requirements: AchievementRequirement;
   };
 }

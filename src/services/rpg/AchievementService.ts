@@ -2,8 +2,8 @@
 import { ServiceResponse } from '@/services/common/ErrorHandlingService';
 import { Achievement, AchievementProgress } from '@/types/achievementTypes';
 import { AchievementAwardService } from './achievements/services/AchievementAwardService';
-import { AchievementFetchService } from './achievements/services/AchievementFetchService';
-import { AchievementProcessingService } from './achievements/services/AchievementProcessingService';
+import { AchievementFetchService } from './achievements/AchievementFetchService';
+import { AchievementProcessorService } from './achievements/AchievementProcessorService';
 import { AchievementProgressService } from './achievements/AchievementProgressService';
 
 /**
@@ -49,7 +49,7 @@ export class AchievementService {
    * Process achievements
    */
   static async checkWorkoutAchievements(userId: string, workoutId: string): Promise<ServiceResponse<string[]>> {
-    return AchievementProcessingService.checkWorkoutAchievements(userId, workoutId);
+    return AchievementProcessorService.checkWorkoutAchievements(userId, workoutId);
   }
   
   /**

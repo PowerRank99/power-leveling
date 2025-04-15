@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Achievement, AchievementCategory, AchievementRank } from '@/types/achievementTypes';
 import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
@@ -94,7 +95,7 @@ export class AchievementDatabaseService {
   }
   
   /**
-   * Get a specific achievement by its string ID (enhanced version)
+   * Get a specific achievement by its string ID (for backward compatibility)
    */
   static async getAchievementByStringId(stringId: string): Promise<ServiceResponse<Achievement | null>> {
     try {

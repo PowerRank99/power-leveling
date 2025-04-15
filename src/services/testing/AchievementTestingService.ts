@@ -17,7 +17,7 @@ import { TestCoverageService } from './TestCoverageService';
 export interface AchievementTestResult {
   achievementId: string;
   name: string;
-  category: AchievementCategory;
+  category: AchievementCategory | string;
   rank: AchievementRank | string;
   success: boolean;
   errorMessage?: string;
@@ -281,7 +281,7 @@ export class AchievementTestingService {
       successRate: number;
       totalDurationMs: number;
       averageTestDurationMs: number;
-      coverage: TestCoverageReport;
+      coverage: ReturnType<typeof TestCoverageService.generateCoverageReport>;
     };
     results: AchievementTestResult[];
     failedTests: AchievementTestResult[];

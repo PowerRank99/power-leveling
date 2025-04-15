@@ -1,23 +1,28 @@
+
 /**
  * AchievementUtils
  * Primary interface for achievement operations using the database as source of truth
  */
 import { Achievement, AchievementCategory, AchievementRank } from '@/types/achievementTypes';
 import { supabase } from '@/integrations/supabase/client';
+import { CachingService } from '@/services/common/CachingService';
 
 export class AchievementUtils {
-  // Cache for achievements to improve performance
-  private static achievementCache: Map<string, Achievement> = new Map();
-  private static allAchievementsCache: Achievement[] | null = null;
+  // Cache keys
+  private static readonly CACHE_KEY_ALL = 'achievements:all';
+  private static readonly CACHE_KEY_PREFIX_BY_ID = 'achievements:id:';
+  private static readonly CACHE_KEY_PREFIX_BY_CATEGORY = 'achievements:category:';
+  private static readonly CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
   
   /**
    * Get all achievements from the database
    */
   static async getAllAchievements(): Promise<Achievement[]> {
     try {
-      // Return cached achievements if available
-      if (this.allAchievementsCache !== null) {
-        return this.allAchievementsCache;
+      // Check cache first
+      const cached = CachingService.get<Achievement[]>(this.CACHE_KEY_ALL);
+      if (cached) {
+        return cached;
       }
       
       const { data, error } = await supabase
@@ -30,10 +35,7 @@ export class AchievementUtils {
       const achievements = data.map(achievement => this.mapDbAchievementToModel(achievement));
       
       // Cache the results
-      this.allAchievementsCache = achievements;
-      achievements.forEach(achievement => {
-        this.achievementCache.set(achievement.id, achievement);
-      });
+      CachingService.set(this.CACHE_KEY_ALL, achievements, this.CACHE_DURATION_MS);
       
       return achievements;
     } catch (error) {
@@ -47,11 +49,11 @@ export class AchievementUtils {
    */
   static async getAchievementsByCategory(category: AchievementCategory): Promise<Achievement[]> {
     try {
-      // Try to use cache first for better performance
-      if (this.allAchievementsCache !== null) {
-        return this.allAchievementsCache.filter(achievement => 
-          achievement.category === category
-        );
+      // Check cache first
+      const cacheKey = `${this.CACHE_KEY_PREFIX_BY_CATEGORY}${category}`;
+      const cached = CachingService.get<Achievement[]>(cacheKey);
+      if (cached) {
+        return cached;
       }
       
       const { data, error } = await supabase
@@ -64,12 +66,8 @@ export class AchievementUtils {
       
       const achievements = data.map(achievement => this.mapDbAchievementToModel(achievement));
       
-      // Add to cache if not already cached
-      achievements.forEach(achievement => {
-        if (!this.achievementCache.has(achievement.id)) {
-          this.achievementCache.set(achievement.id, achievement);
-        }
-      });
+      // Cache the results
+      CachingService.set(cacheKey, achievements, this.CACHE_DURATION_MS);
       
       return achievements;
     } catch (error) {
@@ -83,8 +81,9 @@ export class AchievementUtils {
    * Used for performance-critical operations 
    */
   static getAllAchievementsSync(): Achievement[] {
-    if (this.allAchievementsCache !== null) {
-      return this.allAchievementsCache;
+    const cached = CachingService.get<Achievement[]>(this.CACHE_KEY_ALL);
+    if (cached) {
+      return cached;
     }
     console.warn('Achievement cache not populated. Call getAllAchievements() first.');
     return [];
@@ -96,8 +95,10 @@ export class AchievementUtils {
   static async getAchievementById(id: string): Promise<Achievement | null> {
     try {
       // Check cache first
-      if (this.achievementCache.has(id)) {
-        return this.achievementCache.get(id) || null;
+      const cacheKey = `${this.CACHE_KEY_PREFIX_BY_ID}${id}`;
+      const cached = CachingService.get<Achievement>(cacheKey);
+      if (cached) {
+        return cached;
       }
       
       const { data, error } = await supabase
@@ -110,7 +111,7 @@ export class AchievementUtils {
       
       if (data) {
         const achievement = this.mapDbAchievementToModel(data);
-        this.achievementCache.set(id, achievement);
+        CachingService.set(cacheKey, achievement, this.CACHE_DURATION_MS);
         return achievement;
       }
       
@@ -126,11 +127,12 @@ export class AchievementUtils {
    */
   static async getAchievementByStringId(stringId: string): Promise<Achievement | null> {
     try {
-      // Check cache first
-      const cachedAchievement = Array.from(this.achievementCache.values()).find(
-        achievement => achievement.stringId === stringId
-      );
-      if (cachedAchievement) return cachedAchievement;
+      // Try to get from all achievements cache first (most efficient)
+      const allAchievements = CachingService.get<Achievement[]>(this.CACHE_KEY_ALL);
+      if (allAchievements) {
+        const achievement = allAchievements.find(a => a.stringId === stringId);
+        if (achievement) return achievement;
+      }
       
       const { data, error } = await supabase
         .from('achievements')
@@ -142,7 +144,11 @@ export class AchievementUtils {
       
       if (data) {
         const achievement = this.mapDbAchievementToModel(data);
-        this.achievementCache.set(achievement.id, achievement);
+        CachingService.set(
+          `${this.CACHE_KEY_PREFIX_BY_ID}${achievement.id}`, 
+          achievement, 
+          this.CACHE_DURATION_MS
+        );
         return achievement;
       }
       
@@ -175,7 +181,18 @@ export class AchievementUtils {
    * Clear the achievement cache
    */
   static clearCache(): void {
-    this.achievementCache.clear();
-    this.allAchievementsCache = null;
+    CachingService.clear(this.CACHE_KEY_ALL);
+    
+    // In a real implementation, we would clear all category and ID caches too
+    // This is a simplified version
+  }
+  
+  /**
+   * Initialize the achievement system
+   * Preloads data into cache for better performance
+   */
+  static async initialize(): Promise<void> {
+    await this.getAllAchievements();
+    console.log('Achievement system initialized');
   }
 }

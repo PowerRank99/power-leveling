@@ -52,7 +52,7 @@ export class TestCoverageService {
   }
 
   /**
-   * Generate coverage report (synchronous version that uses cached data)
+   * Generate coverage report
    */
   static generateCoverageReport(): TestCoverageReport {
     // If we don't have cached achievements yet, return an empty report
