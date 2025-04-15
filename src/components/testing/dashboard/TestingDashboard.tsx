@@ -1,18 +1,5 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Button } from '@/components/ui/button';
-import {
-  CircleCheck,
-  CircleX,
-  Clock,
-  Play,
-  Download,
-  RotateCcw
-} from 'lucide-react';
 import TestCoverageStats from './TestCoverageStats';
 import RecentTestResults from './RecentTestResults';
 import QuickActions from './QuickActions';

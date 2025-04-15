@@ -236,7 +236,7 @@ const AchievementTestRunner: React.FC<AchievementTestRunnerProps> = ({ userId, a
     return grouped;
   }, [filteredAchievements, sortBy, results]);
   
-  // Stats for dashboard
+  // Stats calculation for dashboard
   const stats = useMemo(() => {
     const totalAchievements = allAchievements.length;
     const testedAchievements = results.length;
@@ -494,13 +494,7 @@ const AchievementTestRunner: React.FC<AchievementTestRunnerProps> = ({ userId, a
   const renderDashboard = () => {
     return (
       <TestingDashboard
-        stats={{
-          totalAchievements: stats.totalAchievements,
-          testedAchievements: stats.testedAchievements,
-          passedTests: stats.passedTests,
-          failedTests: stats.failedTests,
-          coveragePercentage: stats.coveragePercentage
-        }}
+        stats={stats}
         results={results}
         onRunAllTests={runAllTests}
         onRunCategoryTests={runCategoryTests}
