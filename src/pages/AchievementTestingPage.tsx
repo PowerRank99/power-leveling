@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LayoutDashboard, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -148,7 +147,6 @@ const AchievementTestingPage: React.FC = () => {
                 </TabsContent>
               </Tabs>
             ) : (
-              // Legacy/Simple Testing Interface
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="w-full mb-4 bg-midnight-card border border-divider/30 shadow-subtle overflow-x-auto flex-nowrap">
                   <TabsTrigger value="workout" className="flex-1">Workout</TabsTrigger>

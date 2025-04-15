@@ -5,6 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { AlarmClock, Award, Calendar, PlayCircle, RotateCw, Users, Hand } from 'lucide-react';
 import { useTestingDashboard } from '@/contexts/TestingDashboardContext';
+import SimulationTimeline from './simulation/SimulationTimeline';
 
 interface TestSimulationTabProps {
   userId: string;
@@ -28,6 +29,8 @@ const TestSimulationTab: React.FC<TestSimulationTabProps> = ({ userId }) => {
           Simulate the user journey to earning achievements. Choose scenarios to run or create custom achievement sequences.
         </AlertDescription>
       </Alert>
+      
+      <SimulationTimeline userId={userId} />
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
@@ -148,20 +151,6 @@ const TestSimulationTab: React.FC<TestSimulationTabProps> = ({ userId }) => {
           </CardContent>
         </Card>
       </div>
-      
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-orbitron">Timeline Simulation</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-text-tertiary">
-            <p>Timeline simulation will be available in a future update</p>
-            <p className="text-xs mt-2">
-              This feature will allow you to create a visual timeline of user actions and see achievements unlock in sequence
-            </p>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
