@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 import { useTestingDashboard } from '@/contexts/TestingDashboardContext';
 import { testDataGenerator } from '@/services/testing/generators/TestDataGeneratorService';
 import { CharacterClass } from '@/services/testing/generators/ClassGenerator';
-import { supabaseClient } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 // Define test data template types
 interface DataTemplate {
@@ -296,7 +296,7 @@ const TemplateGenerationSystem: React.FC = () => {
           const exerciseCount = template.config.prs.count || 2;
           const withProgression = template.config.prs.progression || false;
           
-          const { data: exercises } = await supabaseClient
+          const { data: exercises } = await supabase
             .from('exercises')
             .select('id')
             .limit(exerciseCount);
