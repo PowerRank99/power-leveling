@@ -31,8 +31,9 @@ export class AchievementValidationService {
     }
     
     // Find achievements in DB that aren't mapped
+    const allMappings = AchievementIdMappingService.getAllMappings();
     this.databaseAchievements.forEach(dbId => {
-      if (!Array.from(AchievementIdMappingService.getAllMappings().values()).includes(dbId)) {
+      if (!Array.from(allMappings.values()).includes(dbId)) {
         results.missing.push(dbId);
       }
     });

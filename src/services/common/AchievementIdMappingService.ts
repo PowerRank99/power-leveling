@@ -52,6 +52,8 @@ export class AchievementIdMappingService {
   }
 
   private static normalizeId(id: string): string {
+    if (!id) return '';
+    
     return id.toLowerCase()
       .normalize('NFD')       // Normalize accented characters
       .replace(/[\u0300-\u036f]/g, '')  // Remove accent marks
@@ -100,5 +102,34 @@ export class AchievementIdMappingService {
   // Method to get all mapped achievements
   static getAllMappedAchievements(): Map<string, { uuid: string; achievement: Achievement }> {
     return new Map(this.idMap);
+  }
+
+  // Add new method to get UUID directly from string ID
+  static getUuid(stringId: string): string | undefined {
+    if (!this.initialized) {
+      console.warn('[AchievementIdMapping] Service not initialized when getting UUID for', stringId);
+      return undefined;
+    }
+
+    const entry = Array.from(this.idMap.entries()).find(
+      ([id, _]) => id === stringId
+    );
+
+    return entry?.[1].uuid;
+  }
+
+  // Add new method to get all mappings as a Map of string ID to UUID
+  static getAllMappings(): Map<string, string> {
+    if (!this.initialized) {
+      console.warn('[AchievementIdMapping] Service not initialized when getting all mappings');
+      return new Map();
+    }
+
+    const mappings = new Map<string, string>();
+    this.idMap.forEach((value, key) => {
+      mappings.set(key, value.uuid);
+    });
+    
+    return mappings;
   }
 }
