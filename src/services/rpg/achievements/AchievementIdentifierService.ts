@@ -4,7 +4,7 @@ import { CachingService } from '@/services/common/CachingService';
 
 /**
  * Service for mapping between achievement string IDs and database UUIDs
- * This service provides a consistent way to reference achievements across the app
+ * Uses caching for performance optimization
  */
 export class AchievementIdentifierService {
   private static readonly CACHE_KEY = 'achievement_identifiers';
@@ -47,6 +47,21 @@ export class AchievementIdentifierService {
   }
   
   /**
+   * Convert an array of UUIDs to string IDs
+   */
+  static async convertToStringIds(ids: string[]): Promise<string[]> {
+    await this.ensureCache();
+    const stringIds: string[] = [];
+    
+    for (const id of ids) {
+      const stringId = await this.getStringIdById(id);
+      if (stringId) stringIds.push(stringId);
+    }
+    
+    return stringIds;
+  }
+  
+  /**
    * Ensure the cache is loaded
    */
   private static async ensureCache(): Promise<void> {
@@ -82,5 +97,67 @@ export class AchievementIdentifierService {
   static clearCache(): void {
     this.identifiersCache = null;
     CachingService.clear(this.CACHE_KEY);
+  }
+  
+  /**
+   * Fill in missing mappings by standardizing achievement names
+   * This is a utility function for migration purposes
+   */
+  static async fillMissingMappings(): Promise<{ added: number; total: number }> {
+    const { data: achievements, error } = await supabase
+      .from('achievements')
+      .select('id, name, string_id');
+      
+    if (error) {
+      console.error('Error loading achievements for mapping:', error);
+      return { added: 0, total: 0 };
+    }
+    
+    let added = 0;
+    const updates: { id: string; string_id: string }[] = [];
+    
+    // Process achievements without string_id
+    for (const achievement of achievements) {
+      if (!achievement.string_id && achievement.name) {
+        // Generate standardized string ID from name
+        const stringId = this.standardizeStringId(achievement.name);
+        updates.push({
+          id: achievement.id,
+          string_id: stringId
+        });
+        added++;
+      }
+    }
+    
+    // Update database if needed
+    if (updates.length > 0) {
+      for (const update of updates) {
+        const { error: updateError } = await supabase
+          .from('achievements')
+          .update({ string_id: update.string_id })
+          .eq('id', update.id);
+          
+        if (updateError) {
+          console.error(`Error updating string_id for achievement ${update.id}:`, updateError);
+        }
+      }
+      
+      // Clear cache to ensure fresh data
+      this.clearCache();
+    }
+    
+    return { added, total: achievements.length };
+  }
+  
+  /**
+   * Standardize a string to be used as an achievement ID
+   */
+  static standardizeStringId(name: string): string {
+    return name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
   }
 }

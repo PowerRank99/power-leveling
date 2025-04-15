@@ -4,6 +4,7 @@ import { BaseAchievementChecker } from './BaseAchievementChecker';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { supabase } from '@/integrations/supabase/client';
 import { Achievement } from '@/types/achievementTypes';
+import { UnifiedAchievementService } from '../UnifiedAchievementService';
 
 export class XPCheckerService extends BaseAchievementChecker {
   async checkAchievements(userId: string, totalXP?: number): Promise<ServiceResponse<string[]>> {
@@ -29,7 +30,7 @@ export class XPCheckerService extends BaseAchievementChecker {
           .from('achievements')
           .select('*')
           .eq('category', 'xp')
-          .order('requirements->total_xp', { ascending: true });
+          .order('requirements->value', { ascending: true });
         
         if (error) {
           throw new Error(`Failed to fetch XP achievements: ${error.message}`);
@@ -38,7 +39,7 @@ export class XPCheckerService extends BaseAchievementChecker {
         // Filter achievements based on current XP
         const achievementsToCheck = xpAchievements
           .filter((achievement: Achievement) => {
-            // Safely access total_xp from requirements, defaulting to 0 if not found
+            // Safely access value from requirements, defaulting to 0 if not found
             const requiredXP = achievement.requirements?.value || 0;
             return totalXP >= requiredXP;
           })
