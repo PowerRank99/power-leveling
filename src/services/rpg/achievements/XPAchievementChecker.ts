@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceResponse, ErrorHandlingService, createSuccessResponse } from '@/services/common/ErrorHandlingService';
+import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { AchievementChecker } from './AchievementCheckerInterface';
 import { BaseAchievementChecker } from './BaseAchievementChecker';
 import { AchievementService } from '../AchievementService';
@@ -12,7 +12,6 @@ import { TransactionService } from '../../common/TransactionService';
 export class XPAchievementChecker extends BaseAchievementChecker implements AchievementChecker {
   /**
    * Check all achievements related to XP milestones
-   * Implementation of abstract method from BaseAchievementChecker (static version)
    */
   static async checkAchievements(
     userId: string, 
@@ -22,8 +21,6 @@ export class XPAchievementChecker extends BaseAchievementChecker implements Achi
       async () => {
         if (!userId) throw new Error('User ID is required');
         
-        const awardedAchievements: string[] = [];
-
         // Get user profile to get current XP if not provided
         let userXP = totalXP;
         let userLevel = 1;
@@ -41,24 +38,46 @@ export class XPAchievementChecker extends BaseAchievementChecker implements Achi
           userLevel = profile?.level || 1;
         }
 
+        // Get XP achievements from database
+        const { data: xpAchievements, error: achievementsError } = await supabase
+          .from('achievements')
+          .select('id, requirements')
+          .eq('category', 'xp')
+          .order('requirements->xp', { ascending: true });
+          
+        if (achievementsError) throw achievementsError;
+
+        // Get level achievements from database
+        const { data: levelAchievements, error: levelError } = await supabase
+          .from('achievements')
+          .select('id, requirements')
+          .eq('category', 'level')
+          .order('requirements->level', { ascending: true });
+          
+        if (levelError) throw levelError;
+
+        const awardedAchievements: string[] = [];
+
         // Use transaction service for consistency
         await TransactionService.executeWithRetry(
           async () => {
             // Award XP milestone achievements
-            if (userXP >= 1000) awardedAchievements.push('xp-1000');
-            if (userXP >= 5000) awardedAchievements.push('xp-5000');
-            if (userXP >= 10000) awardedAchievements.push('xp-10000');
-            if (userXP >= 50000) awardedAchievements.push('xp-50000');
-            if (userXP >= 100000) awardedAchievements.push('xp-100000');
+            xpAchievements.forEach(achievement => {
+              const requiredXP = achievement.requirements?.xp || 0;
+              if (userXP >= requiredXP) {
+                awardedAchievements.push(achievement.id);
+              }
+            });
 
-            // Level milestone achievements
-            if (userLevel >= 10) awardedAchievements.push('level-10');
-            if (userLevel >= 25) awardedAchievements.push('level-25');
-            if (userLevel >= 50) awardedAchievements.push('level-50');
-            if (userLevel >= 75) awardedAchievements.push('level-75');
-            if (userLevel >= 99) awardedAchievements.push('level-99');
+            // Award level milestone achievements
+            levelAchievements.forEach(achievement => {
+              const requiredLevel = achievement.requirements?.level || 0;
+              if (userLevel >= requiredLevel) {
+                awardedAchievements.push(achievement.id);
+              }
+            });
             
-            // Check all achievements in batch
+            // Check achievements in batch
             if (awardedAchievements.length > 0) {
               await AchievementService.checkAndAwardAchievements(userId, awardedAchievements);
             }
@@ -77,7 +96,6 @@ export class XPAchievementChecker extends BaseAchievementChecker implements Achi
 
   /**
    * Instance method implementation of the abstract method
-   * Acts as a bridge to the static method for interface conformance
    */
   async checkAchievements(
     userId: string,

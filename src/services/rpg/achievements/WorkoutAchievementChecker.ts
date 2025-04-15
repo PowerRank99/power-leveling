@@ -29,26 +29,31 @@ export class WorkoutAchievementChecker {
         );
       }
       
+      // Get relevant workout achievements from database
+      const { data: workoutAchievements, error: achievementsError } = await supabase
+        .from('achievements')
+        .select('id, requirements')
+        .eq('category', 'workout')
+        .order('requirements->count', { ascending: true });
+        
+      if (achievementsError) {
+        return createErrorResponse(
+          achievementsError.message,
+          `Failed to fetch workout achievements: ${achievementsError.message}`,
+          ErrorCategory.DATABASE
+        );
+      }
+      
       // Array to collect achievements that should be checked
       const achievementsToCheck: string[] = [];
       
-      // Basic workout achievements
-      if (stats.workouts_count === 1) {
-        achievementsToCheck.push('primeiro-treino');
-      }
-      
-      if (stats.workouts_count >= 7) {
-        achievementsToCheck.push('embalo-fitness');
-      }
-      
-      // Streak achievements
-      if (stats.streak >= 3) {
-        achievementsToCheck.push('trinca-poderosa');
-      }
-      
-      if (stats.streak >= 7) {
-        achievementsToCheck.push('semana-impecavel');
-      }
+      // Check each achievement's requirements
+      workoutAchievements.forEach(achievement => {
+        const requiredCount = achievement.requirements?.count || 0;
+        if (stats.workouts_count >= requiredCount) {
+          achievementsToCheck.push(achievement.id);
+        }
+      });
       
       // Check category-specific achievements
       await WorkoutCategoryChecker.checkWorkoutCategoryAchievements(userId, achievementsToCheck);
