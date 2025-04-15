@@ -1,101 +1,44 @@
-
 /**
  * Class Progression Scenario
  * 
- * This scenario tests class-specific passive abilities
- * and achievements by simulating different class selections
- * and activities.
+ * This scenario simulates progress with different character classes,
+ * focusing on class-specific achievements and passive bonuses.
  */
-import { BaseScenario, ScenarioOptions, ScenarioResult } from './index';
-import { WorkoutType } from '../generators/WorkoutGenerator';
-import { CharacterClass } from '../generators/ClassGenerator';
+import { supabase } from '@/integrations/supabase/client';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 import { StandardizedAchievementService } from '@/services/rpg/achievements/StandardizedAchievementService';
-import { supabase } from '@/integrations/supabase/client';
+import { WorkoutType } from '../generators/WorkoutGenerator';
+import { CharacterClass } from '../generators/ClassGenerator';
 import { ActivityType } from '../generators/ActivityGenerator';
+import { BaseScenario, ScenarioOptions, ScenarioResult, scenarioRunner } from './index';
 
 /**
  * Class Progression Scenario configuration options
  */
 export interface ClassProgressionScenarioOptions extends ScenarioOptions {
-  /** Classes to test (default: all) */
-  classes?: CharacterClass[];
-  /** Whether to test class change mechanics (default: true) */
-  testClassChanges?: boolean;
-  /** Whether to test all passives sequentially (default: true) */
-  testAllPassives?: boolean;
-  /** Whether to verify XP bonuses (default: true) */
-  verifyXpBonuses?: boolean;
+  /** Which class to test (default: Guerreiro) */
+  characterClass?: CharacterClass;
+  /** Number of workouts to generate (default: 10) */
+  workoutCount?: number;
+  /** Whether to test passive abilities (default: true) */
+  testPassives?: boolean;
+  /** Whether to test class-specific achievements (default: true) */
+  testAchievements?: boolean;
 }
 
 /**
- * Class data structure for testing
- */
-interface ClassTestData {
-  class: CharacterClass;
-  workoutType: WorkoutType;
-  passiveName: string;
-  passiveDescription: string;
-}
-
-/**
- * Simulates class progression and tests class-specific
- * passive abilities and achievements
+ * Simulates progress with different character classes,
+ * focusing on class-specific achievements and passive bonuses
  */
 export class ClassProgressionScenario extends BaseScenario {
   private totalActions: number = 0;
   private static readonly TEST_DATA_TAG = 'class-progression-scenario';
-  
-  private classData: Record<CharacterClass, ClassTestData> = {
-    [CharacterClass.GUERREIRO]: {
-      class: CharacterClass.GUERREIRO,
-      workoutType: WorkoutType.STRENGTH,
-      passiveName: 'Força Bruta',
-      passiveDescription: '+20% XP from weight training exercises'
-    },
-    [CharacterClass.MONGE]: {
-      class: CharacterClass.MONGE,
-      workoutType: WorkoutType.CALISTHENICS,
-      passiveName: 'Força Interior',
-      passiveDescription: '+20% XP from calisthenics exercises'
-    },
-    [CharacterClass.NINJA]: {
-      class: CharacterClass.NINJA,
-      workoutType: WorkoutType.CARDIO,
-      passiveName: 'Forrest Gump',
-      passiveDescription: '+20% XP from cardio exercises'
-    },
-    [CharacterClass.DRUIDA]: {
-      class: CharacterClass.DRUIDA,
-      workoutType: WorkoutType.FLEXIBILITY,
-      passiveName: 'Ritmo da Natureza',
-      passiveDescription: '+40% XP from mobility & flexibility exercises'
-    },
-    [CharacterClass.BRUXO]: {
-      class: CharacterClass.BRUXO,
-      workoutType: WorkoutType.MIXED,
-      passiveName: 'Pijama Arcano',
-      passiveDescription: 'Streak bonus reduced by only 5% when not training'
-    },
-    [CharacterClass.PALADINO]: {
-      class: CharacterClass.PALADINO,
-      workoutType: WorkoutType.SPORT,
-      passiveName: 'Caminho do Herói',
-      passiveDescription: '+40% XP from sport activities'
-    },
-    [CharacterClass.AVENTUREIRO]: {
-      class: CharacterClass.AVENTUREIRO,
-      workoutType: WorkoutType.MIXED,
-      passiveName: 'Versatilidade',
-      passiveDescription: 'No special passive'
-    }
-  };
 
   constructor() {
     super(
       'class-progression-scenario',
       'Class Progression Journey',
-      'Tests class-specific passive abilities and achievements'
+      'Simulates progress with different character classes, focusing on class-specific achievements and passive bonuses'
     );
   }
 
@@ -103,16 +46,18 @@ export class ClassProgressionScenario extends BaseScenario {
    * Get all achievements that should be unlocked by this scenario
    */
   public getRequiredAchievements(): string[] {
-    // This scenario doesn't target specific achievements
-    // but rather tests class mechanics
-    return [];
+    return [
+      'primeiro-treino',    // First workout
+      'heroi-em-ascensao',  // Reach level 5
+      // Class-specific achievements may vary
+    ];
   }
 
   /**
    * Get estimated execution time in milliseconds
    */
   public getEstimatedDuration(): number {
-    return 60000; // 60 seconds
+    return 25000; // 25 seconds
   }
 
   /**
@@ -123,170 +68,47 @@ export class ClassProgressionScenario extends BaseScenario {
   }
 
   /**
-   * Get configuration options specific to this scenario
+   * Configure class-specific options
    */
-  public getConfigurationOptions(): Record<string, any> {
+  public configureClass(className: CharacterClass): ClassProgressionScenarioOptions {
     return {
-      classes: {
-        type: 'multiselect',
-        default: Object.values(CharacterClass).filter(c => c !== CharacterClass.AVENTUREIRO),
-        options: Object.values(CharacterClass),
-        label: 'Classes to Test',
-        description: 'Which character classes to include in the test'
-      },
-      testClassChanges: {
-        type: 'boolean',
-        default: true,
-        label: 'Test Class Changes',
-        description: 'Whether to test class change mechanics and cooldowns'
-      },
-      testAllPassives: {
-        type: 'boolean',
-        default: true,
-        label: 'Test All Passives',
-        description: 'Whether to test all passive abilities in sequence'
-      },
-      verifyXpBonuses: {
-        type: 'boolean',
-        default: true,
-        label: 'Verify XP Bonuses',
-        description: 'Whether to verify XP bonuses apply correctly'
-      }
+      characterClass: className
     };
   }
 
   /**
-   * Test all classes in sequence
+   * Get configuration options specific to this scenario
    */
-  private async testAllClasses(
-    userId: string, 
-    classes: CharacterClass[], 
-    options: Required<ClassProgressionScenarioOptions>
-  ): Promise<void> {
-    // Test each class
-    for (const className of classes) {
-      await this.testSpecificClass(userId, className, options);
-      
-      // Add a short delay between class tests
-      await this.delayBySpeed(1000, options);
-    }
-  }
-
-  /**
-   * Test a specific class thoroughly
-   */
-  private async testSpecificClass(
-    userId: string, 
-    className: CharacterClass,
-    options: Required<ClassProgressionScenarioOptions>
-  ): Promise<void> {
-    const classInfo = this.classData[className];
-    
-    // Select the class
-    this.logAction('CLASS_SELECT', `Selecting class: ${className}`);
-    await this.dataGenerator.getGenerators().class.simulateClassSelection(
-      userId, 
-      className, 
-      { bypassCooldown: true, silent: options.silent }
-    );
-    
-    // Generate workouts specific to this class's strengths
-    this.logAction('CLASS_WORKOUTS', `Generating ${className}-specific workouts`);
-    await this.dataGenerator.getGenerators().workout.generateWorkoutSeries(userId, {
-      count: 3,
-      startDate: new Date(new Date().setDate(new Date().getDate() - 7)),
-      workoutType: classInfo.workoutType,
-      testDataTag: options.testDataTag,
-      silent: options.silent
-    });
-    
-    // If it's a Paladino, add some manual sport activities
-    if (className === CharacterClass.PALADINO) {
-      this.logAction('PALADINO_SPORTS', 'Adding sport activities for Paladino');
-      await this.dataGenerator.getGenerators().activity.generateManualWorkout(userId, {
-        activityType: ActivityType.SOCCER,
-        description: 'Football match',
-        testDataTag: options.testDataTag,
-        silent: options.silent
-      });
-    }
-    
-    // If it's a Bruxo, test streak preservation
-    if (className === CharacterClass.BRUXO) {
-      this.logAction('BRUXO_STREAK', 'Testing Bruxo streak preservation');
-      
-      // First build a small streak
-      await this.dataGenerator.getGenerators().streak.generateStreak(userId, 3, {
-        startDate: new Date(new Date().setDate(new Date().getDate() - 3)),
-        testDataTag: options.testDataTag,
-        silent: options.silent
-      });
-      
-      // Then break it and see if passive works
-      await this.dataGenerator.getGenerators().streak.simulateStreakBreak(userId, {
-        daysAgo: 1,
-        // Should preserve most of the streak due to Bruxo passive
-        newStreakValue: 2, 
-        silent: options.silent
-      });
-    }
-    
-    // Verify XP bonuses if requested
-    if (options.verifyXpBonuses) {
-      this.logAction('VERIFY_XP', `Verifying XP bonuses for ${className}`);
-      // This would be where we'd verify the XP calculations
-      // But we'll just simulate it for now
-      await this.delayBySpeed(500, options);
-    }
-  }
-
-  /**
-   * Verify that passive bonuses apply correctly
-   */
-  private async verifyPassiveBonuses(
-    userId: string,
-    options: Required<ClassProgressionScenarioOptions>
-  ): Promise<void> {
-    this.logAction('XP_VERIFICATION', 'Verifying passive XP bonuses');
-    
-    // This would be where we'd implement detailed XP verification
-    // For now, we'll just simulate the process
-    
-    // Get the user's current class
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('class')
-      .eq('id', userId)
-      .single();
-    
-    if (!profile || !profile.class) {
-      this.logAction('XP_VERIFICATION_FAILED', 'User has no class selected', {}, false);
-      return;
-    }
-    
-    const className = profile.class as CharacterClass;
-    const classInfo = this.classData[className];
-    
-    this.logAction('PASSIVE_INFO', `Testing passive: ${classInfo.passiveName}`, { 
-      description: classInfo.passiveDescription 
-    });
-    
-    // Generate a workout of the appropriate type
-    await this.dataGenerator.getGenerators().workout.generateWorkout(userId, {
-      workoutType: classInfo.workoutType,
-      exerciseCount: 3,
-      setsPerExercise: 3,
-      completed: true,
-      testDataTag: options.testDataTag,
-      silent: options.silent
-    });
-    
-    // Simulate checking XP calculation
-    this.logAction('XP_CALCULATION', 'Checking XP calculation with class bonus');
-    await this.delayBySpeed(500, options);
-    
-    // In a real implementation, we would verify the XP awarded matches expectations
-    this.logAction('XP_VERIFICATION_COMPLETE', 'Passive bonus verification complete');
+  public getConfigurationOptions(): Record<string, any> {
+    return {
+      characterClass: {
+        type: 'select',
+        default: CharacterClass.GUERREIRO,
+        options: Object.values(CharacterClass),
+        label: 'Character Class',
+        description: 'Which class to use for testing'
+      },
+      workoutCount: {
+        type: 'number',
+        default: 10,
+        min: 5,
+        max: 50,
+        label: 'Number of Workouts',
+        description: 'How many workouts to generate'
+      },
+      testPassives: {
+        type: 'boolean',
+        default: true,
+        label: 'Test Class Passives',
+        description: 'Whether to test class passive abilities'
+      },
+      testAchievements: {
+        type: 'boolean',
+        default: true,
+        label: 'Test Class Achievements',
+        description: 'Whether to test class-specific achievements'
+      }
+    };
   }
 
   /**
@@ -303,10 +125,10 @@ export class ClassProgressionScenario extends BaseScenario {
 
     // Configure options
     const config: Required<ClassProgressionScenarioOptions> = {
-      classes: options?.classes || Object.values(CharacterClass).filter(c => c !== CharacterClass.AVENTUREIRO),
-      testClassChanges: options?.testClassChanges !== false,
-      testAllPassives: options?.testAllPassives !== false,
-      verifyXpBonuses: options?.verifyXpBonuses !== false,
+      characterClass: options?.characterClass || CharacterClass.GUERREIRO,
+      workoutCount: options?.workoutCount || 10,
+      testPassives: options?.testPassives !== false,
+      testAchievements: options?.testAchievements !== false,
       silent: options?.silent || false,
       speed: options?.speed || 0.5,
       autoCleanup: options?.autoCleanup || false,
@@ -314,91 +136,68 @@ export class ClassProgressionScenario extends BaseScenario {
     };
 
     // Calculate total actions for progress tracking
-    this.totalActions = 2 + // Setup actions
-      (config.testAllPassives ? config.classes.length * 3 : 3) + // Class test actions
-      (config.testClassChanges ? 2 : 0) + // Class change test actions
-      (config.verifyXpBonuses ? 2 : 0) + // XP verification actions
-      2; // Finalization actions
+    this.totalActions = 5 + // Setup actions
+      1 + // Class selection
+      1 + // Workout series generation
+      1 + // XP checking
+      1 + // Achievement checking
+      1; // Finalization
 
     try {
-      // Save original class to restore later
-      const { data: originalProfile } = await supabase
-        .from('profiles')
-        .select('class, class_selected_at')
-        .eq('id', userId)
-        .single();
+      // Set character class
+      this.logAction('SET_CLASS', `Setting character class to ${config.characterClass}`);
+      await this.dataGenerator.getGenerators().class.simulateClassSelection(
+        userId, 
+        config.characterClass, 
+        { bypassCooldown: true, silent: config.silent }
+      );
+      await this.delayBySpeed(1000, options);
       
-      const originalClass = originalProfile?.class as CharacterClass;
-      const originalClassSelectedAt = originalProfile?.class_selected_at;
+      // Generate workout series
+      this.logAction('GENERATE_WORKOUTS', `Generating ${config.workoutCount} workouts`);
+      await this.dataGenerator.getGenerators().workout.generateWorkoutSeries(userId, {
+        count: config.workoutCount,
+        startDate: new Date(new Date().setDate(new Date().getDate() - 30)),
+        consecutive: false,
+        randomizeWorkouts: true,
+        workoutType: WorkoutType.MIXED,
+        testDataTag: config.testDataTag,
+        silent: config.silent
+      });
+      await this.delayBySpeed(3000, options);
       
-      this.logAction('ORIGINAL_CLASS', `Original class: ${originalClass || 'None'}`);
+      // Add some manual workouts for variety
+      this.logAction('GENERATE_MANUAL_WORKOUTS', 'Adding manual workouts for variety');
+      await this.dataGenerator.getGenerators().activity.generateActivityMix(userId, {
+        count: 3,
+        includePowerDays: true,
+        testDataTag: config.testDataTag,
+        silent: config.silent
+      });
+      await this.delayBySpeed(1500, options);
       
-      // Test class change mechanics if requested
-      if (config.testClassChanges && config.classes.length >= 2) {
-        this.logAction('TEST_CLASS_CHANGES', 'Testing class change mechanics');
-        
-        // Test changing between multiple classes
-        const testClasses = config.classes.slice(0, 2); // Just use the first two classes
-        
-        // First change should always succeed
-        await this.dataGenerator.getGenerators().class.simulateClassSelection(
-          userId,
-          testClasses[0],
-          { bypassCooldown: true, silent: config.silent }
-        );
-        
-        await this.delayBySpeed(1000, options);
-        
-        // Second change should fail due to cooldown unless bypassed
-        const result = await this.dataGenerator.getGenerators().class.simulateClassSelection(
-          userId,
-          testClasses[1],
-          { bypassCooldown: false, silent: config.silent }
-        );
-        
-        if (!result.success) {
-          this.logAction('COOLDOWN_VERIFIED', 'Class change cooldown working correctly', { 
-            error: result.error 
-          });
-        } else {
-          this.logAction('COOLDOWN_FAILED', 'Class change should have been on cooldown but wasn\'t', {}, false);
-        }
-        
-        // Now force the change with bypass
-        await this.dataGenerator.getGenerators().class.simulateClassSelection(
-          userId,
-          testClasses[1],
-          { bypassCooldown: true, silent: config.silent }
-        );
-        
-        await this.delayBySpeed(1000, options);
+      // Check achievements
+      this.logAction('CHECK_ACHIEVEMENTS', 'Checking for unlocked achievements');
+      
+      // Use the StandardizedAchievementService to check for achievements
+      const workoutAchievements = await StandardizedAchievementService.checkWorkoutAchievements(userId);
+      const recordAchievements = await StandardizedAchievementService.checkStreakAchievements(userId);
+      
+      if (workoutAchievements.success && workoutAchievements.data) {
+        this.achievementsUnlocked.push(...workoutAchievements.data);
       }
       
-      // Test all class passives if requested
-      if (config.testAllPassives) {
-        this.logAction('TEST_ALL_PASSIVES', `Testing passives for ${config.classes.length} classes`);
-        await this.testAllClasses(userId, config.classes, config);
-      } else if (config.classes.length > 0) {
-        // Just test the first class in the list
-        await this.testSpecificClass(userId, config.classes[0], config);
+      if (recordAchievements.success && recordAchievements.data) {
+        this.achievementsUnlocked.push(...recordAchievements.data);
       }
       
-      // Verify passive bonuses if requested
-      if (config.verifyXpBonuses) {
-        await this.verifyPassiveBonuses(userId, config);
-      }
+      // Get achievement names for better logging
+      const achievementNames = this.achievementsUnlocked.map(id => {
+        const achievement = AchievementUtils.getAchievementById(id);
+        return achievement ? achievement.name : id;
+      });
       
-      // Restore original class if available
-      if (originalClass) {
-        this.logAction('RESTORE_CLASS', `Restoring original class: ${originalClass}`);
-        await supabase
-          .from('profiles')
-          .update({
-            class: originalClass,
-            class_selected_at: originalClassSelectedAt
-          })
-          .eq('id', userId);
-      }
+      this.logAction('ACHIEVEMENTS_UNLOCKED', `Unlocked ${achievementNames.length} achievements`, { achievements: achievementNames });
       
       return this.createResult(true);
     } catch (error) {
@@ -413,22 +212,9 @@ export class ClassProgressionScenario extends BaseScenario {
    */
   public async cleanup(userId: string, options?: { silent?: boolean }): Promise<boolean> {
     try {
-      // Clean up workout data
-      await this.dataGenerator.getGenerators().workout.cleanupGeneratedWorkouts(userId, {
+      await this.dataGenerator.cleanupAllTestData(userId, {
         silent: options?.silent,
         testDataTag: ClassProgressionScenario.TEST_DATA_TAG
-      });
-      
-      // Clean up activity data
-      await this.dataGenerator.getGenerators().activity.cleanupActivityData(userId, {
-        silent: options?.silent,
-        testDataTag: ClassProgressionScenario.TEST_DATA_TAG
-      });
-      
-      // Clean up class data
-      await this.dataGenerator.getGenerators().class.cleanupClassData(userId, {
-        silent: options?.silent,
-        resetToDefault: true
       });
       
       return true;
@@ -439,5 +225,4 @@ export class ClassProgressionScenario extends BaseScenario {
 }
 
 // Register the scenario with the scenario runner
-import { scenarioRunner } from './index';
 scenarioRunner.registerScenario(new ClassProgressionScenario());

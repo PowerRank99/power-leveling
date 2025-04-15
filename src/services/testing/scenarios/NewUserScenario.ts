@@ -1,4 +1,3 @@
-
 /**
  * New User Scenario
  * 
@@ -6,12 +5,12 @@
  * the initial achievements they would earn when starting to use the app.
  */
 import { supabase } from '@/integrations/supabase/client';
-import { BaseScenario, ScenarioOptions, ScenarioResult } from './index';
-import { WorkoutType } from '../generators/WorkoutGenerator';
-import { CharacterClass } from '../generators/ClassGenerator';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 import { StandardizedAchievementService } from '@/services/rpg/achievements/StandardizedAchievementService';
+import { WorkoutType } from '../generators/WorkoutGenerator';
+import { CharacterClass } from '../generators/ClassGenerator';
 import { ActivityType } from '../generators/ActivityGenerator';
+import { BaseScenario, ScenarioOptions, ScenarioResult, scenarioRunner } from './index';
 
 /**
  * New User Scenario configuration options
@@ -278,5 +277,4 @@ export class NewUserScenario extends BaseScenario {
 }
 
 // Register the scenario with the scenario runner
-import { scenarioRunner } from './index';
 scenarioRunner.registerScenario(new NewUserScenario());

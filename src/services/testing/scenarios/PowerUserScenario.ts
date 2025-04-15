@@ -1,3 +1,4 @@
+
 /**
  * Power User Scenario
  * 
@@ -5,13 +6,13 @@
  * trains and sets new personal records, focusing on mid to
  * high-tier achievements.
  */
-import { BaseScenario, ScenarioOptions, ScenarioResult } from './index';
-import { WorkoutType } from '../generators/WorkoutGenerator';
-import { PRProgressionOptions } from '../generators/PRGenerator';
-import { CharacterClass } from '../generators/ClassGenerator';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 import { StandardizedAchievementService } from '@/services/rpg/achievements/StandardizedAchievementService';
 import { supabase } from '@/integrations/supabase/client';
+import { WorkoutType } from '../generators/WorkoutGenerator';
+import { PRProgressionOptions } from '../generators/PRGenerator';
+import { CharacterClass } from '../generators/ClassGenerator';
+import { BaseScenario, ScenarioOptions, ScenarioResult, scenarioRunner } from './index';
 
 /**
  * Power User Scenario configuration options
@@ -330,5 +331,4 @@ export class PowerUserScenario extends BaseScenario {
 }
 
 // Register the scenario with the scenario runner
-import { scenarioRunner } from './index';
 scenarioRunner.registerScenario(new PowerUserScenario());

@@ -1,15 +1,16 @@
+
 /**
  * Completionist Scenario
  * 
  * This scenario attempts to unlock all achievements systematically,
  * from basic to advanced, optimizing the user journey.
  */
-import { BaseScenario, ScenarioOptions, ScenarioResult } from './index';
-import { WorkoutType } from '../generators/WorkoutGenerator';
-import { CharacterClass } from '../generators/ClassGenerator';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 import { StandardizedAchievementService } from '@/services/rpg/achievements/StandardizedAchievementService';
+import { WorkoutType } from '../generators/WorkoutGenerator';
+import { CharacterClass } from '../generators/ClassGenerator';
 import { AchievementRank, AchievementCategory } from '@/types/achievementTypes';
+import { BaseScenario, ScenarioOptions, ScenarioResult, scenarioRunner } from './index';
 
 /**
  * Completionist Scenario configuration options
@@ -351,5 +352,4 @@ export class CompletionistScenario extends BaseScenario {
 }
 
 // Register the scenario with the scenario runner
-import { scenarioRunner } from './index';
 scenarioRunner.registerScenario(new CompletionistScenario());

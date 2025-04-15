@@ -408,12 +408,17 @@ export class ScenarioRunner {
   }
 }
 
-// Export individual scenario classes
-export * from './NewUserScenario';
-export * from './PowerUserScenario';
-export * from './StreakScenario';
-export * from './ClassProgressionScenario';
-export * from './CompletionistScenario';
-
 // Create and export a singleton instance of ScenarioRunner
 export const scenarioRunner = new ScenarioRunner();
+
+// Important: Move these imports to the bottom to avoid circular dependencies
+// This is the key fix - by moving these imports after the class definitions
+// TypeScript/JavaScript will properly resolve the dependencies
+
+// Export individual scenario classes after the main definitions
+// This avoids circular dependencies
+import './NewUserScenario';
+import './PowerUserScenario';
+import './StreakScenario';
+import './ClassProgressionScenario';
+import './CompletionistScenario';
