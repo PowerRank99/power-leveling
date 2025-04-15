@@ -333,7 +333,7 @@ const TemplateGenerationSystem: React.FC = () => {
           await generators.activity.generateActivityMix(userId, {
             count: template.config.activities.count || 3,
             includePowerDays: template.config.activities.includePowerDays || false,
-            powerDays: 1,
+            maxPowerDays: template.config.activities.powerDayCount || 1,
             testDataTag: `template-${template.id}`
           });
         }

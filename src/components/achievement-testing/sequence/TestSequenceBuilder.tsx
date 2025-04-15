@@ -9,10 +9,20 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, ChevronRight, Play, Plus, Save, Trash2, Check, Edit, Copy } from 'lucide-react';
+import { 
+  ChevronDown, ChevronRight, Play, Plus, Save, Trash2, 
+  Check, Edit, Copy, GripVertical, X, ListOrdered 
+} from 'lucide-react';
+import { 
+  Dialog, DialogContent, DialogDescription, DialogFooter, 
+  DialogHeader, DialogTitle, DialogTrigger 
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { 
+  DragDropContext, Droppable, Draggable 
+} from '@hello-pangea/dnd';
 import { useTestingDashboard } from '@/contexts/TestingDashboardContext';
 
-// Define Test Sequence types
 interface TestStep {
   id: string;
   type: 'achievement' | 'workout' | 'manual_workout' | 'pr' | 'guild' | 'class' | 'pause';
@@ -46,26 +56,22 @@ const TestSequenceBuilder: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newStepType, setNewStepType] = useState<TestStep['type']>('achievement');
   
-  // Save sequences to localStorage
   const saveSequences = (updatedSequences: TestSequence[]) => {
     localStorage.setItem('achievement-test-sequences', JSON.stringify(updatedSequences));
     setSequences(updatedSequences);
   };
   
-  // Save current sequence
   const saveCurrentSequence = () => {
     const updatedSequences = sequences.filter(seq => seq.id !== currentSequence.id);
     updatedSequences.push({...currentSequence, createdAt: new Date()});
     saveSequences(updatedSequences);
   };
   
-  // Load a sequence for editing
   const loadSequence = (sequence: TestSequence) => {
     setCurrentSequence(sequence);
     setActiveTab('builder');
   };
   
-  // Create a new sequence
   const createNewSequence = () => {
     setCurrentSequence({
       id: crypto.randomUUID(),
@@ -77,7 +83,6 @@ const TestSequenceBuilder: React.FC = () => {
     setActiveTab('builder');
   };
   
-  // Delete a sequence
   const deleteSequence = (id: string) => {
     const updatedSequences = sequences.filter(seq => seq.id !== id);
     saveSequences(updatedSequences);
@@ -86,7 +91,6 @@ const TestSequenceBuilder: React.FC = () => {
     }
   };
   
-  // Add a step to the sequence
   const addStep = (step: TestStep) => {
     setCurrentSequence(prev => ({
       ...prev,
@@ -95,7 +99,6 @@ const TestSequenceBuilder: React.FC = () => {
     setIsDialogOpen(false);
   };
   
-  // Remove a step from the sequence
   const removeStep = (stepId: string) => {
     setCurrentSequence(prev => ({
       ...prev,
@@ -103,7 +106,6 @@ const TestSequenceBuilder: React.FC = () => {
     }));
   };
   
-  // Handle drag and drop reordering
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
     
@@ -117,7 +119,6 @@ const TestSequenceBuilder: React.FC = () => {
     }));
   };
   
-  // Create a new step based on type
   const createNewStep = () => {
     let newStep: TestStep = {
       id: crypto.randomUUID(),
@@ -172,7 +173,6 @@ const TestSequenceBuilder: React.FC = () => {
     addStep(newStep);
   };
   
-  // Render step configuration based on type
   const renderStepConfig = (step: TestStep, index: number) => {
     switch(step.type) {
       case 'achievement':
@@ -274,8 +274,6 @@ const TestSequenceBuilder: React.FC = () => {
             />
           </div>
         );
-      
-      // Additional config options for other step types can be added here
       
       default:
         return (
