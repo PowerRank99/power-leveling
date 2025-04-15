@@ -40,7 +40,9 @@ const TestingDashboard: React.FC<TestingDashboardProps> = ({
 }) => {
   useEffect(() => {
     // Initialize achievement ID mapping
-    AchievementIdMappingService.initialize();
+    AchievementIdMappingService.initialize().catch(error => {
+      console.error('Failed to initialize achievement mapping:', error);
+    });
   }, []);
 
   return (
