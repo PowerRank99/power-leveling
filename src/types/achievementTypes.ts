@@ -17,7 +17,13 @@ export enum AchievementCategory {
   SPORTS = 'sports',
   MOBILITY = 'mobility',
   CLASS = 'class',
-  COMBO = 'combo'
+  COMBO = 'combo',
+  POWER_DAY = 'power_day',
+  CONSISTENCY = 'consistency',
+  ACTIVITY = 'activity',
+  EXERCISE_VARIETY = 'exercise_variety',
+  ACHIEVEMENT = 'achievement',
+  SOCIAL = 'social'
 }
 
 export enum AchievementRank {
@@ -33,12 +39,19 @@ export enum AchievementRank {
 /**
  * Type guard and conversion functions for safer enum handling
  */
+/**
+ * Enhanced type guard for category validation with error handling
+ */
 export const isValidCategory = (category: string): category is AchievementCategory => {
-  // Case insensitive check for more robust handling
-  const normalizedInput = category.toLowerCase().replace(/[^a-z0-9]/g, '_');
-  return Object.values(AchievementCategory)
-    .map(c => c.toLowerCase())
-    .includes(normalizedInput);
+  try {
+    const normalizedInput = category.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    return Object.values(AchievementCategory)
+      .map(c => c.toLowerCase())
+      .includes(normalizedInput);
+  } catch (error) {
+    console.error(`Invalid achievement category format: ${category}`, error);
+    return false;
+  }
 };
 
 export const isValidRank = (rank: string): rank is AchievementRank => {
@@ -49,13 +62,21 @@ export const isValidRank = (rank: string): rank is AchievementRank => {
     .includes(normalizedInput);
 };
 
+/**
+ * Enhanced safe conversion function with fallback and logging
+ */
 export const toAchievementCategory = (category: string): AchievementCategory => {
-  const normalized = category.toLowerCase().replace(/[^a-z0-9]/g, '_');
-  if (isValidCategory(normalized)) {
-    return normalized as AchievementCategory;
+  try {
+    const normalized = category.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    if (isValidCategory(normalized)) {
+      return normalized as AchievementCategory;
+    }
+    console.warn(`Invalid achievement category: ${category}, defaulting to MILESTONE`);
+    return AchievementCategory.MILESTONE;
+  } catch (error) {
+    console.error(`Error converting achievement category: ${category}`, error);
+    return AchievementCategory.MILESTONE;
   }
-  console.warn(`Invalid achievement category: ${category}, defaulting to MILESTONE`);
-  return AchievementCategory.MILESTONE;
 };
 
 export const toAchievementRank = (rank: string): AchievementRank => {

@@ -1,4 +1,3 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AchievementProgressService } from '@/services/rpg/achievements/AchievementProgressService';
 import { supabase } from '@/integrations/supabase/client';
@@ -80,7 +79,6 @@ describe('AchievementProgressService', () => {
         is_complete: false
       };
       
-      // Mock the ProgressBaseService.getProgress method
       vi.mocked(ProgressBaseService.getProgress).mockResolvedValue({ 
         success: true, 
         data: {
@@ -91,7 +89,6 @@ describe('AchievementProgressService', () => {
         }
       });
 
-      // Now we call a method that exists on the service via the facade
       const result = await AchievementProgressService.getAchievementProgress(
         mockUserId,
         mockAchievementId
@@ -102,13 +99,11 @@ describe('AchievementProgressService', () => {
     });
 
     it('should handle missing progress data', async () => {
-      // Mock the response for null data
       vi.mocked(ProgressBaseService.getProgress).mockResolvedValue({
         success: true,
         data: null
       });
 
-      // Use the correct method
       const result = await AchievementProgressService.getAchievementProgress(
         mockUserId,
         mockAchievementId
