@@ -1,3 +1,4 @@
+
 /**
  * Activity Data Generator
  * Simulates manual workout submissions with different activity types
@@ -132,7 +133,7 @@ export class ActivityGenerator {
       } = options;
 
       // Create the manual workout within a transaction
-      const result = await TransactionService.executeInTransaction(async () => {
+      const transactionResult = await TransactionService.executeInTransaction(async () => {
         // Create the manual workout record
         const { data: workout, error: workoutError } = await supabase
           .from('manual_workouts')
@@ -204,13 +205,18 @@ export class ActivityGenerator {
         };
       }, 'generate_test_manual_workout');
 
-      if (!silent && result.success) {
+      if (!silent && transactionResult.success) {
         toast.success('Test manual workout generated', {
           description: `Created ${activityType} activity${isPowerDay ? ' (Power Day)' : ''}`
         });
       }
 
-      return result;
+      // Return a properly typed result
+      return {
+        success: transactionResult.success,
+        error: transactionResult.error ? String(transactionResult.error) : undefined,
+        activityIds: transactionResult.success && transactionResult.data ? transactionResult.data.activityIds : undefined
+      };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error generating manual workout';
       if (!options.silent) {
@@ -355,7 +361,6 @@ export class ActivityGenerator {
         });
       }
 
-      // Return the result directly without using ServiceResponse
       return {
         success: true,
         activityIds

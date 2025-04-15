@@ -1,3 +1,4 @@
+
 /**
  * Personal Record Data Generator
  * Simulates personal records for exercises
@@ -113,7 +114,7 @@ export class PRGenerator {
       } = options;
 
       // Create the PR within a transaction
-      const result = await TransactionService.executeInTransaction(async () => {
+      const transactionResult = await TransactionService.executeInTransaction(async () => {
         // Insert or update the PR
         const { data: pr, error: prError } = await supabase
           .from('personal_records')
@@ -153,13 +154,18 @@ export class PRGenerator {
         };
       }, 'generate_test_pr');
 
-      if (!silent && result.success) {
+      if (!silent && transactionResult.success) {
         toast.success('Test PR generated', {
           description: `Created PR of ${weight}kg (previous: ${previousWeight}kg)`
         });
       }
 
-      return result;
+      // Return a properly typed result
+      return {
+        success: transactionResult.success,
+        error: transactionResult.error ? String(transactionResult.error) : undefined,
+        prIds: transactionResult.success && transactionResult.data ? transactionResult.data.prIds : undefined
+      };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error generating PR';
       if (!options.silent) {

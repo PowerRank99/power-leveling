@@ -150,7 +150,7 @@ export class WorkoutGenerator {
       } = options;
 
       // Execute within a transaction for data consistency
-      const result = await TransactionService.executeInTransaction(async () => {
+      const transactionResult = await TransactionService.executeInTransaction(async () => {
         // Step 1: Get exercise IDs if not provided
         let workoutExerciseIds = [...exerciseIds];
         if (workoutExerciseIds.length === 0) {
@@ -265,13 +265,19 @@ export class WorkoutGenerator {
         };
       }, 'generate_test_workout');
 
-      if (!silent && result.success) {
+      if (!silent && transactionResult.success) {
         toast.success('Test workout generated', {
           description: `Created workout with ${exerciseCount} exercises`
         });
       }
 
-      return result;
+      // Return a properly typed result
+      return {
+        success: transactionResult.success,
+        error: transactionResult.error ? String(transactionResult.error) : undefined,
+        workoutIds: transactionResult.success && transactionResult.data ? transactionResult.data.workoutIds : undefined,
+        prIds: transactionResult.success && transactionResult.data ? transactionResult.data.prIds : undefined
+      };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error generating workout';
       if (!options.silent) {
