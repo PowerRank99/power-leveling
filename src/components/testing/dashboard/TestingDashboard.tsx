@@ -1,8 +1,9 @@
-
 import React from 'react';
 import TestCoverageStats from './TestCoverageStats';
 import RecentTestResults from './RecentTestResults';
 import QuickActions from './QuickActions';
+import { useEffect } from 'react';
+import { AchievementIdMappingService } from '@/services/testing/AchievementIdMappingService';
 
 interface TestingDashboardProps {
   stats: {
@@ -37,6 +38,11 @@ const TestingDashboard: React.FC<TestingDashboardProps> = ({
   onExportResults,
   isLoading
 }) => {
+  useEffect(() => {
+    // Initialize achievement ID mapping
+    AchievementIdMappingService.initialize();
+  }, []);
+
   return (
     <div className="space-y-6">
       <TestCoverageStats stats={stats} />

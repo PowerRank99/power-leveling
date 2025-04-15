@@ -9,8 +9,8 @@ import { XPService } from '@/services/rpg/XPService';
 import { UnifiedAchievementChecker } from '@/services/rpg/achievements/UnifiedAchievementChecker';
 import { TransactionService } from '@/services/common/TransactionService';
 import { TestCoverageService, TestCoverageReport } from './TestCoverageService';
+import { AchievementIdMappingService } from '@/services/common/AchievementIdMappingService';
 
-// Define interfaces for the testing service
 export interface AchievementTestResult {
   achievementId: string;
   name: string;
@@ -51,7 +51,6 @@ export type AchievementTestResultCallback = (result: AchievementTestResult) => v
  * Allows systematic testing of all achievement types in the system
  */
 export class AchievementTestingService {
-  // Default test configuration
   private static readonly DEFAULT_CONFIG: AchievementTestConfig = {
     cleanup: true,
     useTransaction: true,
@@ -82,37 +81,22 @@ export class AchievementTestingService {
     this.config = { ...AchievementTestingService.DEFAULT_CONFIG, ...config };
   }
 
-  /**
-   * Set the test user ID
-   */
   setTestUserId(userId: string): void {
     this.testUserId = userId;
   }
 
-  /**
-   * Update test configuration
-   */
   updateConfig(config: Partial<AchievementTestConfig>): void {
     this.config = { ...this.config, ...config };
   }
 
-  /**
-   * Set progress callback
-   */
   onProgress(callback: AchievementTestProgressCallback): void {
     this.progressCallback = callback;
   }
 
-  /**
-   * Set result callback
-   */
   onResult(callback: AchievementTestResultCallback): void {
     this.resultCallback = callback;
   }
 
-  /**
-   * Run tests for all achievements matching the current configuration
-   */
   async runAllTests(): Promise<ServiceResponse<AchievementTestResult[]>> {
     if (!this.testUserId) {
       return createErrorResponse(
@@ -129,10 +113,8 @@ export class AchievementTestingService {
     }
 
     try {
-      // Clear previous coverage data
       TestCoverageService.clearCoverage();
 
-      // Initialize test session
       this.testSessionStartTime = new Date();
       this.results = [];
       this.progress = {
@@ -147,7 +129,6 @@ export class AchievementTestingService {
       this.progress.total = achievements.length;
       this.updateProgress();
 
-      // Run tests using transactions if configured
       if (this.config.useTransaction) {
         await supabase.rpc('begin_transaction');
       }
@@ -185,7 +166,6 @@ export class AchievementTestingService {
         throw error;
       }
 
-      // Generate coverage report
       const coverageReport = TestCoverageService.generateCoverageReport();
       console.log('Test Coverage Report:', coverageReport);
 
@@ -205,9 +185,6 @@ export class AchievementTestingService {
     }
   }
 
-  /**
-   * Run test for a specific achievement
-   */
   async testAchievement(achievementId: string): Promise<AchievementTestResult> {
     if (!this.testUserId) {
       throw new Error('Test user ID not set');
@@ -223,7 +200,11 @@ export class AchievementTestingService {
         throw new Error(`Achievement with ID ${achievementId} not found`);
       }
 
-      // Initialize result
+      const databaseId = AchievementIdMappingService.getUuid(achievementId);
+      if (!databaseId) {
+        throw new Error(`No database mapping found for achievement ID ${achievementId}`);
+      }
+
       const result: AchievementTestResult = {
         achievementId,
         name: achievement.name,
@@ -234,29 +215,26 @@ export class AchievementTestingService {
         testedAt: new Date(),
       };
 
-      // Check if achievement is already awarded to avoid false positives
-      await this.cleanupExistingAchievement(achievementId);
+      await this.cleanupExistingAchievement(databaseId);
 
-      // Use transaction if configured
       if (this.config.useTransaction) {
         await TransactionService.executeWithRetry(
           async () => {
-            await this.executeAchievementTest(achievementId);
+            await this.executeAchievementTest(databaseId);
           },
-          `test_achievement_${achievementId}`,
+          `test_achievement_${databaseId}`,
           this.config.maxRetries,
           `Failed to test achievement ${achievementId}`
         );
       } else {
-        await this.executeAchievementTest(achievementId);
+        await this.executeAchievementTest(databaseId);
       }
 
-      // Verify achievement was awarded
       const { data: userAchievements, error: fetchError } = await supabase
         .from('user_achievements')
         .select('id')
         .eq('user_id', this.testUserId)
-        .eq('achievement_id', achievementId)
+        .eq('achievement_id', databaseId)
         .maybeSingle();
 
       if (fetchError) {
@@ -268,16 +246,14 @@ export class AchievementTestingService {
         errorMessage = 'Achievement was not awarded after test actions';
       }
 
-      // Update result
       result.success = success;
       if (!success) {
         result.errorMessage = errorMessage;
       }
       result.testDurationMs = Date.now() - startTime;
 
-      // Clean up if needed
       if (this.config.cleanup && success) {
-        await this.cleanupExistingAchievement(achievementId);
+        await this.cleanupExistingAchievement(databaseId);
       }
 
       if (this.config.verbose) {
@@ -305,9 +281,6 @@ export class AchievementTestingService {
     }
   }
 
-  /**
-   * Get test report with enhanced metrics
-   */
   getTestReport(): {
     summary: {
       total: number;
@@ -342,68 +315,49 @@ export class AchievementTestingService {
     };
   }
 
-  /**
-   * Run tests for achievements in a specific category
-   */
   async runCategoryTests(category: AchievementCategory): Promise<ServiceResponse<AchievementTestResult[]>> {
     const previousConfig = { ...this.config };
     this.config.categories = [category];
     
     const result = await this.runAllTests();
     
-    // Restore previous config
     this.config = previousConfig;
     return result;
   }
 
-  /**
-   * Run tests for achievements of a specific rank
-   */
   async runRankTests(rank: AchievementRank): Promise<ServiceResponse<AchievementTestResult[]>> {
     const previousConfig = { ...this.config };
     this.config.ranks = [rank];
     
     const result = await this.runAllTests();
     
-    // Restore previous config
     this.config = previousConfig;
     return result;
   }
 
-  // ----- Private helper methods -----
-
-  /**
-   * Update progress and notify callback if set
-   */
   private updateProgress(): void {
     if (this.progressCallback) {
       this.progressCallback({ ...this.progress });
     }
   }
 
-  /**
-   * Get achievements to test based on current configuration
-   */
   private getAchievementsToTest(): { id: string; name: string }[] {
     const allAchievements = AchievementUtils.getAllAchievements();
     
     return allAchievements
       .filter(a => {
-        // Filter by category if specified
         if (this.config.categories && this.config.categories.length > 0) {
           if (!this.config.categories.includes(a.category as AchievementCategory)) {
             return false;
           }
         }
         
-        // Filter by rank if specified
         if (this.config.ranks && this.config.ranks.length > 0) {
           if (!this.config.ranks.includes(a.rank as AchievementRank)) {
             return false;
           }
         }
         
-        // Filter included/excluded achievements
         if (this.config.includedAchievements && this.config.includedAchievements.length > 0) {
           return this.config.includedAchievements.includes(a.id);
         }
@@ -417,13 +371,9 @@ export class AchievementTestingService {
       .map(a => ({ id: a.id, name: a.name }));
   }
 
-  /**
-   * Clean up existing achievement to prepare for testing
-   */
   private async cleanupExistingAchievement(achievementId: string): Promise<void> {
     if (!this.testUserId) return;
 
-    // Remove the achievement if it already exists
     const { error } = await supabase
       .from('user_achievements')
       .delete()
@@ -434,7 +384,6 @@ export class AchievementTestingService {
       console.warn(`[AchievementTestingService] Error cleaning up achievement: ${error.message}`);
     }
 
-    // Clear achievement progress
     const { error: progressError } = await supabase
       .from('achievement_progress')
       .delete()
@@ -446,9 +395,6 @@ export class AchievementTestingService {
     }
   }
 
-  /**
-   * Execute the specific test actions for an achievement
-   */
   private async executeAchievementTest(achievementId: string): Promise<void> {
     if (!this.testUserId) {
       throw new Error('Test user ID not set');
@@ -485,21 +431,15 @@ export class AchievementTestingService {
         await this.testGuildAchievement(achievement);
         break;
       default:
-        // Try to force award the achievement directly
         await AchievementService.awardAchievement(this.testUserId, achievementId);
     }
 
-    // Force check for achievement
     await UnifiedAchievementChecker.processCompletedWorkout(this.testUserId);
   }
 
-  /**
-   * Test workout-related achievement
-   */
   private async testWorkoutAchievement(achievement: any): Promise<void> {
     if (!this.testUserId) return;
 
-    // Implementation for "primeiro-treino" (first workout) achievement
     if (achievement.id === 'primeiro-treino') {
       await this.simulateWorkout(this.testUserId, {
         exerciseCount: 1,
@@ -509,11 +449,9 @@ export class AchievementTestingService {
       return;
     }
 
-    // Implementation for total workout count achievements
     if (achievement.id === 'total-7' || achievement.id.includes('total-')) {
       const requiredCount = parseInt(achievement.id.split('-')[1], 10) || 7;
       
-      // Get current count
       const { data: profile } = await supabase
         .from('profiles')
         .select('workouts_count')
@@ -523,7 +461,6 @@ export class AchievementTestingService {
       const currentCount = profile?.workouts_count || 0;
       const neededWorkouts = Math.max(1, requiredCount - currentCount);
       
-      // Simulate needed workouts
       for (let i = 0; i < neededWorkouts; i++) {
         await this.simulateWorkout(this.testUserId, {
           exerciseCount: 1,
@@ -534,7 +471,6 @@ export class AchievementTestingService {
       return;
     }
 
-    // For all other workout achievements, simulate a standard workout
     await this.simulateWorkout(this.testUserId, {
       exerciseCount: 3,
       setCount: 4,
@@ -542,16 +478,11 @@ export class AchievementTestingService {
     });
   }
 
-  /**
-   * Test streak-related achievement
-   */
   private async testStreakAchievement(achievement: any): Promise<void> {
     if (!this.testUserId) return;
 
-    // Get the required streak from the achievement ID (e.g., streak-7)
     const requiredStreak = parseInt(achievement.id.split('-')[1], 10) || 3;
     
-    // Update the user's streak directly in the database
     const { error } = await supabase
       .from('profiles')
       .update({ streak: requiredStreak })
@@ -561,7 +492,6 @@ export class AchievementTestingService {
       throw new Error(`Error updating streak: ${error.message}`);
     }
     
-    // Simulate a workout to trigger achievement check
     await this.simulateWorkout(this.testUserId, {
       exerciseCount: 1,
       setCount: 3,
@@ -569,15 +499,10 @@ export class AchievementTestingService {
     });
   }
 
-  /**
-   * Test record-related achievement
-   */
   private async testRecordAchievement(achievement: any): Promise<void> {
     if (!this.testUserId) return;
 
-    // Create exercise for testing if PR is first
     if (achievement.id === 'pr-first') {
-      // Create a personal record
       const { data: exercise } = await supabase
         .from('exercises')
         .select('id')
@@ -605,11 +530,9 @@ export class AchievementTestingService {
       return;
     }
     
-    // For multi-record achievements (PR count)
     if (achievement.id.startsWith('pr-') && !isNaN(parseInt(achievement.id.split('-')[1], 10))) {
       const requiredCount = parseInt(achievement.id.split('-')[1], 10);
       
-      // Get exercises for multiple PRs
       const { data: exercises } = await supabase
         .from('exercises')
         .select('id')
@@ -619,13 +542,11 @@ export class AchievementTestingService {
         throw new Error(`Not enough exercises found for PR test (needed ${requiredCount})`);
       }
       
-      // Delete existing PRs
       await supabase
         .from('personal_records')
         .delete()
         .eq('user_id', this.testUserId);
       
-      // Create multiple PRs
       for (let i = 0; i < requiredCount; i++) {
         await supabase
           .from('personal_records')
@@ -638,7 +559,6 @@ export class AchievementTestingService {
           });
       }
       
-      // Update PR count in profile
       await supabase
         .from('profiles')
         .update({ records_count: requiredCount })
@@ -648,21 +568,15 @@ export class AchievementTestingService {
     }
   }
 
-  /**
-   * Test manual workout achievement
-   */
   private async testManualWorkoutAchievement(achievement: any): Promise<void> {
     if (!this.testUserId) return;
 
-    // For example: diario-do-suor (3 manual workouts)
     if (achievement.id === 'diario-do-suor') {
-      // Delete existing manual workouts
       await supabase
         .from('manual_workouts')
         .delete()
         .eq('user_id', this.testUserId);
       
-      // Create 3 manual workouts
       for (let i = 0; i < 3; i++) {
         await supabase
           .from('manual_workouts')
@@ -679,17 +593,14 @@ export class AchievementTestingService {
       return;
     }
     
-    // For other manual workout count achievements
     if (achievement.id.includes('manual-')) {
       const requiredCount = parseInt(achievement.id.split('-')[1], 10) || 5;
       
-      // Delete existing manual workouts
       await supabase
         .from('manual_workouts')
         .delete()
         .eq('user_id', this.testUserId);
       
-      // Create required manual workouts
       for (let i = 0; i < requiredCount; i++) {
         await supabase
           .from('manual_workouts')
@@ -707,16 +618,11 @@ export class AchievementTestingService {
     }
   }
 
-  /**
-   * Test XP achievement
-   */
   private async testXPAchievement(achievement: any): Promise<void> {
     if (!this.testUserId) return;
 
-    // Extract required XP from achievement ID
     const requiredXP = parseInt(achievement.id.split('-')[1], 10) || 1000;
     
-    // Update XP directly in profile
     const { error } = await supabase
       .from('profiles')
       .update({ xp: requiredXP })
@@ -726,20 +632,14 @@ export class AchievementTestingService {
       throw new Error(`Error updating XP: ${error.message}`);
     }
     
-    // Award a small amount of XP to trigger achievement check
     await XPService.awardXP(this.testUserId, 10, 'achievement_test');
   }
 
-  /**
-   * Test level achievement
-   */
   private async testLevelAchievement(achievement: any): Promise<void> {
     if (!this.testUserId) return;
 
-    // Extract required level from achievement ID
     const requiredLevel = parseInt(achievement.id.split('-')[1], 10) || 5;
     
-    // Update level directly in profile
     const { error } = await supabase
       .from('profiles')
       .update({ level: requiredLevel })
@@ -749,7 +649,6 @@ export class AchievementTestingService {
       throw new Error(`Error updating level: ${error.message}`);
     }
     
-    // Simulate a workout to trigger achievement check
     await this.simulateWorkout(this.testUserId, {
       exerciseCount: 1,
       setCount: 1,
@@ -757,15 +656,10 @@ export class AchievementTestingService {
     });
   }
 
-  /**
-   * Test variety achievement
-   */
   private async testVarietyAchievement(achievement: any): Promise<void> {
     if (!this.testUserId) return;
 
-    // For variety-3 (3 types of workouts)
     if (achievement.id === 'variety-3') {
-      // Create 3 different types of workouts
       const workoutTypes = ['strength', 'cardio', 'flexibility'];
       
       for (const type of workoutTypes) {
@@ -779,7 +673,6 @@ export class AchievementTestingService {
       return;
     }
     
-    // For other variety achievements
     await this.simulateWorkout(this.testUserId, {
       exerciseCount: 5,
       setCount: 3,
@@ -788,15 +681,10 @@ export class AchievementTestingService {
     });
   }
 
-  /**
-   * Test guild achievement
-   */
   private async testGuildAchievement(achievement: any): Promise<void> {
     if (!this.testUserId) return;
 
-    // For first-guild (join first guild)
     if (achievement.id === 'primeira-guilda') {
-      // Create a guild if needed
       let guildId: string;
       
       const { data: existingGuilds } = await supabase
@@ -807,7 +695,6 @@ export class AchievementTestingService {
       if (existingGuilds && existingGuilds.length > 0) {
         guildId = existingGuilds[0].id;
       } else {
-        // Create a test guild
         const { data: newGuild, error } = await supabase
           .from('guilds')
           .insert({
@@ -825,13 +712,11 @@ export class AchievementTestingService {
         guildId = newGuild.id;
       }
       
-      // Delete any existing guild memberships
       await supabase
         .from('guild_members')
         .delete()
         .eq('user_id', this.testUserId);
       
-      // Join the guild
       await supabase
         .from('guild_members')
         .insert({
@@ -843,17 +728,13 @@ export class AchievementTestingService {
       return;
     }
     
-    // For multiple-guilds (join 3+ guilds)
     if (achievement.id === 'multiple-guilds') {
-      // Delete any existing guild memberships
       await supabase
         .from('guild_members')
         .delete()
         .eq('user_id', this.testUserId);
       
-      // Create 3 guilds if needed
       for (let i = 0; i < 3; i++) {
-        // Create a test guild
         const { data: newGuild, error } = await supabase
           .from('guilds')
           .insert({
@@ -868,7 +749,6 @@ export class AchievementTestingService {
           throw new Error(`Error creating test guild: ${error?.message}`);
         }
         
-        // Join the guild
         await supabase
           .from('guild_members')
           .insert({
@@ -882,9 +762,6 @@ export class AchievementTestingService {
     }
   }
 
-  /**
-   * Simulate a workout with the given parameters
-   */
   private async simulateWorkout(
     userId: string, 
     params: {
@@ -897,7 +774,6 @@ export class AchievementTestingService {
     const now = new Date();
     const startedAt = new Date(now.getTime() - params.durationMinutes * 60 * 1000);
     
-    // Create the workout
     const { data: workout, error } = await supabase
       .from('workouts')
       .insert({
@@ -913,7 +789,6 @@ export class AchievementTestingService {
       throw new Error(`Error creating workout: ${error?.message}`);
     }
     
-    // Determine type of exercises to use
     let exerciseQuery = supabase.from('exercises').select('id, name, type');
     
     if (params.exerciseType === 'strength') {
@@ -924,14 +799,12 @@ export class AchievementTestingService {
       exerciseQuery = exerciseQuery.in('type', EXERCISE_TYPES.FLEXIBILITY);
     }
     
-    // Get exercises
     const { data: exercises } = await exerciseQuery.limit(params.exerciseCount);
     
     if (!exercises || exercises.length < params.exerciseCount) {
       throw new Error(`Not enough exercises of type ${params.exerciseType} found`);
     }
     
-    // Create sets for each exercise
     for (let i = 0; i < exercises.length; i++) {
       for (let j = 0; j < params.setCount; j++) {
         await supabase
@@ -948,7 +821,6 @@ export class AchievementTestingService {
       }
     }
     
-    // Update profile stats
     await supabase.rpc('increment_profile_counter', {
       user_id_param: userId,
       counter_name: 'workouts_count',
@@ -966,25 +838,17 @@ export class AchievementTestingService {
   }
 }
 
-// Export specific category test runners for convenience
+AchievementIdMappingService.initialize().catch(console.error);
+
 export const AchievementTestRunners = {
-  /**
-   * Run workout achievement tests
-   */
   workouts: async (service: AchievementTestingService): Promise<ServiceResponse<AchievementTestResult[]>> => {
     return service.runCategoryTests(AchievementCategory.WORKOUT);
   },
   
-  /**
-   * Run streak achievement tests
-   */
   streaks: async (service: AchievementTestingService): Promise<ServiceResponse<AchievementTestResult[]>> => {
     return service.runCategoryTests(AchievementCategory.STREAK);
   },
   
-  /**
-   * Run rank-specific tests
-   */
   ranks: {
     rankE: async (service: AchievementTestingService): Promise<ServiceResponse<AchievementTestResult[]>> => {
       return service.runRankTests(AchievementRank.E);
