@@ -1,7 +1,7 @@
 
 import { ServiceResponse, ErrorHandlingService, createSuccessResponse } from '@/services/common/ErrorHandlingService';
 import { AchievementProgressService } from '../AchievementProgressService';
-import { AchievementUtils } from '@/constants/achievements';
+import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 
 /**
  * Service for initializing achievements for new users
@@ -15,9 +15,7 @@ export class AchievementInitializationService {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
         // Get all achievements from centralized definitions
-        const achievements = AchievementUtils.getAllAchievements().map(def => 
-          AchievementUtils.convertToAchievement(def)
-        );
+        const achievements = await AchievementUtils.getAllAchievements();
         
         // Initialize progress tracking for all achievements
         await AchievementProgressService.initializeMultipleProgress(userId, achievements);

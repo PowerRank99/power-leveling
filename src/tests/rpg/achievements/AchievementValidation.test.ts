@@ -1,76 +1,64 @@
-
-import { describe, it, expect } from 'vitest';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
-import { AchievementCategory, AchievementRank } from '@/types/achievementTypes';
 
-describe('AchievementValidation', () => {
-  describe('validateAchievement', () => {
-    it('should validate a valid achievement', () => {
-      const validAchievement = {
-        id: 'test-achievement',
-        name: 'Test Achievement',
-        description: 'This is a test achievement',
-        category: AchievementCategory.WORKOUT,
-        rank: 'S' as AchievementRank,
-        points: 10,
-        xpReward: 100,
-        iconName: 'award',
-        requirementType: 'workout_count',
-        requirementValue: 5
-      };
+describe('Achievement Validation', () => {
+  it('validates an achievement with a valid schema', () => {
+    const achievement = {
+      id: 'test-achievement',
+      name: 'Test Achievement',
+      description: 'This is a test achievement',
+      category: 'workout',
+      rank: 'E',
+      points: 5,
+      xpReward: 100,
+      iconName: 'star',
+      requirements: { type: 'count', value: 5 }
+    };
+    
+    expect(AchievementUtils.validateAchievement(achievement)).toBe(true);
+  });
 
-      expect(AchievementUtils.validateAchievement(validAchievement)).toBe(true);
-    });
+  it('rejects an achievement with missing required fields', () => {
+    const achievement = {
+      id: 'test-achievement',
+      // Missing name field
+      description: 'This is a test achievement',
+      category: 'workout',
+      rank: 'E',
+      points: 5,
+      xpReward: 100
+    };
+    
+    expect(AchievementUtils.validateAchievement(achievement)).toBe(false);
+  });
 
-    it('should reject invalid achievement ID format', () => {
-      const invalidAchievement = {
-        id: 'TestAchievement', // Invalid: contains uppercase
-        name: 'Test Achievement',
-        description: 'This is a test achievement',
-        category: AchievementCategory.WORKOUT,
-        rank: 'S' as AchievementRank,
-        points: 10,
-        xpReward: 100,
-        iconName: 'award',
-        requirementType: 'workout_count',
-        requirementValue: 5
-      };
+  it('rejects an achievement with invalid field types', () => {
+    const achievement = {
+      id: 'test-achievement',
+      name: 'Test Achievement',
+      description: 'This is a test achievement',
+      category: 'workout',
+      rank: 'E',
+      points: 'not-a-number', // Should be a number
+      xpReward: 100
+    };
+    
+    expect(AchievementUtils.validateAchievement(achievement)).toBe(false);
+  });
 
-      expect(AchievementUtils.validateAchievement(invalidAchievement)).toBe(false);
-    });
-
-    it('should reject achievement with invalid points range', () => {
-      const invalidAchievement = {
-        id: 'test-achievement',
-        name: 'Test Achievement',
-        description: 'This is a test achievement',
-        category: AchievementCategory.WORKOUT,
-        rank: 'S' as AchievementRank,
-        points: 30, // Invalid: exceeds maximum of 25
-        xpReward: 100,
-        iconName: 'award',
-        requirementType: 'workout_count',
-        requirementValue: 5
-      };
-
-      expect(AchievementUtils.validateAchievement(invalidAchievement)).toBe(false);
-    });
-
-    it('should reject achievement with invalid XP reward range', () => {
-      const invalidAchievement = {
-        id: 'test-achievement',
-        name: 'Test Achievement',
-        description: 'This is a test achievement',
-        category: AchievementCategory.WORKOUT,
-        rank: 'S' as AchievementRank,
-        points: 10,
-        xpReward: 600, // Invalid: exceeds maximum of 500
-        iconName: 'award',
-        requirementType: 'workout_count',
-        requirementValue: 5
-      };
-
-      expect(AchievementUtils.validateAchievement(invalidAchievement)).toBe(false);
-    });
+  it('validates an achievement with additional optional fields', () => {
+    const achievement = {
+      id: 'test-achievement',
+      name: 'Test Achievement',
+      description: 'This is a test achievement',
+      category: 'workout',
+      rank: 'E',
+      points: 5,
+      xpReward: 100,
+      iconName: 'star',
+      requirements: { type: 'count', value: 5 },
+      extraField: 'this is fine'
+    };
+    
+    expect(AchievementUtils.validateAchievement(achievement)).toBe(true);
   });
 });

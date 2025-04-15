@@ -195,7 +195,7 @@ export class AchievementTestingService {
     let errorMessage = '';
 
     try {
-      const achievement = AchievementUtils.getAchievementById(achievementId);
+      const achievement = await AchievementUtils.getAchievementByStringId(achievementId);
       if (!achievement) {
         throw new Error(`Achievement with ID ${achievementId} not found`);
       }
@@ -207,9 +207,9 @@ export class AchievementTestingService {
 
       const result: AchievementTestResult = {
         achievementId,
-        name: achievement.name,
-        category: achievement.category as AchievementCategory,
-        rank: achievement.rank as AchievementRank,
+        name: (await AchievementUtils.getAchievementByStringId(achievementId))?.name || achievementId,
+        category: (await AchievementUtils.getAchievementByStringId(achievementId))?.category as AchievementCategory || AchievementCategory.WORKOUT,
+        rank: (await AchievementUtils.getAchievementByStringId(achievementId))?.rank as AchievementRank || AchievementRank.E,
         success: false,
         testDurationMs: 0,
         testedAt: new Date(),
@@ -270,9 +270,9 @@ export class AchievementTestingService {
 
       return {
         achievementId,
-        name: AchievementUtils.getAchievementById(achievementId)?.name || achievementId,
-        category: AchievementUtils.getAchievementById(achievementId)?.category as AchievementCategory || AchievementCategory.WORKOUT,
-        rank: AchievementUtils.getAchievementById(achievementId)?.rank as AchievementRank || AchievementRank.E,
+        name: (await AchievementUtils.getAchievementByStringId(achievementId))?.name || achievementId,
+        category: (await AchievementUtils.getAchievementByStringId(achievementId))?.category as AchievementCategory || AchievementCategory.WORKOUT,
+        rank: (await AchievementUtils.getAchievementByStringId(achievementId))?.rank as AchievementRank || AchievementRank.E,
         success: false,
         errorMessage: errorMsg,
         testDurationMs: Date.now() - startTime,
@@ -342,7 +342,7 @@ export class AchievementTestingService {
   }
 
   private getAchievementsToTest(): { id: string; name: string }[] {
-    const allAchievements = AchievementUtils.getAllAchievements();
+    const allAchievements = AchievementUtils.getAllAchievementsSync();
     
     return allAchievements
       .filter(a => {
@@ -400,7 +400,7 @@ export class AchievementTestingService {
       throw new Error('Test user ID not set');
     }
 
-    const achievement = AchievementUtils.getAchievementById(achievementId);
+    const achievement = await AchievementUtils.getAchievementByStringId(achievementId);
     if (!achievement) {
       throw new Error(`Achievement with ID ${achievementId} not found`);
     }

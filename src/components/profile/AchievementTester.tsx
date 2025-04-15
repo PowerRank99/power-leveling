@@ -1,17 +1,29 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Trophy } from 'lucide-react';
 import { achievementPopupStore } from '@/stores/achievementPopupStore';
-import { AchievementUtils } from '@/constants/AchievementDefinitions';
+import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 import { Achievement, AchievementCategory } from '@/types/achievementTypes';
 
 const AchievementTester: React.FC = () => {
   const { showAchievement } = achievementPopupStore();
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  
+  // Load achievements when component mounts
+  useEffect(() => {
+    const loadAchievements = async () => {
+      const loadedAchievements = await AchievementUtils.getAllAchievements();
+      setAchievements(loadedAchievements);
+    };
+    
+    loadAchievements();
+  }, []);
   
   const testAchievement = () => {
-    // Get a real achievement definition from our centralized system
-    const achievements = AchievementUtils.getAllAchievements();
+    if (achievements.length === 0) return;
+    
+    // Get a random achievement from our loaded achievements
     const randomIndex = Math.floor(Math.random() * achievements.length);
     const achievementDef = achievements[randomIndex];
     
@@ -25,9 +37,9 @@ const AchievementTester: React.FC = () => {
       points: achievementDef.points,
       xpReward: achievementDef.xpReward,
       iconName: achievementDef.iconName || 'award',
-      requirements: {
-        type: achievementDef.requirementType,
-        value: achievementDef.requirementValue
+      requirements: achievementDef.requirements || {
+        type: 'generic',
+        value: 1
       },
       metadata: {
         bonusText: "Excede o limite diário"
@@ -42,6 +54,7 @@ const AchievementTester: React.FC = () => {
       <Button 
         onClick={testAchievement} 
         className="bg-arcane hover:bg-arcane-60 flex items-center"
+        disabled={achievements.length === 0}
       >
         <Trophy className="mr-2 h-4 w-4" />
         Testar Conquista Aleatória

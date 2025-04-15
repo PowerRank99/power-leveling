@@ -72,6 +72,7 @@ export class TestCoverageService {
       };
     }
     
+    // Use the sync version to avoid Promise issues
     const allAchievements = this.cachedAchievements;
     
     const byCategory: Record<AchievementCategory, { total: number; tested: number; coverage: number }> = 
@@ -113,6 +114,6 @@ export class TestCoverageService {
    * Initialize the service by preloading achievements
    */
   static async initialize(): Promise<void> {
-    await this.getAllAchievements();
+    this.cachedAchievements = await this.getAllAchievements();
   }
 }
