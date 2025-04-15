@@ -1,35 +1,26 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { AchievementIdentifierService } from '@/services/rpg/achievements/AchievementIdentifierService';
 
+/**
+ * @deprecated Use AchievementIdentifierService instead
+ */
 export class AchievementIdMappingService {
   private static initialized = false;
   private static mappingCache: Map<string, string> = new Map();
 
   /**
-   * Initialize the mapping service - loads mappings from achievements table
-   * @returns A promise that resolves when initialization is complete
+   * @deprecated Use AchievementIdentifierService.getIdByStringId instead
    */
   static async initialize(): Promise<void> {
+    console.warn('AchievementIdMappingService is deprecated. Use AchievementIdentifierService instead.');
     if (this.initialized) return;
 
     try {
-      const { data, error } = await supabase
-        .from('achievements')
-        .select('id, string_id');
-      
-      if (error) throw error;
-      
-      if (data) {
-        this.mappingCache.clear();
-        data.forEach(achievement => {
-          if (achievement.string_id && achievement.id) {
-            this.mappingCache.set(achievement.string_id, achievement.id);
-          }
-        });
+      const result = await AchievementIdentifierService.convertToIds(Array.from(this.mappingCache.keys()));
+      if (result.success) {
+        this.initialized = true;
       }
-      
-      this.initialized = true;
-      console.log(`Achievement ID mapping initialized with ${this.mappingCache.size} entries`);
     } catch (error) {
       console.error('Failed to initialize achievement ID mappings:', error);
       throw error;
@@ -37,56 +28,38 @@ export class AchievementIdMappingService {
   }
 
   /**
-   * Legacy method for backward compatibility
-   * Now returns cached UUID from the database-sourced mapping
+   * @deprecated Use AchievementIdentifierService.getIdByStringId instead
    */
   static getUuid(stringId: string): string | undefined {
+    console.warn('getUuid is deprecated. Use AchievementIdentifierService.getIdByStringId instead.');
     return this.mappingCache.get(stringId);
   }
 
   /**
-   * Legacy method for backward compatibility
-   * Now queries the achievements table directly
+   * @deprecated Use AchievementIdentifierService.getIdByStringId instead
    */
   static async getUuidAsync(stringId: string): Promise<string | undefined> {
-    // Check cache first for performance
-    const cachedId = this.mappingCache.get(stringId);
-    if (cachedId) return cachedId;
-    
-    // If not in cache, query the database
-    const { data, error } = await supabase
-      .from('achievements')
-      .select('id')
-      .eq('string_id', stringId)
-      .single();
-    
-    if (error || !data) {
-      console.warn(`No mapping found for achievement ID: ${stringId}`);
-      return undefined;
-    }
-    
-    // Update cache with the result
-    this.mappingCache.set(stringId, data.id);
-    return data.id;
+    console.warn('getUuidAsync is deprecated. Use AchievementIdentifierService.getIdByStringId instead.');
+    const result = await AchievementIdentifierService.getIdByStringId(stringId);
+    return result.success ? result.data : undefined;
   }
 
   /**
-   * Deprecated: Kept for potential legacy code compatibility
-   * Will be removed in future versions
+   * @deprecated Use AchievementIdentifierService directly
    */
   static getAllMappings(): Map<string, string> {
-    console.warn('getAllMappings() is deprecated and will be removed');
+    console.warn('getAllMappings is deprecated. Use AchievementIdentifierService directly.');
     return new Map(this.mappingCache);
   }
 
   /**
-   * Validates the mappings by checking for unmapped achievements
+   * @deprecated Validation is now handled by AchievementIdentifierService
    */
   static validateMappings(): { 
     unmapped: string[]; 
     missingDatabaseEntries: string[] 
   } {
-    console.warn('validateMappings() is deprecated');
+    console.warn('validateMappings is deprecated. Use AchievementIdentifierService.validateRequiredAchievements instead.');
     return { unmapped: [], missingDatabaseEntries: [] };
   }
 }
