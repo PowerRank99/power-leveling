@@ -30,11 +30,11 @@ export class AchievementFetchService {
           count(*)
         `)
         .eq('user_achievements.user_id', userId)
-        .join('user_achievements', { 
-          sourceColumn: 'id',
-          targetColumn: 'achievement_id',
-          foreignTable: 'user_achievements'
-        })
+        .in('id', supabase
+          .from('user_achievements')
+          .select('achievement_id')
+          .eq('user_id', userId)
+        )
         .group_by('rank');
         
       if (error) throw error;
