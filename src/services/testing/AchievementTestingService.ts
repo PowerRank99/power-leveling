@@ -5,15 +5,14 @@ import {
 } from '@/types/achievementTypes';
 
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
+import { ServiceResponse, createSuccessResponse, createErrorResponse } from '@/services/common/ErrorHandlingService';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 import { EXERCISE_TYPES } from '@/services/rpg/constants/exerciseTypes';
 import { XPService } from '@/services/rpg/XPService';
 import { UnifiedAchievementChecker } from '@/services/rpg/achievements/UnifiedAchievementChecker';
 import { TransactionService } from '@/services/common/TransactionService';
-import { TestCoverageService, TestCoverageReport } from './TestCoverageService';
-import { AchievementIdMappingService } from '@/services/common/AchievementIdMappingService';
+import { TestCoverageService } from './TestCoverageService';
 
 export interface AchievementTestResult {
   achievementId: string;
