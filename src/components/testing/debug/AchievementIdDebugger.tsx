@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +7,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AchievementStandardizationService } from '@/services/common/AchievementStandardizationService';
 import { AchievementIdMappingService } from '@/services/common/AchievementIdMappingService';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner'; // Using sonner instead of react-toastify
 
 interface StandardizationResult {
   valid: string[];
@@ -166,8 +167,8 @@ export function AchievementIdDebugger() {
               {results.suggestions.map((suggestion, index) => (
                 <Alert 
                   key={index} 
-                  variant={suggestion.issue.includes('Automatic match') ? 'success' : 'default'}
-                  className="text-sm"
+                  variant={suggestion.issue.includes('Automatic match') ? 'default' : 'default'}
+                  className={`text-sm ${suggestion.issue.includes('Automatic match') ? 'border-green-500/30 bg-green-500/10' : ''}`}
                 >
                   <AlertTitle>{suggestion.id}</AlertTitle>
                   <AlertDescription>
