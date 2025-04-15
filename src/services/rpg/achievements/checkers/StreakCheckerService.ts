@@ -1,17 +1,11 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
+import { ServiceResponse } from '@/services/common/ErrorHandlingService';
 import { BaseAchievementChecker } from './BaseAchievementChecker';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { TransactionService } from '@/services/common/TransactionService';
 
-/**
- * Service specifically for checking streak-related achievements
- */
 export class StreakCheckerService extends BaseAchievementChecker {
-  /**
-   * Check streak-related achievements
-   */
   async checkAchievements(userId: string): Promise<ServiceResponse<string[]>> {
     return this.executeWithErrorHandling(
       async () => {
@@ -28,17 +22,16 @@ export class StreakCheckerService extends BaseAchievementChecker {
         if (!profile) throw new Error('Profile not found');
 
         // Get streak achievements from database
-        const { data: streakAchievements, error: achievementsError } = await supabase
-          .from('achievements')
-          .select('id, requirements')
-          .eq('category', 'streak')
-          .order('requirements->days', { ascending: true });
+        const { data: streakAchievements, error: achievementsError } = await this.fetchAchievementsByCategory(
+          'streak',
+          'requirements->days'
+        );
           
         if (achievementsError) throw achievementsError;
+        if (!streakAchievements) return [];
 
         const awardedAchievements: string[] = [];
 
-        // Use transaction service for consistency
         await TransactionService.executeWithRetry(
           async () => {
             // Check each achievement's requirements
@@ -50,13 +43,12 @@ export class StreakCheckerService extends BaseAchievementChecker {
             });
             
             // Update streak achievement progress
-            // Just pass the current streak and let the service handle the rest
             if (profile.streak > 0) {
               await AchievementService.updateAchievementProgress(
                 userId,
-                'streak-achievement',
+                'streak',
                 profile.streak,
-                profile.streak + 5,
+                Math.max(profile.streak + 5, 7),
                 false
               );
             }
@@ -78,9 +70,6 @@ export class StreakCheckerService extends BaseAchievementChecker {
     );
   }
 
-  /**
-   * Static method to check streak achievements
-   */
   static async checkStreakAchievements(userId: string): Promise<ServiceResponse<string[]>> {
     const checker = new StreakCheckerService();
     return checker.checkAchievements(userId);

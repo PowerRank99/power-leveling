@@ -2,6 +2,7 @@
 import { ServiceResponse, ErrorHandlingService, createSuccessResponse } from '@/services/common/ErrorHandlingService';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { AchievementCategory, AchievementRank } from '@/types/achievementTypes';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Base abstract class for all specialized achievement checkers
@@ -10,24 +11,33 @@ import { AchievementCategory, AchievementRank } from '@/types/achievementTypes';
 export abstract class BaseAchievementChecker {
   /**
    * Abstract method that must be implemented by all checker classes
-   * Performs the specific achievement checks for a given category 
    */
   abstract checkAchievements(userId: string, data?: any): Promise<ServiceResponse<string[]>>;
   
   /**
-   * Helper method to check achievements based on rank and category
+   * Helper method to fetch achievements by category
    */
-  protected async checkCategoryAchievements(
-    userId: string, 
-    rank: AchievementRank,
-    category: AchievementCategory,
-    currentValue: number
-  ): Promise<string[]> {
-    const achievementsToCheck: string[] = [];
+  protected async fetchAchievementsByCategory(
+    category: string,
+    orderBy?: string,
+    additionalFilters?: Record<string, any>
+  ): Promise<{ data: any[] | null; error: any }> {
+    let query = supabase
+      .from('achievements')
+      .select('*')
+      .eq('category', category);
     
-    // Check for achievements in the specified category and rank
+    if (orderBy) {
+      query = query.order(orderBy, { ascending: true });
+    }
     
-    return achievementsToCheck;
+    if (additionalFilters) {
+      Object.entries(additionalFilters).forEach(([key, value]) => {
+        query = query.eq(key, value);
+      });
+    }
+    
+    return query;
   }
   
   /**
@@ -55,6 +65,6 @@ export abstract class BaseAchievementChecker {
     if (!achievementIds.length) return [];
     
     const result = await AchievementService.checkAndAwardAchievements(userId, achievementIds);
-    return result.success && Array.isArray(result.data) ? result.data || [] : [];
+    return result.success && Array.isArray(result.data) ? result.data : [];
   }
 }

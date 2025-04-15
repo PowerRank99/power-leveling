@@ -1,17 +1,11 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
+import { ServiceResponse } from '@/services/common/ErrorHandlingService';
 import { BaseAchievementChecker } from './BaseAchievementChecker';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { TransactionService } from '@/services/common/TransactionService';
 
-/**
- * Service specifically for checking workout-related achievements
- */
 export class WorkoutCheckerService extends BaseAchievementChecker {
-  /**
-   * Implementation of abstract method from BaseAchievementChecker
-   */
   async checkAchievements(userId: string): Promise<ServiceResponse<string[]>> {
     return this.executeWithErrorHandling(
       async () => {
@@ -20,7 +14,7 @@ export class WorkoutCheckerService extends BaseAchievementChecker {
         // Get user's workout stats
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('workouts_count, streak')
+          .select('workouts_count')
           .eq('id', userId)
           .maybeSingle();
           
@@ -28,17 +22,16 @@ export class WorkoutCheckerService extends BaseAchievementChecker {
         if (!profile) throw new Error('Profile not found');
         
         // Get workout achievements from database
-        const { data: workoutAchievements, error: achievementsError } = await supabase
-          .from('achievements')
-          .select('id, requirements')
-          .eq('category', 'workout')
-          .order('requirements->count', { ascending: true });
+        const { data: workoutAchievements, error: achievementsError } = await this.fetchAchievementsByCategory(
+          'workout',
+          'requirements->count'
+        );
           
         if (achievementsError) throw achievementsError;
+        if (!workoutAchievements) return [];
 
         const awardedAchievements: string[] = [];
 
-        // Use transaction service for consistency
         await TransactionService.executeWithRetry(
           async () => {
             // Check each achievement's requirements
@@ -50,14 +43,13 @@ export class WorkoutCheckerService extends BaseAchievementChecker {
             });
             
             // Update workout count progress
-            // Just pass the current count and an appropriate target
             if (profile.workouts_count > 0) {
               await AchievementService.updateAchievementProgress(
                 userId,
-                'workout-count-achievement', // achievementId
-                profile.workouts_count,      // currentValue
-                Math.max(profile.workouts_count + 5, 10), // targetValue
-                false                        // isComplete
+                'workout',
+                profile.workouts_count,
+                Math.max(profile.workouts_count + 5, 10),
+                false
               );
             }
             
@@ -78,9 +70,6 @@ export class WorkoutCheckerService extends BaseAchievementChecker {
     );
   }
 
-  /**
-   * Static method to check workout-related achievements
-   */
   static async checkWorkoutAchievements(userId: string): Promise<ServiceResponse<string[]>> {
     const checker = new WorkoutCheckerService();
     return checker.checkAchievements(userId);
