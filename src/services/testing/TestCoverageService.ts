@@ -1,4 +1,3 @@
-
 import { Achievement, AchievementCategory } from '@/types/achievementTypes';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 
@@ -52,12 +51,12 @@ export class TestCoverageService {
   }
 
   /**
-   * Generate coverage report
+   * Generate coverage report with improved type safety
    */
   static generateCoverageReport(): TestCoverageReport {
     // If we don't have cached achievements yet, return an empty report
     if (!this.cachedAchievements) {
-      // Initialize with empty data
+      // Initialize with empty data for all categories
       const emptyCategoryStats = Object.values(AchievementCategory).reduce((acc, category) => ({
         ...acc,
         [category]: { total: 0, tested: 0, coverage: 0 }

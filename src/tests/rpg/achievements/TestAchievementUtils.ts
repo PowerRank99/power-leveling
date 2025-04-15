@@ -28,8 +28,10 @@ export class TestAchievementUtils {
       points: rawData.points,
       xpReward: rawData.xp_reward,
       iconName: rawData.icon_name,
-      requirements: rawData.requirements,
-      stringId: rawData.string_id
+      requirements: {
+        type: rawData.requirements?.type || 'count', 
+        value: rawData.requirements?.value || 0
+      }
     };
   }
 }

@@ -1,36 +1,16 @@
 
-import { AchievementCategory, AchievementRank } from './achievementTypes';
+import { AchievementCategory, AchievementRank, toAchievementCategory, toAchievementRank } from './achievementTypes';
 
 /**
- * Maps database category strings to TypeScript enum values
+ * Maps database category strings to TypeScript enum values with improved safety
  */
 export const mapToAchievementCategory = (category: string): AchievementCategory => {
-  const normalizedCategory = category.toLowerCase();
-  const validCategory = Object.values(AchievementCategory).find(
-    c => c.toLowerCase() === normalizedCategory
-  );
-  
-  if (!validCategory) {
-    console.warn(`Invalid achievement category: ${category}, defaulting to milestone`);
-    return AchievementCategory.MILESTONE;
-  }
-  
-  return validCategory;
+  return toAchievementCategory(category.toLowerCase());
 };
 
 /**
- * Maps database rank strings to TypeScript enum values
+ * Maps database rank strings to TypeScript enum values with improved safety
  */
 export const mapToAchievementRank = (rank: string): AchievementRank => {
-  const normalizedRank = rank.toUpperCase();
-  const validRank = Object.values(AchievementRank).find(
-    r => r.toUpperCase() === normalizedRank
-  );
-  
-  if (!validRank) {
-    console.warn(`Invalid achievement rank: ${rank}, defaulting to unranked`);
-    return AchievementRank.UNRANKED;
-  }
-  
-  return validRank;
+  return toAchievementRank(rank.toUpperCase());
 };
