@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,10 +14,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { testDataGenerator } from '@/services/testing/generators/TestDataGeneratorService';
-import { useTestingDashboard } from '@/contexts/TestingDashboardContext';
-import { CharacterClass } from '@/services/testing/generators/ClassGenerator';
 import { toast } from 'sonner';
+import { useTestingDashboard } from '@/contexts/TestingDashboardContext';
+import { testDataGenerator } from '@/services/testing/generators/TestDataGeneratorService';
+import { CharacterClass } from '@/services/testing/generators/ClassGenerator';
+import { supabaseClient } from '@/lib/supabase';
 
 // Define test data template types
 interface DataTemplate {
@@ -134,11 +134,9 @@ const TemplateGenerationSystem: React.FC = () => {
   const { userId } = useTestingDashboard();
   const [activeTab, setActiveTab] = useState('templates');
   const [templates, setTemplates] = useState<DataTemplate[]>(() => {
-    // Load custom templates from localStorage
     const savedTemplates = localStorage.getItem('test-data-templates');
     const customTemplates = savedTemplates ? JSON.parse(savedTemplates) : [];
     
-    // Combine with preset templates
     return [...PRESET_TEMPLATES, ...customTemplates];
   });
   
@@ -148,7 +146,6 @@ const TemplateGenerationSystem: React.FC = () => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Extract all unique tags from templates
   const allTags = React.useMemo(() => {
     const tagSet = new Set<string>();
     templates.forEach(template => {
@@ -157,16 +154,13 @@ const TemplateGenerationSystem: React.FC = () => {
     return Array.from(tagSet);
   }, [templates]);
   
-  // Filter templates based on search and tags
   const filteredTemplates = React.useMemo(() => {
     return templates.filter(template => {
-      // Filter by search query
       const matchesSearch = 
         searchQuery === '' || 
         template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         template.description.toLowerCase().includes(searchQuery.toLowerCase());
       
-      // Filter by selected tags
       const matchesTags = 
         selectedTags.length === 0 || 
         selectedTags.some(tag => template.tags.includes(tag));
@@ -175,7 +169,6 @@ const TemplateGenerationSystem: React.FC = () => {
     });
   }, [templates, searchQuery, selectedTags]);
   
-  // Group templates by category
   const templatesByCategory = React.useMemo(() => {
     const grouped: Record<string, DataTemplate[]> = {
       mixed: [],
@@ -195,23 +188,18 @@ const TemplateGenerationSystem: React.FC = () => {
       }
     });
     
-    // Remove empty categories
     return Object.fromEntries(
       Object.entries(grouped).filter(([_, templates]) => templates.length > 0)
     );
   }, [filteredTemplates]);
   
-  // Save templates to localStorage
   const saveTemplates = (updatedTemplates: DataTemplate[]) => {
-    // Separate custom templates from preset templates
     const customTemplates = updatedTemplates.filter(t => t.type === 'custom');
     localStorage.setItem('test-data-templates', JSON.stringify(customTemplates));
     
-    // Update state with all templates
     setTemplates([...PRESET_TEMPLATES, ...customTemplates]);
   };
   
-  // Create a new template
   const createTemplate = () => {
     const newTemplate: DataTemplate = {
       id: crypto.randomUUID(),
@@ -229,7 +217,6 @@ const TemplateGenerationSystem: React.FC = () => {
     setActiveTab('editor');
   };
   
-  // Save the current template
   const saveTemplate = () => {
     if (!currentTemplate) return;
     
@@ -241,14 +228,12 @@ const TemplateGenerationSystem: React.FC = () => {
     toast.success('Template saved successfully');
   };
   
-  // Edit a template
   const editTemplate = (template: DataTemplate) => {
     setCurrentTemplate({...template});
     setEditMode(true);
     setActiveTab('editor');
   };
   
-  // Delete a template
   const deleteTemplate = (templateId: string) => {
     const updatedTemplates = templates.filter(t => t.id !== templateId);
     saveTemplates(updatedTemplates);
@@ -261,7 +246,6 @@ const TemplateGenerationSystem: React.FC = () => {
     toast.success('Template deleted');
   };
   
-  // Duplicate a template
   const duplicateTemplate = (template: DataTemplate) => {
     const newTemplate: DataTemplate = {
       ...template,
@@ -276,7 +260,6 @@ const TemplateGenerationSystem: React.FC = () => {
     toast.success('Template duplicated');
   };
   
-  // Run a template to generate data
   const runTemplate = async (template: DataTemplate) => {
     if (!userId) {
       toast.error('User ID is required');
@@ -286,7 +269,6 @@ const TemplateGenerationSystem: React.FC = () => {
     setIsGenerating(true);
     
     try {
-      // Example implementation - replace with actual code that uses your data generators
       const generators = testDataGenerator.getGenerators();
       
       if (template.category === 'workout' || template.category === 'mixed') {
@@ -303,6 +285,7 @@ const TemplateGenerationSystem: React.FC = () => {
       if (template.category === 'streak' || template.category === 'mixed') {
         if (template.config.streak) {
           await generators.streak.generateStreak(userId, template.config.streak.days || 3, {
+            startDate: new Date(),
             testDataTag: `template-${template.id}`
           });
         }
@@ -313,8 +296,7 @@ const TemplateGenerationSystem: React.FC = () => {
           const exerciseCount = template.config.prs.count || 2;
           const withProgression = template.config.prs.progression || false;
           
-          // Get exercise IDs for PRs
-          const { data: exercises } = await supabase
+          const { data: exercises } = await supabaseClient
             .from('exercises')
             .select('id')
             .limit(exerciseCount);
@@ -353,13 +335,11 @@ const TemplateGenerationSystem: React.FC = () => {
           await generators.activity.generateActivityMix(userId, {
             count: template.config.activities.count || 3,
             includePowerDays: template.config.activities.includePowerDays || false,
-            powerDayCount: template.config.activities.powerDayCount || 1,
             testDataTag: `template-${template.id}`
           });
         }
       }
       
-      // Update template last run time
       const updatedTemplate = {...template, lastRun: new Date()};
       const updatedTemplates = templates.map(t => 
         t.id === template.id ? updatedTemplate : t
@@ -378,7 +358,6 @@ const TemplateGenerationSystem: React.FC = () => {
     }
   };
   
-  // Toggle a tag in the filter
   const toggleTag = (tag: string) => {
     if (selectedTags.includes(tag)) {
       setSelectedTags(selectedTags.filter(t => t !== tag));
@@ -405,7 +384,6 @@ const TemplateGenerationSystem: React.FC = () => {
           </TabsList>
           
           <TabsContent value="templates" className="space-y-4">
-            {/* Search and filter */}
             <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
               <div className="relative flex-1">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -429,7 +407,6 @@ const TemplateGenerationSystem: React.FC = () => {
               </Button>
             </div>
             
-            {/* Tags */}
             {allTags.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {allTags.map(tag => (
@@ -455,7 +432,6 @@ const TemplateGenerationSystem: React.FC = () => {
               </div>
             )}
             
-            {/* Template list by category */}
             {Object.keys(templatesByCategory).length === 0 ? (
               <div className="flex flex-col items-center justify-center h-[200px] text-text-secondary">
                 <p>No templates match your criteria</p>
@@ -584,7 +560,6 @@ const TemplateGenerationSystem: React.FC = () => {
                           variant="outline"
                           onClick={() => {
                             setEditMode(false);
-                            // Reset to saved state if canceling edit
                             const savedTemplate = templates.find(t => t.id === currentTemplate.id);
                             if (savedTemplate) {
                               setCurrentTemplate(savedTemplate);
@@ -658,7 +633,6 @@ const TemplateGenerationSystem: React.FC = () => {
                     />
                   </div>
                   
-                  {/* Configuration editor based on category */}
                   <div className="space-y-2">
                     <Label>Template Configuration</Label>
                     <div className="border border-divider/30 rounded-md p-4 space-y-4">
@@ -875,7 +849,6 @@ const TemplateGenerationSystem: React.FC = () => {
                         </div>
                       ) : null}
                       
-                      {/* Advanced configuration editor would go here */}
                       {editMode && (
                         <div className="pt-4">
                           <Button variant="outline" size="sm">
@@ -888,7 +861,6 @@ const TemplateGenerationSystem: React.FC = () => {
                   </div>
                 </div>
                 
-                {/* Run button */}
                 <div className="pt-4">
                   <Button 
                     variant="arcane"

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useTestingDashboard } from '@/contexts/TestingDashboardContext';
 import { format } from 'date-fns';
+import { Progress } from '@/components/ui/progress';
 
 // Simulation Event types
 interface SimulationEvent {

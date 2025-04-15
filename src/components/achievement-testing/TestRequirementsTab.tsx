@@ -74,7 +74,7 @@ const TestRequirementsTab: React.FC<TestRequirementsTabProps> = ({ userId }) => 
                       </div>
                       <div className="flex justify-between text-sm">
                         <span>XP Reward:</span>
-                        <span className="font-medium">{achievementObject.xp_reward}</span>
+                        <span className="font-medium">{achievementObject.xpReward}</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span>Points:</span>
@@ -129,7 +129,7 @@ const TestRequirementsTab: React.FC<TestRequirementsTabProps> = ({ userId }) => 
               <CardTitle className="text-lg">Achievement Dependencies</CardTitle>
             </CardHeader>
             <CardContent className="p-4">
-              <AchievementDependencyGraph userId={userId} />
+              <AchievementDependencyGraph />
             </CardContent>
           </Card>
         </TabsContent>

@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { 
   ListOrdered, Save, Play, Plus, X, 
   GripVertical, ChevronDown, ChevronUp, ListChecks
@@ -521,7 +521,7 @@ const TestSequenceBuilder: React.FC = () => {
                     New Sequence
                   </Button>
                   <Button
-                    onClick={saveCurrentSequence}
+                    onClick={() => saveCurrentSequence()}
                     disabled={currentSequence.steps.length === 0}
                   >
                     <Save className="mr-1 h-4 w-4" />
