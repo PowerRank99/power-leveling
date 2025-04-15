@@ -49,7 +49,7 @@ export class AchievementService {
    * Process achievements
    */
   static async checkWorkoutAchievements(userId: string, workoutId: string): Promise<ServiceResponse<string[]>> {
-    return AchievementProcessorService.checkWorkoutAchievements(userId, workoutId);
+    return AchievementProcessorService.processWorkoutCompletion(userId, workoutId);
   }
   
   /**
