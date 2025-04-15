@@ -3,7 +3,7 @@ import TestCoverageStats from './TestCoverageStats';
 import RecentTestResults from './RecentTestResults';
 import QuickActions from './QuickActions';
 import { useEffect } from 'react';
-import { AchievementIdMappingService } from '@/services/testing/AchievementIdMappingService';
+import { AchievementIdMappingService } from '@/services/common/AchievementIdMappingService';
 
 interface TestingDashboardProps {
   stats: {
