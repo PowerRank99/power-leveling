@@ -1,17 +1,25 @@
 
-import { ServiceResponse } from '@/services/common/ErrorHandlingService';
-import { AchievementCategory } from '@/types/achievementTypes';
-import { Achievement, AchievementProgress } from '@/types/achievementTypes';
-import { AchievementProgressFacade } from './AchievementProgressFacade';
+import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 import { ProgressBaseService } from './progress/ProgressBaseService';
+import { AchievementProgress } from '@/types/achievementTypes';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Service for handling achievement progress updates
- * Acts as a thin facade to more specialized services
+ * Service for managing achievement progress
  */
 export class AchievementProgressService {
   /**
-   * Update achievement progress for a specific achievement
+   * Get progress for a specific achievement
+   */
+  static async getAchievementProgress(
+    userId: string,
+    achievementId: string
+  ): Promise<ServiceResponse<AchievementProgress | null>> {
+    return ProgressBaseService.getProgress(userId, achievementId);
+  }
+  
+  /**
+   * Update progress for a specific achievement
    */
   static async updateProgress(
     userId: string,
@@ -20,21 +28,42 @@ export class AchievementProgressService {
     targetValue: number,
     isComplete: boolean
   ): Promise<ServiceResponse<boolean>> {
-    return AchievementProgressFacade.updateProgress(userId, achievementId, currentValue, targetValue, isComplete);
+    try {
+      if (!userId || !achievementId) {
+        return createErrorResponse(
+          'Invalid parameters',
+          'User ID and achievement ID are required',
+          ErrorCategory.VALIDATION
+        );
+      }
+      
+      // Insert or update the progress record
+      const { error } = await supabase.from('achievement_progress')
+        .upsert({
+          user_id: userId,
+          achievement_id: achievementId,
+          current_value: currentValue,
+          target_value: targetValue,
+          is_complete: isComplete,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id,achievement_id'
+        });
+        
+      if (error) throw error;
+      
+      return createSuccessResponse(true);
+    } catch (error) {
+      return createErrorResponse(
+        'Failed to update achievement progress',
+        error instanceof Error ? error.message : 'Unknown error',
+        ErrorCategory.DATABASE
+      );
+    }
   }
   
   /**
-   * Initialize progress for one or more achievements
-   */
-  static async initializeMultipleProgress(
-    userId: string,
-    achievements: Achievement[]
-  ): Promise<ServiceResponse<boolean>> {
-    return AchievementProgressFacade.initializeMultipleProgress(userId, achievements);
-  }
-  
-  /**
-   * Update multiple achievement progress values in a single operation
+   * Update progress for multiple achievements in a batch
    */
   static async updateMultipleProgressValues(
     userId: string,
@@ -45,59 +74,36 @@ export class AchievementProgressService {
       isComplete: boolean
     }>
   ): Promise<ServiceResponse<boolean>> {
-    return AchievementProgressFacade.updateMultipleProgressValues(userId, progressUpdates);
-  }
-  
-  /**
-   * Update streak progress for relevant achievements
-   */
-  static async updateStreakProgress(
-    userId: string,
-    currentStreak: number
-  ): Promise<ServiceResponse<boolean>> {
-    return AchievementProgressFacade.updateStreakProgress(userId, currentStreak);
-  }
-  
-  /**
-   * Update workout count progress for relevant achievements
-   */
-  static async updateWorkoutCountProgress(
-    userId: string,
-    workoutCount: number
-  ): Promise<ServiceResponse<boolean>> {
-    return AchievementProgressFacade.updateWorkoutCountProgress(userId, workoutCount);
-  }
-  
-  /**
-   * Update personal record progress for relevant achievements
-   */
-  static async updatePersonalRecordProgress(
-    userId: string,
-    recordCount: number
-  ): Promise<ServiceResponse<boolean>> {
-    return AchievementProgressFacade.updatePersonalRecordProgress(userId, recordCount);
-  }
-  
-  /**
-   * Batch update progress for achievements by category
-   */
-  static async batchUpdateByCategory(
-    userId: string,
-    category: AchievementCategory,
-    requirementType: string,
-    currentValue: number
-  ): Promise<ServiceResponse<boolean>> {
-    return AchievementProgressFacade.batchUpdateByCategory(userId, category, requirementType, currentValue);
-  }
-  
-  /**
-   * Get progress for a specific achievement
-   * This delegates to the ProgressBaseService directly
-   */
-  static async getAchievementProgress(
-    userId: string,
-    achievementId: string
-  ): Promise<ServiceResponse<AchievementProgress | null>> {
-    return ProgressBaseService.getProgress(userId, achievementId);
+    try {
+      if (!userId || !progressUpdates.length) {
+        return createErrorResponse(
+          'Invalid parameters',
+          'User ID and progress updates are required',
+          ErrorCategory.VALIDATION
+        );
+      }
+      
+      // Format the updates for the batch operation
+      const formattedUpdates = ProgressBaseService.formatProgressUpdates(progressUpdates);
+      
+      // Use Supabase RPC for better performance
+      const { error } = await supabase.rpc(
+        'batch_update_achievement_progress',
+        {
+          p_user_id: userId,
+          p_achievements: JSON.stringify(formattedUpdates)
+        }
+      );
+      
+      if (error) throw error;
+      
+      return createSuccessResponse(true);
+    } catch (error) {
+      return createErrorResponse(
+        'Failed to update multiple achievement progress values',
+        error instanceof Error ? error.message : 'Unknown error',
+        ErrorCategory.DATABASE
+      );
+    }
   }
 }

@@ -1,44 +1,39 @@
 
-import { Achievement } from '@/types/achievementTypes';
-import { ServiceResponse } from '@/services/common/ErrorHandlingService';
-import { AchievementFetchService as BaseFetchService } from '../AchievementFetchService';
+import { Achievement, AchievementCategory, AchievementRank, AchievementStats } from '@/types/achievementTypes';
+import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
+import { AchievementListService } from '../fetch/AchievementListService';
+import { AchievementStatsService } from '../fetch/AchievementStatsService';
+import { AchievementProgressFetchService } from '../fetch/AchievementProgressFetchService';
 
 /**
- * Service for fetching achievement-related data
+ * Service for fetching achievement data
  */
 export class AchievementFetchService {
   /**
    * Get all achievements
    */
   static async getAllAchievements(): Promise<ServiceResponse<Achievement[]>> {
-    return BaseFetchService.getAllAchievements();
+    return AchievementListService.getAllAchievements();
   }
   
   /**
    * Get unlocked achievements for a user
    */
   static async getUnlockedAchievements(userId: string): Promise<ServiceResponse<Achievement[]>> {
-    return BaseFetchService.getUnlockedAchievements(userId);
+    return AchievementListService.getUnlockedAchievements(userId);
   }
   
   /**
-   * Get achievement stats for a user
+   * Get achievement statistics for a user
    */
-  static async getAchievementStats(userId: string): Promise<ServiceResponse<any>> {
-    return BaseFetchService.getAchievementStats(userId);
-  }
-  
-  /**
-   * Get achievement progress for a user
-   */
-  static async getAchievementProgress(userId: string, achievementId: string): Promise<ServiceResponse<any>> {
-    return BaseFetchService.getAchievementProgress(userId, achievementId);
+  static async getAchievementStats(userId: string): Promise<ServiceResponse<AchievementStats>> {
+    return AchievementStatsService.getAchievementStats(userId);
   }
   
   /**
    * Get all achievement progress for a user
    */
   static async getAllAchievementProgress(userId: string): Promise<ServiceResponse<any>> {
-    return BaseFetchService.getAllAchievementProgress(userId);
+    return AchievementProgressFetchService.getAllAchievementProgress(userId);
   }
 }

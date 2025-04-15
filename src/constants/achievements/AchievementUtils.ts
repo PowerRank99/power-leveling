@@ -3,7 +3,7 @@
  * AchievementUtils
  * Primary interface for achievement operations using the database as source of truth
  */
-import { Achievement, AchievementCategory, AchievementRank } from '@/types/achievementTypes';
+import { Achievement, AchievementCategory, AchievementRank, toAchievementCategory, toAchievementRank } from '@/types/achievementTypes';
 import { supabase } from '@/integrations/supabase/client';
 import { CachingService } from '@/services/common/CachingService';
 
@@ -161,14 +161,15 @@ export class AchievementUtils {
   
   /**
    * Map database achievement record to Achievement model
+   * Uses safe type conversion for category and rank
    */
   private static mapDbAchievementToModel(dbAchievement: any): Achievement {
     return {
       id: dbAchievement.id,
       name: dbAchievement.name,
       description: dbAchievement.description,
-      category: dbAchievement.category as AchievementCategory,
-      rank: dbAchievement.rank as AchievementRank,
+      category: toAchievementCategory(dbAchievement.category),
+      rank: toAchievementRank(dbAchievement.rank),
       points: dbAchievement.points,
       xpReward: dbAchievement.xp_reward,
       iconName: dbAchievement.icon_name,

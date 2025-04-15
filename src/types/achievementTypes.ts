@@ -15,7 +15,12 @@ export enum AchievementCategory {
   TIME_BASED = 'time_based',
   MILESTONE = 'milestone',
   WORKOUT_COUNT = 'workout_count',
-  PERSONAL_RECORD = 'personal_record'
+  PERSONAL_RECORD = 'personal_record',
+  // Add missing categories for completeness
+  SPORTS = 'sports',
+  MOBILITY = 'mobility',
+  CLASS = 'class',
+  COMBO = 'combo'
 }
 
 /**
@@ -30,6 +35,36 @@ export enum AchievementRank {
   E = 'E',
   UNRANKED = 'Unranked'
 }
+
+/**
+ * Type guard functions for safer type conversions
+ */
+export const isValidCategory = (category: string): category is AchievementCategory => {
+  return Object.values(AchievementCategory).includes(category as AchievementCategory);
+};
+
+export const isValidRank = (rank: string): rank is AchievementRank => {
+  return Object.values(AchievementRank).includes(rank as AchievementRank);
+};
+
+/**
+ * Safe conversion functions to convert string values to enum values
+ */
+export const toAchievementCategory = (category: string): AchievementCategory => {
+  if (isValidCategory(category)) {
+    return category;
+  }
+  console.warn(`Invalid achievement category: ${category}, defaulting to MILESTONE`);
+  return AchievementCategory.MILESTONE;
+};
+
+export const toAchievementRank = (rank: string): AchievementRank => {
+  if (isValidRank(rank)) {
+    return rank;
+  }
+  console.warn(`Invalid achievement rank: ${rank}, defaulting to UNRANKED`);
+  return AchievementRank.UNRANKED;
+};
 
 /**
  * Strongly typed requirement structure

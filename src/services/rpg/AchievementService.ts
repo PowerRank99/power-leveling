@@ -2,9 +2,9 @@
 import { ServiceResponse } from '@/services/common/ErrorHandlingService';
 import { Achievement, AchievementProgress } from '@/types/achievementTypes';
 import { AchievementAwardService } from './achievements/services/AchievementAwardService';
-import { AchievementFetchService } from './achievements/AchievementFetchService';
-import { AchievementProcessorService } from './achievements/AchievementProcessorService';
-import { AchievementProgressService } from './achievements/AchievementProgressService';
+import { AchievementFetchService } from './achievements/services/AchievementFetchService';
+import { AchievementProcessorService } from './achievements/services/AchievementProcessorService';
+import { AchievementProgressService } from './achievements/services/AchievementProgressService';
 
 /**
  * Facade service for achievement-related operations
