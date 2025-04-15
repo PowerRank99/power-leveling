@@ -33,6 +33,11 @@ const TestingDashboardPage: React.FC = () => {
   const [results, setResults] = useState<AchievementTestResult[]>(savedResults);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [coverageStats, setCoverageStats] = useState({
+    totalAchievements: 0,
+    testedAchievements: 0,
+    coveragePercentage: 0
+  });
   const [testConfig, setTestConfig] = useState({
     useCleanup: true,
     useTransaction: true,
@@ -51,6 +56,14 @@ const TestingDashboardPage: React.FC = () => {
           setTestService(service);
         }
         
+        // Get initial coverage stats
+        const report = TestCoverageService.generateCoverageReport();
+        setCoverageStats({
+          totalAchievements: report.totalAchievements,
+          testedAchievements: report.testedAchievements,
+          coveragePercentage: report.coveragePercentage
+        });
+        
         setIsInitialized(true);
       } catch (error) {
         console.error('Error initializing testing services:', error);
@@ -63,11 +76,11 @@ const TestingDashboardPage: React.FC = () => {
   
   // Calculate stats from results using cached data
   const stats = isInitialized ? {
-    totalAchievements: TestCoverageService.generateCoverageReport().totalAchievements,
-    testedAchievements: TestCoverageService.generateCoverageReport().testedAchievements,
+    totalAchievements: coverageStats.totalAchievements,
+    testedAchievements: coverageStats.testedAchievements,
     passedTests: results.filter(r => r.success).length,
     failedTests: results.filter(r => !r.success).length,
-    coveragePercentage: TestCoverageService.generateCoverageReport().coveragePercentage
+    coveragePercentage: coverageStats.coveragePercentage
   } : {
     totalAchievements: 0,
     testedAchievements: 0,
@@ -85,6 +98,15 @@ const TestingDashboardPage: React.FC = () => {
       if (response.success && response.data) {
         setResults(response.data);
         saveResults(response.data);
+        
+        // Update coverage stats
+        const report = TestCoverageService.generateCoverageReport();
+        setCoverageStats({
+          totalAchievements: report.totalAchievements,
+          testedAchievements: report.testedAchievements,
+          coveragePercentage: report.coveragePercentage
+        });
+        
         toast.success('All tests completed', {
           description: `${response.data.filter(r => r.success).length} passed, ${response.data.filter(r => !r.success).length} failed`
         });
@@ -114,6 +136,14 @@ const TestingDashboardPage: React.FC = () => {
         const newResults = [...existingResults, ...response.data];
         setResults(newResults);
         saveResults(newResults);
+        
+        // Update coverage stats
+        const report = TestCoverageService.generateCoverageReport();
+        setCoverageStats({
+          totalAchievements: report.totalAchievements,
+          testedAchievements: report.testedAchievements,
+          coveragePercentage: report.coveragePercentage
+        });
         
         toast.success(`${category} tests completed`, {
           description: `${response.data.filter(r => r.success).length} passed, ${response.data.filter(r => !r.success).length} failed`

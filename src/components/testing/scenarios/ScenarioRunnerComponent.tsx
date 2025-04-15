@@ -40,6 +40,7 @@ import {
   TestScenario
 } from '@/services/testing/scenarios';
 import { useAuth } from '@/hooks/useAuth';
+import { AchievementScenarioAdapter } from '@/services/testing/adapters/AchievementScenarioAdapter';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 
 interface ScenarioRunnerProps {
@@ -647,7 +648,16 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
                 <ScrollArea className="h-[200px] pr-4">
                   <div className="space-y-1">
                     {result.achievementsUnlocked.map((id, index) => {
-                      const achievement = AchievementUtils.getAchievementById(id);
+                      const [achievement, setAchievement] = useState<Achievement | null>(null);
+                      
+                      useEffect(() => {
+                        const loadAchievement = async () => {
+                          const achievementData = await AchievementScenarioAdapter.getAchievementById(id);
+                          setAchievement(achievementData);
+                        };
+                        loadAchievement();
+                      }, [id]);
+                      
                       return (
                         <div key={index} className="flex items-center space-x-2 p-1 text-sm">
                           <CheckCircle className="h-4 w-4 text-green-500" />

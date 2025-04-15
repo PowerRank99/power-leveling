@@ -204,7 +204,7 @@ export class AchievementUtils {
         type: def.requirementType || 'generic',
         value: def.requirementValue || 1
       },
-      stringId: def.stringId || AchievementStandardizationService.standardizeId(def.id)
+      stringId: def.stringId || AchievementStandardizationService.standardizeAchievementId(def.id)
     };
   }
 }
