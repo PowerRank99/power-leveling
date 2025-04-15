@@ -1,12 +1,13 @@
 
 import { ServiceResponse } from '@/services/common/ErrorHandlingService';
 import { BaseAchievementChecker } from '../BaseAchievementChecker';
+import { supabase } from '@/integrations/supabase/client';
 
 export class ExerciseVarietyChecker extends BaseAchievementChecker {
   async checkAchievements(userId: string): Promise<ServiceResponse<string[]>> {
     return this.executeWithErrorHandling(
       async () => {
-        const { data: achievements } = await this.fetchAchievementsByCategory('exercise_variety', 'requirements->count');
+        const { data: achievements } = await super.fetchAchievementsByCategory('exercise_variety', 'requirements->count');
         
         const { data, error } = await supabase
           .from('workout_sets')
