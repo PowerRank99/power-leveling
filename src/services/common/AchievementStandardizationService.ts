@@ -1,110 +1,114 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Achievement } from '@/types/achievementTypes';
-import { AchievementDefinition } from '@/constants/achievements/AchievementSchema';
 import { ACHIEVEMENTS } from '@/constants/achievements';
+import { AchievementIdMappingService } from './AchievementIdMappingService';
 
 export class AchievementStandardizationService {
-  /**
-   * Validates and standardizes achievement IDs across the application
-   */
-  static async validateAndStandardize(): Promise<{
-    valid: string[];
-    invalid: string[];
-    missing: string[];
-    suggestions: Array<{
-      id: string;
-      issue: string;
-      suggestion: string;
-    }>;
-  }> {
-    const constantIds = this.getAllConstantIds();
-    const databaseIds = await this.getDatabaseIds();
-    
-    const valid: string[] = [];
-    const invalid: string[] = [];
-    const missing: string[] = [];
-    const suggestions: Array<{ id: string; issue: string; suggestion: string; }> = [];
+  static async validateAndStandardize() {
+    const result = {
+      valid: [] as string[],
+      invalid: [] as string[],
+      missing: [] as string[],
+      suggestions: [] as Array<{
+        id: string;
+        issue: string;
+        suggestion: string;
+      }>
+    };
 
-    // Check constant IDs against database
-    for (const id of constantIds) {
-      const normalizedId = this.normalizeId(id);
+    try {
+      // Get all achievements from database
+      const { data: dbAchievements, error } = await supabase
+        .from('achievements')
+        .select('*');
+
+      if (error) throw error;
+
+      // Get all string IDs from constants
+      const stringIds = Object.values(ACHIEVEMENTS)
+        .flatMap(category => Object.values(category))
+        .map(achievement => typeof achievement === 'string' ? achievement : achievement.id);
+
+      // Get current ID mappings
+      await AchievementIdMappingService.initialize();
+      const mappings = AchievementIdMappingService.getAllMappings();
+
+      // Validate string IDs against mappings
+      for (const stringId of stringIds) {
+        const uuid = mappings.get(stringId);
+        if (uuid) {
+          // Check if UUID exists in database
+          const achievementExists = dbAchievements?.some(a => a.id === uuid);
+          if (achievementExists) {
+            result.valid.push(stringId);
+          } else {
+            result.invalid.push(stringId);
+            result.suggestions.push({
+              id: stringId,
+              issue: 'UUID exists in mapping but not in database',
+              suggestion: 'Create achievement record with ID: ' + uuid
+            });
+          }
+        } else {
+          result.invalid.push(stringId);
+          result.suggestions.push({
+            id: stringId,
+            issue: 'Missing database entry',
+            suggestion: 'Create database entry with ID: ' + stringId
+          });
+        }
+      }
+
+      // Find database achievements without string ID mappings
+      const dbUuids = dbAchievements?.map(a => a.id) || [];
+      const mappedUuids = Array.from(mappings.values());
       
-      if (databaseIds.has(normalizedId)) {
-        valid.push(id);
-      } else {
-        invalid.push(id);
-        suggestions.push({
-          id,
-          issue: 'Missing database entry',
-          suggestion: `Create database entry with ID: ${normalizedId}`
-        });
+      for (const dbUuid of dbUuids) {
+        if (!mappedUuids.includes(dbUuid)) {
+          result.missing.push(dbUuid);
+          result.suggestions.push({
+            id: dbUuid,
+            issue: 'Missing constant definition',
+            suggestion: 'Add constant definition for ID: ' + dbUuid
+          });
+        }
       }
-    }
 
-    // Check database IDs against constants
-    for (const dbId of databaseIds) {
-      if (!constantIds.some(id => this.normalizeId(id) === dbId)) {
-        missing.push(dbId);
-        suggestions.push({
-          id: dbId,
-          issue: 'Missing constant definition',
-          suggestion: `Add constant definition for ID: ${dbId}`
-        });
-      }
-    }
+      // Call database function to attempt automatic matching
+      const { data: matches, error: matchError } = await supabase
+        .rpc('match_achievement_by_name');
 
-    return { valid, invalid, missing, suggestions };
-  }
+      if (matchError) throw matchError;
 
-  private static normalizeId(id: string): string {
-    return id.toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9-]/g, '-');
-  }
-
-  private static getAllConstantIds(): string[] {
-    const ids: string[] = [];
-    
-    Object.values(ACHIEVEMENTS).forEach(category => {
-      Object.values(category).forEach(achievement => {
-        if (typeof achievement === 'string') {
-          ids.push(achievement);
-        } else if (achievement && typeof achievement === 'object' && 'id' in achievement) {
-          ids.push(achievement.id);
+      // Add automatic matches to suggestions
+      matches?.forEach((match: any) => {
+        if (!result.suggestions.some(s => s.id === match.string_id)) {
+          result.suggestions.push({
+            id: match.string_id,
+            issue: 'Automatic match found',
+            suggestion: `Map to achievement "${match.name}" (${match.uuid})`
+          });
         }
       });
-    });
-    
-    return ids;
+
+      return result;
+    } catch (error) {
+      console.error('Validation failed:', error);
+      throw error;
+    }
   }
 
-  private static async getDatabaseIds(): Promise<Set<string>> {
-    const { data: achievements, error } = await supabase
-      .from('achievements')
-      .select('id');
-      
-    if (error) {
-      console.error('Failed to load database achievements:', error);
-      return new Set();
-    }
-    
-    return new Set(achievements.map(a => a.id));
-  }
+  static async migrateUnmappedAchievements() {
+    try {
+      const { data: count, error } = await supabase
+        .rpc('complete_achievement_id_migration');
 
-  static getConstantDefinition(id: string): AchievementDefinition | undefined {
-    for (const category of Object.values(ACHIEVEMENTS)) {
-      for (const achievement of Object.values(category)) {
-        if (
-          (typeof achievement === 'string' && achievement === id) ||
-          (achievement && typeof achievement === 'object' && 'id' in achievement && achievement.id === id)
-        ) {
-          return achievement as AchievementDefinition;
-        }
-      }
+      if (error) throw error;
+
+      return count;
+    } catch (error) {
+      console.error('Migration failed:', error);
+      throw error;
     }
-    return undefined;
   }
 }
-

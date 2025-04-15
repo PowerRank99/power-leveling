@@ -6,6 +6,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AchievementStandardizationService } from '@/services/common/AchievementStandardizationService';
 import { AchievementIdMappingService } from '@/services/common/AchievementIdMappingService';
+import { toast } from 'react-toastify';
 
 interface StandardizationResult {
   valid: string[];
@@ -47,21 +48,44 @@ export function AchievementIdDebugger() {
       setIsValidating(false);
     }
   };
-  
+
+  const handleMigrate = async () => {
+    setIsValidating(true);
+    try {
+      const count = await AchievementStandardizationService.migrateUnmappedAchievements();
+      toast.success(`Migrated ${count} achievement mappings`);
+      await runValidation();
+    } catch (error) {
+      console.error('Migration failed:', error);
+      toast.error('Failed to migrate achievements');
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
   useEffect(() => {
     runValidation();
   }, []);
-  
+
   return (
     <Card className="p-4 space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Achievement ID Validation</h3>
-        <Button 
-          onClick={runValidation} 
-          disabled={isValidating}
-        >
-          {isValidating ? 'Validating...' : 'Re-run Validation'}
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleMigrate}
+            disabled={isValidating || results.suggestions.length === 0}
+            variant="outline"
+          >
+            Run Migration
+          </Button>
+          <Button 
+            onClick={runValidation} 
+            disabled={isValidating}
+          >
+            {isValidating ? 'Validating...' : 'Re-run Validation'}
+          </Button>
+        </div>
       </div>
       
       <Card className="p-4">
@@ -136,19 +160,19 @@ export function AchievementIdDebugger() {
       
       {results.suggestions.length > 0 && (
         <Card className="p-4">
-          <h4 className="font-medium mb-2">Suggestions</h4>
+          <h4 className="font-medium mb-2">Migration Actions</h4>
           <ScrollArea className="h-[200px]">
             <div className="space-y-2">
               {results.suggestions.map((suggestion, index) => (
                 <Alert 
                   key={index} 
-                  variant="default"
+                  variant={suggestion.issue.includes('Automatic match') ? 'success' : 'default'}
                   className="text-sm"
                 >
                   <AlertTitle>{suggestion.id}</AlertTitle>
                   <AlertDescription>
                     <strong>Issue:</strong> {suggestion.issue}<br />
-                    <strong>Suggestion:</strong> {suggestion.suggestion}
+                    <strong>Action:</strong> {suggestion.suggestion}
                   </AlertDescription>
                 </Alert>
               ))}

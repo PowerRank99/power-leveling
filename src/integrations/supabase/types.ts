@@ -24,6 +24,33 @@ export type Database = {
         }
         Relationships: []
       }
+      achievement_id_migration: {
+        Row: {
+          created_at: string | null
+          id: number
+          migrated: boolean | null
+          name: string
+          string_id: string
+          uuid: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          migrated?: boolean | null
+          name: string
+          string_id: string
+          uuid: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          migrated?: boolean | null
+          name?: string
+          string_id?: string
+          uuid?: string
+        }
+        Relationships: []
+      }
       achievement_progress: {
         Row: {
           achievement_id: string | null
@@ -927,6 +954,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      complete_achievement_id_migration: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       create_manual_workout: {
         Args: {
           p_user_id: string
@@ -1039,6 +1070,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      match_achievement_by_name: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          string_id: string
+          uuid: string
+          name: string
+          similarity: number
+        }[]
+      }
       migrate_exercise_columns: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -1054,6 +1094,10 @@ export type Database = {
       select_class: {
         Args: { p_user_id: string; p_class_name: string }
         Returns: Json
+      }
+      standardize_achievement_id: {
+        Args: { input_text: string }
+        Returns: string
       }
     }
     Enums: {
