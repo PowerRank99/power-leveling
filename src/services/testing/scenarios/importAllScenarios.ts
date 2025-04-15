@@ -9,7 +9,13 @@
 
 // Import scenario runner and helpers for patching
 import { scenarioRunner } from './index';
-import { ScenarioAchievementPatcher } from '../helpers/ScenarioAchievementPatcher';
+import { ScenarioAchievementPatcher } from '../../helpers/ScenarioAchievementPatcher';
+import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
+
+// First, pre-load the achievements cache
+AchievementUtils.getAllAchievements().catch(err => {
+  console.error('Failed to initialize achievement cache:', err);
+});
 
 // Import all scenario files
 // Importing them here makes them register with the scenarioRunner via their side effects

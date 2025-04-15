@@ -7,7 +7,7 @@
  */
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 import { Achievement } from '@/types/achievementTypes';
-import { TestScenario } from '../scenarios';
+import { TestScenario } from '../testing/scenarios';
 
 export class ScenarioAchievementPatcher {
   /**
