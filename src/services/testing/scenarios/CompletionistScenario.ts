@@ -47,10 +47,10 @@ export class CompletionistScenario extends BaseScenario {
   /**
    * Get all achievements that should be unlocked by this scenario
    */
-  public getRequiredAchievements(): string[] {
+  public async getRequiredAchievements(): Promise<string[]> {
     // This scenario targets a large number of achievements
     // Get achievements filtered by rank if specified
-    const achievements = AchievementUtils.getAllAchievements();
+    const achievements = await AchievementUtils.getAllAchievements();
     return achievements.map(a => a.id);
   }
 
@@ -95,7 +95,7 @@ export class CompletionistScenario extends BaseScenario {
       'Unranked': 0
     };
     
-    return achievements
+    return [...achievements]
       .sort((a, b) => {
         // First sort by rank
         const rankDiff = rankOrder[a.rank as AchievementRank] - rankOrder[b.rank as AchievementRank];
@@ -182,7 +182,7 @@ export class CompletionistScenario extends BaseScenario {
     };
 
     // Get achievement list
-    let achievementsList = this.getRequiredAchievements();
+    let achievementsList = await this.getRequiredAchievements();
     
     // Filter by rank if specified
     const rankOrder: Record<AchievementRank, number> = {
@@ -243,7 +243,7 @@ export class CompletionistScenario extends BaseScenario {
       
       // Get the set of requirements to try to satisfy
       const workoutAchievements = await AchievementUtils.getAchievementsByCategory(AchievementCategory.WORKOUT);
-      const prAchievements = await AchievementUtils.getAchievementsByCategory(AchievementCategory.RECORD);
+      const prAchievements = await AchievementUtils.getAchievementsByCategory(AchievementCategory.PERSONAL_RECORD);
       const streakAchievements = await AchievementUtils.getAchievementsByCategory(AchievementCategory.STREAK);
       
       // Find the highest PR count requirement
