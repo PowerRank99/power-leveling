@@ -1,13 +1,12 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { ACHIEVEMENT_IDS } from '@/constants/achievements/AchievementConstants';
 import { Achievement } from '@/types/achievementTypes';
-import { ServiceErrorHandler } from '@/services/common/ServiceErrorHandler';
 
 export class AchievementIdMappingService {
   private static idMap: Map<string, { uuid: string; achievement: Achievement }> = new Map();
   private static unmappedIds: Set<string> = new Set();
   private static initialized: boolean = false;
-  private static logger = new ServiceErrorHandler('AchievementIdMappingService');
 
   static async initialize(): Promise<void> {
     if (this.initialized) return;
@@ -18,7 +17,7 @@ export class AchievementIdMappingService {
         .select('id, name, category, rank, points, xp_reward, icon_name');
 
       if (error) {
-        this.logger.logError('Initialization failed', error);
+        console.error('Failed to initialize AchievementIdMappingService:', error);
         throw error;
       }
 
@@ -39,13 +38,13 @@ export class AchievementIdMappingService {
           });
         } else {
           this.unmappedIds.add(achievement.name);
-          this.logger.logWarning(`Unmapped Achievement: ${achievement.name}`);
+          console.warn(`Unmapped Achievement: ${achievement.name}`);
         }
       });
 
       this.initialized = true;
     } catch (error) {
-      this.logger.logError('Initialization failed', error);
+      console.error('AchievementIdMapping initialization failed:', error);
       throw error;
     }
   }
@@ -163,9 +162,9 @@ export class AchievementIdMappingService {
     if (missingEntries.length > 0) {
       try {
         // Future implementation: Bulk insert missing achievements
-        this.logger.logInfo(`Syncing ${missingEntries.length} missing achievement entries`);
+        console.info(`Syncing ${missingEntries.length} missing achievement entries`);
       } catch (error) {
-        this.logger.logError('Database sync failed', error);
+        console.error('Database sync failed', error);
       }
     }
   }
