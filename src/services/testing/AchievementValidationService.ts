@@ -48,8 +48,11 @@ export class AchievementValidationService {
         categoryAchievements.forEach(achievement => {
           if (typeof achievement === 'string') {
             ids.push(achievement);
-          } else if (achievement && typeof achievement === 'object' && 'id' in achievement) {
-            ids.push(achievement.id as string);
+          } else if (achievement && typeof achievement === 'object') {
+            // Use type guard to check if 'id' property exists
+            if ('id' in achievement && achievement.id) {
+              ids.push(achievement.id);
+            }
           }
         });
       });
