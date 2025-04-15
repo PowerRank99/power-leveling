@@ -1,419 +1,309 @@
-import React, { useState, useEffect, useRef } from 'react';
+
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Play, Pause, SkipBack, SkipForward, 
-  FastForward, Clock, RotateCcw, Calendar,
-  StepForward, StepBack
-} from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTestingDashboard } from '@/contexts/TestingDashboardContext';
-import { format } from 'date-fns';
-import { Progress } from '@/components/ui/progress';
-
-// Simulation Event types
-interface SimulationEvent {
-  id: string;
-  type: 'workout' | 'manual_workout' | 'personal_record' | 'guild_join' | 'class_change' | 'level_up' | 'xp_gain';
-  timestamp: Date;
-  data: Record<string, any>;
-  completed: boolean;
-  triggeredAchievements: Array<{id: string, name: string}>;
-}
-
-// Define simulation speeds
-const SIMULATION_SPEEDS = [
-  { label: '1x', value: 1 },
-  { label: '2x', value: 2 },
-  { label: '5x', value: 5 },
-  { label: '10x', value: 10 }
-];
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { 
+  PlayCircle, FastForward, Clock, SkipForward, Activity, 
+  Dumbbell, Calendar, Pause, Award, RotateCcw, Hourglass
+} from 'lucide-react';
+import { toast } from 'sonner';
 
 const StepByStepSimulation: React.FC = () => {
-  const { userId, simulateAchievement } = useTestingDashboard();
+  const { allAchievements, simulateAchievement } = useTestingDashboard();
+  const [isRunning, setIsRunning] = useState(false);
+  const [timeSpeed, setTimeSpeed] = useState(1);
+  const [currentScenario, setCurrentScenario] = useState('workout-streak');
+  const [currentStep, setCurrentStep] = useState(0);
+  const [elapsedTime, setElapsedTime] = useState(0);
   
-  // Simulation state
-  const [events, setEvents] = useState<SimulationEvent[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [speed, setSpeed] = useState(1);
-  const [progress, setProgress] = useState(0);
-  
-  // For interval management
-  const intervalRef = useRef<number | null>(null);
-  
-  // Current event getter
-  const currentEvent = events[currentIndex];
-  
-  // Sample event generator (replace with your real implementation)
-  const generateSampleEvents = () => {
-    const now = new Date();
-    const newEvents: SimulationEvent[] = [];
-    
-    // Generate a series of events for demonstration
-    for (let i = 0; i < 10; i++) {
-      const eventDate = new Date(now);
-      eventDate.setDate(eventDate.getDate() - (10 - i));
-      
-      const eventTypes = ['workout', 'manual_workout', 'personal_record', 'guild_join', 'class_change', 'level_up', 'xp_gain'];
-      const randomType = eventTypes[Math.floor(Math.random() * eventTypes.length)] as SimulationEvent['type'];
-      
-      newEvents.push({
-        id: `event-${i}`,
-        type: randomType,
-        timestamp: eventDate,
-        data: {
-          // Sample data based on event type
-          exerciseCount: Math.floor(Math.random() * 5) + 1,
-          duration: Math.floor(Math.random() * 60) + 30,
-          xpGained: Math.floor(Math.random() * 100) + 50
-        },
-        completed: false,
-        triggeredAchievements: []
-      });
+  // Define test scenarios
+  const scenarios = {
+    'workout-streak': {
+      name: 'Workout Streak',
+      description: 'Simulate a user completing a 7-day workout streak',
+      steps: [
+        { type: 'workout', description: 'Day 1: Complete first workout', simulateAchievement: 'primeiro-treino' },
+        { type: 'workout', description: 'Day 2: Complete second workout' },
+        { type: 'workout', description: 'Day 3: Complete third workout', simulateAchievement: 'trinca-poderosa' },
+        { type: 'workout', description: 'Day 4: Complete fourth workout' },
+        { type: 'workout', description: 'Day 5: Complete fifth workout', simulateAchievement: 'embalo-fitness' },
+        { type: 'workout', description: 'Day 6: Complete sixth workout' },
+        { type: 'workout', description: 'Day 7: Complete seventh workout', simulateAchievement: 'semana-impecavel' }
+      ]
+    },
+    'pr-progression': {
+      name: 'Personal Record Progression',
+      description: 'Simulate a user setting multiple personal records',
+      steps: [
+        { type: 'pr', description: 'Set first personal record', simulateAchievement: 'pr-first' },
+        { type: 'pr', description: 'Set second personal record' },
+        { type: 'pr', description: 'Set third personal record' },
+        { type: 'pr', description: 'Set fourth personal record' },
+        { type: 'pr', description: 'Set fifth personal record', simulateAchievement: 'recordista-experiente' }
+      ]
+    },
+    'mixed-workouts': {
+      name: 'Mixed Workout Types',
+      description: 'Simulate completing different types of workouts',
+      steps: [
+        { type: 'workout', description: 'Complete strength workout' },
+        { type: 'manual', description: 'Complete cardio workout', simulateAchievement: 'diario-do-suor' },
+        { type: 'workout', description: 'Complete mobility workout' },
+        { type: 'manual', description: 'Complete sports activity', simulateAchievement: 'esporte-de-primeira' },
+        { type: 'workout', description: 'Complete calisthenics workout', simulateAchievement: 'aventuras-fitness' }
+      ]
     }
-    
-    return newEvents;
   };
   
-  // Start simulation with sample events
+  const selectedScenario = scenarios[currentScenario as keyof typeof scenarios];
+  const currentStepData = selectedScenario.steps[currentStep];
+  
+  // Start simulation
   const startSimulation = () => {
-    const sampleEvents = generateSampleEvents();
-    setEvents(sampleEvents);
-    setCurrentIndex(0);
-    setProgress(0);
-    setIsPlaying(false);
+    setIsRunning(true);
+    setCurrentStep(0);
+    setElapsedTime(0);
+    toast.info('Simulation started', {
+      description: `Running "${selectedScenario.name}" step by step`
+    });
+    runStep(0);
   };
   
-  // Play/pause the simulation
-  const togglePlayPause = () => {
-    if (isPlaying) {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
+  // Run a specific step
+  const runStep = (stepIndex: number) => {
+    if (stepIndex >= selectedScenario.steps.length) {
+      // Simulation complete
+      setIsRunning(false);
+      toast.success('Simulation complete', {
+        description: `Completed "${selectedScenario.name}" simulation`
+      });
+      return;
+    }
+    
+    setCurrentStep(stepIndex);
+    
+    // Get the step data
+    const step = selectedScenario.steps[stepIndex];
+    
+    // If the step should trigger an achievement, simulate it
+    if (step.simulateAchievement) {
+      const achievement = allAchievements.find(a => a.id === step.simulateAchievement);
+      if (achievement) {
+        setTimeout(() => {
+          simulateAchievement(step.simulateAchievement as string);
+        }, 1000 / timeSpeed);
       }
-    } else if (currentIndex < events.length) {
-      intervalRef.current = window.setInterval(() => {
-        advanceSimulation();
-      }, 1000 / speed);
     }
     
-    setIsPlaying(!isPlaying);
-  };
-  
-  // Step forward in simulation
-  const stepForward = () => {
-    if (currentIndex < events.length - 1) {
-      processEvent(currentIndex);
-      setCurrentIndex(currentIndex + 1);
-      setProgress((currentIndex + 1) / events.length * 100);
-    }
-  };
-  
-  // Step backward in simulation
-  const stepBackward = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-      setProgress(currentIndex / events.length * 100);
-    }
-  };
-  
-  // Skip to the beginning
-  const skipToStart = () => {
-    setCurrentIndex(0);
-    setProgress(0);
-  };
-  
-  // Skip to the end
-  const skipToEnd = () => {
-    // Process all events
-    for (let i = currentIndex; i < events.length; i++) {
-      processEvent(i);
-    }
-    setCurrentIndex(events.length - 1);
-    setProgress(100);
-  };
-  
-  // Reset the simulation
-  const resetSimulation = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    
-    setIsPlaying(false);
-    setEvents([]);
-    setCurrentIndex(0);
-    setProgress(0);
-  };
-  
-  // Change simulation speed
-  const changeSpeed = (newSpeed: number) => {
-    setSpeed(newSpeed);
-    
-    // Restart interval with new speed if playing
-    if (isPlaying && intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = window.setInterval(() => {
-        advanceSimulation();
-      }, 1000 / newSpeed);
-    }
-  };
-  
-  // Process the current event
-  const processEvent = (index: number) => {
-    const event = events[index];
-    if (!event || event.completed) return;
-    
-    // Mark as completed
-    const updatedEvents = [...events];
-    updatedEvents[index] = {
-      ...event,
-      completed: true,
-      // Simulate achievements triggered by this event (for demo purposes)
-      triggeredAchievements: event.type === 'workout' ? [
-        { id: 'workout-achievement', name: 'Workout Master' }
-      ] : []
-    };
-    
-    setEvents(updatedEvents);
-    
-    // Trigger achievement notification for any triggered achievements
-    updatedEvents[index].triggeredAchievements.forEach(achievement => {
-      simulateAchievement(achievement.id);
+    // Show toast for the step
+    toast.info(`Step ${stepIndex + 1}: ${step.type.toUpperCase()}`, {
+      description: step.description
     });
   };
   
-  // Advance the simulation
-  const advanceSimulation = () => {
-    if (currentIndex < events.length - 1) {
-      processEvent(currentIndex);
-      setCurrentIndex(prev => prev + 1);
-      setProgress((currentIndex + 1) / events.length * 100);
+  // Go to next step
+  const nextStep = () => {
+    if (currentStep < selectedScenario.steps.length - 1) {
+      runStep(currentStep + 1);
     } else {
-      // End of simulation
-      processEvent(currentIndex);
-      setIsPlaying(false);
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+      setIsRunning(false);
+      toast.success('Simulation complete', {
+        description: `Completed "${selectedScenario.name}" simulation`
+      });
     }
   };
   
-  // Clean up interval on unmount
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, []);
+  // Stop simulation
+  const stopSimulation = () => {
+    setIsRunning(false);
+    toast.info('Simulation stopped');
+  };
+  
+  // Reset simulation
+  const resetSimulation = () => {
+    setIsRunning(false);
+    setCurrentStep(0);
+    setElapsedTime(0);
+    toast.info('Simulation reset');
+  };
+  
+  // Get step icon based on type
+  const getStepIcon = (type: string) => {
+    switch (type) {
+      case 'workout':
+        return <Dumbbell className="h-4 w-4" />;
+      case 'pr':
+        return <Activity className="h-4 w-4" />;
+      case 'manual':
+        return <Calendar className="h-4 w-4" />;
+      default:
+        return <Award className="h-4 w-4" />;
+    }
+  };
   
   return (
-    <Card className="border-arcane-30">
+    <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-orbitron flex items-center">
-          <Clock className="mr-2 h-5 w-5 text-arcane" />
+        <CardTitle className="flex items-center text-lg">
+          <Hourglass className="mr-2 h-5 w-5 text-arcane" />
           Step-by-Step Simulation
         </CardTitle>
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {events.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-[200px] text-text-secondary">
-            <p>No simulation active</p>
-            <Button 
-              variant="outline" 
-              className="mt-4"
-              onClick={startSimulation}
-            >
-              <Play className="mr-2 h-4 w-4" />
-              Start Sample Simulation
-            </Button>
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Select Scenario</label>
+          <Select 
+            value={currentScenario} 
+            onValueChange={setCurrentScenario}
+            disabled={isRunning}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select a scenario" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(scenarios).map(([key, scenario]) => (
+                <SelectItem key={key} value={key}>
+                  {scenario.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          <Alert className="mt-2 bg-midnight-elevated border-divider/30">
+            <AlertTitle>{selectedScenario.name}</AlertTitle>
+            <AlertDescription>
+              {selectedScenario.description}
+            </AlertDescription>
+          </Alert>
+        </div>
+        
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <label className="text-sm font-medium">Simulation Speed</label>
+            <div className="flex items-center">
+              <Clock className="h-4 w-4 mr-1" />
+              <span className="text-sm">{timeSpeed}x</span>
+            </div>
           </div>
-        ) : (
-          <>
-            {/* Simulation progress */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Progress</span>
-                <span className="text-sm text-text-secondary">
-                  Event {currentIndex + 1} of {events.length}
-                </span>
-              </div>
-              <Progress value={progress} className="h-2" />
+          <Slider
+            value={[timeSpeed]}
+            min={0.5}
+            max={5}
+            step={0.5}
+            onValueChange={value => setTimeSpeed(value[0])}
+            disabled={isRunning}
+          />
+        </div>
+        
+        <div className="border border-divider/30 rounded-md bg-midnight-card p-3">
+          <div className="flex justify-between items-center mb-3">
+            <div className="font-medium">Current Progress</div>
+            <Badge variant={isRunning ? 'arcane' : 'outline'}>
+              {isRunning ? 'Running' : 'Ready'}
+            </Badge>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm text-text-secondary">
+              <span>Step {currentStep + 1} of {selectedScenario.steps.length}</span>
+              <span>{Math.round((currentStep / selectedScenario.steps.length) * 100)}% complete</span>
             </div>
             
-            {/* Simulation controls */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  onClick={skipToStart}
-                  disabled={currentIndex === 0 || isPlaying}
-                >
-                  <SkipBack className="h-4 w-4" />
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  onClick={stepBackward}
-                  disabled={currentIndex === 0 || isPlaying}
-                >
-                  <StepBack className="h-4 w-4" />
-                </Button>
-                
-                <Button 
-                  variant={isPlaying ? "valor" : "arcane"}
-                  size="icon"
-                  onClick={togglePlayPause}
-                  disabled={currentIndex >= events.length - 1 && isPlaying}
-                >
-                  {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  onClick={stepForward}
-                  disabled={currentIndex >= events.length - 1 || isPlaying}
-                >
-                  <StepForward className="h-4 w-4" />
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  onClick={skipToEnd}
-                  disabled={currentIndex >= events.length - 1 || isPlaying}
-                >
-                  <SkipForward className="h-4 w-4" />
-                </Button>
+            <div className="w-full bg-midnight-elevated rounded-full h-2">
+              <div 
+                className="bg-arcane rounded-full h-2"
+                style={{ width: `${(currentStep / selectedScenario.steps.length) * 100}%` }}
+              ></div>
+            </div>
+          </div>
+          
+          {currentStepData && (
+            <div className="mt-4 p-3 border border-arcane-30 bg-arcane-15 rounded-md">
+              <div className="flex items-center">
+                {getStepIcon(currentStepData.type)}
+                <span className="ml-2 font-medium capitalize">{currentStepData.type}</span>
+                {currentStepData.simulateAchievement && (
+                  <Badge className="ml-auto">Achievement</Badge>
+                )}
               </div>
-              
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-text-secondary">Speed:</span>
-                {SIMULATION_SPEEDS.map(s => (
-                  <Button
-                    key={s.value}
-                    variant={speed === s.value ? "arcane" : "outline"}
-                    size="sm"
-                    onClick={() => changeSpeed(s.value)}
-                    className="min-w-[40px]"
-                  >
-                    {s.label}
-                  </Button>
-                ))}
-                
-                <Button
-                  variant="ghost"
-                  size="icon"
+              <p className="mt-1 text-sm">{currentStepData.description}</p>
+            </div>
+          )}
+          
+          <div className="flex justify-between mt-4">
+            <div className="space-x-2">
+              {isRunning ? (
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={stopSimulation}
+                >
+                  <Pause className="h-4 w-4 mr-1" />
+                  Pause
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline"
+                  size="sm"
                   onClick={resetSimulation}
                 >
-                  <RotateCcw className="h-4 w-4" />
+                  <RotateCcw className="h-4 w-4 mr-1" />
+                  Reset
                 </Button>
-              </div>
-            </div>
-            
-            {/* Current event details */}
-            <div className="border border-divider/30 rounded-md p-3">
-              <h3 className="text-sm font-semibold mb-2">Current Event</h3>
-              {currentEvent ? (
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <Badge variant="outline" className="capitalize">
-                      {currentEvent.type.replace('_', ' ')}
-                    </Badge>
-                    <div className="flex items-center text-xs text-text-tertiary">
-                      <Calendar className="h-3 w-3 mr-1" />
-                      {format(currentEvent.timestamp, 'MMM d, yyyy')}
-                    </div>
-                  </div>
-                  
-                  <div className="text-xs space-y-1">
-                    <div>
-                      <span className="font-semibold">Event Data:</span>
-                      <pre className="mt-1 p-2 bg-midnight-elevated rounded-md overflow-x-auto">
-                        {JSON.stringify(currentEvent.data, null, 2)}
-                      </pre>
-                    </div>
-                    <div>
-                      <span className="font-semibold">Status:</span>{' '}
-                      {currentEvent.completed ? (
-                        <Badge variant="success">Processed</Badge>
-                      ) : (
-                        <Badge variant="outline">Pending</Badge>
-                      )}
-                    </div>
-                    <div>
-                      <span className="font-semibold">Triggered Achievements:</span>
-                      {currentEvent.completed && currentEvent.triggeredAchievements.length > 0 ? (
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {currentEvent.triggeredAchievements.map(achievement => (
-                            <Badge key={achievement.id} className="bg-arcane-15 text-arcane border-arcane-30">
-                              {achievement.name}
-                            </Badge>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-text-tertiary mt-1">
-                          {currentEvent.completed ? 'No achievements triggered' : 'Not processed yet'}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-2 text-text-tertiary">
-                  No current event
-                </div>
               )}
             </div>
             
-            {/* Event timeline */}
-            <ScrollArea className="h-[200px] border border-divider/30 rounded-md">
-              <div className="p-2 space-y-2">
-                {events.map((event, index) => (
-                  <div 
-                    key={event.id}
-                    className={`p-2 border rounded-md text-xs ${
-                      index === currentIndex 
-                        ? 'border-arcane bg-arcane-15' 
-                        : event.completed 
-                          ? 'border-success bg-success/5' 
-                          : 'border-divider/20'
-                    }`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <Badge variant="outline" className="capitalize">
-                        {event.type.replace('_', ' ')}
-                      </Badge>
-                      <span className="text-text-tertiary">
-                        {format(event.timestamp, 'MMM d')}
-                      </span>
-                    </div>
-                    <div className="mt-1 text-text-secondary">
-                      {event.completed ? (
-                        event.triggeredAchievements.length > 0 ? (
-                          <span>Triggered {event.triggeredAchievements.length} achievement(s)</span>
-                        ) : (
-                          <span>Processed - no achievements</span>
-                        )
-                      ) : (
-                        <span>Pending</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-          </>
-        )}
+            <div className="space-x-2">
+              {isRunning ? (
+                <Button 
+                  size="sm"
+                  onClick={nextStep}
+                >
+                  <SkipForward className="h-4 w-4 mr-1" />
+                  Next Step
+                </Button>
+              ) : (
+                <Button 
+                  size="sm"
+                  onClick={startSimulation}
+                >
+                  <PlayCircle className="h-4 w-4 mr-1" />
+                  Start Simulation
+                </Button>
+              )}
+              
+              <Button 
+                variant="arcane"
+                size="sm"
+                onClick={() => {
+                  setIsRunning(true);
+                  // Run all steps with a delay between them
+                  for (let i = 0; i < selectedScenario.steps.length; i++) {
+                    setTimeout(() => {
+                      runStep(i);
+                      
+                      // Check if last step
+                      if (i === selectedScenario.steps.length - 1) {
+                        setIsRunning(false);
+                      }
+                    }, (1500 / timeSpeed) * i);
+                  }
+                }}
+                disabled={isRunning}
+              >
+                <FastForward className="h-4 w-4 mr-1" />
+                Run All
+              </Button>
+            </div>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

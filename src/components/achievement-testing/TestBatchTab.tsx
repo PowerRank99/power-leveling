@@ -2,274 +2,449 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Play, Pause, Plus, Save, Trash2, Clock } from 'lucide-react';
-import { useTestingDashboard } from '@/contexts/TestingDashboardContext';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useTestingDashboard } from '@/contexts/TestingDashboardContext';
+import { 
+  Clock, PauseCircle, PlayCircle, ListRestart, Dices, AlertTriangle, 
+  Check, Repeat, CheckSquare, X, Filter, RotateCcw, Loader2
+} from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { toast } from 'sonner';
 
 interface TestBatchTabProps {
   userId: string;
 }
 
-interface BatchConfig {
+interface TestBatchResult {
   id: string;
   name: string;
-  description: string;
-  achievements: string[];
+  category: string;
+  rank: string;
+  status: 'success' | 'failure' | 'pending';
+  error?: string;
+  duration?: number;
 }
 
 const TestBatchTab: React.FC<TestBatchTabProps> = ({ userId }) => {
   const { 
-    allAchievements, 
-    selectedAchievements,
-    testProgress,
-    runTests,
-    isLoading
+    allAchievements, selectedAchievements, testResults, testProgress,
+    toggleAchievementSelection, selectAllVisible, clearSelection,
+    filteredAchievements, runTests, stopTests, clearResults
   } = useTestingDashboard();
   
-  const [batchConfigs, setBatchConfigs] = useState<BatchConfig[]>([
-    {
-      id: '1',
-      name: 'Workout Basics',
-      description: 'Basic workout achievements for new users',
-      achievements: ['primeiro-treino', 'embalo-fitness', 'total-7']
-    },
-    {
-      id: '2',
-      name: 'Streak Master',
-      description: 'All streak-related achievements',
-      achievements: ['trinca-poderosa', 'streak-7', 'streak-14', 'streak-21', 'streak-30']
-    }
-  ]);
+  const [activeTab, setActiveTab] = useState('configure');
+  const [showSuccessful, setShowSuccessful] = useState(true);
+  const [showFailed, setShowFailed] = useState(true);
+  const [showPending, setShowPending] = useState(true);
+  const [retryingFailed, setRetryingFailed] = useState(false);
   
-  const [newBatchName, setNewBatchName] = useState('');
-  const [newBatchDescription, setNewBatchDescription] = useState('');
-  
-  const saveBatch = () => {
-    if (newBatchName.trim() === '') return;
+  // Get batch test results
+  const batchResults: TestBatchResult[] = allAchievements.map(ach => {
+    const testResult = testResults.find(r => r.achievementId === ach.id);
     
-    const newBatch: BatchConfig = {
-      id: Date.now().toString(),
-      name: newBatchName,
-      description: newBatchDescription,
-      achievements: Array.from(selectedAchievements)
+    return {
+      id: ach.id,
+      name: ach.name,
+      category: ach.category,
+      rank: ach.rank,
+      status: testResult 
+        ? testResult.success ? 'success' : 'failure'
+        : 'pending',
+      error: testResult?.errorMessage,
+      duration: testResult?.testDurationMs
     };
+  });
+  
+  // Filter results based on success/failure/pending filters
+  const filteredResults = batchResults.filter(result => {
+    if (result.status === 'success' && !showSuccessful) return false;
+    if (result.status === 'failure' && !showFailed) return false;
+    if (result.status === 'pending' && !showPending) return false;
+    return true;
+  });
+  
+  // Stats
+  const successCount = batchResults.filter(r => r.status === 'success').length;
+  const failureCount = batchResults.filter(r => r.status === 'failure').length;
+  const pendingCount = batchResults.filter(r => r.status === 'pending').length;
+  
+  // Run selected tests
+  const handleRunSelectedTests = async () => {
+    if (selectedAchievements.size === 0) {
+      toast.error('No achievements selected', {
+        description: 'Please select at least one achievement to test'
+      });
+      return;
+    }
     
-    setBatchConfigs(prev => [...prev, newBatch]);
-    setNewBatchName('');
-    setNewBatchDescription('');
+    setActiveTab('results');
+    await runTests(Array.from(selectedAchievements));
   };
   
-  const deleteBatch = (id: string) => {
-    setBatchConfigs(prev => prev.filter(batch => batch.id !== id));
-  };
-  
-  const runBatch = (achievements: string[]) => {
-    runTests(achievements);
+  // Retry failed tests
+  const handleRetryFailed = async () => {
+    const failedIds = batchResults
+      .filter(r => r.status === 'failure')
+      .map(r => r.id);
+      
+    if (failedIds.length === 0) {
+      toast.info('No failed tests to retry');
+      return;
+    }
+    
+    setRetryingFailed(true);
+    try {
+      setActiveTab('results');
+      await runTests(failedIds);
+    } finally {
+      setRetryingFailed(false);
+    }
   };
   
   return (
     <div className="space-y-4">
       <Alert className="bg-arcane-15 border-arcane-30">
-        <Clock className="h-4 w-4 text-arcane" />
+        <Dices className="h-4 w-4 text-arcane" />
         <AlertTitle>Batch Testing</AlertTitle>
         <AlertDescription>
-          Create and save batches of achievement tests. Run them sequentially to test multiple achievements at once.
+          Configure and run tests for multiple achievements at once. Select achievements, run tests, and analyze the results.
         </AlertDescription>
       </Alert>
       
-      {testProgress.isRunning && (
-        <Card className="border-arcane-30 p-3 space-y-2">
-          <div className="flex justify-between items-center">
-            <h3 className="font-semibold">Running Batch</h3>
-            <span className="text-sm text-text-secondary">
-              {testProgress.completed} / {testProgress.total}
-            </span>
-          </div>
-          <div className="w-full h-2 bg-midnight-card rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-arcane"
-              style={{ width: `${(testProgress.completed / testProgress.total) * 100}%` }}
-            />
-          </div>
-          {testProgress.currentTest && (
-            <p className="text-xs text-text-tertiary">
-              Current: {testProgress.currentTest}
-            </p>
-          )}
-        </Card>
-      )}
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Saved Batches */}
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-orbitron">Saved Batches</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {batchConfigs.length === 0 ? (
-                <div className="text-center py-8 text-text-tertiary">
-                  <p>No saved batches yet</p>
-                  <p className="text-xs mt-2">
-                    Select achievements and save them as a batch to appear here
-                  </p>
-                </div>
-              ) : (
-                <ScrollArea className="h-[400px]">
-                  <div className="space-y-4">
-                    {batchConfigs.map(batch => {
-                      // Get achievement details for this batch
-                      const batchAchievements = allAchievements.filter(a => 
-                        batch.achievements.includes(a.id)
-                      );
-                      
-                      return (
-                        <div 
-                          key={batch.id} 
-                          className="border border-divider/30 rounded-md p-3 space-y-2"
-                        >
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h3 className="font-semibold">{batch.name}</h3>
-                              <p className="text-sm text-text-secondary">{batch.description}</p>
-                            </div>
-                            <div className="flex space-x-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => runBatch(batch.achievements)}
-                                disabled={isLoading}
-                              >
-                                <Play className="h-3 w-3 mr-1" />
-                                Run
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => deleteBatch(batch.id)}
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </div>
-                          
-                          <div className="flex flex-wrap gap-2">
-                            {batchAchievements.map(achievement => (
-                              <Badge 
-                                key={achievement.id}
-                                variant="outline"
-                                className="bg-midnight-elevated"
-                              >
-                                {achievement.name}
-                              </Badge>
-                            ))}
-                            {batchAchievements.length === 0 && (
-                              <span className="text-xs text-text-tertiary">
-                                No achievements in this batch
-                              </span>
-                            )}
-                          </div>
-                          
-                          <div className="flex justify-between text-xs text-text-tertiary">
-                            <span>{batchAchievements.length} achievements</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="w-full mb-4">
+          <TabsTrigger value="configure" className="flex-1">
+            <CheckSquare className="h-4 w-4 mr-2" />
+            Configure
+          </TabsTrigger>
+          <TabsTrigger value="results" className="flex-1">
+            <ListRestart className="h-4 w-4 mr-2" />
+            Results
+          </TabsTrigger>
+        </TabsList>
         
-        {/* Create New Batch */}
-        <div>
+        <TabsContent value="configure">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-orbitron">Create Batch</CardTitle>
+              <CardTitle className="flex justify-between items-center">
+                <span className="text-lg">Select Achievements to Test</span>
+                <div className="text-sm font-normal">
+                  {selectedAchievements.size} selected
+                </div>
+              </CardTitle>
             </CardHeader>
+            
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Input
-                  placeholder="Batch name"
-                  value={newBatchName}
-                  onChange={(e) => setNewBatchName(e.target.value)}
-                  className="bg-midnight-elevated border-divider"
-                />
-                
-                <Input
-                  placeholder="Description (optional)"
-                  value={newBatchDescription}
-                  onChange={(e) => setNewBatchDescription(e.target.value)}
-                  className="bg-midnight-elevated border-divider"
-                />
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={selectAllVisible}
+                >
+                  Select All Visible
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={clearSelection}
+                >
+                  Clear Selection
+                </Button>
               </div>
               
-              <div className="border border-divider/30 rounded-md p-2">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-semibold">Selected Achievements</span>
-                  <Badge variant="outline">
-                    {selectedAchievements.size}
+              <Separator />
+              
+              <ScrollArea className="h-[300px] border border-divider/30 rounded-md p-2">
+                <div className="space-y-1">
+                  {filteredAchievements.map(achievement => (
+                    <div 
+                      key={achievement.id}
+                      className={`flex items-center p-2 rounded-md cursor-pointer hover:bg-midnight-elevated ${
+                        selectedAchievements.has(achievement.id) ? 'bg-arcane-15 border border-arcane-30' : ''
+                      }`}
+                      onClick={() => toggleAchievementSelection(achievement.id)}
+                    >
+                      <Checkbox 
+                        checked={selectedAchievements.has(achievement.id)}
+                        onCheckedChange={() => toggleAchievementSelection(achievement.id)}
+                        className="mr-2"
+                      />
+                      <div>
+                        <div className="font-medium">{achievement.name}</div>
+                        <div className="text-xs text-text-secondary">{achievement.description}</div>
+                      </div>
+                      <div className="ml-auto flex items-center">
+                        <Badge className="mr-2 capitalize">{achievement.category}</Badge>
+                        <Badge variant="outline">{achievement.rank}</Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+              
+              <div className="flex justify-between items-center">
+                <Button 
+                  onClick={handleRunSelectedTests}
+                  disabled={selectedAchievements.size === 0 || testProgress.isRunning}
+                >
+                  {testProgress.isRunning ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Running...
+                    </>
+                  ) : (
+                    <>
+                      <PlayCircle className="h-4 w-4 mr-2" />
+                      Run Selected Tests
+                    </>
+                  )}
+                </Button>
+                
+                <div className="text-sm text-text-secondary">
+                  {filteredAchievements.length} achievements in current filter
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="results">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex justify-between items-center">
+                <span className="text-lg">Test Results</span>
+                <div className="flex items-center space-x-2">
+                  <Badge variant="success" className="flex items-center">
+                    <Check className="h-3 w-3 mr-1" />
+                    {successCount}
+                  </Badge>
+                  <Badge variant="destructive" className="flex items-center">
+                    <X className="h-3 w-3 mr-1" />
+                    {failureCount}
+                  </Badge>
+                  <Badge variant="outline" className="flex items-center">
+                    <Clock className="h-3 w-3 mr-1" />
+                    {pendingCount}
                   </Badge>
                 </div>
+              </CardTitle>
+            </CardHeader>
+            
+            <CardContent className="space-y-4">
+              {testProgress.isRunning && (
+                <div className="border border-arcane-30 bg-arcane-15 rounded-md p-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="font-medium">Test Progress</div>
+                    <div className="text-sm">
+                      {testProgress.completed}/{testProgress.total} completed
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <div className="relative h-2">
+                      <div className="absolute inset-0 bg-midnight-elevated rounded-full"></div>
+                      <div 
+                        className="absolute inset-y-0 left-0 bg-arcane rounded-full"
+                        style={{ 
+                          width: `${testProgress.total > 0 ? (testProgress.completed / testProgress.total) * 100 : 0}%`
+                        }}
+                      ></div>
+                    </div>
+                    
+                    <div className="flex justify-between text-xs text-text-secondary">
+                      <div>
+                        <span className="text-success">{testProgress.successful} passed</span>
+                        {testProgress.failed > 0 && (
+                          <span className="ml-2 text-valor">{testProgress.failed} failed</span>
+                        )}
+                      </div>
+                      <div>
+                        {testProgress.currentTest ? (
+                          <span>Testing: {testProgress.currentTest}</span>
+                        ) : (
+                          <span>Running tests...</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={stopTests}
+                    >
+                      <PauseCircle className="h-4 w-4 mr-1" />
+                      Stop Tests
+                    </Button>
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center">
+                    <Checkbox 
+                      id="show-successful"
+                      checked={showSuccessful}
+                      onCheckedChange={() => setShowSuccessful(!showSuccessful)}
+                      className="mr-1"
+                    />
+                    <label 
+                      htmlFor="show-successful"
+                      className="text-sm text-text-secondary cursor-pointer"
+                    >
+                      Successful
+                    </label>
+                  </div>
+                  
+                  <div className="flex items-center">
+                    <Checkbox 
+                      id="show-failed"
+                      checked={showFailed}
+                      onCheckedChange={() => setShowFailed(!showFailed)}
+                      className="mr-1"
+                    />
+                    <label 
+                      htmlFor="show-failed"
+                      className="text-sm text-text-secondary cursor-pointer"
+                    >
+                      Failed
+                    </label>
+                  </div>
+                  
+                  <div className="flex items-center">
+                    <Checkbox 
+                      id="show-pending"
+                      checked={showPending}
+                      onCheckedChange={() => setShowPending(!showPending)}
+                      className="mr-1"
+                    />
+                    <label 
+                      htmlFor="show-pending"
+                      className="text-sm text-text-secondary cursor-pointer"
+                    >
+                      Pending
+                    </label>
+                  </div>
+                </div>
                 
-                <ScrollArea className="h-[200px]">
-                  {selectedAchievements.size === 0 ? (
-                    <div className="text-center py-4 text-text-tertiary">
-                      <p className="text-xs">
-                        No achievements selected. 
-                        Select achievements in the Categories tab.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-1">
-                      {Array.from(selectedAchievements).map(id => {
-                        const achievement = allAchievements.find(a => a.id === id);
-                        if (!achievement) return null;
-                        
-                        return (
-                          <div 
-                            key={id}
-                            className="text-xs p-1 border-b border-divider/10 last:border-0"
-                          >
-                            {achievement.name}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </ScrollArea>
+                <div className="text-sm text-text-secondary">
+                  {filteredResults.length} visible results
+                </div>
               </div>
               
-              <div className="flex space-x-2">
-                <Button 
-                  variant="outline"
-                  onClick={saveBatch}
-                  disabled={newBatchName.trim() === '' || selectedAchievements.size === 0}
-                  className="flex-1"
-                >
-                  <Save className="h-4 w-4 mr-1" />
-                  Save Batch
-                </Button>
+              <ScrollArea className="h-[300px] border border-divider/30 rounded-md">
+                <div className="space-y-1 p-2">
+                  {filteredResults.map(result => (
+                    <div 
+                      key={result.id}
+                      className="border border-divider/30 rounded-md p-2 bg-midnight-card"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="font-medium">{result.name}</div>
+                          <div className="flex items-center mt-1">
+                            <Badge className="mr-2 capitalize">{result.category}</Badge>
+                            <Badge variant="outline">{result.rank}</Badge>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center">
+                          {result.status === 'success' ? (
+                            <Badge variant="success" className="flex items-center">
+                              <Check className="h-3 w-3 mr-1" />
+                              Pass
+                            </Badge>
+                          ) : result.status === 'failure' ? (
+                            <Badge variant="destructive" className="flex items-center">
+                              <X className="h-3 w-3 mr-1" />
+                              Fail
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="flex items-center">
+                              <Clock className="h-3 w-3 mr-1" />
+                              Pending
+                            </Badge>
+                          )}
+                          
+                          {result.duration !== undefined && (
+                            <div className="ml-2 text-xs text-text-tertiary">
+                              {result.duration}ms
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {result.error && (
+                        <div className="mt-2 p-2 bg-red-950/30 border border-red-800/50 rounded text-xs text-text-secondary">
+                          <div className="flex items-start">
+                            <AlertTriangle className="h-3 w-3 text-red-400 mr-1 mt-0.5 flex-shrink-0" />
+                            <div>{result.error}</div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {result.status === 'failure' && (
+                        <div className="mt-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => runTests([result.id])}
+                            disabled={testProgress.isRunning}
+                          >
+                            <Repeat className="h-3 w-3 mr-1" />
+                            Retry
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+              
+              <div className="flex justify-between">
+                <div className="space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={handleRetryFailed}
+                    disabled={testProgress.isRunning || failureCount === 0 || retryingFailed}
+                  >
+                    {retryingFailed ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                    )}
+                    Retry Failed
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={clearResults}
+                    disabled={testProgress.isRunning || testResults.length === 0}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Clear Results
+                  </Button>
+                </div>
                 
-                <Button 
-                  variant="arcane"
-                  onClick={() => runTests()}
-                  disabled={selectedAchievements.size === 0 || isLoading}
-                  className="flex-1"
+                <Button
+                  onClick={() => setActiveTab('configure')}
+                  disabled={testProgress.isRunning}
                 >
-                  <Play className="h-4 w-4 mr-1" />
-                  Run Selected
+                  <Filter className="h-4 w-4 mr-2" />
+                  Edit Test Selection
                 </Button>
               </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

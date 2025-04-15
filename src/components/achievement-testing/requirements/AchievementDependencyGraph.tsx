@@ -1,167 +1,302 @@
 
-import React, { useEffect, useState, useMemo } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useTestingDashboard } from '@/contexts/TestingDashboardContext';
+import React, { useEffect, useState, useRef } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Achievement } from '@/types/achievementTypes';
+import { useTestingDashboard } from '@/contexts/TestingDashboardContext';
+import { ArrowUpRight, GitMerge, Activity, Zap } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
-interface DependencyNode {
+interface AchievementNode {
   id: string;
-  label: string;
+  name: string;
   rank: string;
-  isUnlocked: boolean;
-  category: string;
-}
-
-interface DependencyLink {
-  source: string;
-  target: string;
-  type: 'prerequisite' | 'suggested';
-}
-
-interface DependencyGraphData {
-  nodes: DependencyNode[];
-  links: DependencyLink[];
+  unlocked: boolean;
+  dependencies: string[];
+  dependents: string[];
 }
 
 interface AchievementDependencyGraphProps {
-  selectedAchievementId?: string;
+  selectedAchievementId: string | null;
 }
 
-const AchievementDependencyGraph: React.FC<AchievementDependencyGraphProps> = ({ 
-  selectedAchievementId 
+const AchievementDependencyGraph: React.FC<AchievementDependencyGraphProps> = ({
+  selectedAchievementId
 }) => {
   const { allAchievements, userAchievements } = useTestingDashboard();
-  const [graphData, setGraphData] = useState<DependencyGraphData | null>(null);
+  const [nodes, setNodes] = useState<AchievementNode[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [graphBuilt, setGraphBuilt] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   
-  // Determine prerequisites based on rank and relationships
-  const findPrerequisites = (achievement: Achievement): string[] => {
-    // For this example, we'll use rank as a simple prerequisite system
-    // In a real system, you'd have more complex logic or actual prerequisite data
-    const rankOrder = ['E', 'D', 'C', 'B', 'A', 'S'];
-    const achievementRank = rankOrder.indexOf(achievement.rank);
+  // Build the dependency graph
+  useEffect(() => {
+    if (allAchievements.length === 0) return;
     
-    // Get achievements of the previous rank in the same category
-    return allAchievements
-      .filter(a => 
-        a.category === achievement.category && 
-        rankOrder.indexOf(a.rank) === achievementRank - 1
-      )
-      .map(a => a.id);
-  };
+    setLoading(true);
+    
+    // Create dependency and unlock mapping
+    const buildGraph = () => {
+      // Map for tracking dependencies and dependents
+      const dependencyMap: Record<string, string[]> = {};
+      const dependentMap: Record<string, string[]> = {};
+      
+      // Initialize maps
+      allAchievements.forEach(ach => {
+        dependencyMap[ach.id] = [];
+        dependentMap[ach.id] = [];
+      });
+      
+      // Analyze requirements to find dependencies
+      allAchievements.forEach(ach => {
+        // Check if requirement contains another achievement
+        if (ach.requirements && ach.requirements.type === 'ACHIEVEMENT') {
+          const dependsOn = ach.requirements.achievementId;
+          if (dependsOn) {
+            dependencyMap[ach.id].push(dependsOn);
+            dependentMap[dependsOn].push(ach.id);
+          }
+        }
+      });
+      
+      // Create nodes with dependencies
+      const graphNodes = allAchievements.map(ach => ({
+        id: ach.id,
+        name: ach.name,
+        rank: ach.rank,
+        unlocked: userAchievements[ach.id]?.isUnlocked || false,
+        dependencies: dependencyMap[ach.id] || [],
+        dependents: dependentMap[ach.id] || []
+      }));
+      
+      setNodes(graphNodes);
+      setLoading(false);
+      setGraphBuilt(true);
+    };
+    
+    buildGraph();
+  }, [allAchievements, userAchievements]);
   
-  // Generate dependency graph data
-  const generateGraphData = useMemo(() => {
-    const nodes: DependencyNode[] = allAchievements.map(achievement => ({
-      id: achievement.id,
-      label: achievement.name,
-      rank: achievement.rank,
-      category: achievement.category,
-      isUnlocked: userAchievements[achievement.id]?.isUnlocked || false
-    }));
+  // Render the graph on canvas
+  useEffect(() => {
+    if (!graphBuilt || !canvasRef.current || !nodes.length) return;
     
-    const links: DependencyLink[] = [];
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
     
-    // Create links based on prerequisites
-    allAchievements.forEach(achievement => {
-      const prerequisites = findPrerequisites(achievement);
-      prerequisites.forEach(prereqId => {
-        links.push({
-          source: prereqId,
-          target: achievement.id,
-          type: 'prerequisite'
-        });
+    // Set canvas size
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Calculate node positions (simple layout algorithm)
+    const nodePositions: Record<string, {x: number, y: number}> = {};
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = Math.min(canvas.width, canvas.height) * 0.4;
+    
+    // If there's a selected achievement, put it in the center
+    if (selectedAchievementId) {
+      const selectedNode = nodes.find(n => n.id === selectedAchievementId);
+      if (selectedNode) {
+        // Selected node in center
+        nodePositions[selectedNode.id] = { x: centerX, y: centerY };
+        
+        // Dependencies in a circle on top
+        const deps = selectedNode.dependencies;
+        if (deps.length > 0) {
+          const depAngleStep = Math.PI / (deps.length + 1);
+          deps.forEach((depId, i) => {
+            const angle = Math.PI + depAngleStep * (i + 1);
+            nodePositions[depId] = {
+              x: centerX + radius * Math.cos(angle),
+              y: centerY + radius * Math.sin(angle) * 0.7
+            };
+          });
+        }
+        
+        // Dependents in a circle on bottom
+        const dependents = selectedNode.dependents;
+        if (dependents.length > 0) {
+          const depAngleStep = Math.PI / (dependents.length + 1);
+          dependents.forEach((depId, i) => {
+            const angle = depAngleStep * (i + 1);
+            nodePositions[depId] = {
+              x: centerX + radius * Math.cos(angle),
+              y: centerY + radius * Math.sin(angle) * 0.7
+            };
+          });
+        }
+      }
+    } else {
+      // Arrange all nodes in a circle
+      nodes.forEach((node, i) => {
+        const angle = (2 * Math.PI * i) / nodes.length;
+        nodePositions[node.id] = {
+          x: centerX + radius * Math.cos(angle),
+          y: centerY + radius * Math.sin(angle)
+        };
+      });
+    }
+    
+    // Draw connections first (behind nodes)
+    ctx.lineWidth = 1.5;
+    nodes.forEach(node => {
+      const nodePos = nodePositions[node.id];
+      if (!nodePos) return;
+      
+      // Draw dependencies
+      node.dependencies.forEach(depId => {
+        const depPos = nodePositions[depId];
+        if (!depPos) return;
+        
+        // Draw arrow from dependency to this node
+        ctx.beginPath();
+        ctx.moveTo(depPos.x, depPos.y);
+        ctx.lineTo(nodePos.x, nodePos.y);
+        
+        // Style based on unlock status
+        const depNode = nodes.find(n => n.id === depId);
+        const isUnlocked = depNode?.unlocked || false;
+        
+        ctx.strokeStyle = isUnlocked 
+          ? 'rgba(124, 58, 237, 0.6)' // Arcane purple
+          : 'rgba(255, 255, 255, 0.2)'; // Faded white
+          
+        ctx.stroke();
+        
+        // Draw arrowhead
+        const angle = Math.atan2(nodePos.y - depPos.y, nodePos.x - depPos.x);
+        const size = 8;
+        
+        ctx.beginPath();
+        ctx.moveTo(
+          nodePos.x - size * Math.cos(angle),
+          nodePos.y - size * Math.sin(angle)
+        );
+        ctx.lineTo(
+          nodePos.x - size * Math.cos(angle) + size * Math.cos(angle - Math.PI/6),
+          nodePos.y - size * Math.sin(angle) + size * Math.sin(angle - Math.PI/6)
+        );
+        ctx.lineTo(
+          nodePos.x - size * Math.cos(angle) + size * Math.cos(angle + Math.PI/6),
+          nodePos.y - size * Math.sin(angle) + size * Math.sin(angle + Math.PI/6)
+        );
+        ctx.closePath();
+        ctx.fillStyle = isUnlocked 
+          ? 'rgba(124, 58, 237, 0.6)' 
+          : 'rgba(255, 255, 255, 0.2)';
+        ctx.fill();
       });
     });
     
-    return { nodes, links };
-  }, [allAchievements, userAchievements]);
-  
-  useEffect(() => {
-    setGraphData(generateGraphData);
-  }, [generateGraphData]);
-  
-  if (!graphData || graphData.nodes.length === 0) {
-    return (
-      <Card className="p-4">
-        <CardContent className="flex flex-col items-center justify-center h-[300px] text-text-secondary">
-          <p>No achievement dependency data available</p>
-        </CardContent>
-      </Card>
-    );
-  }
-  
-  // If a specific achievement is selected, filter the graph
-  const filteredData = selectedAchievementId 
-    ? {
-        nodes: graphData.nodes.filter(node => 
-          node.id === selectedAchievementId || 
-          graphData.links.some(link => 
-            (link.source === selectedAchievementId && link.target === node.id) ||
-            (link.target === selectedAchievementId && link.source === node.id)
-          )
-        ),
-        links: graphData.links.filter(link => 
-          link.source === selectedAchievementId || 
-          link.target === selectedAchievementId
-        )
+    // Draw nodes
+    nodes.forEach(node => {
+      const pos = nodePositions[node.id];
+      if (!pos) return;
+      
+      const isSelected = node.id === selectedAchievementId;
+      const nodeSize = isSelected ? 24 : 20;
+      
+      // Node circle
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, nodeSize, 0, 2 * Math.PI);
+      
+      // Fill based on unlock status
+      if (node.unlocked) {
+        ctx.fillStyle = isSelected 
+          ? 'rgba(124, 58, 237, 0.9)' // Bright arcane
+          : 'rgba(124, 58, 237, 0.6)'; // Regular arcane
+      } else {
+        ctx.fillStyle = isSelected 
+          ? 'rgba(30, 30, 60, 0.9)' // Dark bg highlight
+          : 'rgba(20, 20, 40, 0.6)'; // Dark bg
       }
-    : graphData;
+      
+      ctx.fill();
+      
+      // Border
+      ctx.lineWidth = isSelected ? 3 : 1.5;
+      ctx.strokeStyle = isSelected 
+        ? 'rgba(250, 204, 21, 0.85)' // Gold for selected
+        : node.unlocked 
+          ? 'rgba(124, 58, 237, 0.9)' // Arcane for unlocked
+          : 'rgba(255, 255, 255, 0.4)'; // Grey for locked
+      ctx.stroke();
+      
+      // Rank indicator
+      const rankSize = 12;
+      ctx.font = `${rankSize}px Space Grotesk`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.fillText(node.rank, pos.x, pos.y);
+      
+      // Node name (below node)
+      ctx.font = '12px Sora';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = isSelected 
+        ? 'rgba(255, 255, 255, 0.95)' 
+        : 'rgba(255, 255, 255, 0.7)';
+      
+      // Truncate long names
+      let name = node.name;
+      if (name.length > 15) {
+        name = name.substring(0, 13) + '...';
+      }
+      
+      ctx.fillText(name, pos.x, pos.y + nodeSize + 5);
+    });
+    
+  }, [graphBuilt, nodes, selectedAchievementId, canvasRef]);
   
   return (
-    <Card className="p-4">
-      <CardContent className="h-[300px] overflow-auto">
-        <h3 className="text-sm font-medium mb-3">Achievement Dependencies</h3>
-        
-        {filteredData.nodes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-[250px] text-text-secondary">
-            <p>No dependencies found for this achievement</p>
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center text-lg">
+          <GitMerge className="mr-2 h-5 w-5 text-arcane" />
+          Achievement Dependencies
+        </CardTitle>
+      </CardHeader>
+      
+      <CardContent>
+        {loading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-[300px] w-full bg-midnight-elevated" />
+          </div>
+        ) : nodes.length > 0 ? (
+          <div className="space-y-4">
+            <div className="h-[300px] w-full relative border border-divider/30 rounded-md bg-midnight-card">
+              <canvas 
+                ref={canvasRef}
+                className="w-full h-full"
+              />
+            </div>
+            
+            <div className="flex justify-between items-center text-sm text-text-secondary">
+              <div className="flex items-center">
+                <div className="w-3 h-3 rounded-full bg-arcane-60 mr-2"></div>
+                <span>Unlocked</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-3 h-3 rounded-full bg-midnight-elevated border border-divider/30 mr-2"></div>
+                <span>Locked</span>
+              </div>
+              <div className="flex items-center">
+                <ArrowUpRight className="w-3 h-3 text-arcane-60 mr-2" />
+                <span>Dependency</span>
+              </div>
+            </div>
           </div>
         ) : (
-          <div className="space-y-3">
-            {/* Simple visualization - in a real app, you might use a library like d3 or react-flow */}
-            {filteredData.nodes.map(node => (
-              <div 
-                key={node.id}
-                className={`p-3 rounded-md border ${
-                  node.isUnlocked 
-                    ? 'border-arcane bg-arcane-15' 
-                    : node.id === selectedAchievementId
-                      ? 'border-valor-30 bg-valor-15'
-                      : 'border-divider/30'
-                }`}
-              >
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">{node.label}</span>
-                  <div className="flex gap-1">
-                    <Badge variant="outline">Rank {node.rank}</Badge>
-                    {node.isUnlocked && (
-                      <Badge variant="arcane">Unlocked</Badge>
-                    )}
-                    {node.id === selectedAchievementId && (
-                      <Badge variant="valor">Selected</Badge>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Show connections */}
-                {filteredData.links
-                  .filter(link => link.source === node.id || link.target === node.id)
-                  .map((link, idx) => {
-                    const connectedId = link.source === node.id ? link.target : link.source;
-                    const connectedNode = filteredData.nodes.find(n => n.id === connectedId);
-                    const relationType = link.source === node.id ? 'Leads to' : 'Requires';
-                    
-                    return connectedNode ? (
-                      <div key={idx} className="mt-2 text-sm pl-3 border-l-2 border-divider/30">
-                        <span className="text-text-secondary">{relationType}: </span>
-                        <span>{connectedNode.label}</span>
-                      </div>
-                    ) : null;
-                  })
-                }
-              </div>
-            ))}
+          <div className="flex flex-col items-center justify-center h-[300px] text-text-secondary">
+            <Activity className="h-12 w-12 mb-4 text-text-tertiary" />
+            <p>No dependency data available</p>
+            <p className="text-xs mt-2">Select an achievement to visualize its dependencies</p>
           </div>
         )}
       </CardContent>
