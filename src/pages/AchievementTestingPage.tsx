@@ -13,6 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { TestingDashboardProvider } from '@/contexts/TestingDashboardContext';
 import { AchievementIdMappingService } from '@/services/common/AchievementIdMappingService';
 import { AchievementIdRepairService } from '@/services/testing/AchievementIdRepairService';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 import TestControlPanel from '@/components/achievement-testing/TestControlPanel';
 import TestDashboardTab from '@/components/achievement-testing/TestDashboardTab';

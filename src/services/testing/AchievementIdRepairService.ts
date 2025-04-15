@@ -73,7 +73,7 @@ export class AchievementIdRepairService {
     try {
       // Step 1: Get all achievements from utils
       const achievements = await AchievementUtils.getAllAchievements();
-      const stringIds = achievements.map(a => a.string_id).filter(Boolean);
+      const stringIds = achievements.map(a => a.stringId).filter(Boolean);
       
       // Step 2: Check which ones exist in the database
       const { data: existingMappings, error } = await supabase
@@ -98,9 +98,9 @@ export class AchievementIdRepairService {
       for (const stringId of missingStringIds) {
         if (!stringId) continue;
         
-        const achievement = achievements.find(a => a.string_id === stringId);
+        const achievement = achievements.find(a => a.stringId === stringId);
         if (!achievement) {
-          errors.push(`Achievement with string_id "${stringId}" not found`);
+          errors.push(`Achievement with stringId "${stringId}" not found`);
           continue;
         }
         

@@ -101,7 +101,7 @@ const AchievementIdRepairTool: React.FC<AchievementIdRepairToolProps> = ({
       
       <CardContent className="space-y-4">
         {validationState && (
-          <Alert variant={validationState.unmapped.length > 0 ? "destructive" : "success"}>
+          <Alert variant={validationState.unmapped.length > 0 ? "destructive" : "default"} className={validationState.unmapped.length > 0 ? "" : "border-green-600 text-green-600"}>
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Validation Results</AlertTitle>
             <AlertDescription>
@@ -115,7 +115,7 @@ const AchievementIdRepairTool: React.FC<AchievementIdRepairToolProps> = ({
         )}
         
         {repairResult && (
-          <Alert variant={repairResult.success ? "success" : "warning"}>
+          <Alert variant={repairResult.success ? "default" : "destructive"} className={repairResult.success ? "border-green-600 text-green-600" : ""}>
             <CheckCircle className="h-4 w-4" />
             <AlertTitle>Repair Results</AlertTitle>
             <AlertDescription>
