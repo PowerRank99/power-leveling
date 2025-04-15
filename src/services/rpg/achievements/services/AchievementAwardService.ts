@@ -1,8 +1,8 @@
+
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { supabase } from '@/integrations/supabase/client';
 import { Achievement } from '@/types/achievementTypes';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
-import { AsyncAchievementAdapter } from '../progress/AsyncAchievementAdapter';
 
 /**
  * Service for awarding achievements to users

@@ -15,7 +15,8 @@ export class AchievementDatabaseService {
     try {
       const { data: achievements, error } = await supabase
         .from('achievements')
-        .select('*');
+        .select('*')
+        .order('rank', { ascending: false });
       
       if (error) throw error;
       
@@ -45,11 +46,11 @@ export class AchievementDatabaseService {
   }
   
   /**
-   * Get a specific achievement by its string ID
+   * Get a specific achievement by its ID
    */
-  static async getAchievementByStringId(stringId: string): Promise<ServiceResponse<Achievement | null>> {
+  static async getAchievementById(id: string): Promise<ServiceResponse<Achievement | null>> {
     try {
-      if (!stringId) {
+      if (!id) {
         return createErrorResponse(
           'Invalid achievement ID',
           'Achievement ID cannot be empty',
@@ -60,7 +61,7 @@ export class AchievementDatabaseService {
       const { data: achievement, error } = await supabase
         .from('achievements')
         .select('*')
-        .eq('string_id', stringId)
+        .eq('id', id)
         .maybeSingle();
       
       if (error) throw error;
@@ -94,6 +95,55 @@ export class AchievementDatabaseService {
   }
   
   /**
+   * Get a specific achievement by its string ID (for backward compatibility)
+   */
+  static async getAchievementByStringId(stringId: string): Promise<ServiceResponse<Achievement | null>> {
+    try {
+      if (!stringId) {
+        return createErrorResponse(
+          'Invalid achievement string ID',
+          'Achievement string ID cannot be empty',
+          ErrorCategory.VALIDATION
+        );
+      }
+      
+      const { data: achievement, error } = await supabase
+        .from('achievements')
+        .select('*')
+        .eq('string_id', stringId)
+        .maybeSingle();
+      
+      if (error) throw error;
+      
+      if (!achievement) {
+        return createSuccessResponse(null);
+      }
+      
+      const formattedAchievement: Achievement = {
+        id: achievement.id,
+        name: achievement.name,
+        description: achievement.description,
+        category: achievement.category as AchievementCategory,
+        rank: achievement.rank as AchievementRank,
+        points: achievement.points,
+        xpReward: achievement.xp_reward,
+        iconName: achievement.icon_name,
+        requirements: achievement.requirements,
+        stringId: achievement.string_id
+      };
+      
+      return createSuccessResponse(formattedAchievement);
+    } catch (error) {
+      console.error('Failed to fetch achievement by string ID:', error);
+      return createErrorResponse(
+        'Failed to fetch achievement by string ID',
+        error instanceof Error ? error.message : 'Unknown error',
+        ErrorCategory.DATABASE
+      );
+    }
+  }
+  
+  /**
    * Get achievements by category
    */
   static async getAchievementsByCategory(category: AchievementCategory): Promise<ServiceResponse<Achievement[]>> {
@@ -101,7 +151,8 @@ export class AchievementDatabaseService {
       const { data: achievements, error } = await supabase
         .from('achievements')
         .select('*')
-        .eq('category', category);
+        .eq('category', category)
+        .order('rank', { ascending: false });
       
       if (error) throw error;
       
@@ -137,7 +188,8 @@ export class AchievementDatabaseService {
       const { data: achievements, error } = await supabase
         .from('achievements')
         .select('*')
-        .eq('rank', rank);
+        .eq('rank', rank)
+        .order('category');
       
       if (error) throw error;
       

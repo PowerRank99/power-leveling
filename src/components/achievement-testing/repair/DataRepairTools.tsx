@@ -6,6 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Wrench, Database, AlertCircle } from 'lucide-react';
 import AchievementIdRepairTool from './AchievementIdRepairTool';
+import AchievementMigrationTool from './AchievementMigrationTool';
 
 interface DataRepairToolsProps {
   userId: string;
@@ -18,6 +19,10 @@ const DataRepairTools: React.FC<DataRepairToolsProps> = ({ userId }) => {
     // Refresh data or update UI as needed
   };
   
+  const handleMigrationComplete = () => {
+    // Refresh data or update UI as needed
+  };
+  
   return (
     <div className="space-y-4">
       <Alert className="bg-arcane-15 border-arcane-30">
@@ -26,6 +31,7 @@ const DataRepairTools: React.FC<DataRepairToolsProps> = ({ userId }) => {
         <AlertDescription>
           These tools help fix data inconsistencies that can cause achievement tests to fail.
           Run the Achievement ID Repair tool first if you're seeing "No database mapping" errors.
+          Use the Database Migration tool to migrate to using the database as the source of truth.
         </AlertDescription>
       </Alert>
       
@@ -34,6 +40,10 @@ const DataRepairTools: React.FC<DataRepairToolsProps> = ({ userId }) => {
           <TabsTrigger value="id-repair" className="flex-1">
             <Wrench className="h-4 w-4 mr-2" />
             Achievement ID Repair
+          </TabsTrigger>
+          <TabsTrigger value="migration" className="flex-1">
+            <Database className="h-4 w-4 mr-2" />
+            Database Migration
           </TabsTrigger>
           <TabsTrigger value="data-integrity" className="flex-1">
             <Database className="h-4 w-4 mr-2" />
@@ -45,6 +55,13 @@ const DataRepairTools: React.FC<DataRepairToolsProps> = ({ userId }) => {
           <AchievementIdRepairTool 
             userId={userId}
             onRepairComplete={handleRepairComplete}
+          />
+        </TabsContent>
+        
+        <TabsContent value="migration">
+          <AchievementMigrationTool
+            userId={userId}
+            onMigrationComplete={handleMigrationComplete}
           />
         </TabsContent>
         

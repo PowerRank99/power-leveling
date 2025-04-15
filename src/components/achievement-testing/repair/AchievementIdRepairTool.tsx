@@ -5,7 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Wrench, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { AchievementIdRepairService } from '@/services/testing/AchievementIdRepairService';
-import { AchievementIdMappingService } from '@/services/common/AchievementIdMappingService';
+import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 import { toast } from 'sonner';
 
 interface AchievementIdRepairToolProps {
@@ -24,31 +24,29 @@ const AchievementIdRepairTool: React.FC<AchievementIdRepairToolProps> = ({
     details?: any;
   } | null>(null);
   const [validationState, setValidationState] = useState<{
-    unmapped: string[];
-    missingDatabaseEntries: string[];
+    valid: number;
+    invalid: number;
+    errors: string[];
   } | null>(null);
   
-  const checkMappings = async () => {
+  const checkStringIds = async () => {
     try {
-      // Initialize mapping service if not already initialized
-      await AchievementIdMappingService.initialize();
-      
-      // Validate mappings
-      const validation = AchievementIdMappingService.validateMappings();
+      // Validate string IDs
+      const validation = await AchievementIdRepairService.validateAchievementStringIds();
       setValidationState(validation);
       
-      if (validation.unmapped.length === 0 && validation.missingDatabaseEntries.length === 0) {
-        toast.success('All achievement IDs are properly mapped');
+      if (validation.invalid === 0) {
+        toast.success('All achievements have valid string IDs');
       } else {
-        toast.error(`Found ${validation.unmapped.length} unmapped achievements`);
+        toast.error(`Found ${validation.invalid} achievements without string IDs`);
       }
     } catch (error) {
-      console.error('Error checking achievement mappings:', error);
-      toast.error('Failed to check achievement mappings');
+      console.error('Error checking achievement string IDs:', error);
+      toast.error('Failed to check achievement string IDs');
     }
   };
   
-  const repairMappings = async () => {
+  const repairStringIds = async () => {
     setIsRepairing(true);
     setRepairResult(null);
     
@@ -58,7 +56,7 @@ const AchievementIdRepairTool: React.FC<AchievementIdRepairToolProps> = ({
       setRepairResult(result);
       
       if (result.success) {
-        toast.success('Achievement ID mappings repaired successfully', {
+        toast.success('Achievement string IDs repaired successfully', {
           description: result.message
         });
       } else {
@@ -68,20 +66,23 @@ const AchievementIdRepairTool: React.FC<AchievementIdRepairToolProps> = ({
       }
       
       // Refresh validation state
-      const validation = AchievementIdMappingService.validateMappings();
+      const validation = await AchievementIdRepairService.validateAchievementStringIds();
       setValidationState(validation);
+      
+      // Clear achievement cache to force refresh
+      AchievementUtils.clearCache();
       
       // Notify parent component
       if (onRepairComplete) {
         onRepairComplete();
       }
     } catch (error) {
-      console.error('Error repairing achievement mappings:', error);
+      console.error('Error repairing achievement string IDs:', error);
       setRepairResult({
         success: false,
         message: error instanceof Error ? error.message : 'Unknown error'
       });
-      toast.error('Failed to repair achievement mappings');
+      toast.error('Failed to repair achievement string IDs');
     } finally {
       setIsRepairing(false);
     }
@@ -95,20 +96,20 @@ const AchievementIdRepairTool: React.FC<AchievementIdRepairToolProps> = ({
           Achievement ID Repair
         </CardTitle>
         <CardDescription>
-          Fix missing or broken achievement ID mappings that can cause test failures
+          Fix missing or invalid achievement string IDs in the database
         </CardDescription>
       </CardHeader>
       
       <CardContent className="space-y-4">
         {validationState && (
-          <Alert variant={validationState.unmapped.length > 0 ? "destructive" : "default"} className={validationState.unmapped.length > 0 ? "" : "border-green-600 text-green-600"}>
+          <Alert variant={validationState.invalid > 0 ? "destructive" : "default"} className={validationState.invalid === 0 ? "border-green-600 text-green-600" : ""}>
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Validation Results</AlertTitle>
             <AlertDescription>
-              {validationState.unmapped.length === 0 ? (
-                <span>All achievements have proper ID mappings</span>
+              {validationState.invalid === 0 ? (
+                <span>All {validationState.valid} achievements have valid string IDs</span>
               ) : (
-                <span>Found {validationState.unmapped.length} unmapped achievements</span>
+                <span>Found {validationState.invalid} achievements without string IDs</span>
               )}
             </AlertDescription>
           </Alert>
@@ -122,10 +123,10 @@ const AchievementIdRepairTool: React.FC<AchievementIdRepairToolProps> = ({
               {repairResult.message}
               {repairResult.details && (
                 <div className="mt-2 text-xs">
-                  <p>Mappings fixed: {repairResult.details.mappingsFixed}</p>
-                  <p>Entries created: {repairResult.details.entriesCreated}</p>
-                  {repairResult.details.mappingErrors.length > 0 && (
-                    <p>Mapping errors: {repairResult.details.mappingErrors.length}</p>
+                  <p>Validated: {repairResult.details.validated}</p>
+                  <p>Generated: {repairResult.details.generated}</p>
+                  {repairResult.details.errors.length > 0 && (
+                    <p>Errors: {repairResult.details.errors.length}</p>
                   )}
                 </div>
               )}
@@ -135,15 +136,15 @@ const AchievementIdRepairTool: React.FC<AchievementIdRepairToolProps> = ({
         
         <div className="flex space-x-2">
           <Button 
-            onClick={checkMappings} 
+            onClick={checkStringIds} 
             variant="outline"
             className="flex-1"
           >
-            Check Mappings
+            Check String IDs
           </Button>
           
           <Button 
-            onClick={repairMappings}
+            onClick={repairStringIds}
             disabled={isRepairing}
             variant="arcane"
             className="flex-1"
@@ -156,7 +157,7 @@ const AchievementIdRepairTool: React.FC<AchievementIdRepairToolProps> = ({
             ) : (
               <>
                 <Wrench className="mr-2 h-4 w-4" />
-                Repair Mappings
+                Repair String IDs
               </>
             )}
           </Button>

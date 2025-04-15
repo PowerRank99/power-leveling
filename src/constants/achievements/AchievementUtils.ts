@@ -2,7 +2,7 @@
 /**
  * AchievementUtils
  * 
- * Static utility methods for achievement operations
+ * Static utility methods for achievement operations using the database as the source of truth
  */
 import { Achievement, AchievementCategory, AchievementRank } from '@/types/achievementTypes';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,7 +30,7 @@ export class AchievementUtils {
         
       if (error) throw error;
       
-      const achievements = data as Achievement[] || [];
+      const achievements = data.map(achievement => this.mapDbAchievementToModel(achievement)) || [];
       
       // Cache the results for future use
       this.allAchievementsCache = achievements;
@@ -76,7 +76,7 @@ export class AchievementUtils {
         
       if (error) throw error;
       
-      return data as Achievement[] || [];
+      return data.map(achievement => this.mapDbAchievementToModel(achievement)) || [];
     } catch (error) {
       console.error(`Error fetching ${category} achievements:`, error);
       return [];
@@ -102,10 +102,12 @@ export class AchievementUtils {
       if (error) throw error;
       
       if (data) {
-        this.achievementCache.set(id, data as Achievement);
+        const achievement = this.mapDbAchievementToModel(data);
+        this.achievementCache.set(id, achievement);
+        return achievement;
       }
       
-      return data as Achievement || null;
+      return null;
     } catch (error) {
       console.error(`Error fetching achievement ${id}:`, error);
       return null;
@@ -113,10 +115,53 @@ export class AchievementUtils {
   }
   
   /**
-   * Get achievement by string ID (alias for getAchievementById for backwards compatibility)
+   * Get achievement by string ID (alias for backward compatibility)
    */
-  static async getAchievementByStringId(id: string): Promise<Achievement | null> {
-    return this.getAchievementById(id);
+  static async getAchievementByStringId(stringId: string): Promise<Achievement | null> {
+    try {
+      // Check cache first - we'd need to iterate since we're using UUID as the key
+      const cachedAchievement = Array.from(this.achievementCache.values()).find(
+        achievement => achievement.stringId === stringId
+      );
+      if (cachedAchievement) return cachedAchievement;
+      
+      const { data, error } = await supabase
+        .from('achievements')
+        .select('*')
+        .eq('string_id', stringId)
+        .maybeSingle();
+        
+      if (error) throw error;
+      
+      if (data) {
+        const achievement = this.mapDbAchievementToModel(data);
+        this.achievementCache.set(achievement.id, achievement);
+        return achievement;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error(`Error fetching achievement by string ID ${stringId}:`, error);
+      return null;
+    }
+  }
+  
+  /**
+   * Map database achievement record to Achievement model
+   */
+  private static mapDbAchievementToModel(dbAchievement: any): Achievement {
+    return {
+      id: dbAchievement.id,
+      name: dbAchievement.name,
+      description: dbAchievement.description,
+      category: dbAchievement.category as AchievementCategory,
+      rank: dbAchievement.rank as AchievementRank,
+      points: dbAchievement.points,
+      xpReward: dbAchievement.xp_reward,
+      iconName: dbAchievement.icon_name,
+      requirements: dbAchievement.requirements,
+      stringId: dbAchievement.string_id
+    };
   }
   
   /**
