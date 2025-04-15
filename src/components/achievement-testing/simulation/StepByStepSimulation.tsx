@@ -244,7 +244,7 @@ const StepByStepSimulation: React.FC = () => {
                   Event {currentIndex + 1} of {events.length}
                 </span>
               </div>
-              <Progress value={progress} />
+              <Progress value={progress} className="h-2" />
             </div>
             
             {/* Simulation controls */}

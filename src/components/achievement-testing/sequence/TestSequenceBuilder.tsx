@@ -1,21 +1,16 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { 
-  ListOrdered, Save, Play, Plus, X, 
-  GripVertical, ChevronDown, ChevronUp, ListChecks
-} from 'lucide-react';
-import { useState } from 'react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChevronDown, ChevronRight, Play, Plus, Save, Trash2, Check, Edit, Copy } from 'lucide-react';
 import { useTestingDashboard } from '@/contexts/TestingDashboardContext';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Achievement } from '@/types/achievementTypes';
 
 // Define Test Sequence types
 interface TestStep {

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Tabs, TabsContent, TabsList, TabsTrigger 
@@ -17,7 +16,6 @@ const TestRequirementsTab: React.FC<TestRequirementsTabProps> = ({ userId }) => 
   const { allAchievements, userAchievements } = useTestingDashboard();
   const [selectedAchievement, setSelectedAchievement] = useState<string | null>(null);
   
-  // Find the selected achievement object
   const achievementObject = selectedAchievement 
     ? allAchievements.find(a => a.id === selectedAchievement) 
     : null;
@@ -101,15 +99,12 @@ const TestRequirementsTab: React.FC<TestRequirementsTabProps> = ({ userId }) => 
                   <RequirementGapAnalysis 
                     achievement={achievementObject}
                     onGenerateData={() => {
-                      // Add generate data logic here
                       console.log('Generate data for', achievementObject.id);
                     }}
                     onRepairData={() => {
-                      // Add repair data logic here
                       console.log('Repair data for', achievementObject.id);
                     }}
                     onRunTest={() => {
-                      // Add test run logic here
                       console.log('Run test for', achievementObject.id);
                     }}
                   />
@@ -129,7 +124,7 @@ const TestRequirementsTab: React.FC<TestRequirementsTabProps> = ({ userId }) => 
               <CardTitle className="text-lg">Achievement Dependencies</CardTitle>
             </CardHeader>
             <CardContent className="p-4">
-              <AchievementDependencyGraph />
+              <AchievementDependencyGraph selectedAchievementId={selectedAchievement} />
             </CardContent>
           </Card>
         </TabsContent>

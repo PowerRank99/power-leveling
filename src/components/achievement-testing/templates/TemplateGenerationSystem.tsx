@@ -20,7 +20,6 @@ import { testDataGenerator } from '@/services/testing/generators/TestDataGenerat
 import { CharacterClass } from '@/services/testing/generators/ClassGenerator';
 import { supabase } from '@/integrations/supabase/client';
 
-// Define test data template types
 interface DataTemplate {
   id: string;
   name: string;
@@ -33,7 +32,6 @@ interface DataTemplate {
   lastRun?: Date;
 }
 
-// Predefined templates
 const PRESET_TEMPLATES: DataTemplate[] = [
   {
     id: 'new-user-journey',
@@ -335,6 +333,7 @@ const TemplateGenerationSystem: React.FC = () => {
           await generators.activity.generateActivityMix(userId, {
             count: template.config.activities.count || 3,
             includePowerDays: template.config.activities.includePowerDays || false,
+            powerDays: 1,
             testDataTag: `template-${template.id}`
           });
         }
