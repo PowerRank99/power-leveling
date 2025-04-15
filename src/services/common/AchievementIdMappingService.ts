@@ -131,7 +131,13 @@ export class AchievementIdMappingService {
     
     Object.values(ACHIEVEMENT_IDS).forEach(rankAchievements => {
       Object.values(rankAchievements).forEach(categoryAchievements => {
-        ids.push(...categoryAchievements.map(a => typeof a === 'string' ? a : a.id || ''));
+        categoryAchievements.forEach(achievement => {
+          if (typeof achievement === 'string') {
+            ids.push(achievement);
+          } else if (achievement && typeof achievement === 'object' && 'id' in achievement) {
+            ids.push(achievement.id as string);
+          }
+        });
       });
     });
     
