@@ -85,6 +85,27 @@ export class AchievementIdMappingService {
     }
   }
 
+  // Enhanced method to validate all mappings
+  static validateMappings(): {
+    valid: number;
+    invalid: number;
+    unmapped: string[];
+  } {
+    if (!this.initialized) {
+      throw new Error('AchievementIdMapping not initialized');
+    }
+
+    const validCount = this.idMap.size;
+    const invalidCount = this.unmappedIds.size;
+    const unmappedList = Array.from(this.unmappedIds);
+
+    return {
+      valid: validCount,
+      invalid: invalidCount,
+      unmapped: unmappedList
+    };
+  }
+
   // Enhanced method to get achievement UUID and full details
   static getAchievementDetails(stringId: string): { uuid?: string; achievement?: Achievement } {
     if (!this.initialized) {
@@ -99,12 +120,6 @@ export class AchievementIdMappingService {
     return entry || {};
   }
 
-  // Method to get all mapped achievements
-  static getAllMappedAchievements(): Map<string, { uuid: string; achievement: Achievement }> {
-    return new Map(this.idMap);
-  }
-
-  // Add new method to get UUID directly from string ID
   static getUuid(stringId: string): string | undefined {
     if (!this.initialized) {
       console.warn('[AchievementIdMapping] Service not initialized when getting UUID for', stringId);
@@ -118,7 +133,6 @@ export class AchievementIdMappingService {
     return entry?.[1].uuid;
   }
 
-  // Add new method to get all mappings as a Map of string ID to UUID
   static getAllMappings(): Map<string, string> {
     if (!this.initialized) {
       console.warn('[AchievementIdMapping] Service not initialized when getting all mappings');
@@ -132,4 +146,16 @@ export class AchievementIdMappingService {
     
     return mappings;
   }
+
+  // Optional: Method to force re-initialization
+  static async reset(): Promise<void> {
+    this.initialized = false;
+    this.idMap.clear();
+    this.unmappedIds.clear();
+    await this.initialize();
+  }
 }
+
+// Automatically initialize on import
+AchievementIdMappingService.initialize().catch(console.error);
+
