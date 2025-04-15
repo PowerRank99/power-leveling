@@ -135,8 +135,8 @@ export class AchievementIdMappingService {
           if (typeof achievement === 'string') {
             ids.push(achievement);
           } else if (achievement && typeof achievement === 'object') {
-            // Use type guard to check if 'id' property exists
-            if ('id' in achievement && achievement.id) {
+            // Type check the object and explicitly cast it to an interface with an id
+            if ('id' in achievement && typeof achievement.id === 'string') {
               ids.push(achievement.id);
             }
           }

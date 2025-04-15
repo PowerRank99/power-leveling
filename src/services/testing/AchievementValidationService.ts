@@ -49,8 +49,8 @@ export class AchievementValidationService {
           if (typeof achievement === 'string') {
             ids.push(achievement);
           } else if (achievement && typeof achievement === 'object') {
-            // Use type guard to check if 'id' property exists
-            if ('id' in achievement && achievement.id) {
+            // Explicit type check for id property with type assertion
+            if ('id' in achievement && typeof achievement.id === 'string') {
               ids.push(achievement.id);
             }
           }
