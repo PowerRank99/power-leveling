@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AchievementStandardizationService } from '@/services/common/AchievementStandardizationService';
+import { AchievementIdMappingService } from '@/services/common/AchievementIdMappingService';
 
 interface StandardizationResult {
   valid: string[];
@@ -26,10 +26,19 @@ export function AchievementIdDebugger() {
     suggestions: []
   });
   const [isValidating, setIsValidating] = useState(false);
+  const [mappings, setMappings] = useState<{[key: string]: string}>({});
   
   const runValidation = async () => {
     setIsValidating(true);
     try {
+      await AchievementIdMappingService.initialize();
+      
+      const currentMappings: {[key: string]: string} = {};
+      AchievementIdMappingService.getAllMappings().forEach((value, key) => {
+        currentMappings[key] = value;
+      });
+      setMappings(currentMappings);
+      
       const validationResults = await AchievementStandardizationService.validateAndStandardize();
       setResults(validationResults);
     } catch (error) {
@@ -39,6 +48,10 @@ export function AchievementIdDebugger() {
     }
   };
   
+  useEffect(() => {
+    runValidation();
+  }, []);
+  
   return (
     <Card className="p-4 space-y-4">
       <div className="flex items-center justify-between">
@@ -47,9 +60,23 @@ export function AchievementIdDebugger() {
           onClick={runValidation} 
           disabled={isValidating}
         >
-          {isValidating ? 'Validating...' : 'Run Validation'}
+          {isValidating ? 'Validating...' : 'Re-run Validation'}
         </Button>
       </div>
+      
+      <Card className="p-4">
+        <h4 className="font-medium mb-2">Current Mappings</h4>
+        <ScrollArea className="h-[200px]">
+          <div className="space-y-1">
+            {Object.entries(mappings).map(([stringId, uuid]) => (
+              <div key={stringId} className="text-sm p-1 border-b last:border-0">
+                <span className="font-mono">{stringId}</span>: 
+                <span className="ml-2 text-text-secondary">{uuid}</span>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+      </Card>
       
       <div className="grid grid-cols-3 gap-4">
         <Card className="p-4">
@@ -115,7 +142,7 @@ export function AchievementIdDebugger() {
               {results.suggestions.map((suggestion, index) => (
                 <Alert 
                   key={index} 
-                  variant="default"  // Changed from "info" to "default"
+                  variant="default"
                   className="text-sm"
                 >
                   <AlertTitle>{suggestion.id}</AlertTitle>
