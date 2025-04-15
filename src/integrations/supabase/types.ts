@@ -9,6 +9,21 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      achievement_id_mappings: {
+        Row: {
+          string_id: string
+          uuid: string
+        }
+        Insert: {
+          string_id: string
+          uuid?: string
+        }
+        Update: {
+          string_id?: string
+          uuid?: string
+        }
+        Relationships: []
+      }
       achievement_progress: {
         Row: {
           achievement_id: string | null

@@ -63,6 +63,33 @@ export class AchievementIdMappingService {
   static getAllMappings(): Map<string, string> {
     return this.mappings;
   }
+
+  // Add validation method for the IDRepairService
+  static validateMappings(): { 
+    unmapped: string[]; 
+    missingDatabaseEntries: string[] 
+  } {
+    const allAchievements = Object.values(ACHIEVEMENTS)
+      .flatMap(category => Object.values(category));
+
+    const unmapped: string[] = [];
+    const missingDatabaseEntries: string[] = [];
+
+    for (const achievement of allAchievements) {
+      const stringId = typeof achievement === 'string' 
+        ? achievement 
+        : (achievement as any).id;
+
+      if (!this.mappings.has(stringId)) {
+        unmapped.push(stringId);
+      }
+    }
+
+    return { 
+      unmapped, 
+      missingDatabaseEntries: unmapped 
+    };
+  }
 }
 
 // Automatically initialize on import

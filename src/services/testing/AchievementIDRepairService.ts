@@ -25,8 +25,7 @@ export class AchievementIDRepairService {
     
     // Analyze unmapped achievements
     for (const unmappedId of validationResults.unmapped) {
-      const normalizedId = AchievementIdMappingService['normalizeId'](unmappedId);
-      const similarAchievements = await this.findSimilarAchievements(normalizedId);
+      const similarAchievements = await this.findSimilarAchievements(unmappedId);
       
       if (similarAchievements.length > 0) {
         suggestions.push({
@@ -60,9 +59,16 @@ export class AchievementIDRepairService {
     return achievements
       .map(a => a.name)
       .filter(name => {
-        const normalizedName = AchievementIdMappingService['normalizeId'](name);
+        const normalizedName = this.normalizeId(name);
         return this.calculateSimilarity(normalizedId, normalizedName) > 0.7;
       });
+  }
+  
+  private static normalizeId(str: string): string {
+    return str.toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9-]/g, '-');
   }
   
   private static calculateSimilarity(s1: string, s2: string): number {
