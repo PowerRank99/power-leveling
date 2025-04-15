@@ -9,7 +9,8 @@ import { Achievement, AchievementCategory, AchievementRank } from '@/types/achie
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 import { 
   AchievementTestingService, 
-  AchievementTestResult
+  AchievementTestResult,
+  AchievementTestProgress
 } from '@/services/testing/AchievementTestingService';
 import { toast } from 'sonner';
 import TestProgressIndicator from './TestProgressIndicator';
@@ -39,13 +40,13 @@ export function AchievementTestRunner({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedRank, setSelectedRank] = useState('all');
-  const [progress, setProgress] = useState({
+  const [progress, setProgress] = useState<AchievementTestProgress>({
     total: 0,
     completed: 0, 
     successful: 0,
     failed: 0,
     isRunning: false,
-    currentTest: ''
+    currentTest: undefined
   });
   
   // Convert results to a map for easier lookup
@@ -313,3 +314,4 @@ export function AchievementTestRunner({
     </div>
   );
 }
+
