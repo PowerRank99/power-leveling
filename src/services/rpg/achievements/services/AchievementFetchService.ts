@@ -43,14 +43,12 @@ export class AchievementFetchService {
       }
       
       // Now query the achievements table with the IDs from user_achievements
+      // Using the correct Supabase query syntax for grouping
       const { data, error } = await supabase
         .from('achievements')
-        .select(`
-          rank,
-          count(*)
-        `, { count: 'exact' })
+        .select('rank, count(*)')
         .in('id', achievementIds)
-        .groupBy('rank');
+        .group('rank');
         
       if (error) throw error;
       
