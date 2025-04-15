@@ -1,4 +1,9 @@
 
+/**
+ * Selection Controls Component
+ * 
+ * Provides controls for selecting and clearing achievements in the test interface.
+ */
 import React from 'react';
 import { Button } from '@/components/ui/button';
 

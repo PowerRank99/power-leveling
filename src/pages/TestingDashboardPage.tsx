@@ -8,6 +8,7 @@ import TestingDashboard from '@/components/testing/dashboard/TestingDashboard';
 import TestConfigurationPanel from '@/components/testing/TestConfigurationPanel';
 import { AchievementTestRunner } from '@/components/testing/AchievementTestRunner';
 import { TestResultViewer } from '@/components/testing/TestResultViewer';
+import ScenarioTestingTab from '@/components/testing/dashboard/ScenarioTestingTab';
 import PageHeader from '@/components/ui/PageHeader';
 import BottomNavBar from '@/components/navigation/BottomNavBar';
 import AuthRequiredRoute from '@/components/AuthRequiredRoute';
@@ -155,6 +156,7 @@ const TestingDashboardPage: React.FC = () => {
             <TabsList className="w-full mb-4 bg-midnight-card border border-divider/30 shadow-subtle overflow-x-auto flex-nowrap">
               <TabsTrigger value="dashboard" className="flex-1">Dashboard</TabsTrigger>
               <TabsTrigger value="runner" className="flex-1">Test Runner</TabsTrigger>
+              <TabsTrigger value="scenarios" className="flex-1">Scenarios</TabsTrigger>
               <TabsTrigger value="results" className="flex-1">Results</TabsTrigger>
               <TabsTrigger value="configuration" className="flex-1">Configuration</TabsTrigger>
             </TabsList>
@@ -184,6 +186,10 @@ const TestingDashboardPage: React.FC = () => {
                   setIsLoading={setIsLoading}
                 />
               </Card>
+            </TabsContent>
+            
+            <TabsContent value="scenarios">
+              <ScenarioTestingTab userId={user?.id || ''} />
             </TabsContent>
             
             <TabsContent value="results">

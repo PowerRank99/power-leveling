@@ -1,4 +1,9 @@
 
+/**
+ * Filter Header Component
+ * 
+ * Provides search and filter controls for the achievement testing interface.
+ */
 import React from 'react';
 import { Filter, FilterX, Play, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';

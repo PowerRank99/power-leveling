@@ -1,4 +1,9 @@
 
+/**
+ * Expanded Filters Component
+ * 
+ * Provides additional filtering options for achievements in the testing interface.
+ */
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
