@@ -1,6 +1,6 @@
 
 import { ServiceResponse } from '@/services/common/ErrorHandlingService';
-import { Achievement, AchievementProgress } from '@/types/achievementTypes';
+import { Achievement, AchievementProgress, AchievementStats } from '@/types/achievementTypes';
 import { AchievementAwardService } from './achievements/services/AchievementAwardService';
 import { AchievementFetchService } from './achievements/services/AchievementFetchService';
 import { AchievementProcessorService } from './achievements/services/AchievementProcessorService';

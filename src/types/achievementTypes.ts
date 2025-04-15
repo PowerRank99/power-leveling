@@ -57,6 +57,14 @@ export const toAchievementRank = (rank: string): AchievementRank => {
   return AchievementRank.UNRANKED;
 };
 
+// Zod schema for achievement requirement validation
+export const AchievementRequirementSchema = z.object({
+  type: z.string(),
+  value: z.number()
+});
+
+export type AchievementRequirement = z.infer<typeof AchievementRequirementSchema>;
+
 // Zod schema for achievement validation
 export const AchievementSchema = z.object({
   id: z.string(),
@@ -67,10 +75,38 @@ export const AchievementSchema = z.object({
   points: z.number().int().positive(),
   xpReward: z.number().int().nonnegative(),
   iconName: z.string(),
-  requirements: z.object({
-    type: z.string(),
-    value: z.number()
-  })
+  requirements: AchievementRequirementSchema,
+  // Optional fields
+  isUnlocked: z.boolean().optional(),
+  achievedAt: z.string().optional(),
+  stringId: z.string().optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
+  progress: z.object({
+    current: z.number(),
+    total: z.number()
+  }).optional()
 });
 
 export type Achievement = z.infer<typeof AchievementSchema>;
+
+// Add the missing AchievementProgress type
+export interface AchievementProgress {
+  current: number;
+  total: number;
+  isComplete?: boolean;
+}
+
+// Add the missing AchievementStats type
+export interface AchievementStats {
+  total: number;
+  unlocked: number;
+  points: number;
+  byRank?: Record<AchievementRank, number>;
+  byCategory?: Record<AchievementCategory, number>;
+}
+
+// Add the missing UserAchievementData type
+export interface UserAchievementData {
+  achievement: Achievement;
+  achievedAt: string;
+}

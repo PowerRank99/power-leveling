@@ -1,7 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
-import { AchievementProgress } from '@/types/achievementTypes';
+import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
+import { Achievement, AchievementProgress } from '@/types/achievementTypes';
 import { CachingService } from '@/services/common/CachingService';
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
@@ -15,7 +14,7 @@ export class ProgressBaseService {
     const cached = CachingService.get<AchievementProgress>(cacheKey);
     if (cached) return { success: true, data: cached };
 
-    return ErrorHandlingService.executeWithErrorHandling(
+    return createSuccessResponse(await ErrorHandlingService.executeWithErrorHandling(
       async () => {
         const { data, error } = await supabase
           .from('achievement_progress')
@@ -29,7 +28,6 @@ export class ProgressBaseService {
         if (!data) return null;
         
         const progress: AchievementProgress = {
-          id: data.id,
           current: data.current_value,
           total: data.target_value,
           isComplete: data.is_complete
@@ -40,7 +38,7 @@ export class ProgressBaseService {
       },
       'GET_PROGRESS',
       { showToast: false }
-    );
+    ));
   }
   
   static async getAllProgress(userId: string): Promise<ServiceResponse<Record<string, AchievementProgress>>> {
@@ -48,7 +46,7 @@ export class ProgressBaseService {
     const cached = CachingService.get<Record<string, AchievementProgress>>(cacheKey);
     if (cached) return { success: true, data: cached };
 
-    return ErrorHandlingService.executeWithErrorHandling(
+    return createSuccessResponse(await ErrorHandlingService.executeWithErrorHandling(
       async () => {
         const { data, error } = await supabase.rpc(
           'get_all_achievement_progress',
@@ -62,7 +60,6 @@ export class ProgressBaseService {
         if (data) {
           Object.entries(data).forEach(([achievementId, progressData]: [string, any]) => {
             progressMap[achievementId] = {
-              id: progressData.id,
               current: progressData.current,
               total: progressData.total,
               isComplete: progressData.isComplete
@@ -75,7 +72,7 @@ export class ProgressBaseService {
       }, 
       'GET_ALL_PROGRESS', 
       { showToast: false }
-    );
+    ));
   }
   
   static formatProgressUpdates(progressUpdates: Array<{

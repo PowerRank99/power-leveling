@@ -1,8 +1,6 @@
-
+import { Achievement, AchievementCategory, AchievementRank, UserAchievementData } from '@/types/achievementTypes';
+import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceResponse, ErrorHandlingService, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
-import { Achievement, UserAchievementData } from '@/types/achievementTypes';
-import { AchievementDatabaseService } from '@/services/common/AchievementDatabaseService';
 
 /**
  * Service for fetching achievement lists

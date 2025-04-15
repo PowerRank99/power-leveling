@@ -1,10 +1,9 @@
-
+import { ServiceResponse } from '@/services/common/ErrorHandlingService';
 import { supabase } from '@/integrations/supabase/client';
 import { AchievementProgress } from '@/types/achievementTypes';
-import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 
 /**
- * Base service class for achievement progress operations
+ * Base class for achievement progress services
  */
 export class BaseProgressService {
   /**

@@ -1,11 +1,9 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceResponse, ErrorHandlingService, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
-import { AchievementUtils } from '@/constants/achievements';
+import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 import { Achievement, AchievementCategory, AchievementRank, AchievementStats } from '@/types/achievementTypes';
 
 /**
- * Service for fetching and processing achievement statistics
+ * Service for fetching achievement statistics
  */
 export class AchievementStatsService {
   /**
@@ -82,5 +80,26 @@ export class AchievementStatsService {
       'GET_ACHIEVEMENT_STATS', 
       { showToast: false }
     );
+  }
+
+  private static mapDbAchievementToModel(achievement: any, achievedAt?: string): Achievement {
+    const mapped: Achievement = {
+      id: achievement.id,
+      name: achievement.name,
+      description: achievement.description,
+      category: achievement.category,
+      rank: achievement.rank,
+      points: achievement.points,
+      xpReward: achievement.xp_reward,
+      iconName: achievement.icon_name,
+      requirements: achievement.requirements,
+      isUnlocked: !!achievedAt,
+    };
+    
+    if (achievedAt) {
+      mapped.achievedAt = achievedAt;
+    }
+    
+    return mapped;
   }
 }
