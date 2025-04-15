@@ -342,39 +342,33 @@ export class AchievementTestingService {
   }
 
   private getAchievementsToTest(): { id: string; name: string }[] {
-    const allAchievements = AchievementUtils.getAllAchievements();
+    const allAchievements = AchievementUtils.getAllAchievementsSync();
     
     return allAchievements
-      .then(achievements => achievements
-        .filter(a => {
-          if (this.config.categories && this.config.categories.length > 0) {
-            if (!this.config.categories.includes(a.category as AchievementCategory)) {
-              return false;
-            }
+      .filter(a => {
+        if (this.config.categories && this.config.categories.length > 0) {
+          if (!this.config.categories.includes(a.category as AchievementCategory)) {
+            return false;
           }
-          
-          if (this.config.ranks && this.config.ranks.length > 0) {
-            if (!this.config.ranks.includes(a.rank as AchievementRank)) {
-              return false;
-            }
+        }
+        
+        if (this.config.ranks && this.config.ranks.length > 0) {
+          if (!this.config.ranks.includes(a.rank as AchievementRank)) {
+            return false;
           }
-          
-          if (this.config.includedAchievements && this.config.includedAchievements.length > 0) {
-            return this.config.includedAchievements.includes(a.id);
-          }
-          
-          if (this.config.excludedAchievements && this.config.excludedAchievements.length > 0) {
-            return !this.config.excludedAchievements.includes(a.id);
-          }
-          
-          return true;
-        })
-        .map(a => ({ id: a.id, name: a.name }))
-      )
-      .catch(error => {
-        console.error('Error getting achievements to test:', error);
-        return [];
-      });
+        }
+        
+        if (this.config.includedAchievements && this.config.includedAchievements.length > 0) {
+          return this.config.includedAchievements.includes(a.id);
+        }
+        
+        if (this.config.excludedAchievements && this.config.excludedAchievements.length > 0) {
+          return !this.config.excludedAchievements.includes(a.id);
+        }
+        
+        return true;
+      })
+      .map(a => ({ id: a.id, name: a.name }));
   }
 
   private async cleanupExistingAchievement(achievementId: string): Promise<void> {

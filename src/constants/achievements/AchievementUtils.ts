@@ -10,12 +10,19 @@ import { supabase } from '@/integrations/supabase/client';
 export class AchievementUtils {
   // Cache for achievements to improve performance
   private static achievementCache: Map<string, Achievement> = new Map();
+  // Cache for all achievements
+  private static allAchievementsCache: Achievement[] | null = null;
   
   /**
    * Get all achievements from the database
    */
   static async getAllAchievements(): Promise<Achievement[]> {
     try {
+      // Return cached achievements if available
+      if (this.allAchievementsCache !== null) {
+        return this.allAchievementsCache;
+      }
+      
       const { data, error } = await supabase
         .from('achievements')
         .select('*')
@@ -23,7 +30,17 @@ export class AchievementUtils {
         
       if (error) throw error;
       
-      return data as Achievement[] || [];
+      const achievements = data as Achievement[] || [];
+      
+      // Cache the results for future use
+      this.allAchievementsCache = achievements;
+      
+      // Also cache individual achievements by ID
+      achievements.forEach(achievement => {
+        this.achievementCache.set(achievement.id, achievement);
+      });
+      
+      return achievements;
     } catch (error) {
       console.error('Error fetching achievements:', error);
       return [];
@@ -35,8 +52,15 @@ export class AchievementUtils {
    * Used for performance-critical operations 
    */
   static getAllAchievementsSync(): Achievement[] {
-    // This is a simplification - in a real app, you'd want to ensure the cache is populated first
-    return Array.from(this.achievementCache.values());
+    // Return cached achievements if available
+    if (this.allAchievementsCache !== null) {
+      return this.allAchievementsCache;
+    }
+    
+    // If cache is not populated, return empty array
+    // This should be rare since we usually pre-populate the cache
+    console.warn('Achievement cache not populated, returning empty array. Call getAllAchievements() first.');
+    return [];
   }
   
   /**
@@ -100,5 +124,6 @@ export class AchievementUtils {
    */
   static clearCache(): void {
     this.achievementCache.clear();
+    this.allAchievementsCache = null;
   }
 }
