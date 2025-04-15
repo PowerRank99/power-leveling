@@ -35,6 +35,8 @@ export function AchievementTestRunner({
     selectedCategory,
     selectedRank,
     filteredAchievements,
+    isDataGenerating,
+    isDataCleaning,
     setSearchQuery,
     setSelectedCategory,
     setSelectedRank,
@@ -42,6 +44,8 @@ export function AchievementTestRunner({
     toggleAchievementSelection,
     selectAllVisible,
     clearSelection,
+    generateTestData,
+    cleanupTestData
   } = useAchievementTestState(userId);
 
   const [progress, setProgress] = useState({
@@ -147,6 +151,9 @@ export function AchievementTestRunner({
       setIsLoading(false);
     }
   };
+
+  // Determine whether test runners or data generators are busy
+  const isBusy = isLoading || isDataGenerating || isDataCleaning;
   
   return (
     <div className="space-y-4">
@@ -180,7 +187,10 @@ export function AchievementTestRunner({
         onSelectAll={selectAllVisible}
         onClearSelection={clearSelection}
         filteredCount={filteredAchievements.length}
-        isLoading={isLoading}
+        isLoading={isBusy}
+        onGenerateData={generateTestData}
+        onCleanupData={cleanupTestData}
+        showDataControls={true}
       />
       
       <ScrollArea className="h-[500px] rounded-md border border-divider/30 p-2">
@@ -203,7 +213,7 @@ export function AchievementTestRunner({
                 onToggleSelect={toggleAchievementSelection}
                 selectedAchievements={Array.from(selectedAchievements)}
                 testResults={resultsMap}
-                isLoading={isLoading}
+                isLoading={isBusy}
               />
             ))}
           </div>

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { AchievementTestingService, AchievementTestResult } from '@/services/testing/AchievementTestingService';
 import { Achievement } from '@/types/achievementTypes';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
+import { testDataGenerator } from '@/services/testing/generators/TestDataGeneratorService';
 
 export function useAchievementTestState(userId: string) {
   const [testService, setTestService] = useState<AchievementTestingService | null>(null);
@@ -12,6 +13,8 @@ export function useAchievementTestState(userId: string) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedRank, setSelectedRank] = useState('all');
+  const [isDataGenerating, setIsDataGenerating] = useState(false);
+  const [isDataCleaning, setIsDataCleaning] = useState(false);
 
   // Initialize test service
   useEffect(() => {
@@ -75,6 +78,28 @@ export function useAchievementTestState(userId: string) {
     setSelectedAchievements(new Set());
   };
 
+  const generateTestData = async () => {
+    if (!userId) return;
+    
+    setIsDataGenerating(true);
+    try {
+      await testDataGenerator.generateStandardTestData(userId);
+    } finally {
+      setIsDataGenerating(false);
+    }
+  };
+  
+  const cleanupTestData = async () => {
+    if (!userId) return;
+    
+    setIsDataCleaning(true);
+    try {
+      await testDataGenerator.cleanupAllTestData(userId);
+    } finally {
+      setIsDataCleaning(false);
+    }
+  };
+
   // Group achievements by category
   const achievementsByCategory = filteredAchievements.reduce((acc, achievement) => {
     if (!acc[achievement.category]) {
@@ -93,6 +118,8 @@ export function useAchievementTestState(userId: string) {
     selectedCategory,
     selectedRank,
     filteredAchievements,
+    isDataGenerating,
+    isDataCleaning,
     setSearchQuery,
     setSelectedCategory,
     setSelectedRank,
@@ -100,5 +127,7 @@ export function useAchievementTestState(userId: string) {
     toggleAchievementSelection,
     selectAllVisible,
     clearSelection,
+    generateTestData,
+    cleanupTestData
   };
 }
