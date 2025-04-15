@@ -2,6 +2,7 @@
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { UserWorkoutStats, UserProfileData } from '../AchievementCheckerInterface';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Checker specifically for higher rank (C, B, A, S) workout achievements
@@ -17,11 +18,25 @@ export class HigherRankAchievementChecker {
   ): Promise<ServiceResponse<void>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
+        // Fetch Rank C achievements from database
+        const { data: rankCAchievements, error: achievementsError } = await supabase
+          .from('achievements')
+          .select('id, requirements')
+          .eq('rank', 'C')
+          .eq('category', 'workout');
+          
+        if (achievementsError) throw achievementsError;
+        
         const achievementChecks: string[] = [];
         
-        // 25 total workouts
-        if (workoutStats.totalCount >= 25) {
-          achievementChecks.push('total-25');
+        // Check each achievement's requirements
+        if (rankCAchievements) {
+          rankCAchievements.forEach(achievement => {
+            // Check for total workout count requirement
+            if (achievement.requirements?.total_count && workoutStats.totalCount >= achievement.requirements.total_count) {
+              achievementChecks.push(achievement.id);
+            }
+          });
         }
         
         if (achievementChecks.length > 0) {
@@ -43,29 +58,43 @@ export class HigherRankAchievementChecker {
   ): Promise<ServiceResponse<void>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
+        // Fetch higher rank achievements (B, A, S) from database
+        const { data: higherRankAchievements, error: achievementsError } = await supabase
+          .from('achievements')
+          .select('id, rank, requirements')
+          .in('rank', ['B', 'A', 'S'])
+          .eq('category', 'workout');
+          
+        if (achievementsError) throw achievementsError;
+        
         const achievementChecks: string[] = [];
         
-        // Rank B achievements
-        // 50 total workouts
-        if (workoutStats.totalCount >= 50) {
-          achievementChecks.push('total-50');
+        // Check each achievement's requirements
+        if (higherRankAchievements) {
+          higherRankAchievements.forEach(achievement => {
+            // Check for total workout count requirement
+            if (achievement.requirements?.total_count && workoutStats.totalCount >= achievement.requirements.total_count) {
+              achievementChecks.push(achievement.id);
+            }
+          });
         }
         
-        // Rank A achievements
-        // 100 total workouts
-        if (workoutStats.totalCount >= 100) {
-          achievementChecks.push('total-100');
-        }
-        
-        // Rank S achievements
-        // 200 total workouts
-        if (workoutStats.totalCount >= 200) {
-          achievementChecks.push('total-200');
-        }
-        
-        // 365-day streak (legendary)
-        if (userProfile?.streak >= 365) {
-          achievementChecks.push('streak-365');
+        // Check for streak achievements (legendary)
+        if (userProfile?.streak) {
+          const { data: streakAchievements } = await supabase
+            .from('achievements')
+            .select('id, requirements')
+            .eq('category', 'streak')
+            .order('requirements->days', { ascending: true });
+            
+          if (streakAchievements) {
+            streakAchievements.forEach(achievement => {
+              const requiredDays = achievement.requirements?.days || 0;
+              if (userProfile.streak >= requiredDays && requiredDays >= 100) {
+                achievementChecks.push(achievement.id);
+              }
+            });
+          }
         }
         
         if (achievementChecks.length > 0) {

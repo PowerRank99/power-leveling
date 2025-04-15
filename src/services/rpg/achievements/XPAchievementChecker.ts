@@ -43,7 +43,7 @@ export class XPAchievementChecker extends BaseAchievementChecker implements Achi
           .from('achievements')
           .select('id, requirements')
           .eq('category', 'xp')
-          .order('requirements->xp', { ascending: true });
+          .order('requirements->value', { ascending: true });
           
         if (achievementsError) throw achievementsError;
 
@@ -62,20 +62,24 @@ export class XPAchievementChecker extends BaseAchievementChecker implements Achi
         await TransactionService.executeWithRetry(
           async () => {
             // Award XP milestone achievements
-            xpAchievements.forEach(achievement => {
-              const requiredXP = achievement.requirements?.xp || 0;
-              if (userXP >= requiredXP) {
-                awardedAchievements.push(achievement.id);
-              }
-            });
+            if (xpAchievements) {
+              xpAchievements.forEach(achievement => {
+                const requiredXP = achievement.requirements?.value || 0;
+                if (userXP && userXP >= requiredXP) {
+                  awardedAchievements.push(achievement.id);
+                }
+              });
+            }
 
             // Award level milestone achievements
-            levelAchievements.forEach(achievement => {
-              const requiredLevel = achievement.requirements?.level || 0;
-              if (userLevel >= requiredLevel) {
-                awardedAchievements.push(achievement.id);
-              }
-            });
+            if (levelAchievements) {
+              levelAchievements.forEach(achievement => {
+                const requiredLevel = achievement.requirements?.level || 0;
+                if (userLevel >= requiredLevel) {
+                  awardedAchievements.push(achievement.id);
+                }
+              });
+            }
             
             // Check achievements in batch
             if (awardedAchievements.length > 0) {

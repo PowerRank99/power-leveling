@@ -34,14 +34,27 @@ export class WorkoutHistoryChecker {
         // Combined count
         const totalWorkouts = (workoutCount || 0) + (manualWorkoutCount || 0);
         
+        // Fetch workout history achievements from database
+        const { data: historyAchievements, error: achievementsError } = await supabase
+          .from('achievements')
+          .select('id, requirements, category')
+          .eq('category', 'workout_history');
+          
+        if (achievementsError) throw achievementsError;
+        
         // Use transaction service for consistency
         await TransactionService.executeWithRetry(
           async () => {
             // Check for workout count achievements
             const achievementChecks = [];
             
-            if (totalWorkouts >= 7) achievementChecks.push('embalo_fitness');
-            if (totalWorkouts >= 10) achievementChecks.push('dedicacao_semanal');
+            if (historyAchievements) {
+              historyAchievements.forEach(achievement => {
+                if (achievement.requirements?.total_count && totalWorkouts >= achievement.requirements.total_count) {
+                  achievementChecks.push(achievement.id);
+                }
+              });
+            }
             
             // Get workouts per week
             const { data: weekData, error: weekError } = await supabase
@@ -54,8 +67,22 @@ export class WorkoutHistoryChecker {
             if (weekError) throw weekError;
             
             // Check for weekly workout achievements
-            if (weekData && weekData.length >= 3) {
-              achievementChecks.push('trio_na_semana');
+            if (weekData) {
+              const weeklyWorkouts = weekData.length;
+              
+              // Fetch weekly achievements
+              const { data: weeklyAchievements } = await supabase
+                .from('achievements')
+                .select('id, requirements')
+                .eq('category', 'weekly_workout');
+                
+              if (weeklyAchievements) {
+                weeklyAchievements.forEach(achievement => {
+                  if (achievement.requirements?.weekly_count && weeklyWorkouts >= achievement.requirements.weekly_count) {
+                    achievementChecks.push(achievement.id);
+                  }
+                });
+              }
             }
             
             // Check all achievements in batch

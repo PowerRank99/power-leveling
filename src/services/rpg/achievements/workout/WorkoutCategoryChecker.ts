@@ -25,30 +25,29 @@ export class WorkoutCategoryChecker {
         categoryCounts[category] = (categoryCounts[category] || 0) + 1;
       });
       
+      // Fetch category-specific achievements from database
+      const { data: categoryAchievements, error: achievementsError } = await supabase
+        .from('achievements')
+        .select('id, category_type, requirements')
+        .eq('category', 'workout_category');
+        
+      if (achievementsError) throw achievementsError;
+      
       // Check for category-specific achievements
-      if (categoryCounts['strength'] >= 10) {
-        achievementsToCheck.push('forca-de-guerreiro');
-      }
-      
-      if (categoryCounts['cardio'] >= 10) {
-        achievementsToCheck.push('cardio-sem-folego');
-      }
-      
-      if (categoryCounts['mobility'] >= 10) {
-        achievementsToCheck.push('guru-do-alongamento');
-      }
-      
-      if (categoryCounts['calisthenics'] >= 10) {
-        achievementsToCheck.push('forca-interior');
-      }
-      
-      if (categoryCounts['sport'] >= 10) {
-        achievementsToCheck.push('craque-dos-esportes');
-      }
-      
-      // Check for first sport workout
-      if (categoryCounts['sport'] >= 1) {
-        achievementsToCheck.push('esporte-de-primeira');
+      if (categoryAchievements) {
+        categoryAchievements.forEach(achievement => {
+          const categoryType = achievement.category_type;
+          const requiredCount = achievement.requirements?.count || 0;
+          
+          if (categoryType && categoryCounts[categoryType] && categoryCounts[categoryType] >= requiredCount) {
+            achievementsToCheck.push(achievement.id);
+          }
+          
+          // Special case for first sport workout
+          if (categoryType === 'sport' && requiredCount === 1 && categoryCounts['sport'] && categoryCounts['sport'] >= 1) {
+            achievementsToCheck.push(achievement.id);
+          }
+        });
       }
     } catch (error) {
       console.error('Error checking workout category achievements:', error);

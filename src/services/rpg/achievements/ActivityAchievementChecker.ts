@@ -1,11 +1,10 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceResponse, ErrorHandlingService, createSuccessResponse } from '@/services/common/ErrorHandlingService';
+import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { AchievementChecker } from './AchievementCheckerInterface';
 import { BaseAchievementChecker } from './BaseAchievementChecker';
 import { AchievementService } from '../AchievementService';
 import { TransactionService } from '../../common/TransactionService';
-import { ACHIEVEMENT_IDS, ACHIEVEMENT_REQUIREMENTS } from './AchievementConstants';
 
 /**
  * Checker for activity-related achievements (variety of exercises, etc.)
@@ -71,17 +70,31 @@ export class ActivityAchievementChecker extends BaseAchievementChecker implement
           
         if (error) throw error;
         
-        const achievementChecks: string[] = [];
+        // Fetch manual workout achievements from database
+        const { data: manualAchievements, error: achievementsError } = await supabase
+          .from('achievements')
+          .select('id, requirements')
+          .eq('category', 'manual')
+          .order('requirements->count', { ascending: true });
+          
+        if (achievementsError) throw achievementsError;
         
-        // Check achievement criteria using constants
-        if (count && count >= 3) achievementChecks.push(ACHIEVEMENT_IDS.E.manual[0]); // diario-do-suor
-        if (count && count >= 5) achievementChecks.push(ACHIEVEMENT_IDS.D.manual[0]); // manual-5
-        if (count && count >= 10) achievementChecks.push(ACHIEVEMENT_IDS.C.manual[0]); // manual-10
+        const achievementsToCheck: string[] = [];
+        
+        // Check each achievement's requirements
+        if (manualAchievements) {
+          manualAchievements.forEach(achievement => {
+            const requiredCount = achievement.requirements?.count || 0;
+            if (count && count >= requiredCount) {
+              achievementsToCheck.push(achievement.id);
+            }
+          });
+        }
         
         // Award achievements
-        if (achievementChecks.length > 0) {
-          const result = await AchievementService.checkAndAwardAchievements(userId, achievementChecks);
-          return result.success ? achievementChecks : [];
+        if (achievementsToCheck.length > 0) {
+          const result = await AchievementService.checkAndAwardAchievements(userId, achievementsToCheck);
+          return result.success ? achievementsToCheck : [];
         }
         
         return [];
@@ -115,16 +128,31 @@ export class ActivityAchievementChecker extends BaseAchievementChecker implement
       
       const distinctCount = distinctTypes.size;
       
-      const achievementChecks: string[] = [];
+      // Fetch variety achievements from database
+      const { data: varietyAchievements, error: achievementsError } = await supabase
+        .from('achievements')
+        .select('id, requirements')
+        .eq('category', 'variety')
+        .order('requirements->count', { ascending: true });
+        
+      if (achievementsError) throw achievementsError;
       
-      // Check for achievements based on variety using constants
-      if (distinctCount >= 3) achievementChecks.push(ACHIEVEMENT_IDS.D.variety[0]); // variety-3
-      if (distinctCount >= 5) achievementChecks.push(ACHIEVEMENT_IDS.C.variety[1]); // variety-5
+      const achievementsToCheck: string[] = [];
+      
+      // Check each achievement's requirements
+      if (varietyAchievements) {
+        varietyAchievements.forEach(achievement => {
+          const requiredCount = achievement.requirements?.count || 0;
+          if (distinctCount >= requiredCount) {
+            achievementsToCheck.push(achievement.id);
+          }
+        });
+      }
       
       // Award achievements
-      if (achievementChecks.length > 0) {
-        const result = await AchievementService.checkAndAwardAchievements(userId, achievementChecks);
-        return result.success ? achievementChecks : [];
+      if (achievementsToCheck.length > 0) {
+        const result = await AchievementService.checkAndAwardAchievements(userId, achievementsToCheck);
+        return result.success ? achievementsToCheck : [];
       }
       
       return [];
@@ -150,23 +178,39 @@ export class ActivityAchievementChecker extends BaseAchievementChecker implement
       
       // Get unique exercise IDs
       const uniqueExerciseIds = new Set();
-      data.forEach(item => {
-        if (item.exercise_id) uniqueExerciseIds.add(item.exercise_id);
-      });
+      if (data) {
+        data.forEach(item => {
+          if (item.exercise_id) uniqueExerciseIds.add(item.exercise_id);
+        });
+      }
       
       const distinctCount = uniqueExerciseIds.size;
       
-      const achievementChecks: string[] = [];
+      // Fetch exercise variety achievements
+      const { data: exerciseAchievements, error: achievementsError } = await supabase
+        .from('achievements')
+        .select('id, requirements')
+        .eq('category', 'exercise_variety')
+        .order('requirements->count', { ascending: true });
+        
+      if (achievementsError) throw achievementsError;
       
-      // Check for achievements based on variety using constants
-      if (distinctCount >= 3) achievementChecks.push(ACHIEVEMENT_IDS.D.variety[1]); // exercise-variety-3
-      if (distinctCount >= 5) achievementChecks.push(ACHIEVEMENT_IDS.C.variety[0]); // exercise-variety-5
-      if (distinctCount >= 10) achievementChecks.push(ACHIEVEMENT_IDS.B.variety[0]); // exercise-variety-10
+      const achievementsToCheck: string[] = [];
+      
+      // Check each achievement's requirements
+      if (exerciseAchievements) {
+        exerciseAchievements.forEach(achievement => {
+          const requiredCount = achievement.requirements?.count || 0;
+          if (distinctCount >= requiredCount) {
+            achievementsToCheck.push(achievement.id);
+          }
+        });
+      }
       
       // Award achievements
-      if (achievementChecks.length > 0) {
-        const result = await AchievementService.checkAndAwardAchievements(userId, achievementChecks);
-        return result.success ? achievementChecks : [];
+      if (achievementsToCheck.length > 0) {
+        const result = await AchievementService.checkAndAwardAchievements(userId, achievementsToCheck);
+        return result.success ? achievementsToCheck : [];
       }
       
       return [];

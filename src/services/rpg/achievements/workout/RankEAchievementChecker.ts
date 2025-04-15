@@ -18,31 +18,50 @@ export class RankEAchievementChecker {
   ): Promise<ServiceResponse<void>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
+        // Fetch Rank E achievements from database
+        const { data: rankEAchievements, error: achievementsError } = await supabase
+          .from('achievements')
+          .select('id, requirements')
+          .eq('rank', 'E')
+          .eq('category', 'workout');
+          
+        if (achievementsError) throw achievementsError;
+        
         const achievementChecks: string[] = [];
         
-        // First workout achievement
-        if (workoutStats.totalCount >= 1) {
-          achievementChecks.push('first-workout');
+        // Check each achievement's requirements
+        if (rankEAchievements) {
+          rankEAchievements.forEach(achievement => {
+            // Check for total workout count requirement
+            if (achievement.requirements?.total_count && workoutStats.totalCount >= achievement.requirements.total_count) {
+              achievementChecks.push(achievement.id);
+            }
+            
+            // Check for weekly workout count requirement
+            if (achievement.requirements?.weekly_count && workoutStats.weeklyCount >= achievement.requirements.weekly_count) {
+              achievementChecks.push(achievement.id);
+            }
+          });
         }
         
-        // 3 workouts in a week
-        if (workoutStats.weeklyCount >= 3) {
-          achievementChecks.push('weekly-3');
-        }
-        
-        // 7 total workouts
-        if (workoutStats.totalCount >= 7) {
-          achievementChecks.push('total-7');
-        }
-        
-        // First guild joined - need to check guilds
+        // Check for first guild joined - special case
         const { count: guildCount, error: guildError } = await supabase
           .from('guild_members')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', userId);
           
         if (!guildError && guildCount && guildCount > 0) {
-          achievementChecks.push('first-guild');
+          // Fetch guild-related achievement
+          const { data: guildAchievement } = await supabase
+            .from('achievements')
+            .select('id')
+            .eq('rank', 'E')
+            .eq('category', 'guild')
+            .single();
+            
+          if (guildAchievement) {
+            achievementChecks.push(guildAchievement.id);
+          }
         }
         
         if (achievementChecks.length > 0) {

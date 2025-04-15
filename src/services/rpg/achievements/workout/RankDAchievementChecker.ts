@@ -18,11 +18,25 @@ export class RankDAchievementChecker {
   ): Promise<ServiceResponse<void>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
+        // Fetch Rank D achievements from database
+        const { data: rankDAchievements, error: achievementsError } = await supabase
+          .from('achievements')
+          .select('id, requirements')
+          .eq('rank', 'D')
+          .eq('category', 'workout');
+          
+        if (achievementsError) throw achievementsError;
+        
         const achievementChecks: string[] = [];
         
-        // 10 total workouts
-        if (workoutStats.totalCount >= 10) {
-          achievementChecks.push('total-10');
+        // Check each achievement's requirements
+        if (rankDAchievements) {
+          rankDAchievements.forEach(achievement => {
+            // Check for total workout count requirement
+            if (achievement.requirements?.total_count && workoutStats.totalCount >= achievement.requirements.total_count) {
+              achievementChecks.push(achievement.id);
+            }
+          });
         }
         
         // Join 3 or more guilds - need to check guilds
@@ -32,7 +46,18 @@ export class RankDAchievementChecker {
           .eq('user_id', userId);
           
         if (!guildError && guildCount && guildCount >= 3) {
-          achievementChecks.push('multiple-guilds');
+          // Fetch multiple guilds achievement
+          const { data: multipleGuildsAchievement } = await supabase
+            .from('achievements')
+            .select('id')
+            .eq('rank', 'D')
+            .eq('category', 'guild')
+            .eq('requirements->guild_count', 3)
+            .single();
+            
+          if (multipleGuildsAchievement) {
+            achievementChecks.push(multipleGuildsAchievement.id);
+          }
         }
         
         if (achievementChecks.length > 0) {
