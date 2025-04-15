@@ -1,20 +1,13 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceResponse, ErrorHandlingService, createSuccessResponse } from '@/services/common/ErrorHandlingService';
+import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { AchievementChecker } from './AchievementCheckerInterface';
 import { BaseAchievementChecker } from './BaseAchievementChecker';
 import { TransactionService } from '../../common/TransactionService';
 import { AchievementProgressService } from './AchievementProgressService';
 import { AchievementService } from '../AchievementService';
 
-/**
- * Checker for streak-related achievements
- */
 export class StreakAchievementChecker extends BaseAchievementChecker implements AchievementChecker {
-  /**
-   * Check all achievements related to streaks
-   * Implementation of abstract method from BaseAchievementChecker (static version)
-   */
   static async checkAchievements(userId: string): Promise<ServiceResponse<string[]>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
@@ -33,14 +26,22 @@ export class StreakAchievementChecker extends BaseAchievementChecker implements 
 
         const currentStreak = profile?.streak || 0;
 
-        // Define achievements to check based on streak count
-        if (currentStreak >= 3) awardedAchievements.push('streak-3');
-        if (currentStreak >= 7) awardedAchievements.push('streak-7');
-        if (currentStreak >= 14) awardedAchievements.push('streak-14');
-        if (currentStreak >= 30) awardedAchievements.push('streak-30');
-        if (currentStreak >= 60) awardedAchievements.push('streak-60');
-        if (currentStreak >= 100) awardedAchievements.push('streak-100');
-        if (currentStreak >= 365) awardedAchievements.push('streak-365');
+        // Get streak achievements from database
+        const { data: streakAchievements, error: achievementsError } = await supabase
+          .from('achievements')
+          .select('id, requirements')
+          .eq('category', 'streak')
+          .order('requirements->days', { ascending: true });
+          
+        if (achievementsError) throw achievementsError;
+
+        // Check each achievement
+        streakAchievements.forEach(achievement => {
+          const requiredDays = achievement.requirements?.days || 0;
+          if (currentStreak >= requiredDays) {
+            awardedAchievements.push(achievement.id);
+          }
+        });
 
         // Use transaction service for consistency
         await TransactionService.executeWithRetry(
@@ -67,10 +68,6 @@ export class StreakAchievementChecker extends BaseAchievementChecker implements 
     );
   }
 
-  /**
-   * Instance method implementation of the abstract method
-   * Acts as a bridge to the static method for interface conformance
-   */
   async checkAchievements(userId: string): Promise<ServiceResponse<string[]>> {
     return StreakAchievementChecker.checkAchievements(userId);
   }
