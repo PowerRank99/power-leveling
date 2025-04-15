@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { BaseAchievementChecker } from './BaseAchievementChecker';

@@ -35,12 +35,13 @@ export abstract class BaseAchievementChecker {
    */
   protected async executeWithErrorHandling(
     operation: () => Promise<string[]>,
-    operationName: string
+    operationName: string,
+    options?: { showToast: boolean }
   ): Promise<ServiceResponse<string[]>> {
     return ErrorHandlingService.executeWithErrorHandling(
       operation,
       `CHECK_${operationName.toUpperCase()}`,
-      { showToast: false }
+      options
     );
   }
   
