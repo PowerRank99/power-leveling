@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAchievementSimulation } from '@/hooks/useAchievementSimulation';
 import { format } from 'date-fns';
+import TimelineControls from './TimelineControls';
 
 interface SimulationTimelineProps {
   userId: string;
@@ -31,11 +32,10 @@ const SimulationTimeline: React.FC<SimulationTimelineProps> = ({ userId }) => {
     stepBackward,
     resetTimeline,
     createScenario,
-    currentEvent
+    currentEvent,
+    seekToPosition
   } = useAchievementSimulation(userId);
-  
-  const playbackSpeeds = [0.5, 1, 2, 5, 10];
-  
+
   return (
     <Card className="border-arcane-30">
       <CardHeader className="pb-2">
@@ -85,81 +85,18 @@ const SimulationTimeline: React.FC<SimulationTimelineProps> = ({ userId }) => {
 
         {timeline.events.length > 0 ? (
           <>
-            <div className="relative pt-4">
-              <Slider
-                value={[timeline.currentPosition]}
-                min={0}
-                max={Math.max(timeline.events.length - 1, 0)}
-                step={1}
-                disabled={timeline.isPlaying}
-                onValueChange={(value) => {
-                  // This would be handled by the seekToPosition function
-                  // but we're keeping this simple for the demo
-                }}
-                className="my-4"
-              />
-              <div className="flex justify-between text-xs text-text-tertiary mt-1">
-                <span>Start</span>
-                <span>
-                  Event {timeline.currentPosition + 1} of {timeline.events.length}
-                </span>
-                <span>End</span>
-              </div>
-            </div>
-
-            <div className="flex justify-between items-center">
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={stepBackward}
-                  disabled={timeline.isPlaying || timeline.currentPosition <= 0}
-                >
-                  <SkipBack className="h-4 w-4" />
-                </Button>
-                {timeline.isPlaying ? (
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={pausePlayback}
-                  >
-                    <Pause className="h-4 w-4" />
-                  </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={startPlayback}
-                    disabled={timeline.currentPosition >= timeline.events.length - 1}
-                  >
-                    <Play className="h-4 w-4" />
-                  </Button>
-                )}
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={stepForward}
-                  disabled={timeline.isPlaying || timeline.currentPosition >= timeline.events.length - 1}
-                >
-                  <SkipForward className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <span className="text-xs text-text-secondary">Speed:</span>
-                {playbackSpeeds.map(speed => (
-                  <Button
-                    key={speed}
-                    variant={timeline.playbackSpeed === speed ? "default" : "outline"}
-                    size="sm"
-                    className={`h-7 w-7 p-0 ${timeline.playbackSpeed === speed ? 'bg-arcane text-white' : ''}`}
-                    onClick={() => setPlaybackSpeed(speed)}
-                  >
-                    {speed}x
-                  </Button>
-                ))}
-              </div>
-            </div>
+            <TimelineControls
+              isPlaying={timeline.isPlaying}
+              currentPosition={timeline.currentPosition}
+              maxPosition={timeline.events.length - 1}
+              playbackSpeed={timeline.playbackSpeed}
+              onPlay={startPlayback}
+              onPause={pausePlayback}
+              onStepForward={stepForward}
+              onStepBack={stepBackward}
+              onSpeedChange={setPlaybackSpeed}
+              onPositionChange={(pos) => seekToPosition(pos)}
+            />
 
             <div className="border border-divider/30 rounded-md p-3">
               <h3 className="text-sm font-semibold mb-2">Current Event</h3>
