@@ -2,11 +2,17 @@
 import { supabase } from '@/integrations/supabase/client';
 import { ACHIEVEMENT_IDS } from '@/constants/achievements/AchievementConstants';
 import { Achievement } from '@/types/achievementTypes';
+import { AchievementDefinition } from '@/constants/achievements/AchievementSchema';
 
 export class AchievementIdMappingService {
-  private static idMap: Map<string, { uuid: string; achievement: Achievement }> = new Map();
+  private static idMap: Map<string, { 
+    uuid: string; 
+    achievement: Achievement | AchievementDefinition 
+  }> = new Map();
+  
   private static unmappedIds: Set<string> = new Set();
   private static initialized: boolean = false;
+  private static debugLog: string[] = [];
 
   static async initialize(): Promise<void> {
     if (this.initialized) return;
@@ -17,12 +23,13 @@ export class AchievementIdMappingService {
         .select('id, name, category, rank, points, xp_reward, icon_name');
 
       if (error) {
-        console.error('Failed to initialize AchievementIdMappingService:', error);
+        this.logError('Initialization failed', error);
         throw error;
       }
 
       this.idMap.clear();
       this.unmappedIds.clear();
+      this.debugLog = [];
 
       achievements.forEach(achievement => {
         const normalizedName = this.normalizeId(achievement.name);
@@ -38,13 +45,13 @@ export class AchievementIdMappingService {
           });
         } else {
           this.unmappedIds.add(achievement.name);
-          console.warn(`Unmapped Achievement: ${achievement.name}`);
+          this.logWarning(`Unmapped Achievement: ${achievement.name}`);
         }
       });
 
       this.initialized = true;
     } catch (error) {
-      console.error('AchievementIdMapping initialization failed:', error);
+      this.logError('AchievementIdMapping initialization failed', error);
       throw error;
     }
   }
@@ -52,10 +59,12 @@ export class AchievementIdMappingService {
   private static normalizeId(id: string): string {
     if (!id) return '';
     
+    // Enhanced normalization for Portuguese and English
     return id.toLowerCase()
       .normalize('NFD')       // Normalize accented characters
       .replace(/[\u0300-\u036f]/g, '')  // Remove accent marks
-      .replace(/[^a-z0-9]/g, '');  // Remove non-alphanumeric
+      .replace(/[^a-z0-9]/g, '')  // Remove non-alphanumeric
+      .replace(/\s+/g, '');  // Remove whitespaces
   }
 
   private static findMatchingAchievement(normalizedName: string): Achievement | undefined {
@@ -65,7 +74,7 @@ export class AchievementIdMappingService {
         const achievements = ACHIEVEMENT_IDS[rank][category];
         
         const match = achievements.find(achievement => 
-          this.normalizeId(achievement.name) === normalizedName
+          this.normalizeId(achievement.name || achievement) === normalizedName
         );
 
         if (match) return match;
@@ -74,22 +83,16 @@ export class AchievementIdMappingService {
     return undefined;
   }
 
-  private static logUnmappedIds(): void {
-    if (this.unmappedIds.size > 0) {
-      console.warn(
-        '[AchievementIdMapping] Unmapped Achievement IDs:', 
-        Array.from(this.unmappedIds)
-      );
-    }
-  }
-
+  // Comprehensive validation and reporting
   static validateMappings(): {
     valid: number;
     invalid: number;
     unmapped: string[];
     missingDatabaseEntries: string[];
+    debugLog: string[];
   } {
     if (!this.initialized) {
+      this.logError('AchievementIdMapping not initialized');
       throw new Error('AchievementIdMapping not initialized');
     }
 
@@ -102,81 +105,58 @@ export class AchievementIdMappingService {
       valid: this.idMap.size,
       invalid: this.unmappedIds.size,
       unmapped: Array.from(this.unmappedIds),
-      missingDatabaseEntries
+      missingDatabaseEntries,
+      debugLog: this.debugLog
     };
   }
 
   private static getAllConstantIds(): string[] {
     const ids: string[] = [];
     
-    // Iterate through the nested structure of ACHIEVEMENT_IDS
     Object.values(ACHIEVEMENT_IDS).forEach(rankAchievements => {
       Object.values(rankAchievements).forEach(categoryAchievements => {
-        // Changed from .map(a => a.id) to .map(a => a)
-        ids.push(...categoryAchievements);
+        ids.push(...categoryAchievements.map(a => a.id || a));
       });
     });
     
     return ids;
   }
 
-  static getAchievementDetails(stringId: string): { uuid?: string; achievement?: Achievement } {
-    if (!this.initialized) {
-      console.warn('[AchievementIdMapping] Service not initialized');
-      return {};
-    }
+  // Logging methods
+  private static logError(message: string, error?: any): void {
+    const logEntry = `[ERROR] ${message}: ${error ? JSON.stringify(error) : ''}`;
+    this.debugLog.push(logEntry);
+    console.error(logEntry);
+  }
 
+  private static logWarning(message: string): void {
+    const logEntry = `[WARN] ${message}`;
+    this.debugLog.push(logEntry);
+    console.warn(logEntry);
+  }
+
+  // Defensive programming methods
+  static getAchievementDetails(stringId: string): { uuid?: string; achievement?: Achievement } {
+    this.ensureInitialized();
     const entry = Array.from(this.idMap.values()).find(
       entry => entry.achievement.id === stringId
     );
-
     return entry || {};
   }
 
-  static getUuid(stringId: string): string | undefined {
+  private static ensureInitialized(): void {
     if (!this.initialized) {
-      console.warn('[AchievementIdMapping] Service not initialized when getting UUID for', stringId);
-      return undefined;
-    }
-
-    const entry = Array.from(this.idMap.entries()).find(
-      ([id, _]) => id === stringId
-    );
-
-    return entry?.[1].uuid;
-  }
-
-  static getAllMappings(): Map<string, string> {
-    if (!this.initialized) {
-      console.warn('[AchievementIdMapping] Service not initialized when getting all mappings');
-      return new Map();
-    }
-
-    const mappings = new Map<string, string>();
-    this.idMap.forEach((value, key) => {
-      mappings.set(key, value.uuid);
-    });
-    
-    return mappings;
-  }
-
-  static async syncDatabaseEntries(): Promise<void> {
-    const missingEntries = this.validateMappings().missingDatabaseEntries;
-    
-    if (missingEntries.length > 0) {
-      try {
-        // Future implementation: Bulk insert missing achievements
-        console.info(`Syncing ${missingEntries.length} missing achievement entries`);
-      } catch (error) {
-        console.error('Database sync failed', error);
-      }
+      this.logError('Service not initialized');
+      throw new Error('AchievementIdMapping not initialized');
     }
   }
 
+  // Method to reset and reinitialize
   static async reset(): Promise<void> {
     this.initialized = false;
     this.idMap.clear();
     this.unmappedIds.clear();
+    this.debugLog = [];
     await this.initialize();
   }
 }
