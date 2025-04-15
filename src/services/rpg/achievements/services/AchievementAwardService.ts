@@ -1,68 +1,54 @@
-import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
-import { supabase } from '@/integrations/supabase/client';
-import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
-import { mapToAchievementCategory } from '@/types/achievementMappers';
 
-/**
- * Service for awarding achievements to users
- */
+import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
+import { Achievement } from '@/types/achievementTypes';
+import { supabase } from '@/integrations/supabase/client';
+import { TransactionService } from '@/services/common/TransactionService';
+import { AchievementProgressService } from '../AchievementProgressService';
+
 export class AchievementAwardService {
-  /**
-   * Award an achievement to a user
-   */
   static async awardAchievement(userId: string, achievementId: string): Promise<ServiceResponse<boolean>> {
     try {
-      if (!userId || !achievementId) {
-        return createErrorResponse(
-          'Invalid parameters',
-          'User ID and achievement ID are required',
-          ErrorCategory.VALIDATION
-        );
-      }
-      
-      // Check if already awarded
-      const { data: existing, error: checkError } = await supabase
-        .from('user_achievements')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('achievement_id', achievementId)
-        .maybeSingle();
+      // Get achievement details
+      const { data: achievement, error: achievementError } = await supabase
+        .from('achievements')
+        .select('*')
+        .eq('id', achievementId)
+        .single();
         
-      if (checkError) throw checkError;
-      
-      if (existing) {
-        // Already awarded
-        return createSuccessResponse(true);
-      }
-      
-      // Get achievement details with proper type mapping
-      const achievement = await AchievementUtils.getAchievementById(achievementId);
-      
-      if (!achievement) {
+      if (achievementError || !achievement) {
         return createErrorResponse(
           'Achievement not found',
           `No achievement found with ID: ${achievementId}`,
           ErrorCategory.NOT_FOUND
         );
       }
-      
-      // Begin transaction
-      const { error: beginError } = await supabase.rpc('begin_transaction');
-      if (beginError) throw beginError;
-      
-      try {
-        // Award the achievement
+
+      // Check if already awarded
+      const { data: existingAward, error: existingError } = await supabase
+        .from('user_achievements')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('achievement_id', achievementId)
+        .maybeSingle();
+        
+      if (existingError) throw existingError;
+      if (existingAward) return createSuccessResponse(true); // Already awarded
+
+      // Award achievement using transaction
+      return await TransactionService.executeInTransaction(async () => {
+        // Award achievement
         const { error: awardError } = await supabase
           .from('user_achievements')
           .insert({
             user_id: userId,
-            achievement_id: achievementId
+            achievement_id: achievementId,
+            achieved_at: new Date().toISOString()
           });
           
         if (awardError) throw awardError;
-        
-        // Update user profile stats
-        const { error: updateError } = await supabase
+
+        // Update user profile
+        const { error: profileError } = await supabase
           .from('profiles')
           .update({
             achievements_count: supabase.rpc('increment_profile_counter', {
@@ -78,64 +64,49 @@ export class AchievementAwardService {
             xp: supabase.rpc('increment_profile_counter', {
               user_id_param: userId,
               counter_name: 'xp',
-              increment_amount: achievement.xpReward
+              increment_amount: achievement.xp_reward
             })
           })
           .eq('id', userId);
           
-        if (updateError) throw updateError;
-        
-        // Commit transaction
-        const { error: commitError } = await supabase.rpc('commit_transaction');
-        if (commitError) throw commitError;
-        
-        return createSuccessResponse(true);
-      } catch (transactionError) {
-        // Rollback on error
-        await supabase.rpc('rollback_transaction');
-        throw transactionError;
-      }
+        if (profileError) throw profileError;
+
+        // Mark progress as complete
+        await AchievementProgressService.updateProgress(
+          userId,
+          achievementId,
+          achievement.requirements?.value || 0,
+          achievement.requirements?.value || 0,
+          true
+        );
+
+        return true;
+      }, 'award_achievement');
     } catch (error) {
       return createErrorResponse(
         'Failed to award achievement',
-        error instanceof Error ? error.message : 'Unknown error',
+        error instanceof Error ? error.message : String(error),
         ErrorCategory.DATABASE
       );
     }
   }
-  
-  /**
-   * Check and award multiple achievements in a batch
-   */
-  static async checkAndAwardAchievements(
-    userId: string, 
-    achievementIds: string[]
-  ): Promise<ServiceResponse<boolean>> {
+
+  static async checkAndAwardAchievements(userId: string, achievementIds: string[]): Promise<ServiceResponse<boolean>> {
     try {
-      if (!userId || !achievementIds.length) {
-        return createErrorResponse(
-          'Invalid parameters',
-          'User ID and achievement IDs are required',
-          ErrorCategory.VALIDATION
-        );
-      }
-      
-      // Use batch operation for better performance
-      const { data, error } = await supabase.rpc(
-        'check_achievement_batch',
-        {
-          p_user_id: userId,
-          p_achievement_ids: achievementIds
+      if (!achievementIds.length) return createSuccessResponse(true);
+
+      for (const achievementId of achievementIds) {
+        const result = await this.awardAchievement(userId, achievementId);
+        if (!result.success) {
+          console.error(`Failed to award achievement ${achievementId}:`, result.message);
         }
-      );
-      
-      if (error) throw error;
-      
+      }
+
       return createSuccessResponse(true);
     } catch (error) {
       return createErrorResponse(
-        'Failed to award achievements in batch',
-        error instanceof Error ? error.message : 'Unknown error',
+        'Failed to award achievements',
+        error instanceof Error ? error.message : String(error),
         ErrorCategory.DATABASE
       );
     }
