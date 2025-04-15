@@ -11,6 +11,7 @@ import { WorkoutType } from '../generators/WorkoutGenerator';
 import { CharacterClass } from '../generators/ClassGenerator';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 import { StandardizedAchievementService } from '@/services/rpg/achievements/StandardizedAchievementService';
+import { ActivityType } from '../generators/ActivityGenerator';
 
 /**
  * New User Scenario configuration options
@@ -173,7 +174,7 @@ export class NewUserScenario extends BaseScenario {
         this.logAction('MANUAL_WORKOUT', 'Submitting a manual workout');
         await this.dataGenerator.getGenerators().activity.generateManualWorkout(userId, {
           description: 'Evening run',
-          activityType: 'cardio', // Changed from 'running' to 'cardio'
+          activityType: ActivityType.RUNNING,
           testDataTag: config.testDataTag,
           silent: config.silent
         });

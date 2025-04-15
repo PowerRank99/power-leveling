@@ -259,8 +259,7 @@ export class PowerUserScenario extends BaseScenario {
       const progressionOptions: PRProgressionOptions = {
         steps: config.prsPerExercise,
         progressionType: 'linear',
-        startWeight: 50,
-        incrementAmount: 10
+        startWeight: 50
       };
       
       await this.dataGenerator.getGenerators().pr.generatePRsForMultipleExercises(userId, {

@@ -1,3 +1,4 @@
+
 /**
  * Class Progression Scenario
  * 
@@ -11,6 +12,7 @@ import { CharacterClass } from '../generators/ClassGenerator';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 import { StandardizedAchievementService } from '@/services/rpg/achievements/StandardizedAchievementService';
 import { supabase } from '@/integrations/supabase/client';
+import { ActivityType } from '../generators/ActivityGenerator';
 
 /**
  * Class Progression Scenario configuration options
@@ -202,7 +204,7 @@ export class ClassProgressionScenario extends BaseScenario {
     if (className === CharacterClass.PALADINO) {
       this.logAction('PALADINO_SPORTS', 'Adding sport activities for Paladino');
       await this.dataGenerator.getGenerators().activity.generateManualWorkout(userId, {
-        activityType: 'sport',
+        activityType: ActivityType.SOCCER,
         description: 'Football match',
         testDataTag: options.testDataTag,
         silent: options.silent
