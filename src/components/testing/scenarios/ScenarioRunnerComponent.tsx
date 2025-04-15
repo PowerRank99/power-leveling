@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,6 +40,7 @@ import {
   TestScenario
 } from '@/services/testing/scenarios';
 import { useAuth } from '@/hooks/useAuth';
+import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 
 interface ScenarioRunnerProps {
   userId?: string;
@@ -74,13 +74,10 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
     autoCleanup: true
   });
 
-  // Get the actual user ID to use
   const targetUserId = userId || user?.id || '';
 
-  // Get available scenarios
   const scenarios = scenarioRunner.getScenarios();
 
-  // Initialize selected scenario when component mounts
   useEffect(() => {
     if (scenarios.length > 0 && !selectedScenario) {
       setSelectedScenario(scenarios[0].id);
@@ -88,23 +85,19 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
     }
   }, [scenarios, selectedScenario]);
 
-  // Setup progress callback
   useEffect(() => {
     scenarioRunner.setProgressCallback(handleProgressUpdate);
     return () => {
-      // Clear callback on unmount
       scenarioRunner.setProgressCallback(() => {});
     };
   }, []);
 
-  // Load scenario options when scenario changes
   const loadScenarioOptions = (scenarioId: string) => {
     const scenario = scenarioRunner.getScenario(scenarioId);
     if (scenario) {
       const options = scenario.getConfigurationOptions();
       setScenarioOptions(options);
       
-      // Initialize with default values
       const initialOptions: Record<string, any> = {};
       Object.entries(options).forEach(([key, config]) => {
         initialOptions[key] = config.default;
@@ -117,7 +110,6 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
     }
   };
 
-  // Handle scenario selection change
   const handleScenarioChange = (scenarioId: string) => {
     setSelectedScenario(scenarioId);
     setResult(null);
@@ -132,7 +124,6 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
     loadScenarioOptions(scenarioId);
   };
 
-  // Handle option change
   const handleOptionChange = (key: string, value: any) => {
     setActiveOptions(prev => ({
       ...prev,
@@ -140,14 +131,10 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
     }));
   };
 
-  // Handle progress update
   const handleProgressUpdate = (newProgress: ScenarioProgress) => {
     setProgress(newProgress);
     
-    // Update execution log if action is provided
     if (newProgress.currentAction && newProgress.completedActions > executionLog.length) {
-      // We don't have the full action data here, so we create a simplified version
-      // Real actions will be available in the result
       setExecutionLog(prev => [
         ...prev,
         { 
@@ -160,7 +147,6 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
     }
   };
 
-  // Run the selected scenario
   const runScenario = async () => {
     if (!selectedScenario || !targetUserId) {
       toast.error('Cannot run scenario', {
@@ -187,12 +173,10 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
       );
       
       setResult(result);
-      // Update execution log with complete actions
       if (result.actions) {
         setExecutionLog(result.actions);
       }
       
-      // Reset progress
       setProgress(prev => ({
         ...prev,
         isRunning: false,
@@ -223,38 +207,30 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
     }
   };
 
-  // Pause execution
   const pauseExecution = () => {
     if (progress.isRunning && !progress.isPaused) {
       scenarioRunner.pauseCurrentScenario();
     }
   };
 
-  // Resume execution
   const resumeExecution = () => {
     if (progress.isRunning && progress.isPaused) {
       scenarioRunner.resumeCurrentScenario();
     }
   };
 
-  // Stop execution
   const stopExecution = () => {
-    // Currently no direct way to stop a scenario
-    // This would need additional implementation in the scenario runner
     toast.info('Stopping scenario execution is not yet implemented', {
       description: 'Please wait for the scenario to complete'
     });
   };
 
-  // Download results
   const downloadResults = () => {
     if (!result) return;
     
-    // Create a JSON file
     const dataStr = JSON.stringify(result, null, 2);
     const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
     
-    // Create a download link
     const exportFileDefaultName = `scenario-result-${selectedScenario}-${new Date().toISOString()}.json`;
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
@@ -262,7 +238,6 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
     linkElement.click();
   };
 
-  // Clean up test data
   const cleanupTestData = async () => {
     if (!selectedScenario || !targetUserId) return;
     
@@ -289,10 +264,8 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
     }
   };
 
-  // Get the current scenario details
   const currentScenario = selectedScenario ? scenarioRunner.getScenario(selectedScenario) : null;
 
-  // Configuration panel
   const ConfigPanel = (
     <Card className="mb-4">
       <CardHeader className="pb-2">
@@ -314,7 +287,6 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
       {isConfigOpen && (
         <CardContent>
           <div className="space-y-4">
-            {/* Scenario Selection */}
             <div className="space-y-2">
               <Label htmlFor="scenario-select">Scenario</Label>
               <Select
@@ -340,7 +312,6 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
               )}
             </div>
             
-            {/* Global Options */}
             <div className="space-y-2">
               <h3 className="text-sm font-medium">Global Options</h3>
               
@@ -388,7 +359,6 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
               </div>
             </div>
             
-            {/* Scenario-specific Options */}
             {currentScenario && Object.keys(scenarioOptions).length > 0 && (
               <div className="space-y-2">
                 <Separator />
@@ -396,12 +366,10 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {Object.entries(scenarioOptions).map(([key, config]) => {
-                    // Skip keys that are handled by global options
                     if (['speed', 'silent', 'autoCleanup'].includes(key)) {
                       return null;
                     }
                     
-                    // Render different input types based on config
                     switch (config.type) {
                       case 'number':
                         return (
@@ -483,7 +451,6 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
                         );
                         
                       case 'multiselect':
-                        // Not implemented yet, but could be added
                         return (
                           <div key={key} className="space-y-1">
                             <Label htmlFor={`option-${key}`}>{config.label}</Label>
@@ -506,7 +473,6 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
     </Card>
   );
 
-  // Progress indicator
   const ProgressIndicator = (
     <div className="space-y-2 mb-4">
       <div className="flex items-center justify-between">
@@ -581,7 +547,6 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
     </div>
   );
 
-  // Execution Log
   const ExecutionLog = (
     <Card>
       <CardHeader className="pb-2">
@@ -637,7 +602,6 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
     </Card>
   );
 
-  // Results Summary
   const ResultsSummary = (
     <Card>
       <CardHeader className="pb-2">
@@ -701,7 +665,6 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
               )}
             </div>
             
-            {/* Additional result info for specific scenarios */}
             {result.completionPercentage !== undefined && (
               <div>
                 <h3 className="text-sm font-medium mb-2">Completion Rate</h3>
@@ -722,7 +685,6 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
     </Card>
   );
 
-  // Define tabs for results view
   const resultTabs: ExecutionTab[] = [
     {
       id: 'execution',
@@ -740,13 +702,10 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
 
   return (
     <div className="space-y-4">
-      {/* Configuration Panel */}
       {ConfigPanel}
       
-      {/* Progress Indicator */}
       {ProgressIndicator}
       
-      {/* Results Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4 bg-midnight-card/80 border border-divider/30">
           {resultTabs.map(tab => (

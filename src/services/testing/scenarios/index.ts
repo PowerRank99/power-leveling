@@ -1,4 +1,3 @@
-
 /**
  * Achievement Testing Scenarios
  * 
@@ -99,6 +98,12 @@ export interface TestScenario {
   cleanup(userId: string, options?: { silent?: boolean }): Promise<boolean>;
   /** Get configuration options specific to this scenario */
   getConfigurationOptions(): Record<string, any>;
+  /** Set progress callback function */
+  setProgressCallback(callback: (progress: ScenarioProgress) => void): void;
+  /** Pause scenario execution */
+  pause(): void;
+  /** Resume scenario execution */
+  resume(): void;
 }
 
 /**

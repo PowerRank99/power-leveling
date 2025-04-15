@@ -173,7 +173,7 @@ export class NewUserScenario extends BaseScenario {
         this.logAction('MANUAL_WORKOUT', 'Submitting a manual workout');
         await this.dataGenerator.getGenerators().activity.generateManualWorkout(userId, {
           description: 'Evening run',
-          activityType: 'running',
+          activityType: 'cardio', // Changed from 'running' to 'cardio'
           testDataTag: config.testDataTag,
           silent: config.silent
         });

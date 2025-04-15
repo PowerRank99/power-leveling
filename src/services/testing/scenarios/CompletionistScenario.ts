@@ -1,4 +1,3 @@
-
 /**
  * Completionist Scenario
  * 
@@ -10,7 +9,7 @@ import { WorkoutType } from '../generators/WorkoutGenerator';
 import { CharacterClass } from '../generators/ClassGenerator';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 import { StandardizedAchievementService } from '@/services/rpg/achievements/StandardizedAchievementService';
-import { AchievementRank } from '@/types/achievementTypes';
+import { AchievementRank, AchievementCategory } from '@/types/achievementTypes';
 
 /**
  * Completionist Scenario configuration options
@@ -238,9 +237,9 @@ export class CompletionistScenario extends BaseScenario {
       this.logAction('PERSONAL_RECORDS', 'Generating personal records for multiple exercises');
       
       // Get the set of requirements to try to satisfy
-      const workoutAchievements = AchievementUtils.getAchievementsByCategory('WORKOUT');
-      const prAchievements = AchievementUtils.getAchievementsByCategory('RECORD');
-      const streakAchievements = AchievementUtils.getAchievementsByCategory('STREAK');
+      const workoutAchievements = AchievementUtils.getAchievementsByCategory(AchievementCategory.WORKOUT);
+      const prAchievements = AchievementUtils.getAchievementsByCategory(AchievementCategory.RECORD);
+      const streakAchievements = AchievementUtils.getAchievementsByCategory(AchievementCategory.STREAK);
       
       // Find the highest PR count requirement
       const highestPrCount = Math.max(

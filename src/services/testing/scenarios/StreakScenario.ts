@@ -19,7 +19,7 @@ export interface StreakScenarioOptions extends ScenarioOptions {
   /** Whether to simulate streak breaks (default: true) */
   includeStreakBreaks?: boolean;
   /** Pattern of streak days (1=workout, 0=no workout) */
-  streakPattern?: number[];
+  streakPattern?: number[] | string;
   /** Whether to test class passives (default: true) */
   testClassPassives?: boolean;
   /** Character class to test passives (default: Bruxo) */
@@ -167,7 +167,7 @@ export class StreakScenario extends BaseScenario {
     if (typeof options?.streakPattern === 'string') {
       pattern = options.streakPattern.split('').map(c => c === '1' ? 1 : 0);
     } else if (Array.isArray(config.streakPattern) && config.streakPattern.length > 0) {
-      pattern = config.streakPattern;
+      pattern = config.streakPattern as number[];
     } else if (config.includeStreakBreaks) {
       // Default pattern with a break in the middle
       pattern = Array(config.maxStreakDays + 3).fill(1);

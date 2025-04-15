@@ -1,4 +1,3 @@
-
 /**
  * Class Progression Scenario
  * 
@@ -66,7 +65,7 @@ export class ClassProgressionScenario extends BaseScenario {
     },
     [CharacterClass.DRUIDA]: {
       class: CharacterClass.DRUIDA,
-      workoutType: WorkoutType.MOBILITY,
+      workoutType: WorkoutType.FLEXIBILITY,
       passiveName: 'Ritmo da Natureza',
       passiveDescription: '+40% XP from mobility & flexibility exercises'
     },
@@ -203,7 +202,7 @@ export class ClassProgressionScenario extends BaseScenario {
     if (className === CharacterClass.PALADINO) {
       this.logAction('PALADINO_SPORTS', 'Adding sport activities for Paladino');
       await this.dataGenerator.getGenerators().activity.generateManualWorkout(userId, {
-        activityType: 'football',
+        activityType: 'sport',
         description: 'Football match',
         testDataTag: options.testDataTag,
         silent: options.silent
