@@ -7,9 +7,9 @@ export class ManualWorkoutAchievementChecker extends BaseAchievementChecker {
   async checkAchievements(userId: string): Promise<ServiceResponse<string[]>> {
     return this.executeWithErrorHandling(
       async () => {
-        const { data: achievements } = await super.fetchAchievementsByCategory('manual', 'requirements->count');
+        const { data: achievements } = await this.fetchAchievementsByCategory('manual', 'requirements->count');
         
-        const { data, error } = await supabase
+        const { data, error, count } = await supabase
           .from('manual_workouts')
           .select('id', { count: 'exact', head: true })
           .eq('user_id', userId);
@@ -20,7 +20,7 @@ export class ManualWorkoutAchievementChecker extends BaseAchievementChecker {
         
         achievements?.forEach(achievement => {
           const requiredCount = achievement.requirements?.count || 0;
-          if (data.count && data.count >= requiredCount) {
+          if (count && count >= requiredCount) {
             achievementsToCheck.push(achievement.id);
           }
         });
