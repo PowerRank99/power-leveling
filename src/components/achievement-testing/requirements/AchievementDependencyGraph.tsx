@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -171,6 +172,9 @@ const AchievementDependencyGraph: React.FC<AchievementDependencyGraphProps> = ({
       });
     });
     
+    // Define the rank size for font
+    const rankSize = 14; // Added this variable definition
+    
     nodes.forEach(node => {
       const pos = nodePositions[node.id];
       if (!pos) return;
@@ -274,3 +278,4 @@ const AchievementDependencyGraph: React.FC<AchievementDependencyGraphProps> = ({
 };
 
 export default AchievementDependencyGraph;
+
