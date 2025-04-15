@@ -200,7 +200,7 @@ export class AchievementTestingService {
         throw new Error(`Achievement with ID ${achievementId} not found`);
       }
 
-      const databaseId = AchievementIdMappingService.getUuid(achievementId);
+      const databaseId = await AchievementIdMappingService.getUuidAsync(achievementId);
       if (!databaseId) {
         throw new Error(`No database mapping found for achievement ID ${achievementId}`);
       }
@@ -838,7 +838,11 @@ export class AchievementTestingService {
   }
 }
 
-AchievementIdMappingService.initialize().catch(console.error);
+try {
+  await AchievementIdMappingService.initialize();
+} catch (error) {
+  console.error('Failed to initialize achievement mappings:', error);
+}
 
 export const AchievementTestRunners = {
   workouts: async (service: AchievementTestingService): Promise<ServiceResponse<AchievementTestResult[]>> => {

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import TestCoverageStats from './TestCoverageStats';
 import RecentTestResults from './RecentTestResults';
@@ -41,9 +42,15 @@ const TestingDashboard: React.FC<TestingDashboardProps> = ({
 }) => {
   useEffect(() => {
     // Initialize achievement ID mapping
-    AchievementIdMappingService.initialize().catch(error => {
-      console.error('Failed to initialize achievement mapping:', error);
-    });
+    const initializeMapping = async () => {
+      try {
+        await AchievementIdMappingService.initialize();
+      } catch (error) {
+        console.error('Failed to initialize achievement mapping:', error);
+      }
+    };
+    
+    initializeMapping();
   }, []);
 
   return (
