@@ -18,29 +18,29 @@ export const TestResultCard: React.FC<TestResultCardProps> = ({ result }) => {
             {result.success ? (
               <CheckCircle2 className="h-5 w-5 text-green-500" />
             ) : (
-              <XCircle className="h-5 w-5 text-red-500" />
+              <XCircle className="h-5 w-5 text-valor" />
             )}
             <span className="font-semibold text-text-primary">{result.name}</span>
           </div>
           
           <div className="flex items-center gap-2 text-xs text-text-secondary">
-            <Badge variant="outline" className="px-2 py-0 bg-midnight-elevated">
+            <Badge variant="outline" className="px-2 py-0 bg-midnight-elevated border-arcane-30">
               {result.category}
             </Badge>
-            <Badge variant="outline" className="px-2 py-0 bg-midnight-elevated">
+            <Badge variant="outline" className="px-2 py-0 bg-midnight-elevated border-arcane-30">
               Rank {result.rank}
             </Badge>
-            <span className="flex items-center">
+            <span className="flex items-center text-text-tertiary">
               <Clock className="h-3 w-3 mr-1" />
               {result.testDurationMs}ms
             </span>
-            <span>
+            <span className="text-text-tertiary">
               {new Date(result.testedAt).toLocaleString()}
             </span>
           </div>
           
           {!result.success && result.errorMessage && (
-            <div className="mt-2 text-sm bg-red-900/20 text-red-500 p-2 rounded border border-red-900/30">
+            <div className="mt-2 text-sm bg-valor-15 text-valor p-2 rounded border border-valor-30">
               {result.errorMessage}
             </div>
           )}
@@ -51,7 +51,7 @@ export const TestResultCard: React.FC<TestResultCardProps> = ({ result }) => {
           className={
             result.success 
               ? "bg-green-900/20 text-green-500 border-green-900/30" 
-              : "bg-red-900/20 text-red-500 border-red-900/30"
+              : "bg-valor-15 text-valor border-valor-30"
           }
         >
           {result.success ? 'Passed' : 'Failed'}

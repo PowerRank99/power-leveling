@@ -23,9 +23,9 @@ const QuickActions: React.FC<QuickActionsProps> = ({
   hasResults
 }) => {
   return (
-    <Card>
+    <Card className="bg-midnight-elevated border-divider/30">
       <CardHeader>
-        <CardTitle className="text-lg">Quick Actions</CardTitle>
+        <CardTitle className="text-lg font-orbitron text-text-primary">Quick Actions</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -46,7 +46,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({
                 variant="outline"
                 onClick={() => onRunCategoryTests(category)}
                 disabled={isLoading}
-                className="text-sm"
+                className="text-sm bg-midnight-card border-arcane-30 text-text-primary hover:bg-arcane-15"
               >
                 {category}
               </Button>
@@ -58,6 +58,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({
               variant="outline"
               onClick={onClearResults}
               disabled={isLoading || !hasResults}
+              className="bg-midnight-card border-valor-30 text-text-primary hover:bg-valor-15"
             >
               <RotateCcw className="mr-2 h-4 w-4" />
               Clear Results
@@ -67,6 +68,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({
               variant="outline"
               onClick={onExportResults}
               disabled={isLoading || !hasResults}
+              className="bg-midnight-card border-arcane-30 text-text-primary hover:bg-arcane-15"
             >
               <Download className="mr-2 h-4 w-4" />
               Export Results
