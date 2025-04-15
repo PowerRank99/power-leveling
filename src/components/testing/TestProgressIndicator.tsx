@@ -2,57 +2,75 @@
 import React from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Loader2 } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock } from 'lucide-react';
 
 interface TestProgressIndicatorProps {
-  completed: number;
+  current: number;
   total: number;
   successful: number;
   failed: number;
-  currentTest?: string;
   isRunning: boolean;
+  currentTest?: string;
 }
 
 const TestProgressIndicator: React.FC<TestProgressIndicatorProps> = ({
-  completed,
+  current,
   total,
   successful,
   failed,
-  currentTest,
-  isRunning
+  isRunning,
+  currentTest
 }) => {
-  const progressPercentage = total > 0 ? (completed / total) * 100 : 0;
+  const progress = total > 0 ? (current / total) * 100 : 0;
   
-  if (!isRunning && completed === 0) {
+  if (!isRunning && total === 0) {
     return null;
   }
   
   return (
-    <div className="space-y-2 mb-4">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center">
-          {isRunning && <Loader2 className="animate-spin h-4 w-4 mr-2 text-arcane" />}
-          <span className="text-sm">
-            Progress: {completed}/{total} ({progressPercentage.toFixed(0)}%)
+    <div className="space-y-2 p-3 bg-midnight-card rounded-md border border-divider/30">
+      <div className="flex items-center justify-between text-sm">
+        <div className="flex items-center space-x-2">
+          <Clock className="h-4 w-4 text-text-secondary" />
+          <span>
+            {isRunning ? (
+              <span className="text-text-primary">
+                Testing {current}/{total}
+              </span>
+            ) : (
+              <span className="text-text-secondary">
+                Completed {current}/{total}
+              </span>
+            )}
           </span>
         </div>
+        
         <div className="flex items-center space-x-2">
-          <Badge variant="success" className="bg-success/20 text-success">
-            {successful} passed
-          </Badge>
+          {successful > 0 && (
+            <Badge variant="success" className="flex items-center">
+              <CheckCircle2 className="h-3 w-3 mr-1" />
+              {successful}
+            </Badge>
+          )}
+          
           {failed > 0 && (
-            <Badge variant="valor" className="bg-valor/20 text-valor">
-              {failed} failed
+            <Badge variant="valor" className="flex items-center">
+              <XCircle className="h-3 w-3 mr-1" />
+              {failed}
             </Badge>
           )}
         </div>
       </div>
       
-      <Progress value={progressPercentage} className="h-2" />
+      <Progress 
+        value={progress} 
+        className="h-2"
+        color={failed > 0 ? 'valor' : 'success'} 
+      />
       
-      {currentTest && (
-        <div className="text-xs text-text-secondary flex items-center">
-          <span className="font-bold mr-1">Testing:</span> {currentTest}
+      {isRunning && currentTest && (
+        <div className="text-xs text-text-secondary animate-pulse">
+          Testing: {currentTest}
         </div>
       )}
     </div>

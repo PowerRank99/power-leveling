@@ -1,219 +1,270 @@
 
 import React, { useState } from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Check, Clock, Download, Save, Trash2, XCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Download, Trash2, Search, Filter, ChevronDown, ChevronUp, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { AchievementTestResult } from '@/services/testing/AchievementTestingService';
-import { toast } from 'sonner';
-
-// Explicitly define the FilterOption type here
-export type FilterOption = 'all' | 'passed' | 'failed' | 'untested';
+import { AchievementCategory } from '@/types/achievementTypes';
 
 interface TestResultViewerProps {
   results: AchievementTestResult[];
   onClearResults: () => void;
   onExportResults: () => void;
-  filter: FilterOption;
-  onFilterChange: (value: FilterOption) => void;
-  lastSaved?: string;
 }
 
-const TestResultViewer: React.FC<TestResultViewerProps> = ({
-  results,
-  onClearResults,
-  onExportResults,
-  filter,
-  onFilterChange,
-  lastSaved
-}) => {
+export function TestResultViewer({ results, onClearResults, onExportResults }: TestResultViewerProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('recent');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [activeTab, setActiveTab] = useState('all');
   
-  const filteredResults = results.filter(result => {
-    if (filter === 'passed') return result.success;
-    if (filter === 'failed') return !result.success;
-    if (searchQuery) {
-      return result.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-             result.category.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
-             (result.errorMessage && result.errorMessage.toLowerCase().includes(searchQuery.toLowerCase()));
-    }
-    return true;
-  });
-  
+  // Count stats
   const passedCount = results.filter(r => r.success).length;
   const failedCount = results.filter(r => !r.success).length;
   
-  const handleExport = () => {
-    if (results.length === 0) {
-      toast.error('No results to export');
-      return;
+  // Apply filters and sort
+  const filteredResults = results.filter(result => {
+    // Text search
+    const matchesSearch = 
+      searchQuery === '' || 
+      result.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      result.achievementId.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Status filter
+    const matchesStatus = 
+      statusFilter === 'all' || 
+      (statusFilter === 'passed' && result.success) ||
+      (statusFilter === 'failed' && !result.success);
+    
+    // Category filter
+    const matchesCategory = 
+      categoryFilter === 'all' || 
+      result.category === categoryFilter;
+    
+    return matchesSearch && matchesStatus && matchesCategory;
+  });
+  
+  // Sort results
+  const sortedResults = [...filteredResults].sort((a, b) => {
+    let comparison = 0;
+    
+    switch (sortBy) {
+      case 'recent':
+        comparison = new Date(b.testedAt).getTime() - new Date(a.testedAt).getTime();
+        break;
+      case 'name':
+        comparison = a.name.localeCompare(b.name);
+        break;
+      case 'duration':
+        comparison = a.testDurationMs - b.testDurationMs;
+        break;
+      case 'category':
+        comparison = a.category.localeCompare(b.category);
+        break;
+      case 'rank':
+        comparison = a.rank.localeCompare(b.rank);
+        break;
+      default:
+        comparison = 0;
     }
-
-    const exportData = {
-      results: filteredResults,
-      exportedAt: new Date().toISOString(),
-      metadata: {
-        totalTests: results.length,
-        passedTests: passedCount,
-        failedTests: failedCount,
-        lastSaved
-      }
-    };
-
-    const dataStr = JSON.stringify(exportData, null, 2);
-    const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
-    const exportFileName = `achievement-test-results-${new Date().toISOString().slice(0, 10)}.json`;
-
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileName);
-    linkElement.click();
-
-    toast.success('Results exported successfully');
-  };
-
+    
+    return sortOrder === 'asc' ? comparison : -comparison;
+  });
+  
+  // Filter displayed results based on tab
+  const displayedResults = activeTab === 'all' 
+    ? sortedResults 
+    : activeTab === 'passed' 
+      ? sortedResults.filter(r => r.success) 
+      : sortedResults.filter(r => !r.success);
+  
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg flex items-center justify-between">
-          <span>Test Results</span>
-          <div className="flex space-x-2">
-            {lastSaved && (
-              <span className="text-sm text-text-secondary">
-                Last saved: {new Date(lastSaved).toLocaleString()}
-              </span>
-            )}
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={onClearResults}
-              disabled={results.length === 0}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Clear
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleExport}
-              disabled={results.length === 0}
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Export
-            </Button>
-          </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-midnight-elevated rounded-md p-3 text-center">
-            <div className="text-xl font-semibold">{results.length}</div>
-            <div className="text-sm text-text-secondary">Total Tests</div>
-          </div>
-          <div className="bg-success/10 border border-success/20 rounded-md p-3 text-center">
-            <div className="text-xl font-semibold text-success">{passedCount}</div>
-            <div className="text-sm text-text-secondary">Passed</div>
-          </div>
-          <div className="bg-valor/10 border border-valor/20 rounded-md p-3 text-center">
-            <div className="text-xl font-semibold text-valor">{failedCount}</div>
-            <div className="text-sm text-text-secondary">Failed</div>
-          </div>
-        </div>
-        
-        <div className="flex space-x-2 mb-2">
-          <Input
-            placeholder="Search results..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-midnight-elevated border-divider"
-          />
-          <Button 
-            variant={filter === 'all' ? 'arcane' : 'ghost'}
-            size="sm"
-            onClick={() => onFilterChange('all')}
-          >
-            All
-          </Button>
-          <Button 
-            variant={filter === 'passed' ? 'arcane' : 'ghost'}
-            size="sm"
-            onClick={() => onFilterChange('passed')}
-          >
-            Passed
-          </Button>
-          <Button 
-            variant={filter === 'failed' ? 'arcane' : 'ghost'}
-            size="sm"
-            onClick={() => onFilterChange('failed')}
-          >
-            Failed
-          </Button>
-          {/* Add untested filter button */}
-          <Button 
-            variant={filter === 'untested' ? 'arcane' : 'ghost'}
-            size="sm"
-            onClick={() => onFilterChange('untested')}
-          >
-            Untested
-          </Button>
-        </div>
-        
-        <ScrollArea className="h-[400px] border border-divider/20 rounded-md">
-          {filteredResults.length === 0 ? (
-            <div className="text-center text-text-secondary p-4">
-              No results match your filter criteria.
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex justify-between items-center">
+            <span>Test Results ({results.length})</span>
+            <div className="flex space-x-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onClearResults}
+                disabled={results.length === 0}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Clear
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onExportResults}
+                disabled={results.length === 0}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Export
+              </Button>
             </div>
-          ) : (
-            <div className="space-y-2 p-2">
-              {filteredResults.map(result => (
-                <div 
-                  key={result.achievementId} 
-                  className="border border-divider/20 rounded-md p-3 space-y-2"
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-3">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-text-tertiary" />
+                <Input
+                  placeholder="Search tests..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 w-full bg-midnight-elevated border-divider"
+                />
+              </div>
+              
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[160px] bg-midnight-elevated border-divider">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="passed">Passed only</SelectItem>
+                  <SelectItem value="failed">Failed only</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-[160px] bg-midnight-elevated border-divider">
+                  <SelectValue placeholder="Filter by category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All categories</SelectItem>
+                  {Object.values(AchievementCategory).map(category => (
+                    <SelectItem key={category} value={category}>{category}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <div className="flex">
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="rounded-r-none border-r-0 bg-midnight-elevated border-divider">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="recent">Most recent</SelectItem>
+                    <SelectItem value="name">Name</SelectItem>
+                    <SelectItem value="duration">Duration</SelectItem>
+                    <SelectItem value="category">Category</SelectItem>
+                    <SelectItem value="rank">Rank</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="rounded-l-none bg-midnight-elevated border-divider"
+                  onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
                 >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="font-medium flex items-center">
-                        {result.success ? (
-                          <Check className="h-4 w-4 text-success mr-1" />
-                        ) : (
-                          <XCircle className="h-4 w-4 text-valor mr-1" />
-                        )}
-                        {result.name}
-                      </div>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <Badge variant="outline">{result.category}</Badge>
-                        <Badge variant="outline">Rank {result.rank}</Badge>
-                        <Badge 
-                          variant="outline" 
-                          className="flex items-center"
-                        >
-                          <Clock className="mr-1 h-3 w-3" />
-                          {result.testDurationMs}ms
-                        </Badge>
-                      </div>
+                  {sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Badge variant="outline">
+                {filteredResults.length} results
+              </Badge>
+              {passedCount > 0 && (
+                <Badge variant="success" className="px-2">
+                  {passedCount} passed
+                </Badge>
+              )}
+              {failedCount > 0 && (
+                <Badge variant="valor" className="px-2">
+                  {failedCount} failed
+                </Badge>
+              )}
+            </div>
+            
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="all">
+                  All ({sortedResults.length})
+                </TabsTrigger>
+                <TabsTrigger value="passed">
+                  Passed ({sortedResults.filter(r => r.success).length})
+                </TabsTrigger>
+                <TabsTrigger value="failed">
+                  Failed ({sortedResults.filter(r => !r.success).length})
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value={activeTab} className="mt-4">
+                <ScrollArea className="h-[500px] rounded-md border border-divider/30 p-2">
+                  {displayedResults.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-[400px] text-text-secondary">
+                      <Filter className="h-10 w-10 mb-2 opacity-40" />
+                      <p>No results match your filters</p>
                     </div>
-                    <Badge 
-                      variant={result.success ? "success" : "valor"}
-                    >
-                      {result.success ? 'Passed' : 'Failed'}
-                    </Badge>
-                  </div>
-                  
-                  {!result.success && result.errorMessage && (
-                    <div className="text-sm text-valor bg-valor/10 p-2 rounded">
-                      {result.errorMessage}
+                  ) : (
+                    <div className="space-y-2">
+                      {displayedResults.map(result => (
+                        <Card key={`${result.achievementId}-${result.testedAt}`} className="p-3 hover:bg-midnight-elevated">
+                          <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                {result.success ? (
+                                  <CheckCircle2 className="h-5 w-5 text-success" />
+                                ) : (
+                                  <XCircle className="h-5 w-5 text-valor" />
+                                )}
+                                <span className="font-semibold">{result.name}</span>
+                              </div>
+                              
+                              <div className="flex items-center gap-2 text-xs text-text-secondary">
+                                <Badge variant="outline" className="px-2 py-0">
+                                  {result.category}
+                                </Badge>
+                                <Badge variant="outline" className="px-2 py-0">
+                                  Rank {result.rank}
+                                </Badge>
+                                <span className="flex items-center">
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  {result.testDurationMs}ms
+                                </span>
+                                <span>
+                                  {new Date(result.testedAt).toLocaleString()}
+                                </span>
+                              </div>
+                              
+                              {!result.success && result.errorMessage && (
+                                <div className="mt-2 text-sm text-valor bg-valor/10 p-2 rounded">
+                                  {result.errorMessage}
+                                </div>
+                              )}
+                            </div>
+                            
+                            <Badge 
+                              variant={result.success ? "success" : "valor"}
+                              className="ml-2"
+                            >
+                              {result.success ? 'Passed' : 'Failed'}
+                            </Badge>
+                          </div>
+                        </Card>
+                      ))}
                     </div>
                   )}
-                </div>
-              ))}
-            </div>
-          )}
-        </ScrollArea>
-      </CardContent>
-    </Card>
+                </ScrollArea>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
-};
-
-export default TestResultViewer;
+}

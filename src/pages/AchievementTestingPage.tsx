@@ -3,6 +3,9 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { LayoutDashboard } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import PageHeader from '@/components/ui/PageHeader';
 import AuthRequiredRoute from '@/components/AuthRequiredRoute';
 import BottomNavBar from '@/components/navigation/BottomNavBar';
@@ -45,9 +48,17 @@ const AchievementTestingPage: React.FC = () => {
           title="Achievement Testing" 
           showBackButton={true} 
           rightContent={
-            <Badge variant="outline" className="bg-valor-15 text-valor border-valor-30">
-              DEV ONLY
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="bg-valor-15 text-valor border-valor-30">
+                DEV ONLY
+              </Badge>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/testing-dashboard">
+                  <LayoutDashboard className="h-4 w-4 mr-1" />
+                  Dashboard
+                </Link>
+              </Button>
+            </div>
           }
         />
         

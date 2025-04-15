@@ -1,916 +1,315 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { 
-  AchievementTestingService, 
-  AchievementTestResult, 
-  AchievementTestProgress 
-} from '@/services/testing/AchievementTestingService';
-import { TestCoverageReport as TestCoverageReportType } from '@/services/testing/TestCoverageService';
+
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
+import { Award, CheckCircle2, Play, RotateCcw, Filter, Search, FilterX } from 'lucide-react';
 import { Achievement, AchievementCategory, AchievementRank } from '@/types/achievementTypes';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
-
-// UI Components
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Progress } from '@/components/ui/progress';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { 
+  AchievementTestingService, 
+  AchievementTestResult
+} from '@/services/testing/AchievementTestingService';
 import { toast } from 'sonner';
-
-// Icons
-import { Award, Play, CircleCheck, CircleX, Clock, Filter, RotateCcw, Save, Upload, Download, Settings, CheckCircle2, XCircle, ShieldCheck, AlertTriangle, ChevronDown, ChevronRight, Info, Check, Trash2, Search, FilterX, ArrowDownUp } from 'lucide-react';
-
-// Import sub-components
-import AchievementTestHeader from './AchievementTestHeader';
-import AchievementCategorySection from './AchievementCategorySection';
-import AchievementTestItem from './AchievementTestItem';
 import TestProgressIndicator from './TestProgressIndicator';
-import TestResultViewer, { FilterOption } from './TestResultViewer';
-import TestConfigurationPanel from './TestConfigurationPanel';
-import TestCoverageReport from '@/components/achievement-testing/TestCoverageReport';
-import TestingDashboard from '../testing/dashboard/TestingDashboard';
-import { useTestResultPersistence } from '@/hooks/useTestResultPersistence';
+import AchievementCategorySection from './AchievementCategorySection';
+import AchievementTestHeader from './AchievementTestHeader';
+import { Input } from '@/components/ui/input';
 
 interface AchievementTestRunnerProps {
   userId: string;
-  addLogEntry?: (action: string, details: string) => void;
+  results: AchievementTestResult[];
+  onResultsChange: (results: AchievementTestResult[]) => void;
+  isLoading: boolean;
+  setIsLoading: (loading: boolean) => void;
 }
 
-// Sort options
-type SortOption = 'category' | 'rank' | 'success-rate' | 'duration';
-
-const AchievementTestRunner: React.FC<AchievementTestRunnerProps> = ({ userId, addLogEntry }) => {
-  // Service initialization
+export function AchievementTestRunner({ 
+  userId, 
+  results, 
+  onResultsChange,
+  isLoading,
+  setIsLoading
+}: AchievementTestRunnerProps) {
   const [testService, setTestService] = useState<AchievementTestingService | null>(null);
-  
-  // Test state
-  const [progress, setProgress] = useState<AchievementTestProgress>({
+  const [allAchievements, setAllAchievements] = useState<Achievement[]>([]);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [selectedAchievements, setSelectedAchievements] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedRank, setSelectedRank] = useState('all');
+  const [progress, setProgress] = useState({
     total: 0,
-    completed: 0,
+    completed: 0, 
     successful: 0,
     failed: 0,
-    isRunning: false
+    isRunning: false,
+    currentTest: ''
   });
   
-  const [results, setResults] = useState<AchievementTestResult[]>([]);
-  const [selectedAchievements, setSelectedAchievements] = useState<string[]>([]);
+  // Convert results to a map for easier lookup
+  const resultsMap = results.reduce((acc, result) => {
+    acc[result.achievementId] = {
+      success: result.success,
+      errorMessage: result.errorMessage,
+      testDurationMs: result.testDurationMs
+    };
+    return acc;
+  }, {} as Record<string, {success: boolean, errorMessage?: string, testDurationMs: number}>);
   
-  // UI state
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
-  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
-  const [filter, setFilter] = useState<FilterOption>('all');
-  const [sortBy, setSortBy] = useState<SortOption>('category');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  
-  // Configuration state
-  const [useCleanup, setUseCleanup] = useState(true);
-  const [useTransaction, setUseTransaction] = useState(true);
-  const [verbose, setVerbose] = useState(true);
-  const [loading, setLoading] = useState(false);
-  
-  // Category and rank filters
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedRank, setSelectedRank] = useState<string>('all');
-  
-  // Persist results to localStorage
-  const {
-    savedResults: localStorageResults,
-    lastUpdated,
-    saveResults,
-    clearResults: clearSavedResults
-  } = useTestResultPersistence();
-  
-  // Initialize service
+  // Initialize test service
   useEffect(() => {
     if (userId) {
-      const service = new AchievementTestingService(userId, {
-        cleanup: useCleanup,
-        useTransaction,
-        verbose
-      });
-      
-      service.onProgress(handleProgressUpdate);
-      service.onResult(handleTestResult);
-      
+      const service = new AchievementTestingService(userId);
+      service.onProgress(setProgress);
       setTestService(service);
       
-      // Load saved results from localStorage
-      if (localStorageResults.length > 0) {
-        setResults(localStorageResults);
-        toast.info(`Loaded ${localStorageResults.length} saved test results`);
+      // Fetch all achievements
+      const achievements = AchievementUtils.getAllAchievements()
+        .map(def => AchievementUtils.convertToAchievement(def));
+      setAllAchievements(achievements);
+      
+      // Expand first category by default
+      if (achievements.length > 0) {
+        const firstCategory = achievements[0].category;
+        setExpandedCategories(new Set([firstCategory]));
       }
     }
-  }, [userId, useCleanup, useTransaction, verbose, localStorageResults]);
+  }, [userId]);
   
-  // Update progress handler
-  const handleProgressUpdate = useCallback((newProgress: AchievementTestProgress) => {
-    setProgress(newProgress);
-  }, []);
-  
-  // Test result handler
-  const handleTestResult = useCallback((result: AchievementTestResult) => {
-    setResults(prev => {
-      // Replace existing result or add new one
-      const newResults = prev.filter(r => r.achievementId !== result.achievementId);
-      return [...newResults, result];
-    });
+  // Filter achievements
+  const filteredAchievements = allAchievements.filter(achievement => {
+    const matchesSearch = searchQuery === '' || 
+      achievement.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      achievement.description.toLowerCase().includes(searchQuery.toLowerCase());
+      
+    const matchesCategory = selectedCategory === 'all' || achievement.category === selectedCategory;
+    const matchesRank = selectedRank === 'all' || achievement.rank === selectedRank;
     
-    if (addLogEntry) {
-      addLogEntry(
-        result.success ? 'Test Passed' : 'Test Failed',
-        `${result.name} (${result.category}, ${result.rank}) - ${result.success ? 'Success' : result.errorMessage}`
-      );
-    }
-  }, [addLogEntry]);
-  
-  // Save results to localStorage whenever they change
-  useEffect(() => {
-    if (results.length > 0) {
-      saveResults(results);
-    }
-  }, [results, saveResults]);
-  
-  // Get all achievements
-  const allAchievements = useMemo(() => {
-    return AchievementUtils.getAllAchievements().map(def => 
-      AchievementUtils.convertToAchievement(def)
-    );
-  }, []);
-  
-  // Get filtered achievements based on current filters
-  const filteredAchievements = useMemo(() => {
-    return allAchievements.filter(achievement => {
-      // Category filter
-      if (selectedCategory !== 'all' && achievement.category !== selectedCategory) {
-        return false;
-      }
-      
-      // Rank filter
-      if (selectedRank !== 'all' && achievement.rank !== selectedRank) {
-        return false;
-      }
-      
-      // Test status filter
-      const testResult = results.find(r => r.achievementId === achievement.id);
-      
-      if (filter === 'passed' && (!testResult || !testResult.success)) {
-        return false;
-      }
-      
-      if (filter === 'failed' && (!testResult || testResult.success)) {
-        return false;
-      }
-      
-      if (filter === 'untested' && testResult) {
-        return false;
-      }
-      
-      // Search filter
-      if (searchQuery && !achievement.name.toLowerCase().includes(searchQuery.toLowerCase()) && 
-          !achievement.description.toLowerCase().includes(searchQuery.toLowerCase())) {
-        return false;
-      }
-      
-      return true;
-    });
-  }, [allAchievements, selectedCategory, selectedRank, filter, results, searchQuery]);
+    return matchesSearch && matchesCategory && matchesRank;
+  });
   
   // Group achievements by category
-  const achievementsByCategory = useMemo(() => {
-    const grouped: Record<string, Achievement[]> = {};
-    
-    // Sort achievements based on selected sort option
-    const sortedAchievements = [...filteredAchievements].sort((a, b) => {
-      if (sortBy === 'rank') {
-        // Sort by rank (S, A, B, C, D, E)
-        const rankOrder: Record<string, number> = { 'S': 0, 'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'Unranked': 6 };
-        return rankOrder[a.rank as string] - rankOrder[b.rank as string];
-      }
-      
-      if (sortBy === 'success-rate') {
-        // Sort by test success (passed first, then failed, then untested)
-        const resultA = results.find(r => r.achievementId === a.id);
-        const resultB = results.find(r => r.achievementId === b.id);
-        
-        if (resultA && resultB) {
-          return resultA.success === resultB.success ? 0 : resultA.success ? -1 : 1;
-        }
-        
-        if (resultA) return -1;
-        if (resultB) return 1;
-        return 0;
-      }
-      
-      if (sortBy === 'duration') {
-        // Sort by test duration
-        const resultA = results.find(r => r.achievementId === a.id);
-        const resultB = results.find(r => r.achievementId === b.id);
-        
-        if (resultA && resultB) {
-          return resultA.testDurationMs - resultB.testDurationMs;
-        }
-        
-        return 0;
-      }
-      
-      // Default: sort by category
-      return a.category.localeCompare(b.category);
-    });
-    
-    // Group by category
-    sortedAchievements.forEach(achievement => {
-      const category = achievement.category;
-      if (!grouped[category]) {
-        grouped[category] = [];
-      }
-      grouped[category].push(achievement);
-    });
-    
-    return grouped;
-  }, [filteredAchievements, sortBy, results]);
+  const achievementsByCategory: Record<string, Achievement[]> = {};
+  filteredAchievements.forEach(achievement => {
+    if (!achievementsByCategory[achievement.category]) {
+      achievementsByCategory[achievement.category] = [];
+    }
+    achievementsByCategory[achievement.category].push(achievement);
+  });
   
-  // Stats calculation for dashboard
-  const stats = useMemo(() => {
-    const totalAchievements = allAchievements.length;
-    const testedAchievements = results.length;
-    const passedTests = results.filter(r => r.success).length;
-    const failedTests = results.filter(r => !r.success).length;
-    const coveragePercentage = totalAchievements > 0 ? (testedAchievements / totalAchievements) * 100 : 0;
+  // Toggle category expansion
+  const toggleCategoryExpansion = (category: string) => {
+    const newExpanded = new Set(expandedCategories);
+    if (newExpanded.has(category)) {
+      newExpanded.delete(category);
+    } else {
+      newExpanded.add(category);
+    }
+    setExpandedCategories(newExpanded);
+  };
+  
+  // Toggle achievement selection
+  const toggleAchievementSelection = (achievementId: string) => {
+    const newSelected = new Set(selectedAchievements);
+    if (newSelected.has(achievementId)) {
+      newSelected.delete(achievementId);
+    } else {
+      newSelected.add(achievementId);
+    }
+    setSelectedAchievements(newSelected);
+  };
+  
+  // Run tests for a specific category
+  const runCategoryTests = async (category: string) => {
+    if (!testService || isLoading) return;
     
-    return {
-      totalAchievements,
-      testedAchievements,
-      passedTests,
-      failedTests,
-      coveragePercentage
-    };
-  }, [allAchievements, results]);
+    setIsLoading(true);
+    try {
+      const response = await testService.runCategoryTests(category as AchievementCategory);
+      if (response.success && response.data) {
+        // Update results
+        const updatedResults = [...results.filter(r => r.category !== category), ...response.data];
+        onResultsChange(updatedResults);
+        
+        toast.success(`${category} tests completed`, {
+          description: `${response.data.filter(r => r.success).length} passed, ${response.data.filter(r => !r.success).length} failed`
+        });
+      }
+    } catch (error) {
+      toast.error('Failed to run tests', {
+        description: error instanceof Error ? error.message : 'Unknown error'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
-  // Get test coverage report
-  const coverageReport = useMemo(() => {
-    return testService?.getTestReport().summary.coverage;
-  }, [testService, results]);
-  
-  // Handler for running tests for a single achievement
+  // Run test for a single achievement
   const runSingleTest = async (achievementId: string) => {
-    if (!testService) return;
+    if (!testService || isLoading) return;
     
-    setLoading(true);
-    
+    setIsLoading(true);
     try {
       const result = await testService.testAchievement(achievementId);
-      
       // Update results
-      setResults(prev => {
-        const newResults = prev.filter(r => r.achievementId !== achievementId);
-        return [...newResults, result];
-      });
-      
-      if (addLogEntry) {
-        addLogEntry(
-          result.success ? 'Test Passed' : 'Test Failed',
-          `${result.name} (${result.category}, ${result.rank}) - ${result.success ? 'Success' : result.errorMessage}`
-        );
-      }
+      const updatedResults = [...results.filter(r => r.achievementId !== achievementId), result];
+      onResultsChange(updatedResults);
       
       toast(result.success ? 'Test passed' : 'Test failed', {
         description: result.name,
-        position: 'top-right',
-        duration: 3000,
-        icon: result.success ? <CheckCircle2 className="text-success" /> : <XCircle className="text-valor" />
+        icon: result.success ? <CheckCircle2 className="text-success" /> : undefined
       });
     } catch (error) {
-      console.error('Error running test:', error);
-      toast.error('Error running test', {
+      toast.error('Failed to run test', {
         description: error instanceof Error ? error.message : 'Unknown error'
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
   
-  // Handler for running tests for selected achievements
+  // Run selected tests
   const runSelectedTests = async () => {
-    if (!testService || selectedAchievements.length === 0) return;
+    if (!testService || isLoading || selectedAchievements.size === 0) return;
     
-    setLoading(true);
-    setResults(prev => prev.filter(r => !selectedAchievements.includes(r.achievementId)));
+    setIsLoading(true);
+    const newResults: AchievementTestResult[] = [];
+    let succeeded = 0;
+    let failed = 0;
     
     try {
-      const previousConfig = { ...testService.updateConfig };
-      testService.updateConfig({
-        includedAchievements: selectedAchievements
-      });
-      
-      const response = await testService.runAllTests();
-      
-      if (!response.success) {
-        toast.error('Test run failed', {
-          description: response.error?.message || 'Unknown error'
-        });
+      for (const achievementId of selectedAchievements) {
+        const result = await testService.testAchievement(achievementId);
+        newResults.push(result);
+        
+        if (result.success) {
+          succeeded++;
+        } else {
+          failed++;
+        }
       }
       
-      // Restore previous config
-      testService.updateConfig(previousConfig);
+      // Update results
+      const updatedResults = [
+        ...results.filter(r => !selectedAchievements.has(r.achievementId)), 
+        ...newResults
+      ];
+      onResultsChange(updatedResults);
       
-      toast.success('Selected tests completed', {
-        description: `Ran ${selectedAchievements.length} tests`
+      toast.success(`${selectedAchievements.size} tests completed`, {
+        description: `${succeeded} passed, ${failed} failed`
       });
-      
-      // Clear selection
-      setSelectedAchievements([]);
     } catch (error) {
-      console.error('Error running selected tests:', error);
-      toast.error('Error running tests', {
+      toast.error('Failed to run tests', {
         description: error instanceof Error ? error.message : 'Unknown error'
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
   
-  // Handler for running tests for a category
-  const runCategoryTests = async (category: AchievementCategory) => {
-    if (!testService) return;
-    
-    setLoading(true);
-    
-    try {
-      const response = await testService.runCategoryTests(category);
-      
-      if (!response.success) {
-        toast.error('Category test run failed', {
-          description: response.error?.message || 'Unknown error'
-        });
-      } else {
-        toast.success('Category tests completed', {
-          description: `Ran tests for ${category} category`
-        });
-      }
-    } catch (error) {
-      console.error('Error running category tests:', error);
-      toast.error('Error running tests', {
-        description: error instanceof Error ? error.message : 'Unknown error'
-      });
-    } finally {
-      setLoading(false);
-    }
+  // Handle filter changes
+  const handleFilterChange = (category: string, rank: string) => {
+    setSelectedCategory(category);
+    setSelectedRank(rank);
   };
   
-  // Handler for running tests for a rank
-  const runRankTests = async (rank: AchievementRank) => {
-    if (!testService) return;
-    
-    setLoading(true);
-    
-    try {
-      const response = await testService.runRankTests(rank);
-      
-      if (!response.success) {
-        toast.error('Rank test run failed', {
-          description: response.error?.message || 'Unknown error'
-        });
-      } else {
-        toast.success('Rank tests completed', {
-          description: `Ran tests for Rank ${rank}`
-        });
-      }
-    } catch (error) {
-      console.error('Error running rank tests:', error);
-      toast.error('Error running tests', {
-        description: error instanceof Error ? error.message : 'Unknown error'
-      });
-    } finally {
-      setLoading(false);
-    }
+  // Clear selection
+  const clearSelection = () => {
+    setSelectedAchievements(new Set());
   };
   
-  // Handler for running all tests
-  const runAllTests = async () => {
-    if (!testService) return;
-    
-    setLoading(true);
-    
-    try {
-      const response = await testService.runAllTests();
-      
-      if (!response.success) {
-        toast.error('Test run failed', {
-          description: response.error?.message || 'Unknown error'
-        });
-      } else {
-        toast.success('All tests completed', {
-          description: `Ran ${allAchievements.length} tests`
-        });
-      }
-    } catch (error) {
-      console.error('Error running tests:', error);
-      toast.error('Error running tests', {
-        description: error instanceof Error ? error.message : 'Unknown error'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleClearResults = () => {
-    setResults([]);
-    clearSavedResults();
-    toast.info('Test results cleared');
-  };
-  
-  // Handler for toggling achievement selection
-  const toggleAchievementSelection = (achievementId: string) => {
-    setSelectedAchievements(prev => {
-      if (prev.includes(achievementId)) {
-        return prev.filter(id => id !== achievementId);
-      } else {
-        return [...prev, achievementId];
-      }
+  // Select all visible achievements
+  const selectAllVisible = () => {
+    const newSelected = new Set(selectedAchievements);
+    filteredAchievements.forEach(achievement => {
+      newSelected.add(achievement.id);
     });
-  };
-  
-  // Handler for toggling category expansion
-  const toggleCategoryExpansion = (category: string) => {
-    setExpandedCategories(prev => {
-      if (prev.includes(category)) {
-        return prev.filter(c => c !== category);
-      } else {
-        return [...prev, category];
-      }
-    });
-  };
-  
-  // Handler for updating test configuration
-  const updateTestConfig = () => {
-    if (!testService) return;
-    
-    testService.updateConfig({
-      cleanup: useCleanup,
-      useTransaction,
-      verbose
-    });
-    
-    toast.info('Test configuration updated', {
-      description: `Cleanup: ${useCleanup ? 'Yes' : 'No'}, Transactions: ${useTransaction ? 'Yes' : 'No'}`
-    });
-  };
-  
-  // Handler for exporting test results
-  const exportResults = () => {
-    if (results.length === 0) {
-      toast.error('No results to export');
-      return;
-    }
-    
-    const testReport = testService?.getTestReport();
-    const dataToExport = {
-      results,
-      summary: testReport?.summary,
-      exportedAt: new Date().toISOString()
-    };
-    
-    const dataStr = JSON.stringify(dataToExport, null, 2);
-    const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
-    
-    const exportFileName = `achievement-test-results-${new Date().toISOString().slice(0, 10)}.json`;
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileName);
-    linkElement.click();
-    
-    toast.success('Results exported successfully');
-  };
-  
-  // Render dashboard tab
-  const renderDashboard = () => {
-    return (
-      <TestingDashboard
-        stats={stats}
-        results={results}
-        onRunAllTests={runAllTests}
-        onRunCategoryTests={runCategoryTests}
-        onClearResults={handleClearResults}
-        onExportResults={exportResults}
-        isLoading={loading}
-      />
-    );
-  };
-  
-  // Render test runner tab
-  const renderTestRunner = () => {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
-          <div className="flex items-center space-x-2">
-            <Input
-              placeholder="Search achievements..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-64 bg-midnight-elevated border-divider"
-            />
-            {searchQuery && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setSearchQuery('')}
-                className="h-8 w-8"
-              >
-                <FilterX className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Select value={filter} onValueChange={value => setFilter(value as FilterOption)}>
-              <SelectTrigger className="bg-midnight-elevated border-divider w-40">
-                <SelectValue placeholder="Filter" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Filter</SelectLabel>
-                  <SelectItem value="all">All Achievements</SelectItem>
-                  <SelectItem value="passed">Passed Tests</SelectItem>
-                  <SelectItem value="failed">Failed Tests</SelectItem>
-                  <SelectItem value="untested">Untested</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            
-            <Select value={sortBy} onValueChange={value => setSortBy(value as SortOption)}>
-              <SelectTrigger className="bg-midnight-elevated border-divider w-40">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Sort by</SelectLabel>
-                  <SelectItem value="category">Category</SelectItem>
-                  <SelectItem value="rank">Rank</SelectItem>
-                  <SelectItem value="success-rate">Success Rate</SelectItem>
-                  <SelectItem value="duration">Test Duration</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        
-        {/* Progress indicator */}
-        {progress.isRunning && (
-          <div className="space-y-2 mb-4">
-            <div className="flex justify-between text-sm">
-              <span>Progress: {progress.completed}/{progress.total}</span>
-              <span className="text-success">{progress.successful} passed</span>
-              {progress.failed > 0 && <span className="text-valor">{progress.failed} failed</span>}
-            </div>
-            <Progress 
-              value={progress.total ? (progress.completed / progress.total) * 100 : 0} 
-              className="h-2"
-            />
-            {progress.currentTest && (
-              <div className="text-xs text-text-secondary">
-                Testing: {progress.currentTest}
-              </div>
-            )}
-          </div>
-        )}
-        
-        {/* Selected achievements actions */}
-        {selectedAchievements.length > 0 && (
-          <div className="flex items-center justify-between bg-arcane-15 border border-arcane-30 rounded-md p-2 mb-4">
-            <div className="text-sm">
-              {selectedAchievements.length} achievements selected
-            </div>
-            <div className="flex space-x-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setSelectedAchievements([])}
-              >
-                Clear Selection
-              </Button>
-              <Button 
-                variant="arcane" 
-                size="sm"
-                onClick={runSelectedTests}
-                disabled={loading}
-              >
-                <Play className="mr-2 h-3 w-3" />
-                Run Selected
-              </Button>
-            </div>
-          </div>
-        )}
-        
-        {/* Achievements by category */}
-        <div className="space-y-4">
-          {Object.keys(achievementsByCategory).length === 0 ? (
-            <div className="text-center text-text-secondary py-8">
-              No achievements match the current filters.
-            </div>
-          ) : (
-            Object.entries(achievementsByCategory).map(([category, achievements]) => (
-              <Collapsible 
-                key={category} 
-                open={expandedCategories.includes(category)}
-                onOpenChange={() => toggleCategoryExpansion(category)}
-              >
-                <div className="flex items-center justify-between">
-                  <CollapsibleTrigger asChild>
-                    <Button variant="ghost" className="flex items-center justify-start w-full p-2">
-                      {expandedCategories.includes(category) ? 
-                        <ChevronDown className="mr-2 h-4 w-4" /> : 
-                        <ChevronRight className="mr-2 h-4 w-4" />}
-                      <span className="font-semibold">{category}</span>
-                      <Badge variant="outline" className="ml-2">
-                        {achievements.length}
-                      </Badge>
-                    </Button>
-                  </CollapsibleTrigger>
-                  
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => runCategoryTests(category as AchievementCategory)}
-                    disabled={loading}
-                  >
-                    Run Category
-                  </Button>
-                </div>
-                
-                <CollapsibleContent>
-                  <div className="mt-2 space-y-2 pl-6">
-                    {achievements.map(achievement => {
-                      const testResult = results.find(r => r.achievementId === achievement.id);
-                      const isSelected = selectedAchievements.includes(achievement.id);
-                      
-                      return (
-                        <div 
-                          key={achievement.id} 
-                          className={`
-                            flex items-center justify-between p-2 rounded-md
-                            ${isSelected ? 'bg-arcane-15 border border-arcane-30' : 'border border-divider/10 hover:border-divider/30'}
-                          `}
-                        >
-                          <div className="flex items-center flex-1">
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => toggleAchievementSelection(achievement.id)}
-                              className="mr-2"
-                            />
-                            
-                            <div className="flex-1">
-                              <div className="flex items-center">
-                                <span className="font-medium">{achievement.name}</span>
-                                <Badge variant="outline" className="ml-2 text-xs">
-                                  Rank {achievement.rank}
-                                </Badge>
-                                {testResult && (
-                                  <Badge 
-                                    variant={testResult.success ? "success" : "valor"} 
-                                    className="ml-2 text-xs"
-                                  >
-                                    {testResult.success ? 'Passed' : 'Failed'}
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-xs text-text-secondary">{achievement.description}</p>
-                              
-                              {testResult && !testResult.success && (
-                                <p className="text-xs text-valor mt-1">{testResult.errorMessage}</p>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center space-x-2">
-                            {testResult && (
-                              <Badge 
-                                variant="outline" 
-                                className="text-xs flex items-center"
-                              >
-                                <Clock className="mr-1 h-3 w-3" />
-                                {testResult.testDurationMs}ms
-                              </Badge>
-                            )}
-                            
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => runSingleTest(achievement.id)}
-                              disabled={loading}
-                            >
-                              <Play className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            ))
-          )}
-        </div>
-      </div>
-    );
-  };
-  
-  // Render results tab
-  const renderResults = () => {
-    return (
-      <TestResultViewer
-        results={results}
-        onClearResults={handleClearResults}
-        onExportResults={exportResults}
-        filter={filter}
-        onFilterChange={(value: FilterOption) => setFilter(value)}
-        lastSaved={lastUpdated}
-      />
-    );
-  };
-  
-  // Render configuration tab
-  const renderConfiguration = () => {
-    return (
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Test Configuration</CardTitle>
-            <CardDescription>
-              Configure how tests are executed and what happens after each test
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="cleanup" className="cursor-pointer">Cleanup After Tests</Label>
-                <Switch 
-                  id="cleanup" 
-                  checked={useCleanup}
-                  onCheckedChange={setUseCleanup}
-                  disabled={loading}
-                />
-              </div>
-              <p className="text-xs text-text-secondary">
-                When enabled, test data will be cleaned up after each test to prevent interference between tests
-              </p>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="transaction" className="cursor-pointer">Use Transactions</Label>
-                <Switch 
-                  id="transaction" 
-                  checked={useTransaction}
-                  onCheckedChange={setUseTransaction}
-                  disabled={loading}
-                />
-              </div>
-              <p className="text-xs text-text-secondary">
-                When enabled, each test will run in a database transaction for better isolation
-              </p>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="verbose" className="cursor-pointer">Verbose Logging</Label>
-                <Switch 
-                  id="verbose" 
-                  checked={verbose}
-                  onCheckedChange={setVerbose}
-                  disabled={loading}
-                />
-              </div>
-              <p className="text-xs text-text-secondary">
-                Enable detailed logging to console during test execution
-              </p>
-            </div>
-            
-            <Button 
-              variant="outline"
-              className="w-full mt-4"
-              onClick={updateTestConfig}
-              disabled={loading}
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              Update Configuration
-            </Button>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Data Management</CardTitle>
-            <CardDescription>
-              Manage test results and exported data
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-between">
-              <Button 
-                variant="outline"
-                onClick={handleClearResults}
-                disabled={results.length === 0}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Clear Saved Results
-              </Button>
-              
-              <Button 
-                variant="outline"
-                onClick={exportResults}
-                disabled={results.length === 0}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Export Results
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">User Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-text-secondary">User ID:</span>
-                <span className="font-mono">{userId || 'Not set'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-text-secondary">Test Service Status:</span>
-                <Badge variant={testService ? "success" : "valor"}>
-                  {testService ? 'Ready' : 'Not Initialized'}
-                </Badge>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-text-secondary">Saved Results:</span>
-                <span>{results.length}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    setSelectedAchievements(newSelected);
   };
   
   return (
-    <Card className="premium-card border-arcane-30 shadow-glow-subtle">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-orbitron flex items-center">
-          <Award className="mr-2 h-5 w-5 text-arcane" />
-          Achievement Testing
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full mb-4 bg-midnight-card border border-divider/30 shadow-subtle">
-            <TabsTrigger value="dashboard" className="flex items-center">
-              <ShieldCheck className="mr-2 h-4 w-4" />
-              Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="runner" className="flex items-center">
-              <Play className="mr-2 h-4 w-4" />
-              Test Runner
-            </TabsTrigger>
-            <TabsTrigger value="results" className="flex items-center">
-              <CheckCircle2 className="mr-2 h-4 w-4" />
-              Results
-            </TabsTrigger>
-            <TabsTrigger value="config" className="flex items-center">
-              <Settings className="mr-2 h-4 w-4" />
-              Configuration
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="dashboard" className="mt-0">
-            {renderDashboard()}
-          </TabsContent>
-          
-          <TabsContent value="runner" className="mt-0">
-            {renderTestRunner()}
-          </TabsContent>
-          
-          <TabsContent value="results" className="mt-0">
-            {renderResults()}
-          </TabsContent>
-          
-          <TabsContent value="config" className="mt-0">
-            {renderConfiguration()}
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <AchievementTestHeader
+        onRunTests={runSelectedTests}
+        onStopTests={() => {}}
+        onFilterChange={handleFilterChange}
+        onSearchChange={setSearchQuery}
+        selectedCategory={selectedCategory}
+        selectedRank={selectedRank}
+        searchQuery={searchQuery}
+        isRunning={progress.isRunning}
+        testCount={filteredAchievements.length}
+      />
+      
+      <TestProgressIndicator 
+        current={progress.completed}
+        total={progress.total}
+        successful={progress.successful}
+        failed={progress.failed}
+        isRunning={progress.isRunning}
+        currentTest={progress.currentTest}
+      />
+      
+      <div className="flex items-center justify-between mb-4">
+        <div className="space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={selectAllVisible}
+            disabled={filteredAchievements.length === 0 || isLoading}
+          >
+            Select All ({filteredAchievements.length})
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={clearSelection}
+            disabled={selectedAchievements.size === 0 || isLoading}
+          >
+            Clear Selection
+          </Button>
+        </div>
+        
+        <Button
+          variant="arcane"
+          size="sm"
+          onClick={runSelectedTests}
+          disabled={selectedAchievements.size === 0 || isLoading}
+        >
+          <Play className="mr-2 h-4 w-4" />
+          Run Selected ({selectedAchievements.size})
+        </Button>
+      </div>
+      
+      <ScrollArea className="h-[500px] rounded-md border border-divider/30 p-2">
+        {Object.keys(achievementsByCategory).length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-[400px] text-text-secondary">
+            <FilterX className="h-10 w-10 mb-2 opacity-40" />
+            <p>No achievements match your filters</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {Object.entries(achievementsByCategory).map(([category, achievements]) => (
+              <AchievementCategorySection
+                key={category}
+                category={category}
+                achievements={achievements}
+                isExpanded={expandedCategories.has(category)}
+                onToggleExpand={() => toggleCategoryExpansion(category)}
+                onRunCategoryTests={() => runCategoryTests(category)}
+                onRunSingleTest={runSingleTest}
+                onToggleSelect={toggleAchievementSelection}
+                selectedAchievements={Array.from(selectedAchievements)}
+                testResults={resultsMap}
+                isLoading={isLoading}
+              />
+            ))}
+          </div>
+        )}
+      </ScrollArea>
+    </div>
   );
-};
-
-export default AchievementTestRunner;
+}
