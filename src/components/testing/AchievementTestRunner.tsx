@@ -1,22 +1,15 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Award, CheckCircle2, Play, RotateCcw, Filter, Search, FilterX } from 'lucide-react';
-import { Achievement, AchievementCategory, AchievementRank } from '@/types/achievementTypes';
-import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
-import { 
-  AchievementTestingService, 
-  AchievementTestResult,
-  AchievementTestProgress
-} from '@/services/testing/AchievementTestingService';
+import { Card } from '@/components/ui/card';
+import { FilterX } from 'lucide-react';
+import { AchievementTestResult } from '@/services/testing/AchievementTestingService';
 import { toast } from 'sonner';
 import TestProgressIndicator from './TestProgressIndicator';
 import AchievementCategorySection from './AchievementCategorySection';
 import AchievementTestHeader from './AchievementTestHeader';
-import { Input } from '@/components/ui/input';
+import TestControlPanel from './test-runner/TestControlPanel';
+import { useAchievementTestState } from './test-runner/useAchievementTestState';
 
 interface AchievementTestRunnerProps {
   userId: string;
@@ -33,22 +26,33 @@ export function AchievementTestRunner({
   isLoading,
   setIsLoading
 }: AchievementTestRunnerProps) {
-  const [testService, setTestService] = useState<AchievementTestingService | null>(null);
-  const [allAchievements, setAllAchievements] = useState<Achievement[]>([]);
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
-  const [selectedAchievements, setSelectedAchievements] = useState<Set<string>>(new Set());
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedRank, setSelectedRank] = useState('all');
-  const [progress, setProgress] = useState<AchievementTestProgress>({
+  const {
+    testService,
+    achievementsByCategory,
+    expandedCategories,
+    selectedAchievements,
+    searchQuery,
+    selectedCategory,
+    selectedRank,
+    filteredAchievements,
+    setSearchQuery,
+    setSelectedCategory,
+    setSelectedRank,
+    toggleCategoryExpansion,
+    toggleAchievementSelection,
+    selectAllVisible,
+    clearSelection,
+  } = useAchievementTestState(userId);
+
+  const [progress, setProgress] = useState({
     total: 0,
     completed: 0, 
     successful: 0,
     failed: 0,
     isRunning: false,
-    currentTest: undefined
+    currentTest: undefined as string | undefined
   });
-  
+
   // Convert results to a map for easier lookup
   const resultsMap = results.reduce((acc, result) => {
     acc[result.achievementId] = {
@@ -59,78 +63,14 @@ export function AchievementTestRunner({
     return acc;
   }, {} as Record<string, {success: boolean, errorMessage?: string, testDurationMs: number}>);
   
-  // Initialize test service
-  useEffect(() => {
-    if (userId) {
-      const service = new AchievementTestingService(userId);
-      service.onProgress(setProgress);
-      setTestService(service);
-      
-      // Fetch all achievements
-      const achievements = AchievementUtils.getAllAchievements()
-        .map(def => AchievementUtils.convertToAchievement(def));
-      setAllAchievements(achievements);
-      
-      // Expand first category by default
-      if (achievements.length > 0) {
-        const firstCategory = achievements[0].category;
-        setExpandedCategories(new Set([firstCategory]));
-      }
-    }
-  }, [userId]);
-  
-  // Filter achievements
-  const filteredAchievements = allAchievements.filter(achievement => {
-    const matchesSearch = searchQuery === '' || 
-      achievement.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      achievement.description.toLowerCase().includes(searchQuery.toLowerCase());
-      
-    const matchesCategory = selectedCategory === 'all' || achievement.category === selectedCategory;
-    const matchesRank = selectedRank === 'all' || achievement.rank === selectedRank;
-    
-    return matchesSearch && matchesCategory && matchesRank;
-  });
-  
-  // Group achievements by category
-  const achievementsByCategory: Record<string, Achievement[]> = {};
-  filteredAchievements.forEach(achievement => {
-    if (!achievementsByCategory[achievement.category]) {
-      achievementsByCategory[achievement.category] = [];
-    }
-    achievementsByCategory[achievement.category].push(achievement);
-  });
-  
-  // Toggle category expansion
-  const toggleCategoryExpansion = (category: string) => {
-    const newExpanded = new Set(expandedCategories);
-    if (newExpanded.has(category)) {
-      newExpanded.delete(category);
-    } else {
-      newExpanded.add(category);
-    }
-    setExpandedCategories(newExpanded);
-  };
-  
-  // Toggle achievement selection
-  const toggleAchievementSelection = (achievementId: string) => {
-    const newSelected = new Set(selectedAchievements);
-    if (newSelected.has(achievementId)) {
-      newSelected.delete(achievementId);
-    } else {
-      newSelected.add(achievementId);
-    }
-    setSelectedAchievements(newSelected);
-  };
-  
   // Run tests for a specific category
   const runCategoryTests = async (category: string) => {
     if (!testService || isLoading) return;
     
     setIsLoading(true);
     try {
-      const response = await testService.runCategoryTests(category as AchievementCategory);
+      const response = await testService.runCategoryTests(category as any);
       if (response.success && response.data) {
-        // Update results
         const updatedResults = [...results.filter(r => r.category !== category), ...response.data];
         onResultsChange(updatedResults);
         
@@ -154,13 +94,11 @@ export function AchievementTestRunner({
     setIsLoading(true);
     try {
       const result = await testService.testAchievement(achievementId);
-      // Update results
       const updatedResults = [...results.filter(r => r.achievementId !== achievementId), result];
       onResultsChange(updatedResults);
       
       toast(result.success ? 'Test passed' : 'Test failed', {
-        description: result.name,
-        icon: result.success ? <CheckCircle2 className="text-success" /> : undefined
+        description: result.name
       });
     } catch (error) {
       toast.error('Failed to run test', {
@@ -192,7 +130,6 @@ export function AchievementTestRunner({
         }
       }
       
-      // Update results
       const updatedResults = [
         ...results.filter(r => !selectedAchievements.has(r.achievementId)), 
         ...newResults
@@ -211,32 +148,15 @@ export function AchievementTestRunner({
     }
   };
   
-  // Handle filter changes
-  const handleFilterChange = (category: string, rank: string) => {
-    setSelectedCategory(category);
-    setSelectedRank(rank);
-  };
-  
-  // Clear selection
-  const clearSelection = () => {
-    setSelectedAchievements(new Set());
-  };
-  
-  // Select all visible achievements
-  const selectAllVisible = () => {
-    const newSelected = new Set(selectedAchievements);
-    filteredAchievements.forEach(achievement => {
-      newSelected.add(achievement.id);
-    });
-    setSelectedAchievements(newSelected);
-  };
-  
   return (
     <div className="space-y-4">
       <AchievementTestHeader
         onRunTests={runSelectedTests}
         onStopTests={() => {}}
-        onFilterChange={handleFilterChange}
+        onFilterChange={(category, rank) => {
+          setSelectedCategory(category);
+          setSelectedRank(rank);
+        }}
         onSearchChange={setSearchQuery}
         selectedCategory={selectedCategory}
         selectedRank={selectedRank}
@@ -254,36 +174,14 @@ export function AchievementTestRunner({
         currentTest={progress.currentTest}
       />
       
-      <div className="flex items-center justify-between mb-4">
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={selectAllVisible}
-            disabled={filteredAchievements.length === 0 || isLoading}
-          >
-            Select All ({filteredAchievements.length})
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={clearSelection}
-            disabled={selectedAchievements.size === 0 || isLoading}
-          >
-            Clear Selection
-          </Button>
-        </div>
-        
-        <Button
-          variant="arcane"
-          size="sm"
-          onClick={runSelectedTests}
-          disabled={selectedAchievements.size === 0 || isLoading}
-        >
-          <Play className="mr-2 h-4 w-4" />
-          Run Selected ({selectedAchievements.size})
-        </Button>
-      </div>
+      <TestControlPanel
+        selectedCount={selectedAchievements.size}
+        onRunSelected={runSelectedTests}
+        onSelectAll={selectAllVisible}
+        onClearSelection={clearSelection}
+        filteredCount={filteredAchievements.length}
+        isLoading={isLoading}
+      />
       
       <ScrollArea className="h-[500px] rounded-md border border-divider/30 p-2">
         {Object.keys(achievementsByCategory).length === 0 ? (
@@ -314,4 +212,3 @@ export function AchievementTestRunner({
     </div>
   );
 }
-
