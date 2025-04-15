@@ -48,6 +48,18 @@ export class WorkoutCheckerService extends BaseAchievementChecker {
               }
             });
             
+            // Update workout count progress
+            // Just pass the current count and an appropriate target
+            if (profile.workouts_count > 0) {
+              await AchievementService.updateAchievementProgress(
+                userId,
+                'workout-count-achievement',
+                profile.workouts_count,
+                Math.max(profile.workouts_count + 5, 10), // Target is at least 10 or current+5
+                false
+              );
+            }
+            
             // Award achievements
             if (awardedAchievements.length > 0) {
               await AchievementService.checkAndAwardAchievements(userId, awardedAchievements);

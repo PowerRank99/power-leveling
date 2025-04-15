@@ -48,6 +48,18 @@ export class StreakCheckerService extends BaseAchievementChecker {
               }
             });
             
+            // Update streak achievement progress
+            // Just pass the current streak and let the service handle the rest
+            if (profile.streak > 0) {
+              await AchievementService.updateAchievementProgress(
+                userId,
+                'streak-achievement',
+                profile.streak,
+                profile.streak + 5, // Target is slightly higher to show progress
+                false
+              );
+            }
+            
             // Award achievements
             if (awardedAchievements.length > 0) {
               await AchievementService.checkAndAwardAchievements(userId, awardedAchievements);
