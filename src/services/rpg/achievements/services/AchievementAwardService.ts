@@ -1,4 +1,3 @@
-
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { supabase } from '@/integrations/supabase/client';
 import { Achievement } from '@/types/achievementTypes';
@@ -16,7 +15,7 @@ export class AchievementAwardService {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
         // Check if achievement exists
-        const achievement = await AchievementUtils.getAchievementByStringId(achievementId);
+        const achievement = await AchievementUtils.getAchievementById(achievementId);
         if (!achievement) {
           throw new Error(`Achievement not found: ${achievementId}`);
         }

@@ -195,7 +195,7 @@ export class AchievementTestingService {
     let errorMessage = '';
 
     try {
-      const achievement = await AchievementUtils.getAchievementByStringId(achievementId);
+      const achievement = await AchievementUtils.getAchievementById(achievementId);
       if (!achievement) {
         throw new Error(`Achievement with ID ${achievementId} not found`);
       }
@@ -207,9 +207,9 @@ export class AchievementTestingService {
 
       const result: AchievementTestResult = {
         achievementId,
-        name: (await AchievementUtils.getAchievementByStringId(achievementId))?.name || achievementId,
-        category: (await AchievementUtils.getAchievementByStringId(achievementId))?.category as AchievementCategory || AchievementCategory.WORKOUT,
-        rank: (await AchievementUtils.getAchievementByStringId(achievementId))?.rank as AchievementRank || AchievementRank.E,
+        name: (await AchievementUtils.getAchievementById(achievementId))?.name || achievementId,
+        category: (await AchievementUtils.getAchievementById(achievementId))?.category as AchievementCategory || AchievementCategory.WORKOUT,
+        rank: (await AchievementUtils.getAchievementById(achievementId))?.rank as AchievementRank || AchievementRank.E,
         success: false,
         testDurationMs: 0,
         testedAt: new Date(),
@@ -270,9 +270,9 @@ export class AchievementTestingService {
 
       return {
         achievementId,
-        name: (await AchievementUtils.getAchievementByStringId(achievementId))?.name || achievementId,
-        category: (await AchievementUtils.getAchievementByStringId(achievementId))?.category as AchievementCategory || AchievementCategory.WORKOUT,
-        rank: (await AchievementUtils.getAchievementByStringId(achievementId))?.rank as AchievementRank || AchievementRank.E,
+        name: (await AchievementUtils.getAchievementById(achievementId))?.name || achievementId,
+        category: (await AchievementUtils.getAchievementById(achievementId))?.category as AchievementCategory || AchievementCategory.WORKOUT,
+        rank: (await AchievementUtils.getAchievementById(achievementId))?.rank as AchievementRank || AchievementRank.E,
         success: false,
         errorMessage: errorMsg,
         testDurationMs: Date.now() - startTime,
@@ -342,33 +342,39 @@ export class AchievementTestingService {
   }
 
   private getAchievementsToTest(): { id: string; name: string }[] {
-    const allAchievements = AchievementUtils.getAllAchievementsSync();
+    const allAchievements = AchievementUtils.getAllAchievements();
     
     return allAchievements
-      .filter(a => {
-        if (this.config.categories && this.config.categories.length > 0) {
-          if (!this.config.categories.includes(a.category as AchievementCategory)) {
-            return false;
+      .then(achievements => achievements
+        .filter(a => {
+          if (this.config.categories && this.config.categories.length > 0) {
+            if (!this.config.categories.includes(a.category as AchievementCategory)) {
+              return false;
+            }
           }
-        }
-        
-        if (this.config.ranks && this.config.ranks.length > 0) {
-          if (!this.config.ranks.includes(a.rank as AchievementRank)) {
-            return false;
+          
+          if (this.config.ranks && this.config.ranks.length > 0) {
+            if (!this.config.ranks.includes(a.rank as AchievementRank)) {
+              return false;
+            }
           }
-        }
-        
-        if (this.config.includedAchievements && this.config.includedAchievements.length > 0) {
-          return this.config.includedAchievements.includes(a.id);
-        }
-        
-        if (this.config.excludedAchievements && this.config.excludedAchievements.length > 0) {
-          return !this.config.excludedAchievements.includes(a.id);
-        }
-        
-        return true;
-      })
-      .map(a => ({ id: a.id, name: a.name }));
+          
+          if (this.config.includedAchievements && this.config.includedAchievements.length > 0) {
+            return this.config.includedAchievements.includes(a.id);
+          }
+          
+          if (this.config.excludedAchievements && this.config.excludedAchievements.length > 0) {
+            return !this.config.excludedAchievements.includes(a.id);
+          }
+          
+          return true;
+        })
+        .map(a => ({ id: a.id, name: a.name }))
+      )
+      .catch(error => {
+        console.error('Error getting achievements to test:', error);
+        return [];
+      });
   }
 
   private async cleanupExistingAchievement(achievementId: string): Promise<void> {
@@ -400,7 +406,7 @@ export class AchievementTestingService {
       throw new Error('Test user ID not set');
     }
 
-    const achievement = await AchievementUtils.getAchievementByStringId(achievementId);
+    const achievement = await AchievementUtils.getAchievementById(achievementId);
     if (!achievement) {
       throw new Error(`Achievement with ID ${achievementId} not found`);
     }

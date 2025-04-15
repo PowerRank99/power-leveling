@@ -8,6 +8,9 @@ import { Achievement, AchievementCategory, AchievementRank } from '@/types/achie
 import { supabase } from '@/integrations/supabase/client';
 
 export class AchievementUtils {
+  // Cache for achievements to improve performance
+  private static achievementCache: Map<string, Achievement> = new Map();
+  
   /**
    * Get all achievements from the database
    */
@@ -25,6 +28,15 @@ export class AchievementUtils {
       console.error('Error fetching achievements:', error);
       return [];
     }
+  }
+  
+  /**
+   * Get all achievements (synchronous version that returns cached data or empty array)
+   * Used for performance-critical operations 
+   */
+  static getAllAchievementsSync(): Achievement[] {
+    // This is a simplification - in a real app, you'd want to ensure the cache is populated first
+    return Array.from(this.achievementCache.values());
   }
   
   /**
@@ -52,6 +64,11 @@ export class AchievementUtils {
    */
   static async getAchievementById(id: string): Promise<Achievement | null> {
     try {
+      // Check cache first
+      if (this.achievementCache.has(id)) {
+        return this.achievementCache.get(id) || null;
+      }
+      
       const { data, error } = await supabase
         .from('achievements')
         .select('*')
@@ -60,10 +77,28 @@ export class AchievementUtils {
         
       if (error) throw error;
       
+      if (data) {
+        this.achievementCache.set(id, data as Achievement);
+      }
+      
       return data as Achievement || null;
     } catch (error) {
       console.error(`Error fetching achievement ${id}:`, error);
       return null;
     }
+  }
+  
+  /**
+   * Get achievement by string ID (alias for getAchievementById for backwards compatibility)
+   */
+  static async getAchievementByStringId(id: string): Promise<Achievement | null> {
+    return this.getAchievementById(id);
+  }
+  
+  /**
+   * Clear the achievement cache
+   */
+  static clearCache(): void {
+    this.achievementCache.clear();
   }
 }

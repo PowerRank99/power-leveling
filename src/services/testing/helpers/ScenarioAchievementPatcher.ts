@@ -45,4 +45,11 @@ export class ScenarioAchievementPatcher {
       }
     };
   }
+
+  /**
+   * Patches an array of TestScenario instances
+   */
+  static patchScenarios(scenarios: TestScenario[]): void {
+    scenarios.forEach(scenario => this.patchScenario(scenario));
+  }
 }

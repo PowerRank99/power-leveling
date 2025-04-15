@@ -1,3 +1,4 @@
+
 /**
  * This file's sole purpose is to import all scenario files
  * to ensure they're loaded and registered with the scenario runner.
@@ -21,7 +22,8 @@ import './CompletionistScenario';
 // Ensure all scenario instances are properly patched with the achievement adapter utilities
 (function initializeScenarioPatches() {
   const allScenarios = scenarioRunner.getScenarios();
-  // Cast to any to bypass the type check since we know it will work with our patch
-  ScenarioAchievementPatcher.patchScenarios(allScenarios as any);
+  allScenarios.forEach(scenario => {
+    ScenarioAchievementPatcher.patchScenario(scenario);
+  });
   console.log(`Initialized and patched ${allScenarios.length} test scenarios`);
 })();
