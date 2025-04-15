@@ -1,6 +1,7 @@
+
 import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 import { Achievement, AchievementProgress } from '@/types/achievementTypes';
-import { AchievementIdentifierService } from './AchievementIdentifierService';
+import { AchievementIdentifierUtils } from './utils/AchievementIdentifierUtils';
 import { AchievementFetchService } from './services/AchievementFetchService';
 import { AchievementAwardService } from './services/AchievementAwardService';
 import { AchievementProgressService } from './AchievementProgressService';
@@ -89,9 +90,9 @@ export class UnifiedAchievementService {
       return createSuccessResponse(idOrStringId);
     }
 
-    // If not a UUID, try to get UUID from string ID
-    const result = await AchievementIdentifierService.getIdByStringId(idOrStringId);
-    if (!result.success) {
+    // If not a UUID, try to get UUID from string ID using our new utils
+    const uuid = await AchievementIdentifierUtils.safeGetId(idOrStringId);
+    if (!uuid) {
       return createErrorResponse(
         'Achievement not found',
         `No achievement found with string ID: ${idOrStringId}`,
@@ -99,6 +100,6 @@ export class UnifiedAchievementService {
       );
     }
 
-    return createSuccessResponse(result.data);
+    return createSuccessResponse(uuid);
   }
 }

@@ -33,8 +33,9 @@ export enum AchievementErrorCategory {
 }
 
 /**
- * Achievement string IDs mapped by rank and category
- * This is a temporary solution until all string IDs are migrated to the database
+ * @deprecated This mapping should not be used directly. 
+ * Use AchievementIdentifierUtils or AchievementIdentifierService instead.
+ * These string IDs are being migrated to the database as the source of truth.
  */
 export const ACHIEVEMENT_IDS = {
   E: {
