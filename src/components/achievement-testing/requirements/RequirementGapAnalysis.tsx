@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,7 +30,7 @@ const RequirementGapAnalysis: React.FC<RequirementGapAnalysisProps> = ({
   
   // In a real implementation, we'd get actual values from the database
   // For this example, we'll simulate it with mock values
-  const currentProgress = achievement.requirements.currentValue || 2;
+  const currentProgress = (achievement.requirements as any).currentValue || 2;
   const targetValue = achievement.requirements.value || 5;
   
   const handleGenerateRequirementData = async () => {

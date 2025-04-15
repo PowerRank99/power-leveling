@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useTestingDashboard } from '@/contexts/TestingDashboardContext';
 import { 
   Clock, PauseCircle, PlayCircle, ListRestart, Dices, AlertTriangle, 
-  Check, Repeat, CheckSquare, X, Filter, RotateCcw, Loader2
+  Check, Repeat, CheckSquare, X, Filter, RotateCcw, Loader2, Trash2
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';

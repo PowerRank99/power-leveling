@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { 
   Database, RefreshCcw, FileSearch, AlertTriangle, Trash2,
-  FileText, Wrench, Download, Filter, Check, X
+  FileText, Wrench, Download, Filter, Check, X, TrendingUp, Zap
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useTestingDashboard } from '@/contexts/TestingDashboardContext';
@@ -21,7 +20,6 @@ interface DataInspectorProps {
   userId: string;
 }
 
-// Define table types for inspection
 type InspectableTable = 
   | 'achievement_progress' 
   | 'user_achievements' 
@@ -48,7 +46,6 @@ const DataInspector: React.FC<DataInspectorProps> = ({ userId }) => {
   const [filterValue, setFilterValue] = useState('');
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   
-  // Define inspectable tables with metadata
   const tableDefinitions: TableMetadata[] = [
     {
       name: 'achievement_progress',
@@ -101,7 +98,6 @@ const DataInspector: React.FC<DataInspectorProps> = ({ userId }) => {
     }
   ];
   
-  // Function to fetch table data
   const fetchTableData = async () => {
     if (!userId) return;
     
@@ -114,12 +110,9 @@ const DataInspector: React.FC<DataInspectorProps> = ({ userId }) => {
         .from(selectedTable)
         .select('*');
       
-      // For tables with direct user_id column, filter by user
       if (selectedTableDef.userIdColumn === 'user_id') {
         query = query.eq('user_id', userId);
-      } 
-      // For workout_sets, we need a join to filter by user
-      else if (selectedTable === 'workout_sets') {
+      } else if (selectedTable === 'workout_sets') {
         const { data: workoutIds } = await supabase
           .from('workouts')
           .select('id')
@@ -164,7 +157,6 @@ const DataInspector: React.FC<DataInspectorProps> = ({ userId }) => {
     }
   };
   
-  // Function to clean data for selected table
   const cleanTableData = async () => {
     if (!userId || !selectedTable) return;
     
@@ -175,15 +167,12 @@ const DataInspector: React.FC<DataInspectorProps> = ({ userId }) => {
       
       let result;
       
-      // For tables with direct user_id
       if (selectedTableDef.userIdColumn === 'user_id') {
         result = await supabase
           .from(selectedTable)
           .delete()
           .eq('user_id', userId);
-      } 
-      // For workout_sets, we need a join to delete by user's workouts
-      else if (selectedTable === 'workout_sets') {
+      } else if (selectedTable === 'workout_sets') {
         const { data: workoutIds } = await supabase
           .from('workouts')
           .select('id')
@@ -210,7 +199,6 @@ const DataInspector: React.FC<DataInspectorProps> = ({ userId }) => {
       
       logAction('Data Cleaning', `Cleaned data in ${selectedTable}`);
       
-      // Refresh data
       fetchTableData();
     } catch (error) {
       toast.error(`Error cleaning data`, {
@@ -221,7 +209,6 @@ const DataInspector: React.FC<DataInspectorProps> = ({ userId }) => {
     }
   };
   
-  // Function to export data
   const exportTableData = () => {
     if (tableData.length === 0) {
       toast.error('No data to export');
@@ -248,27 +235,22 @@ const DataInspector: React.FC<DataInspectorProps> = ({ userId }) => {
     }
   };
   
-  // Filter data based on search input
   const filteredData = tableData.filter(row => {
     if (!filterValue) return true;
     
-    // Check if any column contains the filter value
     return Object.values(row).some(value => {
       if (value === null || value === undefined) return false;
       return String(value).toLowerCase().includes(filterValue.toLowerCase());
     });
   });
   
-  // Handle repair data
   const repairData = async () => {
     setIsLoading(true);
     try {
-      // This would connect to repair utilities in a real implementation
       toast.success('Data repair initiated', {
         description: 'Correcting inconsistencies in user achievement data'
       });
       
-      // For demonstration purposes, add a delay
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       toast.success('Data repair completed', {
@@ -277,7 +259,6 @@ const DataInspector: React.FC<DataInspectorProps> = ({ userId }) => {
       
       logAction('Data Repair', `Repaired inconsistencies in ${selectedTable}`);
       
-      // Refresh data
       fetchTableData();
     } catch (error) {
       toast.error('Error repairing data', {
@@ -362,22 +343,22 @@ const DataInspector: React.FC<DataInspectorProps> = ({ userId }) => {
           </div>
         </div>
         
-        {isDataLoaded && (
-          <div className="flex items-center">
-            <div className="flex-1">
+        <div className="flex items-center">
+          <div className="flex-1">
+            <div className="relative max-w-xs">
+              <Filter className="absolute left-2 top-2.5 h-4 w-4 text-text-tertiary" />
               <Input
                 placeholder="Filter data..."
                 value={filterValue}
                 onChange={(e) => setFilterValue(e.target.value)}
-                className="max-w-xs"
-                prefixIcon={<Filter className="h-4 w-4 text-text-tertiary" />}
+                className="max-w-xs pl-8"
               />
             </div>
-            <div className="text-sm text-text-secondary">
-              {filteredData.length} {filteredData.length === 1 ? 'row' : 'rows'}
-            </div>
           </div>
-        )}
+          <div className="text-sm text-text-secondary">
+            {filteredData.length} {filteredData.length === 1 ? 'row' : 'rows'}
+          </div>
+        </div>
         
         {isLoading ? (
           <div className="space-y-2">
