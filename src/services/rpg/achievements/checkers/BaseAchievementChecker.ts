@@ -1,8 +1,7 @@
 
 import { ServiceResponse, ErrorHandlingService, createSuccessResponse } from '@/services/common/ErrorHandlingService';
-import { AchievementService } from '@/services/rpg/AchievementService';
-import { AchievementCategory, AchievementRank } from '@/types/achievementTypes';
 import { supabase } from '@/integrations/supabase/client';
+import { AchievementService } from '@/services/rpg/AchievementService';
 
 /**
  * Base abstract class for all specialized achievement checkers
@@ -15,7 +14,7 @@ export abstract class BaseAchievementChecker {
   abstract checkAchievements(userId: string, data?: any): Promise<ServiceResponse<string[]>>;
   
   /**
-   * Helper method to fetch achievements by category
+   * Helper method to fetch achievements by category with optional sorting and filters
    */
   protected async fetchAchievementsByCategory(
     category: string,
@@ -45,13 +44,12 @@ export abstract class BaseAchievementChecker {
    */
   protected async executeWithErrorHandling(
     operation: () => Promise<string[]>,
-    operationName: string,
-    options?: { showToast: boolean }
+    operationName: string
   ): Promise<ServiceResponse<string[]>> {
     return ErrorHandlingService.executeWithErrorHandling(
       operation,
       `CHECK_${operationName.toUpperCase()}`,
-      options
+      { showToast: false }
     );
   }
   

@@ -21,7 +21,7 @@ export class StreakCheckerService extends BaseAchievementChecker {
         if (profileError) throw profileError;
         if (!profile) throw new Error('Profile not found');
 
-        // Get streak achievements from database
+        // Get streak achievements from database ordered by required days
         const { data: streakAchievements, error: achievementsError } = await this.fetchAchievementsByCategory(
           'streak',
           'requirements->days'
@@ -48,14 +48,13 @@ export class StreakCheckerService extends BaseAchievementChecker {
                 userId,
                 'streak',
                 profile.streak,
-                Math.max(profile.streak + 5, 7),
-                false
+                Math.max(profile.streak + 5, 7)
               );
             }
             
             // Award achievements
             if (awardedAchievements.length > 0) {
-              await AchievementService.checkAndAwardAchievements(userId, awardedAchievements);
+              await this.awardAchievementsBatch(userId, awardedAchievements);
             }
           }, 
           'streak_achievements', 
@@ -65,8 +64,7 @@ export class StreakCheckerService extends BaseAchievementChecker {
         
         return awardedAchievements;
       },
-      'CHECK_STREAK_ACHIEVEMENTS',
-      { showToast: false }
+      'CHECK_STREAK_ACHIEVEMENTS'
     );
   }
 

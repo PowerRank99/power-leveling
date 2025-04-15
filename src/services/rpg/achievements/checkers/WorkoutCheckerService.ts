@@ -21,7 +21,7 @@ export class WorkoutCheckerService extends BaseAchievementChecker {
         if (profileError) throw profileError;
         if (!profile) throw new Error('Profile not found');
         
-        // Get workout achievements from database
+        // Get workout achievements from database ordered by required count
         const { data: workoutAchievements, error: achievementsError } = await this.fetchAchievementsByCategory(
           'workout',
           'requirements->count'
@@ -48,14 +48,13 @@ export class WorkoutCheckerService extends BaseAchievementChecker {
                 userId,
                 'workout',
                 profile.workouts_count,
-                Math.max(profile.workouts_count + 5, 10),
-                false
+                Math.max(profile.workouts_count + 5, 10)
               );
             }
             
             // Award achievements
             if (awardedAchievements.length > 0) {
-              await AchievementService.checkAndAwardAchievements(userId, awardedAchievements);
+              await this.awardAchievementsBatch(userId, awardedAchievements);
             }
           }, 
           'workout_achievements', 
@@ -65,8 +64,7 @@ export class WorkoutCheckerService extends BaseAchievementChecker {
         
         return awardedAchievements;
       },
-      'CHECK_WORKOUT_ACHIEVEMENTS',
-      { showToast: false }
+      'CHECK_WORKOUT_ACHIEVEMENTS'
     );
   }
 
