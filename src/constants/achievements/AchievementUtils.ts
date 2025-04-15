@@ -1,8 +1,7 @@
 
 /**
  * AchievementUtils
- * 
- * Static utility methods for achievement operations using the database as the source of truth
+ * Primary interface for achievement operations using the database as source of truth
  */
 import { Achievement, AchievementCategory, AchievementRank } from '@/types/achievementTypes';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,7 +9,6 @@ import { supabase } from '@/integrations/supabase/client';
 export class AchievementUtils {
   // Cache for achievements to improve performance
   private static achievementCache: Map<string, Achievement> = new Map();
-  // Cache for all achievements
   private static allAchievementsCache: Achievement[] | null = null;
   
   /**
@@ -30,12 +28,10 @@ export class AchievementUtils {
         
       if (error) throw error;
       
-      const achievements = data.map(achievement => this.mapDbAchievementToModel(achievement)) || [];
+      const achievements = data.map(achievement => this.mapDbAchievementToModel(achievement));
       
-      // Cache the results for future use
+      // Cache the results
       this.allAchievementsCache = achievements;
-      
-      // Also cache individual achievements by ID
       achievements.forEach(achievement => {
         this.achievementCache.set(achievement.id, achievement);
       });
@@ -48,39 +44,15 @@ export class AchievementUtils {
   }
   
   /**
-   * Get all achievements (synchronous version that returns cached data or empty array)
+   * Get all achievements (synchronous version that returns cached data)
    * Used for performance-critical operations 
    */
   static getAllAchievementsSync(): Achievement[] {
-    // Return cached achievements if available
     if (this.allAchievementsCache !== null) {
       return this.allAchievementsCache;
     }
-    
-    // If cache is not populated, return empty array
-    // This should be rare since we usually pre-populate the cache
-    console.warn('Achievement cache not populated, returning empty array. Call getAllAchievements() first.');
+    console.warn('Achievement cache not populated. Call getAllAchievements() first.');
     return [];
-  }
-  
-  /**
-   * Get achievements by category
-   */
-  static async getAchievementsByCategory(category: AchievementCategory | string): Promise<Achievement[]> {
-    try {
-      const { data, error } = await supabase
-        .from('achievements')
-        .select('*')
-        .eq('category', category)
-        .order('rank', { ascending: false });
-        
-      if (error) throw error;
-      
-      return data.map(achievement => this.mapDbAchievementToModel(achievement)) || [];
-    } catch (error) {
-      console.error(`Error fetching ${category} achievements:`, error);
-      return [];
-    }
   }
   
   /**
@@ -115,11 +87,11 @@ export class AchievementUtils {
   }
   
   /**
-   * Get achievement by string ID (alias for backward compatibility)
+   * Get achievement by string ID (for backward compatibility)
    */
   static async getAchievementByStringId(stringId: string): Promise<Achievement | null> {
     try {
-      // Check cache first - we'd need to iterate since we're using UUID as the key
+      // Check cache first
       const cachedAchievement = Array.from(this.achievementCache.values()).find(
         achievement => achievement.stringId === stringId
       );

@@ -191,8 +191,6 @@ export class AchievementTestingService {
     }
 
     const startTime = Date.now();
-    let success = false;
-    let errorMessage = '';
 
     try {
       const achievement = await AchievementUtils.getAchievementById(achievementId);
@@ -200,64 +198,55 @@ export class AchievementTestingService {
         throw new Error(`Achievement with ID ${achievementId} not found`);
       }
 
-      const databaseId = await AchievementIdMappingService.getUuidAsync(achievementId);
-      if (!databaseId) {
-        throw new Error(`No database mapping found for achievement ID ${achievementId}`);
-      }
-
       const result: AchievementTestResult = {
         achievementId,
-        name: (await AchievementUtils.getAchievementById(achievementId))?.name || achievementId,
-        category: (await AchievementUtils.getAchievementById(achievementId))?.category as AchievementCategory || AchievementCategory.WORKOUT,
-        rank: (await AchievementUtils.getAchievementById(achievementId))?.rank as AchievementRank || AchievementRank.E,
+        name: achievement.name,
+        category: achievement.category,
+        rank: achievement.rank,
         success: false,
         testDurationMs: 0,
         testedAt: new Date(),
       };
 
-      await this.cleanupExistingAchievement(databaseId);
+      await this.cleanupExistingAchievement(achievementId);
 
       if (this.config.useTransaction) {
         await TransactionService.executeWithRetry(
           async () => {
-            await this.executeAchievementTest(databaseId);
+            await this.executeAchievementTest(achievementId);
           },
-          `test_achievement_${databaseId}`,
+          `test_achievement_${achievementId}`,
           this.config.maxRetries,
           `Failed to test achievement ${achievementId}`
         );
       } else {
-        await this.executeAchievementTest(databaseId);
+        await this.executeAchievementTest(achievementId);
       }
 
       const { data: userAchievements, error: fetchError } = await supabase
         .from('user_achievements')
         .select('id')
         .eq('user_id', this.testUserId)
-        .eq('achievement_id', databaseId)
+        .eq('achievement_id', achievementId)
         .maybeSingle();
 
       if (fetchError) {
         throw new Error(`Error verifying achievement award: ${fetchError.message}`);
       }
 
-      success = !!userAchievements;
-      if (!success) {
-        errorMessage = 'Achievement was not awarded after test actions';
+      result.success = !!userAchievements;
+      if (!result.success) {
+        result.errorMessage = 'Achievement was not awarded after test actions';
       }
 
-      result.success = success;
-      if (!success) {
-        result.errorMessage = errorMessage;
-      }
       result.testDurationMs = Date.now() - startTime;
 
-      if (this.config.cleanup && success) {
-        await this.cleanupExistingAchievement(databaseId);
+      if (this.config.cleanup && result.success) {
+        await this.cleanupExistingAchievement(achievementId);
       }
 
       if (this.config.verbose) {
-        console.log(`[AchievementTestingService] Test for "${achievement.name}": ${success ? 'SUCCESS' : 'FAILED'}${errorMessage ? ` - ${errorMessage}` : ''}`);
+        console.log(`[AchievementTestingService] Test for "${achievement.name}": ${result.success ? 'SUCCESS' : 'FAILED'}${result.errorMessage ? ` - ${result.errorMessage}` : ''}`);
       }
 
       return result;
@@ -839,9 +828,9 @@ export class AchievementTestingService {
 }
 
 try {
-  await AchievementIdMappingService.initialize();
+  await AchievementUtils.getAllAchievements();
 } catch (error) {
-  console.error('Failed to initialize achievement mappings:', error);
+  console.error('Failed to initialize achievement cache:', error);
 }
 
 export const AchievementTestRunners = {
