@@ -1,4 +1,3 @@
-
 import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 import { supabase } from '@/integrations/supabase/client';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';

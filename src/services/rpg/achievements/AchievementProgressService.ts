@@ -3,6 +3,7 @@ import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCateg
 import { ProgressBaseService } from './progress/ProgressBaseService';
 import { AchievementProgress } from '@/types/achievementTypes';
 import { supabase } from '@/integrations/supabase/client';
+import { AchievementCategory } from '@/types/achievementTypes';
 
 /**
  * Service for managing achievement progress
@@ -101,6 +102,175 @@ export class AchievementProgressService {
     } catch (error) {
       return createErrorResponse(
         'Failed to update multiple achievement progress values',
+        error instanceof Error ? error.message : 'Unknown error',
+        ErrorCategory.DATABASE
+      );
+    }
+  }
+
+  /**
+   * Initialize progress for multiple achievements
+   */
+  static async initializeMultipleProgress(
+    userId: string,
+    achievements: any[]
+  ): Promise<ServiceResponse<boolean>> {
+    try {
+      if (!userId || !achievements.length) {
+        return createSuccessResponse(true); // Nothing to do
+      }
+      
+      const progressData = achievements.map(achievement => ({
+        achievement_id: achievement.id,
+        current_value: 0,
+        target_value: achievement.requirements.value || 1,
+        is_complete: false
+      }));
+      
+      const { error } = await supabase
+        .rpc('batch_update_achievement_progress', {
+          p_user_id: userId,
+          p_achievements: JSON.stringify(progressData)
+        });
+        
+      if (error) throw error;
+      
+      return createSuccessResponse(true);
+    } catch (error) {
+      return createErrorResponse(
+        'Failed to initialize achievement progress',
+        error instanceof Error ? error.message : 'Unknown error',
+        ErrorCategory.DATABASE
+      );
+    }
+  }
+
+  /**
+   * Update streak progress for all streak-related achievements
+   */
+  static async updateStreakProgress(
+    userId: string,
+    currentStreak: number
+  ): Promise<ServiceResponse<boolean>> {
+    try {
+      // Get all streak-related achievements
+      const { data: achievements, error } = await supabase
+        .from('achievements')
+        .select('id, requirements')
+        .eq('category', AchievementCategory.STREAK);
+      
+      if (error) throw error;
+      
+      if (!achievements || achievements.length === 0) {
+        return createSuccessResponse(true);
+      }
+      
+      // Prepare updates
+      const progressUpdates = achievements.map(achievement => {
+        const requirementValue = achievement.requirements.value || 1;
+        const isComplete = currentStreak >= requirementValue;
+        
+        return {
+          achievementId: achievement.id,
+          currentValue: Math.min(currentStreak, requirementValue),
+          targetValue: requirementValue,
+          isComplete
+        };
+      });
+      
+      // Update all streak achievements
+      return this.updateMultipleProgressValues(userId, progressUpdates);
+    } catch (error) {
+      return createErrorResponse(
+        'Failed to update streak progress',
+        error instanceof Error ? error.message : 'Unknown error',
+        ErrorCategory.DATABASE
+      );
+    }
+  }
+
+  /**
+   * Update workout count progress for all workout count achievements
+   */
+  static async updateWorkoutCountProgress(
+    userId: string,
+    workoutCount: number
+  ): Promise<ServiceResponse<boolean>> {
+    try {
+      // Get all workout count-related achievements
+      const { data: achievements, error } = await supabase
+        .from('achievements')
+        .select('id, requirements')
+        .eq('category', AchievementCategory.WORKOUT_COUNT);
+      
+      if (error) throw error;
+      
+      if (!achievements || achievements.length === 0) {
+        return createSuccessResponse(true);
+      }
+      
+      // Prepare updates
+      const progressUpdates = achievements.map(achievement => {
+        const requirementValue = achievement.requirements.value || 1;
+        const isComplete = workoutCount >= requirementValue;
+        
+        return {
+          achievementId: achievement.id,
+          currentValue: Math.min(workoutCount, requirementValue),
+          targetValue: requirementValue,
+          isComplete
+        };
+      });
+      
+      // Update all workout count achievements
+      return this.updateMultipleProgressValues(userId, progressUpdates);
+    } catch (error) {
+      return createErrorResponse(
+        'Failed to update workout count progress',
+        error instanceof Error ? error.message : 'Unknown error',
+        ErrorCategory.DATABASE
+      );
+    }
+  }
+
+  /**
+   * Update personal record progress for all PR-related achievements
+   */
+  static async updatePersonalRecordProgress(
+    userId: string,
+    recordCount: number
+  ): Promise<ServiceResponse<boolean>> {
+    try {
+      // Get all personal record-related achievements
+      const { data: achievements, error } = await supabase
+        .from('achievements')
+        .select('id, requirements')
+        .eq('category', AchievementCategory.PERSONAL_RECORD);
+      
+      if (error) throw error;
+      
+      if (!achievements || achievements.length === 0) {
+        return createSuccessResponse(true);
+      }
+      
+      // Prepare updates
+      const progressUpdates = achievements.map(achievement => {
+        const requirementValue = achievement.requirements.value || 1;
+        const isComplete = recordCount >= requirementValue;
+        
+        return {
+          achievementId: achievement.id,
+          currentValue: Math.min(recordCount, requirementValue),
+          targetValue: requirementValue,
+          isComplete
+        };
+      });
+      
+      // Update all personal record achievements
+      return this.updateMultipleProgressValues(userId, progressUpdates);
+    } catch (error) {
+      return createErrorResponse(
+        'Failed to update personal record progress',
         error instanceof Error ? error.message : 'Unknown error',
         ErrorCategory.DATABASE
       );

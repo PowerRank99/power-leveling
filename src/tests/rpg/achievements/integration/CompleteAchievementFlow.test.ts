@@ -1,4 +1,3 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { supabase } from '@/integrations/supabase/client';
 import { AchievementManager } from '@/services/rpg/achievements/AchievementManager';
@@ -19,7 +18,6 @@ describe('Complete Achievement Flow Integration', () => {
 
   describe('Workout completion flow', () => {
     it('should process all achievement types when completing a workout', async () => {
-      // Mock database responses
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockResolvedValue({

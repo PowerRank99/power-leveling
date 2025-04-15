@@ -1,4 +1,3 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { AchievementProgressService } from '@/services/rpg/achievements/AchievementProgressService';

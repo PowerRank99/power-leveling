@@ -4,7 +4,7 @@ import { Achievement, AchievementProgress } from '@/types/achievementTypes';
 import { AchievementAwardService } from './achievements/services/AchievementAwardService';
 import { AchievementFetchService } from './achievements/services/AchievementFetchService';
 import { AchievementProcessorService } from './achievements/services/AchievementProcessorService';
-import { AchievementProgressService } from './achievements/services/AchievementProgressService';
+import { AchievementProgressService } from './achievements/AchievementProgressService';
 
 /**
  * Facade service for achievement-related operations
