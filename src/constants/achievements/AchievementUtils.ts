@@ -1,4 +1,3 @@
-
 /**
  * AchievementUtils
  * Primary interface for achievement operations using the database as source of truth
@@ -44,9 +43,9 @@ export class AchievementUtils {
   }
   
   /**
-   * Get all achievements by category
+   * Get achievements by category with proper typing
    */
-  static async getAchievementsByCategory(category: AchievementCategory | string): Promise<Achievement[]> {
+  static async getAchievementsByCategory(category: AchievementCategory): Promise<Achievement[]> {
     try {
       // Try to use cache first for better performance
       if (this.allAchievementsCache !== null) {
