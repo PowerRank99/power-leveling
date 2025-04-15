@@ -9,12 +9,22 @@
 
 // Import scenario runner and helpers for patching
 import { scenarioRunner } from './index';
-import { ScenarioAchievementPatcher } from '../../helpers/ScenarioAchievementPatcher';
+import { ScenarioAchievementPatcher } from '@/services/helpers/ScenarioAchievementPatcher';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
+import { AchievementIdMappingService } from '@/services/common/AchievementIdMappingService';
 
-// First, pre-load the achievements cache
-AchievementUtils.getAllAchievements().catch(err => {
-  console.error('Failed to initialize achievement cache:', err);
+// First, pre-load the achievements cache and mapping service
+Promise.all([
+  AchievementUtils.getAllAchievements().catch(err => {
+    console.error('Failed to initialize achievement cache:', err);
+  }),
+  AchievementIdMappingService.initialize().catch(err => {
+    console.error('Failed to initialize achievement ID mappings:', err);
+  })
+]).then(() => {
+  console.log('Achievement data and ID mappings initialized');
+}).catch(err => {
+  console.error('Failed to initialize achievement data:', err);
 });
 
 // Import all scenario files

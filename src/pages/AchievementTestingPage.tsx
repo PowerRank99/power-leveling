@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, Settings } from 'lucide-react';
+import { LayoutDashboard, Settings, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PageHeader from '@/components/ui/PageHeader';
 import AuthRequiredRoute from '@/components/AuthRequiredRoute';
@@ -11,8 +11,9 @@ import BottomNavBar from '@/components/navigation/BottomNavBar';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { TestingDashboardProvider } from '@/contexts/TestingDashboardContext';
+import { AchievementIdMappingService } from '@/services/common/AchievementIdMappingService';
+import { AchievementIdRepairService } from '@/services/testing/AchievementIdRepairService';
 
-// Import testing components
 import TestControlPanel from '@/components/achievement-testing/TestControlPanel';
 import TestDashboardTab from '@/components/achievement-testing/TestDashboardTab';
 import TestCategoriesTab from '@/components/achievement-testing/TestCategoriesTab';
@@ -24,7 +25,6 @@ import TestRepairTab from '@/components/achievement-testing/TestRepairTab';
 import TestConfigurationPanel from '@/components/achievement-testing/TestConfigurationPanel';
 import TestNotificationSimulator from '@/components/achievement-testing/TestNotificationSimulator';
 
-// Import traditional testing components for backward compatibility
 import WorkoutSimulation from '@/components/achievement-testing/WorkoutSimulation';
 import PersonalRecordSimulation from '@/components/achievement-testing/PersonalRecordSimulation';
 import ManualWorkoutSimulation from '@/components/achievement-testing/ManualWorkoutSimulation';
@@ -39,6 +39,7 @@ const AchievementTestingPage: React.FC = () => {
   const [advancedMode, setAdvancedMode] = useState(true);
   const [configPanelOpen, setConfigPanelOpen] = useState(false);
   const [logEntries, setLogEntries] = useState<Array<{ timestamp: Date; action: string; details: string }>>([]);
+  const [idMappingIssue, setIdMappingIssue] = useState(false);
   
   const addLogEntry = (action: string, details: string) => {
     setLogEntries(prev => [
@@ -46,21 +47,55 @@ const AchievementTestingPage: React.FC = () => {
       ...prev
     ]);
     
-    // Also show as toast for immediate feedback
     toast.info(action, {
       description: details,
       duration: 3000,
     });
   };
 
-  // Navigate to advanced tab if user changes
+  useEffect(() => {
+    const checkMappingIssues = async () => {
+      try {
+        await AchievementIdMappingService.initialize();
+        
+        const validation = AchievementIdMappingService.validateMappings();
+        
+        if (validation.unmapped.length > 0) {
+          setIdMappingIssue(true);
+          console.warn(`Found ${validation.unmapped.length} unmapped achievements`);
+        }
+      } catch (error) {
+        console.error('Error checking achievement mappings:', error);
+      }
+    };
+    
+    checkMappingIssues();
+  }, []);
+  
   useEffect(() => {
     if (testUser && testUser !== user?.id) {
-      // If testing with another user, stay in advanced mode
       setAdvancedMode(true);
     }
   }, [testUser, user?.id]);
   
+  const handleFixMappingIssues = async () => {
+    try {
+      const result = await AchievementIdRepairService.fixAllAchievementIdIssues();
+      
+      if (result.success) {
+        setIdMappingIssue(false);
+        toast.success('Achievement ID mappings fixed successfully');
+        addLogEntry('System', 'Achievement ID mappings repaired automatically');
+      } else {
+        toast.error('Could not fix all achievement mapping issues');
+        addLogEntry('System', `Achievement ID mapping issues: ${result.message}`);
+      }
+    } catch (error) {
+      console.error('Error fixing achievement mappings:', error);
+      toast.error('Failed to fix achievement mappings');
+    }
+  };
+
   return (
     <AuthRequiredRoute>
       <TestingDashboardProvider userId={testUser || user?.id || ''} logAction={addLogEntry}>
@@ -88,7 +123,6 @@ const AchievementTestingPage: React.FC = () => {
           />
           
           <div className="p-4 space-y-4">
-            {/* Test Control Panel */}
             <TestControlPanel 
               currentUserId={user?.id || ''} 
               testUserId={testUser}
@@ -97,15 +131,32 @@ const AchievementTestingPage: React.FC = () => {
               onModeChange={setAdvancedMode}
             />
             
-            {/* Configuration Panel */}
-            {configPanelOpen && (
-              <TestConfigurationPanel onClose={() => setConfigPanelOpen(false)} />
+            {idMappingIssue && (
+              <Alert variant="destructive" className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <AlertTriangle className="h-5 w-5 mr-2" />
+                  <div>
+                    <AlertTitle>Achievement ID Mapping Issues Detected</AlertTitle>
+                    <AlertDescription>
+                      Missing achievement ID mappings will cause tests to fail with "No database mapping found" errors.
+                    </AlertDescription>
+                  </div>
+                </div>
+                <Button 
+                  size="sm" 
+                  variant="destructive"
+                  className="whitespace-nowrap"
+                  onClick={handleFixMappingIssues}
+                >
+                  Fix Now
+                </Button>
+              </Alert>
             )}
             
-            {/* Notification Simulator - Visible across all tabs */}
+            <TestConfigurationPanel onClose={() => setConfigPanelOpen(false)} />
+            
             <TestNotificationSimulator />
             
-            {/* Advanced or Basic Tabs */}
             {advancedMode ? (
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="w-full mb-4 bg-midnight-card border border-divider/30 shadow-subtle overflow-x-auto flex-nowrap">
