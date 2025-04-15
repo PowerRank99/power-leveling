@@ -57,4 +57,38 @@ export class AsyncAchievementAdapter {
       return [];
     }
   }
+  
+  /**
+   * Sort achievements using a comparator function
+   */
+  static async sortAchievements(
+    comparator: (a: Achievement, b: Achievement) => number
+  ): Promise<Achievement[]> {
+    try {
+      const allAchievements = await AchievementUtils.getAllAchievements();
+      return [...allAchievements].sort(comparator);
+    } catch (error) {
+      console.error('Error sorting achievements:', error);
+      return [];
+    }
+  }
+  
+  /**
+   * Safely get a property from an achievement Promise
+   */
+  static async getAchievementProperty<T>(
+    achievementPromise: Promise<Achievement | undefined | null>,
+    propertyName: keyof Achievement,
+    defaultValue: T
+  ): Promise<T> {
+    try {
+      const achievement = await achievementPromise;
+      return achievement && achievement[propertyName] !== undefined
+        ? achievement[propertyName] as unknown as T
+        : defaultValue;
+    } catch (error) {
+      console.error(`Error getting achievement property ${String(propertyName)}:`, error);
+      return defaultValue;
+    }
+  }
 }

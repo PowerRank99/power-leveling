@@ -1,4 +1,3 @@
-
 import { ServiceResponse } from '@/services/common/ErrorHandlingService';
 
 /**
@@ -15,7 +14,9 @@ export enum AchievementCategory {
   VARIETY = 'variety',
   MANUAL = 'manual',
   TIME_BASED = 'time_based',
-  MILESTONE = 'milestone'
+  MILESTONE = 'milestone',
+  WORKOUT_COUNT = 'workout_count',
+  PERSONAL_RECORD = 'personal_record'
 }
 
 /**

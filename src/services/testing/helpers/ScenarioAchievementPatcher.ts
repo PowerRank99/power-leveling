@@ -1,5 +1,5 @@
 
-import { BaseScenario } from '../scenarios';
+import { BaseScenario, TestScenario } from '../scenarios';
 import { AchievementScenarioAdapter } from '../adapters/AchievementScenarioAdapter';
 
 /**
@@ -9,7 +9,7 @@ export class ScenarioAchievementPatcher {
   /**
    * Patch all provided scenarios to handle async achievement data
    */
-  static patchScenarios(scenarios: BaseScenario[]): void {
+  static patchScenarios(scenarios: (BaseScenario | TestScenario)[]): void {
     for (const scenario of scenarios) {
       this.patchScenario(scenario);
     }
@@ -18,7 +18,7 @@ export class ScenarioAchievementPatcher {
   /**
    * Patch a single scenario to handle async achievement data
    */
-  static patchScenario(scenario: BaseScenario): void {
+  static patchScenario(scenario: BaseScenario | TestScenario): void {
     // Add the async-aware logAction and addAction methods if they don't exist
     if (!scenario.hasOwnProperty('asyncGetAchievementName')) {
       Object.defineProperty(scenario, 'asyncGetAchievementName', {
@@ -39,8 +39,8 @@ export class ScenarioAchievementPatcher {
     if (!scenario.hasOwnProperty('addAction')) {
       Object.defineProperty(scenario, 'addAction', {
         value: function(action: any): void {
-          if (Array.isArray(this.actions)) {
-            this.actions.push(action);
+          if (Array.isArray((this as any).actions)) {
+            (this as any).actions.push(action);
           }
         },
         writable: false

@@ -196,8 +196,14 @@ export class ClassProgressionScenario extends BaseScenario {
       // Get achievement names for better logging
       const achievementNames = [];
       for (const id of this.achievementsUnlocked) {
-        const name = await this.asyncGetAchievementName(id);
-        achievementNames.push(name);
+        try {
+          // Access the asyncGetAchievementName method that's patched onto this object
+          const name = await (this as any).asyncGetAchievementName(id);
+          achievementNames.push(name);
+        } catch (error) {
+          console.error('Error getting achievement name:', error);
+          achievementNames.push(id); // Fallback to ID if name can't be retrieved
+        }
       }
       
       this.logAction('ACHIEVEMENTS_UNLOCKED', `Unlocked ${achievementNames.length} achievements`, { achievements: achievementNames });

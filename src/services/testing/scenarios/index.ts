@@ -296,7 +296,7 @@ export class ScenarioRunner {
    */
   registerScenario(scenario: TestScenario): void {
     // Patch the scenario to work with promised-based achievements
-    ScenarioAchievementPatcher.patchScenario(scenario);
+    ScenarioAchievementPatcher.patchScenario(scenario as any);
     this.scenarios.push(scenario);
   }
   

@@ -72,7 +72,7 @@ export class AchievementProgressFacade {
   ): Promise<ServiceResponse<boolean>> {
     return CategoryProgressService.updateCategoryProgress(
       userId, 
-      AchievementCategory.WORKOUT_COUNT, 
+      AchievementCategory.WORKOUT, 
       workoutCount
     );
   }
@@ -86,7 +86,7 @@ export class AchievementProgressFacade {
   ): Promise<ServiceResponse<boolean>> {
     return CategoryProgressService.updateCategoryProgress(
       userId, 
-      AchievementCategory.PERSONAL_RECORD, 
+      AchievementCategory.RECORD, 
       recordCount
     );
   }

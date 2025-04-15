@@ -1,6 +1,6 @@
 
 import { AchievementCategory } from '@/types/achievementTypes';
-import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
+import { ServiceResponse, ErrorHandlingService, createSuccessResponse } from '@/services/common/ErrorHandlingService';
 import { AsyncAchievementAdapter } from './AsyncAchievementAdapter';
 import { AchievementProgressService } from '../AchievementProgressService';
 
@@ -92,7 +92,7 @@ export class CategoryProgressService {
           );
         }
         
-        return true;
+        return createSuccessResponse(true);
       },
       'BATCH_UPDATE_BY_CATEGORY',
       { showToast: false }
