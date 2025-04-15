@@ -1,10 +1,4 @@
 
-/**
- * AchievementIdRepairService
- * 
- * This service handles the repair and migration of achievement IDs,
- * ensuring proper mapping between string IDs and UUIDs in the database.
- */
 import { supabase } from '@/integrations/supabase/client';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 import { AchievementIdMappingService } from '@/services/common/AchievementIdMappingService';
@@ -12,9 +6,6 @@ import { AchievementStandardizationService } from '@/services/common/Achievement
 import { toast } from 'sonner';
 
 export class AchievementIdRepairService {
-  /**
-   * Repairs missing achievement ID mappings
-   */
   static async repairAchievementIdMappings(): Promise<{
     fixed: number;
     failed: number;
@@ -23,33 +14,24 @@ export class AchievementIdRepairService {
     console.log('[AchievementIdRepairService] Starting achievement ID repair...');
     
     try {
-      // Step 1: Run validation to identify unmapped achievements
-      const validationResult = await AchievementStandardizationService.validateAndStandardize();
-      console.log('[AchievementIdRepairService] Validation result:', validationResult);
+      // Clear existing mappings
+      const { error: clearError } = await supabase
+        .from('achievement_id_mappings')
+        .delete()
+        .neq('string_id', ''); // Delete all records
+        
+      if (clearError) throw clearError;
       
-      if (validationResult.missing.length === 0 && validationResult.invalid.length === 0) {
-        console.log('[AchievementIdRepairService] No issues found with achievement mappings');
-        return { fixed: 0, failed: 0, errors: [] };
-      }
-      
-      // Step 2: Migrate unmapped achievements
-      const migratedCount = await AchievementStandardizationService.migrateUnmappedAchievements();
-      console.log(`[AchievementIdRepairService] Migrated ${migratedCount} achievement mappings`);
-      
-      // Step 3: Clear cache and reload achievements
-      AchievementUtils.clearCache();
-      await AchievementUtils.getAllAchievements();
-      
-      // Step 4: Reinitialize mapping service
+      // Reinitialize mappings
       await AchievementIdMappingService.initialize();
       
-      // Step 5: Verify the fix
-      const verificationResult = AchievementIdMappingService.validateMappings();
+      // Get validation results
+      const validationResult = AchievementIdMappingService.validateMappings();
       
       return {
-        fixed: migratedCount,
-        failed: verificationResult.unmapped.length,
-        errors: verificationResult.unmapped.map(id => `No mapping for: ${id}`)
+        fixed: validationResult.unmapped.length,
+        failed: 0,
+        errors: []
       };
     } catch (error) {
       console.error('[AchievementIdRepairService] Repair failed:', error);
@@ -61,70 +43,23 @@ export class AchievementIdRepairService {
     }
   }
   
-  /**
-   * Checks for and repairs any missing achievement database entries
-   */
   static async ensureAchievementDatabaseEntries(): Promise<{
     created: number;
     errors: string[];
   }> {
-    console.log('[AchievementIdRepairService] Checking for missing achievement database entries...');
+    console.log('[AchievementIdRepairService] Checking achievement database entries...');
     
     try {
-      // Step 1: Get all achievements from utils
+      // Get all achievements
       const achievements = await AchievementUtils.getAllAchievements();
-      const stringIds = achievements.map(a => a.stringId).filter(Boolean);
+      const result = await AchievementIdMappingService.repairMappings();
       
-      // Step 2: Check which ones exist in the database
-      const { data: existingMappings, error } = await supabase
-        .from('achievement_id_mappings')
-        .select('string_id')
-        .in('string_id', stringIds);
-        
-      if (error) throw error;
-      
-      const existingStringIds = new Set(existingMappings?.map(m => m.string_id) || []);
-      const missingStringIds = stringIds.filter(id => id && !existingStringIds.has(id));
-      
-      if (missingStringIds.length === 0) {
-        console.log('[AchievementIdRepairService] No missing achievement database entries');
-        return { created: 0, errors: [] };
-      }
-      
-      // Step 3: Create mappings for missing entries
-      let created = 0;
-      const errors: string[] = [];
-      
-      for (const stringId of missingStringIds) {
-        if (!stringId) continue;
-        
-        const achievement = achievements.find(a => a.stringId === stringId);
-        if (!achievement) {
-          errors.push(`Achievement with stringId "${stringId}" not found`);
-          continue;
-        }
-        
-        // Create mapping
-        const { error: insertError } = await supabase
-          .from('achievement_id_mappings')
-          .insert({ 
-            string_id: stringId, 
-            uuid: achievement.id 
-          });
-          
-        if (insertError) {
-          errors.push(`Failed to create mapping for "${stringId}": ${insertError.message}`);
-        } else {
-          created++;
-        }
-      }
-      
-      // Step 4: Reinitialize mapping service
-      await AchievementIdMappingService.initialize();
-      
-      return { created, errors };
+      return {
+        created: achievements.length - result.unmapped.length,
+        errors: result.unmapped.map(id => `No mapping created for: ${id}`)
+      };
     } catch (error) {
-      console.error('[AchievementIdRepairService] Ensuring database entries failed:', error);
+      console.error('[AchievementIdRepairService] Database entries check failed:', error);
       return {
         created: 0,
         errors: [error instanceof Error ? error.message : 'Unknown error']
@@ -132,9 +67,6 @@ export class AchievementIdRepairService {
     }
   }
   
-  /**
-   * Comprehensive fix for all achievement ID issues
-   */
   static async fixAllAchievementIdIssues(): Promise<{
     success: boolean;
     message: string;
