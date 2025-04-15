@@ -135,15 +135,10 @@ export class AchievementIdMappingService {
           if (typeof achievement === 'string') {
             ids.push(achievement);
           } else if (achievement && typeof achievement === 'object') {
-            // Create a type guard for an object with an id property
-            type AchievementWithId = { id: string };
-            
-            // Use type predicate to check if object has the correct shape
-            const hasIdProperty = (obj: any): obj is AchievementWithId => 
-              obj && typeof obj === 'object' && 'id' in obj && typeof obj.id === 'string';
-            
-            if (hasIdProperty(achievement)) {
-              ids.push(achievement.id);
+            // This is the safer approach that will pass TypeScript's checks
+            const achievementObj = achievement as any;
+            if (achievementObj && 'id' in achievementObj && typeof achievementObj.id === 'string') {
+              ids.push(achievementObj.id);
             }
           }
         });
