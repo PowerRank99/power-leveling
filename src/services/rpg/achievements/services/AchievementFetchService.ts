@@ -23,19 +23,34 @@ export class AchievementFetchService {
   
   static async getAchievementStats(userId: string): Promise<ServiceResponse<any>> {
     try {
+      // First get the achievement IDs unlocked by the user
+      const { data: unlockedAchievements, error: unlockedError } = await supabase
+        .from('user_achievements')
+        .select('achievement_id')
+        .eq('user_id', userId);
+        
+      if (unlockedError) throw unlockedError;
+      
+      // Extract the achievement IDs into an array
+      const achievementIds = unlockedAchievements.map(item => item.achievement_id);
+      
+      // If there are no unlocked achievements, return empty stats
+      if (achievementIds.length === 0) {
+        return {
+          success: true,
+          data: []
+        };
+      }
+      
+      // Now query the achievements table with the IDs from user_achievements
       const { data, error } = await supabase
         .from('achievements')
         .select(`
           rank,
           count(*)
         `)
-        .eq('user_achievements.user_id', userId)
-        .in('id', supabase
-          .from('user_achievements')
-          .select('achievement_id')
-          .eq('user_id', userId)
-        )
-        .group_by('rank');
+        .in('id', achievementIds)
+        .groupBy('rank');
         
       if (error) throw error;
       
