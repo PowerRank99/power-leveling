@@ -2,7 +2,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 import { AchievementIdMappingService } from '@/services/common/AchievementIdMappingService';
-import { AchievementStandardizationService } from '@/services/common/AchievementStandardizationService';
 import { toast } from 'sonner';
 
 export class AchievementIdRepairService {
@@ -14,24 +13,13 @@ export class AchievementIdRepairService {
     console.log('[AchievementIdRepairService] Starting achievement ID repair...');
     
     try {
-      // Clear existing mappings
-      const { error: clearError } = await supabase
-        .from('achievement_id_mappings')
-        .delete()
-        .neq('string_id', ''); // Delete all records
-        
-      if (clearError) throw clearError;
-      
-      // Reinitialize mappings
-      await AchievementIdMappingService.initialize();
-      
-      // Get validation results
-      const validationResult = AchievementIdMappingService.validateMappings();
+      // First clear and regenerate all mappings
+      const result = await AchievementIdMappingService.repairMappings();
       
       return {
-        fixed: validationResult.unmapped.length,
-        failed: 0,
-        errors: []
+        fixed: result.created,
+        failed: result.validation.unmapped.length,
+        errors: result.validation.unmapped.map(id => `No mapping created for: ${id}`)
       };
     } catch (error) {
       console.error('[AchievementIdRepairService] Repair failed:', error);
@@ -50,13 +38,13 @@ export class AchievementIdRepairService {
     console.log('[AchievementIdRepairService] Checking achievement database entries...');
     
     try {
-      // Get all achievements
+      // Get all achievements and refresh mappings
       const achievements = await AchievementUtils.getAllAchievements();
       const result = await AchievementIdMappingService.repairMappings();
       
       return {
-        created: achievements.length - result.unmapped.length,
-        errors: result.unmapped.map(id => `No mapping created for: ${id}`)
+        created: achievements.length - result.validation.unmapped.length,
+        errors: result.validation.unmapped.map(id => `No mapping created for: ${id}`)
       };
     } catch (error) {
       console.error('[AchievementIdRepairService] Database entries check failed:', error);
