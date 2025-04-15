@@ -44,6 +44,42 @@ export class AchievementUtils {
   }
   
   /**
+   * Get all achievements by category
+   */
+  static async getAchievementsByCategory(category: AchievementCategory | string): Promise<Achievement[]> {
+    try {
+      // Try to use cache first for better performance
+      if (this.allAchievementsCache !== null) {
+        return this.allAchievementsCache.filter(achievement => 
+          achievement.category === category
+        );
+      }
+      
+      const { data, error } = await supabase
+        .from('achievements')
+        .select('*')
+        .eq('category', category)
+        .order('rank', { ascending: false });
+        
+      if (error) throw error;
+      
+      const achievements = data.map(achievement => this.mapDbAchievementToModel(achievement));
+      
+      // Add to cache if not already cached
+      achievements.forEach(achievement => {
+        if (!this.achievementCache.has(achievement.id)) {
+          this.achievementCache.set(achievement.id, achievement);
+        }
+      });
+      
+      return achievements;
+    } catch (error) {
+      console.error(`Error fetching achievements for category ${category}:`, error);
+      return [];
+    }
+  }
+  
+  /**
    * Get all achievements (synchronous version that returns cached data)
    * Used for performance-critical operations 
    */

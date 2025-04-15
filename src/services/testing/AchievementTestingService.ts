@@ -649,7 +649,7 @@ export class AchievementTestingService {
     if (!this.testUserId) return;
 
     if (achievement.id === 'variety-3') {
-      const workoutTypes = ['strength', 'cardio', 'flexibility'];
+      const workoutTypes = ['strength', 'cardio', 'flexibility'] as const;
       
       for (const type of workoutTypes) {
         await this.simulateWorkout(this.testUserId, {
