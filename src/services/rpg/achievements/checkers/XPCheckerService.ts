@@ -30,7 +30,7 @@ export class XPCheckerService extends BaseAchievementChecker {
           .from('achievements')
           .select('*')
           .eq('category', 'xp')
-          .order('requirements->xp', { ascending: true });
+          .order('requirements->total_xp', { ascending: true });
         
         if (error) {
           throw new Error(`Failed to fetch XP achievements: ${error.message}`);
@@ -39,7 +39,9 @@ export class XPCheckerService extends BaseAchievementChecker {
         // Filter achievements based on current XP
         const achievementsToCheck = xpAchievements
           .filter((achievement: Achievement) => {
-            const requiredXP = achievement.requirements?.total_xp || 0;
+            // Access the total_xp property from the JSONB requirements column
+            const requiredXP = achievement.requirements ? 
+              (achievement.requirements.total_xp || 0) : 0;
             return totalXP >= requiredXP;
           })
           .map((achievement: Achievement) => achievement.id);
@@ -55,7 +57,8 @@ export class XPCheckerService extends BaseAchievementChecker {
           return {
             achievementId,
             currentValue: totalXP,
-            targetValue: achievement?.requirements?.total_xp || 0,
+            targetValue: achievement?.requirements ? 
+              (achievement.requirements.total_xp || 0) : 0,
             isComplete: true
           };
         });
