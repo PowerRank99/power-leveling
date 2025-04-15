@@ -99,6 +99,53 @@ export class AchievementIdentifierService {
   }
   
   /**
+   * Fill in missing string IDs in the achievements table
+   */
+  static async fillMissingMappings(): Promise<{ added: number, total: number }> {
+    try {
+      // Find achievements without string_ids
+      const { data: missingIds, error: findError } = await supabase
+        .from('achievements')
+        .select('id, name')
+        .is('string_id', null);
+        
+      if (findError) throw findError;
+      
+      const total = missingIds?.length || 0;
+      let added = 0;
+      
+      // Generate and set string IDs
+      for (const achievement of (missingIds || [])) {
+        // Generate a string ID from the name
+        const stringId = achievement.name
+          .toLowerCase()
+          .replace(/[^\w\s-]/g, '')  // Remove special characters
+          .replace(/\s+/g, '-')      // Replace spaces with hyphens
+          .replace(/-+/g, '-')       // Remove duplicate hyphens
+          .replace(/^-+|-+$/g, '');  // Remove leading/trailing hyphens
+          
+        // Update the achievement with the generated string ID
+        const { error: updateError } = await supabase
+          .from('achievements')
+          .update({ string_id: stringId })
+          .eq('id', achievement.id);
+          
+        if (!updateError) {
+          added++;
+        }
+      }
+      
+      // Clear the cache to ensure fresh data
+      this.clearCache();
+      
+      return { added, total };
+    } catch (error) {
+      console.error('Failed to fill missing mappings:', error);
+      return { added: 0, total: 0 };
+    }
+  }
+  
+  /**
    * Ensure the cache is loaded with fresh data
    */
   private static async ensureCache(): Promise<void> {
