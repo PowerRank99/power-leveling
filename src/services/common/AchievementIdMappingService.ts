@@ -135,8 +135,14 @@ export class AchievementIdMappingService {
           if (typeof achievement === 'string') {
             ids.push(achievement);
           } else if (achievement && typeof achievement === 'object') {
-            // Type check the object and explicitly cast it to an interface with an id
-            if ('id' in achievement && typeof achievement.id === 'string') {
+            // Create a type guard for an object with an id property
+            type AchievementWithId = { id: string };
+            
+            // Use type predicate to check if object has the correct shape
+            const hasIdProperty = (obj: any): obj is AchievementWithId => 
+              obj && typeof obj === 'object' && 'id' in obj && typeof obj.id === 'string';
+            
+            if (hasIdProperty(achievement)) {
               ids.push(achievement.id);
             }
           }
