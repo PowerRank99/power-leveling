@@ -16,7 +16,7 @@ const ScenarioTestingTab: React.FC<ScenarioTestingTabProps> = ({ userId }) => {
   
   return (
     <div className="space-y-4">
-      <Alert variant="default" className="mb-4">
+      <Alert className="mb-4">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Test Scenarios</AlertTitle>
         <AlertDescription>

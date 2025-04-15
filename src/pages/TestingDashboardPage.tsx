@@ -21,6 +21,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTestResultPersistence } from '@/hooks/useTestResultPersistence';
 import { toast } from 'sonner';
 
+// Import scenario runner and all scenarios
+import { scenarioRunner } from '@/services/testing/scenarios';
+import '@/services/testing/scenarios/importAllScenarios';
+
 const TestingDashboardPage: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');

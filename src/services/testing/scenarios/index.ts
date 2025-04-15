@@ -1,3 +1,4 @@
+
 /**
  * Achievement Testing Scenarios
  * 
@@ -411,14 +412,5 @@ export class ScenarioRunner {
 // Create and export a singleton instance of ScenarioRunner
 export const scenarioRunner = new ScenarioRunner();
 
-// Important: Move these imports to the bottom to avoid circular dependencies
-// This is the key fix - by moving these imports after the class definitions
-// TypeScript/JavaScript will properly resolve the dependencies
-
-// Export individual scenario classes after the main definitions
-// This avoids circular dependencies
-import './NewUserScenario';
-import './PowerUserScenario';
-import './StreakScenario';
-import './ClassProgressionScenario';
-import './CompletionistScenario';
+// IMPORTANT: We're NOT importing specific scenario implementations here to avoid circular dependencies.
+// The individual scenario files will import what they need from this file and register themselves.
