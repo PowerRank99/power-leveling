@@ -84,6 +84,7 @@ describe('AchievementProgressService', () => {
       vi.mocked(ProgressBaseService.getProgress).mockResolvedValue({ 
         success: true, 
         data: {
+          id: 'mock-progress-id',
           current: 5,
           total: 10,
           isComplete: false

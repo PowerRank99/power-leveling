@@ -51,4 +51,11 @@ export class CachingService {
       entry.expiresAt = Date.now() + duration;
     }
   }
+  
+  static getCacheStats(): { size: number; keys: string[] } {
+    return {
+      size: this.cache.size,
+      keys: Array.from(this.cache.keys())
+    };
+  }
 }
