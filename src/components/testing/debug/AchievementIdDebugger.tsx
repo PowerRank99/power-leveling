@@ -81,14 +81,14 @@ export function AchievementIdDebugger() {
         <Card className="p-4">
           <h4 className="font-medium mb-2 flex items-center gap-2">
             Missing Mappings
-            <Badge variant="warning" className="ml-2">
+            <Badge variant="arcane" className="ml-2">
               {validationResults.missing.length}
             </Badge>
           </h4>
           <ScrollArea className="h-[200px]">
             <div className="space-y-1">
               {validationResults.missing.map(id => (
-                <div key={id} className="text-sm text-warning p-1">
+                <div key={id} className="text-sm text-text-secondary p-1">
                   {id}
                 </div>
               ))}
