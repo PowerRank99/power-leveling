@@ -1,4 +1,3 @@
-
 import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 import { supabase } from '@/integrations/supabase/client';
 import { AchievementProgress } from '@/types/achievementTypes';
@@ -117,11 +116,9 @@ export class AchievementProgressService {
       // Transform to match AchievementProgress type
       const progress: AchievementProgress = {
         id: data.id,
-        achievementId: data.achievement_id,
         current: data.current_value,
         total: data.target_value,
-        isComplete: data.is_complete,
-        updatedAt: data.updated_at
+        isComplete: data.is_complete
       };
       
       return createSuccessResponse(progress);

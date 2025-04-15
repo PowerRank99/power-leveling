@@ -89,6 +89,13 @@ export class AchievementIdentifierService {
   }
   
   /**
+   * Alias for getUuidFromStringId to match expected interface
+   */
+  static async getIdByStringId(stringId: string): Promise<ServiceResponse<string>> {
+    return this.getUuidFromStringId(stringId);
+  }
+  
+  /**
    * Convert multiple string IDs to UUIDs in a batch operation
    */
   static async getUuidsFromStringIds(stringIds: string[]): Promise<ServiceResponse<Record<string, string>>> {
@@ -140,6 +147,13 @@ export class AchievementIdentifierService {
   }
   
   /**
+   * Alias for getUuidsFromStringIds to match expected interface
+   */
+  static async convertToIds(stringIds: string[]): Promise<ServiceResponse<Record<string, string>>> {
+    return this.getUuidsFromStringIds(stringIds);
+  }
+  
+  /**
    * Convert a UUID to a string ID
    */
   static async getStringIdFromUuid(uuid: string): Promise<ServiceResponse<string>> {
@@ -185,7 +199,7 @@ export class AchievementIdentifierService {
   /**
    * Fill any missing mappings from achievement names
    */
-  static async fillMissingMappings(): Promise<ServiceResponse<AchievementIdMigration[]>> {
+  static async fillMissingMappings(): Promise<{ added: number; total: number }> {
     try {
       const { data: result, error } = await supabase
         .rpc('match_achievement_by_name');
@@ -195,20 +209,25 @@ export class AchievementIdentifierService {
       const migrations: AchievementIdMigration[] = result || [];
       
       // Update our cache with the new mappings
+      let addedCount = 0;
       migrations.forEach(mapping => {
         if (mapping.string_id && mapping.uuid) {
           this.mappingCache.set(mapping.string_id, mapping.uuid);
           this.reverseMappingCache.set(mapping.uuid, mapping.string_id);
+          addedCount++;
         }
       });
       
-      return createSuccessResponse(migrations);
+      return {
+        added: addedCount,
+        total: migrations.length
+      };
     } catch (error) {
-      return createErrorResponse(
-        'Failed to fill missing achievement ID mappings',
-        error instanceof Error ? error.message : String(error),
-        ErrorCategory.DATABASE
-      );
+      console.error('Failed to fill missing achievement ID mappings:', error);
+      return {
+        added: 0,
+        total: 0
+      };
     }
   }
   
@@ -232,5 +251,12 @@ export class AchievementIdentifierService {
     this.mappingCache.clear();
     this.reverseMappingCache.clear();
     this.cacheInitialized = false;
+  }
+  
+  /**
+   * Alias for invalidateCache to match expected interface
+   */
+  static clearCache(): void {
+    this.invalidateCache();
   }
 }

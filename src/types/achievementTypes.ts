@@ -152,3 +152,11 @@ export interface UserAchievementData {
     string_id?: string;
   };
 }
+
+export interface AchievementIdMigration {
+  uuid: string;
+  string_id: string;
+  name?: string;
+  similarity?: number;
+  migrated?: boolean;
+}

@@ -1,4 +1,3 @@
-
 import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
 import { Achievement, AchievementProgress } from '@/types/achievementTypes';
 import { AchievementIdentifierService } from './AchievementIdentifierService';
