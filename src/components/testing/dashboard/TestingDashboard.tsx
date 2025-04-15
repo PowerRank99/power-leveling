@@ -4,6 +4,7 @@ import RecentTestResults from './RecentTestResults';
 import QuickActions from './QuickActions';
 import { useEffect } from 'react';
 import { AchievementIdMappingService } from '@/services/common/AchievementIdMappingService';
+import { AchievementIdDebugger } from '../debug/AchievementIdDebugger';
 
 interface TestingDashboardProps {
   stats: {
@@ -48,6 +49,7 @@ const TestingDashboard: React.FC<TestingDashboardProps> = ({
   return (
     <div className="space-y-6">
       <TestCoverageStats stats={stats} />
+      <AchievementIdDebugger />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <RecentTestResults results={results} />
         <QuickActions
