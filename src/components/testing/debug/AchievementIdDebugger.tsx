@@ -5,23 +5,33 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { AchievementValidationService } from '@/services/testing/AchievementValidationService';
-import { AchievementIdMappingService } from '@/services/common/AchievementIdMappingService';
+import { AchievementStandardizationService } from '@/services/common/AchievementStandardizationService';
+
+interface StandardizationResult {
+  valid: string[];
+  invalid: string[];
+  missing: string[];
+  suggestions: Array<{
+    id: string;
+    issue: string;
+    suggestion: string;
+  }>;
+}
 
 export function AchievementIdDebugger() {
-  const [validationResults, setValidationResults] = useState<{
-    valid: string[];
-    invalid: string[];
-    missing: string[];
-  }>({ valid: [], invalid: [], missing: [] });
+  const [results, setResults] = useState<StandardizationResult>({
+    valid: [],
+    invalid: [],
+    missing: [],
+    suggestions: []
+  });
   const [isValidating, setIsValidating] = useState(false);
   
   const runValidation = async () => {
     setIsValidating(true);
     try {
-      await AchievementIdMappingService.initialize();
-      const results = await AchievementValidationService.validateAll();
-      setValidationResults(results);
+      const validationResults = await AchievementStandardizationService.validateAndStandardize();
+      setResults(validationResults);
     } catch (error) {
       console.error('Validation failed:', error);
     } finally {
@@ -46,12 +56,12 @@ export function AchievementIdDebugger() {
           <h4 className="font-medium mb-2 flex items-center gap-2">
             Valid IDs
             <Badge variant="success" className="ml-2">
-              {validationResults.valid.length}
+              {results.valid.length}
             </Badge>
           </h4>
           <ScrollArea className="h-[200px]">
             <div className="space-y-1">
-              {validationResults.valid.map(id => (
+              {results.valid.map(id => (
                 <div key={id} className="text-sm text-success p-1">
                   {id}
                 </div>
@@ -64,12 +74,12 @@ export function AchievementIdDebugger() {
           <h4 className="font-medium mb-2 flex items-center gap-2">
             Invalid IDs
             <Badge variant="destructive" className="ml-2">
-              {validationResults.invalid.length}
+              {results.invalid.length}
             </Badge>
           </h4>
           <ScrollArea className="h-[200px]">
             <div className="space-y-1">
-              {validationResults.invalid.map(id => (
+              {results.invalid.map(id => (
                 <div key={id} className="text-sm text-destructive p-1">
                   {id}
                 </div>
@@ -82,12 +92,12 @@ export function AchievementIdDebugger() {
           <h4 className="font-medium mb-2 flex items-center gap-2">
             Missing Mappings
             <Badge variant="arcane" className="ml-2">
-              {validationResults.missing.length}
+              {results.missing.length}
             </Badge>
           </h4>
           <ScrollArea className="h-[200px]">
             <div className="space-y-1">
-              {validationResults.missing.map(id => (
+              {results.missing.map(id => (
                 <div key={id} className="text-sm text-text-secondary p-1">
                   {id}
                 </div>
@@ -97,15 +107,25 @@ export function AchievementIdDebugger() {
         </Card>
       </div>
       
-      {(validationResults.invalid.length > 0 || validationResults.missing.length > 0) && (
-        <Alert variant="destructive">
-          <AlertTitle>Validation Issues Found</AlertTitle>
-          <AlertDescription>
-            There are mismatches between your code constants and database achievements.
-            Please review the invalid and missing IDs above and update your constants accordingly.
-          </AlertDescription>
-        </Alert>
+      {results.suggestions.length > 0 && (
+        <Card className="p-4">
+          <h4 className="font-medium mb-2">Suggestions</h4>
+          <ScrollArea className="h-[200px]">
+            <div className="space-y-2">
+              {results.suggestions.map((suggestion, index) => (
+                <Alert key={index} variant="info" className="text-sm">
+                  <AlertTitle>{suggestion.id}</AlertTitle>
+                  <AlertDescription>
+                    <strong>Issue:</strong> {suggestion.issue}<br />
+                    <strong>Suggestion:</strong> {suggestion.suggestion}
+                  </AlertDescription>
+                </Alert>
+              ))}
+            </div>
+          </ScrollArea>
+        </Card>
       )}
     </Card>
   );
 }
+
