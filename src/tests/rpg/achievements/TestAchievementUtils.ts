@@ -13,7 +13,7 @@ export class TestAchievementUtils {
       points: 10,
       xpReward: 100,
       iconName: 'test-icon',
-      requirements: { value: 1 },
+      requirements: { type: 'count', value: 1 },
       ...overrides
     };
   }

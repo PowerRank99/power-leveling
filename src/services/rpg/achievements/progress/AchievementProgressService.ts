@@ -3,6 +3,7 @@ import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCateg
 import { ProgressBaseService } from './ProgressBaseService';
 import { ProgressUpdateService } from './ProgressUpdateService';
 import { ProgressInitializationService } from './ProgressInitializationService';
+import { Achievement } from '@/types/achievementTypes';
 
 export class AchievementProgressService extends ProgressBaseService {
   /**
@@ -52,12 +53,22 @@ export class AchievementProgressService extends ProgressBaseService {
       targetValue: number;
     }>
   ): Promise<ServiceResponse<boolean>> {
+    // Convert the simplified achievement data to the format expected by ProgressInitializationService
+    const formattedAchievements: Achievement[] = achievements.map(a => ({
+      id: a.achievementId,
+      name: 'Placeholder',
+      description: 'Placeholder',
+      category: 'milestone',
+      rank: 'E',
+      points: 1,
+      xpReward: 10,
+      iconName: 'achievement',
+      requirements: { type: 'count', value: a.targetValue }
+    }));
+    
     return ProgressInitializationService.initializeMultipleProgress(
       userId,
-      achievements.map(a => ({
-        id: a.achievementId,
-        requirements: { value: a.targetValue }
-      }))
+      formattedAchievements
     );
   }
 }
