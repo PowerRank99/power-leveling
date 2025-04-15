@@ -1,53 +1,54 @@
 
-type CacheEntry<T> = {
-  data: T;
-  timestamp: number;
-};
+const CACHE_PREFIX = 'achievement_cache:';
+const DEFAULT_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+interface CacheEntry<T> {
+  value: T;
+  expiresAt: number;
+}
 
 export class CachingService {
-  private static caches: Map<string, CacheEntry<any>> = new Map();
-  private static logger: Console = console;
-  
-  static set<T>(key: string, data: T, duration: number): void {
-    try {
-      this.caches.set(key, {
-        data,
-        timestamp: Date.now() + duration
-      });
-      this.logger.debug(`Cache set: ${key}, duration: ${duration}ms`);
-    } catch (error) {
-      this.logger.error('Error setting cache', { key, error });
-    }
+  private static cache = new Map<string, CacheEntry<any>>();
+
+  static set<T>(key: string, value: T, duration: number = DEFAULT_CACHE_DURATION): void {
+    const expiresAt = Date.now() + duration;
+    this.cache.set(`${CACHE_PREFIX}${key}`, { value, expiresAt });
   }
-  
+
   static get<T>(key: string): T | null {
-    const entry = this.caches.get(key);
+    const entry = this.cache.get(`${CACHE_PREFIX}${key}`) as CacheEntry<T>;
+    
     if (!entry) return null;
     
-    if (Date.now() > entry.timestamp) {
-      this.caches.delete(key);
-      this.logger.debug(`Cache expired: ${key}`);
+    if (Date.now() > entry.expiresAt) {
+      this.cache.delete(`${CACHE_PREFIX}${key}`);
       return null;
     }
     
-    return entry.data as T;
+    return entry.value;
   }
-  
+
   static clear(key?: string): void {
     if (key) {
-      this.caches.delete(key);
-      this.logger.debug(`Cache cleared for key: ${key}`);
+      this.cache.delete(`${CACHE_PREFIX}${key}`);
     } else {
-      this.caches.clear();
-      this.logger.debug('All caches cleared');
+      this.cache.clear();
     }
   }
 
-  // New method to track cache size and performance
-  static getCacheStats() {
-    return {
-      size: this.caches.size,
-      keys: Array.from(this.caches.keys())
-    };
+  static clearCategory(categoryPrefix: string): void {
+    const fullPrefix = `${CACHE_PREFIX}${categoryPrefix}`;
+    for (const key of this.cache.keys()) {
+      if (key.startsWith(fullPrefix)) {
+        this.cache.delete(key);
+      }
+    }
+  }
+
+  static refreshTTL(key: string, duration: number = DEFAULT_CACHE_DURATION): void {
+    const entry = this.cache.get(`${CACHE_PREFIX}${key}`);
+    if (entry) {
+      entry.expiresAt = Date.now() + duration;
+    }
   }
 }

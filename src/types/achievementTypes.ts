@@ -34,24 +34,35 @@ export enum AchievementRank {
  * Type guard and conversion functions for safer enum handling
  */
 export const isValidCategory = (category: string): category is AchievementCategory => {
-  return Object.values(AchievementCategory).includes(category as AchievementCategory);
+  // Case insensitive check for more robust handling
+  const normalizedInput = category.toLowerCase().replace(/[^a-z0-9]/g, '_');
+  return Object.values(AchievementCategory)
+    .map(c => c.toLowerCase())
+    .includes(normalizedInput);
 };
 
 export const isValidRank = (rank: string): rank is AchievementRank => {
-  return Object.values(AchievementRank).includes(rank as AchievementRank);
+  // Case insensitive check
+  const normalizedInput = rank.toUpperCase();
+  return Object.values(AchievementRank)
+    .map(r => r.toUpperCase())
+    .includes(normalizedInput);
 };
 
-/**
- * Safe conversion functions with logging
- */
 export const toAchievementCategory = (category: string): AchievementCategory => {
-  if (isValidCategory(category)) return category;
+  const normalized = category.toLowerCase().replace(/[^a-z0-9]/g, '_');
+  if (isValidCategory(normalized)) {
+    return normalized as AchievementCategory;
+  }
   console.warn(`Invalid achievement category: ${category}, defaulting to MILESTONE`);
   return AchievementCategory.MILESTONE;
 };
 
 export const toAchievementRank = (rank: string): AchievementRank => {
-  if (isValidRank(rank)) return rank;
+  const normalized = rank.toUpperCase();
+  if (isValidRank(normalized)) {
+    return normalized as AchievementRank;
+  }
   console.warn(`Invalid achievement rank: ${rank}, defaulting to UNRANKED`);
   return AchievementRank.UNRANKED;
 };
@@ -88,25 +99,22 @@ export const AchievementSchema = z.object({
 
 export type Achievement = z.infer<typeof AchievementSchema>;
 
-// Add the AchievementProgress type with an id field
 export interface AchievementProgress {
-  id?: string;  // Added id as optional
+  id: string;
   current: number;
   total: number;
-  isComplete?: boolean;
+  isComplete: boolean;
 }
 
-// Update the AchievementStats type to make byCategory and byRank optional
 export interface AchievementStats {
   total: number;
   unlocked: number;
   points: number;
-  byRank?: Partial<Record<AchievementRank, number>>;
-  byCategory?: Partial<Record<AchievementCategory, number>>;
+  byRank: Partial<Record<AchievementRank, number>>;
+  byCategory: Partial<Record<AchievementCategory, number>>;
   recentlyUnlocked?: Achievement[];
 }
 
-// Fix the UserAchievementData type to match the database structure
 export interface UserAchievementData {
   achievement_id: string;
   achieved_at: string;
