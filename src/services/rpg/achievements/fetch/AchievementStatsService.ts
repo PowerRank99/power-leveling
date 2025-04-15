@@ -61,23 +61,34 @@ export class AchievementStatsService {
                 xpReward: achievementData.xp_reward,
                 iconName: achievementData.icon_name,
                 requirements: achievementData.requirements,
-                achievedAt: item.achieved_at
+                achievedAt: item.achieved_at,
+                stringId: achievementData.string_id
               });
             }
           });
         }
         
+        // Create default category stats object
+        const byCategory: Partial<Record<AchievementCategory, number>> = {};
+        
+        // Initialize with empty values for all categories
+        Object.values(AchievementCategory).forEach(category => {
+          byCategory[category] = 0;
+        });
+        
         // Return the achievement stats
-        return {
+        const stats: AchievementStats = {
           total: statsData?.total || 0,
           unlocked: statsData?.unlocked || 0,
           points: statsData?.points || 0,
           byRank: {
             S: 0, A: 0, B: 0, C: 0, D: 0, E: 0, Unranked: 0
           },
-          byCategory: {},
+          byCategory: byCategory,
           recentlyUnlocked
         };
+        
+        return stats;
       }, 
       'GET_ACHIEVEMENT_STATS', 
       { showToast: false }

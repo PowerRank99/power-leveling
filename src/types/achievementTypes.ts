@@ -1,4 +1,3 @@
-
 import { z } from 'zod';
 
 export enum AchievementCategory {
@@ -97,13 +96,14 @@ export interface AchievementProgress {
   isComplete?: boolean;
 }
 
-// Add the AchievementStats type
+// Update the AchievementStats type to make byCategory and byRank optional
 export interface AchievementStats {
   total: number;
   unlocked: number;
   points: number;
-  byRank?: Record<AchievementRank, number>;
-  byCategory?: Record<AchievementCategory, number>;
+  byRank?: Partial<Record<AchievementRank, number>>;
+  byCategory?: Partial<Record<AchievementCategory, number>>;
+  recentlyUnlocked?: Achievement[];
 }
 
 // Fix the UserAchievementData type to match the database structure

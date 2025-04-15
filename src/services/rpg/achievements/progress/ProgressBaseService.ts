@@ -13,9 +13,9 @@ export class ProgressBaseService {
   ): Promise<ServiceResponse<AchievementProgress | null>> {
     const cacheKey = `achievement_progress_${userId}_${achievementId}`;
     const cached = CachingService.get<AchievementProgress>(cacheKey);
-    if (cached) return { success: true, data: cached };
+    if (cached) return createSuccessResponse(cached);
 
-    return createSuccessResponse(await ErrorHandlingService.executeWithErrorHandling(
+    return ErrorHandlingService.executeWithErrorHandling(
       async () => {
         const { data, error } = await supabase
           .from('achievement_progress')
@@ -40,15 +40,15 @@ export class ProgressBaseService {
       },
       'GET_PROGRESS',
       { showToast: false }
-    ));
+    );
   }
   
   static async getAllProgress(userId: string): Promise<ServiceResponse<Record<string, AchievementProgress>>> {
     const cacheKey = `all_achievement_progress_${userId}`;
     const cached = CachingService.get<Record<string, AchievementProgress>>(cacheKey);
-    if (cached) return { success: true, data: cached };
+    if (cached) return createSuccessResponse(cached);
 
-    return createSuccessResponse(await ErrorHandlingService.executeWithErrorHandling(
+    return ErrorHandlingService.executeWithErrorHandling(
       async () => {
         const { data, error } = await supabase.rpc(
           'get_all_achievement_progress',
@@ -75,7 +75,7 @@ export class ProgressBaseService {
       }, 
       'GET_ALL_PROGRESS', 
       { showToast: false }
-    ));
+    );
   }
   
   static formatProgressUpdates(progressUpdates: Array<{
