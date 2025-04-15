@@ -1,7 +1,7 @@
-
-import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, createSuccessResponse, createErrorResponse, ErrorCategory } from '@/services/common/ErrorHandlingService';
+import { supabase } from '@/integrations/supabase/client';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
+import { mapToAchievementCategory } from '@/types/achievementMappers';
 
 /**
  * Service for awarding achievements to users
@@ -35,7 +35,7 @@ export class AchievementAwardService {
         return createSuccessResponse(true);
       }
       
-      // Get achievement details to get XP and points
+      // Get achievement details with proper type mapping
       const achievement = await AchievementUtils.getAchievementById(achievementId);
       
       if (!achievement) {

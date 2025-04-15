@@ -11,7 +11,9 @@ export enum ErrorCategory {
   EXCEPTION = 'exception',
   UNKNOWN = 'unknown',
   PROCESSING_ERROR = 'processing_error',
-  NOT_FOUND = 'not_found'
+  NOT_FOUND = 'not_found',
+  INITIALIZATION_ERROR = 'initialization_error',
+  DATA_MAPPING_ERROR = 'data_mapping_error'
 }
 
 /**
