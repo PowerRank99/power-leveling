@@ -3,18 +3,10 @@ import { ServiceResponse, ErrorHandlingService, createSuccessResponse, createErr
 import { BaseAchievementChecker } from './BaseAchievementChecker';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { supabase } from '@/integrations/supabase/client';
-import { ACHIEVEMENT_IDS, ACHIEVEMENT_REQUIREMENTS } from '../AchievementConstants';
-import { TransactionService } from '@/services/common/TransactionService';
+import { ACHIEVEMENT_REQUIREMENTS } from '@/constants/achievements/AchievementConstants';
+import { Achievement } from '@/types/achievementTypes';
 
-/**
- * Service specifically for checking XP-related achievements
- * Uses optimized batch operations
- */
 export class XPCheckerService extends BaseAchievementChecker {
-  /**
-   * Implementation of abstract method from BaseAchievementChecker
-   * Optimized to reduce database calls
-   */
   async checkAchievements(userId: string, totalXP?: number): Promise<ServiceResponse<string[]>> {
     return this.executeWithErrorHandling(
       async () => {
@@ -33,16 +25,24 @@ export class XPCheckerService extends BaseAchievementChecker {
           totalXP = profile?.xp || 0;
         }
         
-        // Define achievements to check based on XP milestones using constants
-        const achievementsToCheck: string[] = [];
+        // Fetch XP-related achievements from the database
+        const { data: xpAchievements, error } = await supabase
+          .from('achievements')
+          .select('*')
+          .eq('category', 'xp')
+          .order('requirements->xp', { ascending: true });
         
-        const xpMilestones = ACHIEVEMENT_REQUIREMENTS.XP.MILESTONES;
+        if (error) {
+          throw new Error(`Failed to fetch XP achievements: ${error.message}`);
+        }
         
-        if (totalXP >= xpMilestones[0]) achievementsToCheck.push(ACHIEVEMENT_IDS.C.xp[0]); // xp-1000
-        if (totalXP >= xpMilestones[1]) achievementsToCheck.push(ACHIEVEMENT_IDS.B.xp[0]); // xp-5000
-        if (totalXP >= xpMilestones[2]) achievementsToCheck.push(ACHIEVEMENT_IDS.A.xp[0]); // xp-10000
-        if (totalXP >= xpMilestones[3]) achievementsToCheck.push(ACHIEVEMENT_IDS.S.xp[0]); // xp-50000
-        if (totalXP >= xpMilestones[4]) achievementsToCheck.push(ACHIEVEMENT_IDS.S.xp[1]); // xp-100000
+        // Filter achievements based on current XP
+        const achievementsToCheck = xpAchievements
+          .filter((achievement: Achievement) => {
+            const requiredXP = achievement.requirements?.total_xp || 0;
+            return totalXP >= requiredXP;
+          })
+          .map((achievement: Achievement) => achievement.id);
         
         // If no achievements to check, return empty array
         if (achievementsToCheck.length === 0) {
@@ -50,12 +50,15 @@ export class XPCheckerService extends BaseAchievementChecker {
         }
         
         // Update progress in batch first
-        const progressUpdates = achievementsToCheck.map(achievementId => ({
-          achievementId,
-          currentValue: totalXP,
-          targetValue: this.getMilestoneForAchievement(achievementId, xpMilestones),
-          isComplete: true
-        }));
+        const progressUpdates = achievementsToCheck.map(achievementId => {
+          const achievement = xpAchievements.find((a: Achievement) => a.id === achievementId);
+          return {
+            achievementId,
+            currentValue: totalXP,
+            targetValue: achievement?.requirements?.total_xp || 0,
+            isComplete: true
+          };
+        });
         
         // Update progress first using the service's batch update method
         const progressResult = await AchievementService.updateMultipleProgressValues(userId, progressUpdates);
@@ -69,16 +72,5 @@ export class XPCheckerService extends BaseAchievementChecker {
       },
       'XP_MILESTONE_ACHIEVEMENTS'
     );
-  }
-
-  /**
-   * Helper method to get milestone value for an achievement
-   */
-  private getMilestoneForAchievement(achievementId: string, milestones: number[]): number {
-    if (Object.values(ACHIEVEMENT_IDS.C.xp).indexOf(achievementId) !== -1) return milestones[0];
-    if (Object.values(ACHIEVEMENT_IDS.B.xp).indexOf(achievementId) !== -1) return milestones[1];
-    if (Object.values(ACHIEVEMENT_IDS.A.xp).indexOf(achievementId) !== -1) return milestones[2];
-    if (Object.values(ACHIEVEMENT_IDS.S.xp).indexOf(achievementId) !== -1) return milestones[3];
-    return milestones[4];
   }
 }
