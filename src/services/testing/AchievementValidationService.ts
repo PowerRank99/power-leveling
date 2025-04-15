@@ -1,5 +1,5 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { ACHIEVEMENT_IDS } from '@/constants/achievements/AchievementConstants';
 
 export class AchievementValidationService {
   private static databaseAchievements: Set<string> = new Set();
@@ -11,7 +11,17 @@ export class AchievementValidationService {
   }> {
     await this.loadDatabaseAchievements();
     
-    const stringIds = this.getAllStringIds();
+    const { data: expectedAchievements, error } = await supabase
+      .from('achievements')
+      .select('string_id')
+      .order('string_id');
+      
+    if (error) {
+      console.error('Failed to load achievements:', error);
+      return { valid: [], invalid: [], missing: [] };
+    }
+    
+    const stringIds = expectedAchievements.map(a => a.string_id);
     const results = {
       valid: [] as string[],
       invalid: [] as string[],
@@ -32,7 +42,7 @@ export class AchievementValidationService {
       }
     }
     
-    // Find achievements in DB that aren't in the constants
+    // Find achievements in DB that aren't in the expected list
     this.databaseAchievements.forEach(dbStringId => {
       if (!stringIds.includes(dbStringId)) {
         results.missing.push(dbStringId);
@@ -40,26 +50,6 @@ export class AchievementValidationService {
     });
     
     return results;
-  }
-  
-  private static getAllStringIds(): string[] {
-    const ids: string[] = [];
-    Object.values(ACHIEVEMENT_IDS).forEach(rankAchievements => {
-      Object.values(rankAchievements).forEach(categoryAchievements => {
-        categoryAchievements.forEach(achievement => {
-          if (typeof achievement === 'string') {
-            ids.push(achievement);
-          } else if (achievement && typeof achievement === 'object') {
-            // Use a simple type assertion approach that avoids TypeScript errors
-            const achievementObj = achievement as any;
-            if (achievementObj && 'id' in achievementObj && typeof achievementObj.id === 'string') {
-              ids.push(achievementObj.id);
-            }
-          }
-        });
-      });
-    });
-    return ids;
   }
   
   private static async loadDatabaseAchievements(): Promise<void> {
