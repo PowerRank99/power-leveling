@@ -113,7 +113,11 @@ export function AchievementIdDebugger() {
           <ScrollArea className="h-[200px]">
             <div className="space-y-2">
               {results.suggestions.map((suggestion, index) => (
-                <Alert key={index} variant="info" className="text-sm">
+                <Alert 
+                  key={index} 
+                  variant="default"  // Changed from "info" to "default"
+                  className="text-sm"
+                >
                   <AlertTitle>{suggestion.id}</AlertTitle>
                   <AlertDescription>
                     <strong>Issue:</strong> {suggestion.issue}<br />
@@ -128,4 +132,3 @@ export function AchievementIdDebugger() {
     </Card>
   );
 }
-
