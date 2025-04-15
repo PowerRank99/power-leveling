@@ -74,7 +74,7 @@ const AchievementMigrationTool: React.FC<AchievementMigrationToolProps> = ({
       </CardHeader>
       
       <CardContent className="space-y-4">
-        <Alert variant="warning">
+        <Alert variant="default">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Important</AlertTitle>
           <AlertDescription>
