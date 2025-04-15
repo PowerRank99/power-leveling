@@ -1,59 +1,27 @@
 
 /**
- * Utilities for converting between snake_case and camelCase
+ * Normalizes a snake_case object to camelCase
  */
-
-/**
- * Convert a snake_case object to camelCase
- */
-export function snakeToCamel<T>(obj: any): T {
-  if (obj === null || typeof obj !== 'object') {
-    return obj;
-  }
-
-  if (Array.isArray(obj)) {
-    return obj.map(snakeToCamel) as any;
-  }
-
-  return Object.keys(obj).reduce((result, key) => {
-    const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-    result[camelKey] = snakeToCamel(obj[key]);
-    return result;
-  }, {} as any);
-}
-
-/**
- * Convert a camelCase object to snake_case
- */
-export function camelToSnake<T>(obj: any): T {
-  if (obj === null || typeof obj !== 'object') {
-    return obj;
-  }
-
-  if (Array.isArray(obj)) {
-    return obj.map(camelToSnake) as any;
-  }
-
-  return Object.keys(obj).reduce((result, key) => {
-    const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-    result[snakeKey] = camelToSnake(obj[key]);
-    return result;
-  }, {} as any);
-}
-
-/**
- * Normalize a personal record object to use consistent camelCase properties
- */
-export function normalizePersonalRecord(record: any): any {
-  if (!record) return null;
+export function normalizeObjectKeys<T>(obj: any): T {
+  if (!obj || typeof obj !== 'object') return obj;
   
+  const result: any = {};
+  
+  Object.keys(obj).forEach(key => {
+    const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+    result[camelKey] = obj[key];
+  });
+  
+  return result as T;
+}
+
+/**
+ * Normalize personal record data to ensure consistent property names
+ */
+export function normalizePersonalRecord(record: any): { weight: number; previousWeight: number; exerciseId: string } {
   return {
-    id: record.id,
-    userId: record.userId || record.user_id,
-    exerciseId: record.exerciseId || record.exercise_id,
-    exerciseName: record.exerciseName || record.exercise_name,
-    weight: record.weight,
-    previousWeight: record.previousWeight || record.previous_weight,
-    recordedAt: record.recordedAt || record.recorded_at
+    weight: record.weight || 0,
+    previousWeight: record.previous_weight || record.previousWeight || 0,
+    exerciseId: record.exercise_id || record.exerciseId
   };
 }

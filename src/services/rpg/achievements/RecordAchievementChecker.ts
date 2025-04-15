@@ -14,7 +14,6 @@ import { normalizePersonalRecord } from '@/utils/caseConversions';
 export class RecordAchievementChecker extends BaseAchievementChecker implements AchievementChecker {
   /**
    * Check all achievements related to personal records
-   * Implementation of abstract method from BaseAchievementChecker (static version)
    */
   static async checkAchievements(
     userId: string,
@@ -37,30 +36,49 @@ export class RecordAchievementChecker extends BaseAchievementChecker implements 
 
         if (prError) throw prError;
 
+        // Get PR achievements from database
+        const { data: prAchievements, error: achievementsError } = await supabase
+          .from('achievements')
+          .select('id, requirements')
+          .eq('category', 'record')
+          .order('requirements->count', { ascending: true });
+          
+        if (achievementsError) throw achievementsError;
+
         // Use transaction service to ensure consistency
         await TransactionService.executeWithRetry(
           async () => {
-            // Update PR count achievement progress using optimized batch function
+            // Update PR count achievement progress
             if (prCount && prCount > 0) {
               await AchievementProgressService.updatePersonalRecordProgress(userId, prCount);
             }
 
             // Check count-based achievements
-            if (prCount && prCount >= 1) awardedAchievements.push('pr-first');
-            if (prCount && prCount >= 5) awardedAchievements.push('pr-5');
-            if (prCount && prCount >= 10) awardedAchievements.push('pr-10');
-            if (prCount && prCount >= 25) awardedAchievements.push('pr-25');
-            if (prCount && prCount >= 50) awardedAchievements.push('pr-50');
+            prAchievements.forEach(achievement => {
+              const requiredCount = achievement.requirements?.count || 0;
+              if (prCount && prCount >= requiredCount) {
+                awardedAchievements.push(achievement.id);
+              }
+            });
 
             // Check for impressive PR achievements based on weight increase percentage
             if (normalizedRecordInfo && normalizedRecordInfo.previousWeight > 0) {
               const increasePercentage = ((normalizedRecordInfo.weight - normalizedRecordInfo.previousWeight) / normalizedRecordInfo.previousWeight) * 100;
               
-              if (increasePercentage >= 10) {
-                awardedAchievements.push('pr-increase-10');
-              }
-              if (increasePercentage >= 20) {
-                awardedAchievements.push('pr-increase-20');
+              // Get percentage-based PR achievements
+              const { data: percentageAchievements } = await supabase
+                .from('achievements')
+                .select('id, requirements')
+                .eq('category', 'record_percentage')
+                .order('requirements->percentage', { ascending: true });
+              
+              if (percentageAchievements) {
+                percentageAchievements.forEach(achievement => {
+                  const requiredPercentage = achievement.requirements?.percentage || 0;
+                  if (increasePercentage >= requiredPercentage) {
+                    awardedAchievements.push(achievement.id);
+                  }
+                });
               }
             }
             
@@ -83,7 +101,6 @@ export class RecordAchievementChecker extends BaseAchievementChecker implements 
 
   /**
    * Instance method implementation of the abstract method
-   * Acts as a bridge to the static method for interface conformance
    */
   async checkAchievements(
     userId: string,

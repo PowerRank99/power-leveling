@@ -13,38 +13,31 @@ export class AchievementValidationService {
     
     const { data: expectedAchievements, error } = await supabase
       .from('achievements')
-      .select('string_id')
-      .order('string_id');
+      .select('id, string_id');
       
     if (error) {
       console.error('Failed to load achievements:', error);
       return { valid: [], invalid: [], missing: [] };
     }
     
-    const stringIds = expectedAchievements.map(a => a.string_id);
     const results = {
       valid: [] as string[],
       invalid: [] as string[],
       missing: [] as string[]
     };
     
-    for (const id of stringIds) {
-      const { data } = await supabase
-        .from('achievements')
-        .select('id')
-        .eq('string_id', id)
-        .single();
-      
-      if (data) {
-        results.valid.push(id);
+    // Validate each achievement
+    for (const achievement of expectedAchievements) {
+      if (achievement.string_id) {
+        results.valid.push(achievement.string_id);
       } else {
-        results.invalid.push(id);
+        results.invalid.push(achievement.id);
       }
     }
     
     // Find achievements in DB that aren't in the expected list
     this.databaseAchievements.forEach(dbStringId => {
-      if (!stringIds.includes(dbStringId)) {
+      if (!results.valid.includes(dbStringId)) {
         results.missing.push(dbStringId);
       }
     });
@@ -55,7 +48,8 @@ export class AchievementValidationService {
   private static async loadDatabaseAchievements(): Promise<void> {
     const { data: achievements, error } = await supabase
       .from('achievements')
-      .select('string_id');
+      .select('string_id')
+      .not('string_id', 'is', null);
       
     if (error) {
       console.error('Failed to load database achievements:', error);

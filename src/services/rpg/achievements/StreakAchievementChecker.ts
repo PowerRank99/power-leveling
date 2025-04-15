@@ -20,13 +20,14 @@ export class StreakAchievementChecker extends BaseAchievementChecker implements 
           .from('profiles')
           .select('streak')
           .eq('id', userId)
-          .single();
+          .maybeSingle();
         
         if (profileError) throw profileError;
+        if (!profile) throw new Error('Profile not found');
 
-        const currentStreak = profile?.streak || 0;
+        const currentStreak = profile.streak || 0;
 
-        // Get streak achievements from database
+        // Get streak achievements from database (ordered by required days ascending)
         const { data: streakAchievements, error: achievementsError } = await supabase
           .from('achievements')
           .select('id, requirements')

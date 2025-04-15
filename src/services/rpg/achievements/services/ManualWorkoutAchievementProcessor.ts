@@ -1,7 +1,7 @@
 
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
-import { AchievementCategory } from '@/types/achievementTypes';
-import { AsyncAchievementAdapter } from '../progress/AsyncAchievementAdapter';
+import { supabase } from '@/integrations/supabase/client';
+import { AchievementService } from '@/services/rpg/AchievementService';
 
 /**
  * Service for processing manual workout related achievements
@@ -14,18 +14,34 @@ export class ManualWorkoutAchievementProcessor {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
         // Get user manual workout count
-        // We'll just use a placeholder value for now since the WorkoutService doesn't exist
-        const manualWorkoutCount = 1; // Placeholder
+        const { count, error } = await supabase
+          .from('manual_workouts')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId);
+          
+        if (error) throw error;
         
-        // Get relevant achievements
-        const manualAchievements = await AsyncAchievementAdapter.filterAchievements(
-          a => a.category === AchievementCategory.MANUAL
-        );
+        // Get manual workout achievements from database
+        const { data: achievements, error: achievementsError } = await supabase
+          .from('achievements')
+          .select('id, requirements')
+          .eq('category', 'manual')
+          .order('requirements->count', { ascending: true });
+          
+        if (achievementsError) throw achievementsError;
         
-        // Filter achievements based on manual workout count
-        const unlockedAchievementIds = manualAchievements
-          .filter(achievement => manualWorkoutCount >= (achievement.requirements?.value || 0))
+        // Determine which achievements have been unlocked
+        const unlockedAchievementIds = achievements
+          .filter(achievement => {
+            const requiredCount = achievement.requirements?.count || 0;
+            return count && count >= requiredCount;
+          })
           .map(achievement => achievement.id);
+        
+        // Award achievements
+        if (unlockedAchievementIds.length > 0) {
+          await AchievementService.checkAndAwardAchievements(userId, unlockedAchievementIds);
+        }
         
         return unlockedAchievementIds;
       },
@@ -35,7 +51,7 @@ export class ManualWorkoutAchievementProcessor {
   }
   
   /**
-   * Check manual workout achievements (legacy method)
+   * Legacy method for backward compatibility
    */
   static async checkManualAchievements(userId: string): Promise<ServiceResponse<string[]>> {
     return this.processManualWorkout(userId);
