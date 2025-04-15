@@ -7,7 +7,7 @@ import { AchievementDefinition } from '@/constants/achievements/AchievementSchem
 export class AchievementIdMappingService {
   private static idMap: Map<string, { 
     uuid: string; 
-    achievement: Achievement | AchievementDefinition 
+    achievement: Achievement 
   }> = new Map();
   
   private static unmappedIds: Set<string> = new Set();
@@ -36,10 +36,25 @@ export class AchievementIdMappingService {
         const matchingAchievement = this.findMatchingAchievement(normalizedName);
 
         if (matchingAchievement) {
-          this.idMap.set(matchingAchievement.id, {
+          // If matchingAchievement is a string, create a minimal Achievement object
+          const achievementObj = typeof matchingAchievement === 'string' 
+            ? { 
+                id: matchingAchievement,
+                name: achievement.name,
+                description: '',
+                category: achievement.category,
+                rank: achievement.rank,
+                points: achievement.points,
+                xpReward: achievement.xp_reward,
+                iconName: achievement.icon_name,
+                requirements: { type: 'unknown', value: 0 } // Default requirements
+              } as Achievement
+            : matchingAchievement as Achievement;
+            
+          this.idMap.set(typeof matchingAchievement === 'string' ? matchingAchievement : matchingAchievement.id, {
             uuid: achievement.id,
             achievement: {
-              ...matchingAchievement,
+              ...achievementObj,
               id: achievement.id  // Override with database UUID
             }
           });
@@ -67,17 +82,18 @@ export class AchievementIdMappingService {
       .replace(/\s+/g, '');  // Remove whitespaces
   }
 
-  private static findMatchingAchievement(normalizedName: string): Achievement | undefined {
+  private static findMatchingAchievement(normalizedName: string): Achievement | string | undefined {
     // Search through all achievement constants
     for (const rank in ACHIEVEMENT_IDS) {
       for (const category in ACHIEVEMENT_IDS[rank]) {
         const achievements = ACHIEVEMENT_IDS[rank][category];
         
-        const match = achievements.find(achievement => 
-          this.normalizeId(achievement.name || achievement) === normalizedName
-        );
-
-        if (match) return match;
+        for (const achievement of achievements) {
+          const achievementToCheck = typeof achievement === 'string' ? achievement : achievement.name || '';
+          if (this.normalizeId(achievementToCheck) === normalizedName) {
+            return achievement;
+          }
+        }
       }
     }
     return undefined;
@@ -115,11 +131,30 @@ export class AchievementIdMappingService {
     
     Object.values(ACHIEVEMENT_IDS).forEach(rankAchievements => {
       Object.values(rankAchievements).forEach(categoryAchievements => {
-        ids.push(...categoryAchievements.map(a => a.id || a));
+        ids.push(...categoryAchievements.map(a => typeof a === 'string' ? a : a.id || ''));
       });
     });
     
     return ids;
+  }
+
+  // New method to get UUID from string ID
+  static getUuid(stringId: string): string | undefined {
+    this.ensureInitialized();
+    const entry = this.idMap.get(stringId);
+    return entry?.uuid;
+  }
+  
+  // New method to get all mappings
+  static getAllMappings(): Map<string, string> {
+    this.ensureInitialized();
+    const mappings = new Map<string, string>();
+    
+    this.idMap.forEach((value, key) => {
+      mappings.set(key, value.uuid);
+    });
+    
+    return mappings;
   }
 
   // Logging methods
@@ -138,9 +173,7 @@ export class AchievementIdMappingService {
   // Defensive programming methods
   static getAchievementDetails(stringId: string): { uuid?: string; achievement?: Achievement } {
     this.ensureInitialized();
-    const entry = Array.from(this.idMap.values()).find(
-      entry => entry.achievement.id === stringId
-    );
+    const entry = this.idMap.get(stringId);
     return entry || {};
   }
 

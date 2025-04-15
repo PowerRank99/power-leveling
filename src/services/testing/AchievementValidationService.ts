@@ -45,7 +45,7 @@ export class AchievementValidationService {
     const ids: string[] = [];
     Object.values(ACHIEVEMENT_IDS).forEach(rankAchievements => {
       Object.values(rankAchievements).forEach(categoryAchievements => {
-        ids.push(...categoryAchievements);
+        ids.push(...categoryAchievements.map(a => typeof a === 'string' ? a : a.id || ''));
       });
     });
     return ids;
