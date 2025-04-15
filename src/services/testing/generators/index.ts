@@ -120,21 +120,17 @@ export function formatDateForDB(date: Date): string {
   return date.toISOString();
 }
 
-// Export all generators and interfaces
-export {
-  WorkoutGenerator,
-  WorkoutGenerationOptions,
-  WorkoutSeriesOptions,
-  WorkoutWithPROptions,
-  StreakGenerator,
-  StreakPatternOptions,
-  PRGenerator, 
-  PROptions,
-  PRProgressionOptions,
-  MultiExercisePROptions,
-  ClassGenerator,
-  ClassChangeHistoryOptions,
-  ActivityGenerator,
-  ManualWorkoutOptions,
-  ActivityMixOptions
-};
+// Export all generators
+export { WorkoutGenerator, StreakGenerator, PRGenerator, ClassGenerator, ActivityGenerator };
+
+// Export types with the 'export type' syntax for isolatedModules compliance
+export type { WorkoutGenerationOptions };
+export type { WorkoutSeriesOptions };
+export type { WorkoutWithPROptions };
+export type { StreakPatternOptions };
+export type { PROptions };
+export type { PRProgressionOptions };
+export type { MultiExercisePROptions };
+export type { ClassChangeHistoryOptions };
+export type { ManualWorkoutOptions };
+export type { ActivityMixOptions };

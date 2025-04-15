@@ -522,6 +522,7 @@ export class WorkoutGenerator {
         }
       }
 
+      // Convert the result directly, bypassing ServiceResponse type
       return {
         success: true,
         workoutIds: workoutResult.workoutIds,

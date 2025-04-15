@@ -1,4 +1,3 @@
-
 /**
  * Activity Data Generator
  * Simulates manual workout submissions with different activity types
@@ -356,6 +355,7 @@ export class ActivityGenerator {
         });
       }
 
+      // Return the result directly without using ServiceResponse
       return {
         success: true,
         activityIds

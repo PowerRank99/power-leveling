@@ -1,4 +1,3 @@
-
 /**
  * Personal Record Data Generator
  * Simulates personal records for exercises
@@ -309,6 +308,7 @@ export class PRGenerator {
         });
       }
 
+      // Return the result directly without using ServiceResponse
       return {
         success: true,
         prIds

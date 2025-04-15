@@ -1,4 +1,3 @@
-
 /**
  * Streak Data Generator
  * Simulates workout streaks by creating properly-dated workout records
@@ -49,28 +48,33 @@ export class StreakGenerator {
   }
 
   /**
-   * Generate a perfect streak of consecutive days
-   * @param userId User ID to generate streak for
+   * Generate a single workout with configurable parameters
+   * @param userId User ID to generate workout for
    * @param days Number of consecutive days to generate
    * @param options Additional options
    * @returns Promise with generation result
    * 
    * @example
    * ```typescript
-   * // Generate a 7-day perfect streak
-   * const result = await streakGenerator.generateStreak('user-123', 7);
+   * // Generate a basic strength workout
+   * const result = await workoutGenerator.generateWorkout('user-123', {
+   *   workoutType: WorkoutType.STRENGTH,
+   *   exerciseCount: 3,
+   *   setsPerExercise: 3
+   * });
    * 
-   * // Generate a 5-day streak with specific starting date
-   * const result = await streakGenerator.generateStreak('user-123', 5, {
-   *   startDate: new Date('2023-05-01'),
-   *   workoutType: WorkoutType.MIXED
+   * // Generate a cardio workout for a specific date
+   * const result = await workoutGenerator.generateWorkout('user-123', {
+   *   workoutType: WorkoutType.CARDIO,
+   *   workoutDate: new Date('2023-05-15'),
+   *   durationMinutes: 45
    * });
    * ```
    */
   async generateStreak(
     userId: string,
     days: number,
-    options: Omit<StreakPatternOptions, 'pattern'> = {}
+    options: Omit<StreakPatternOptions, 'pattern'> = { startDate: new Date() }
   ): Promise<StreakGenerationResult> {
     if (!userId) {
       return { success: false, error: 'User ID is required' };

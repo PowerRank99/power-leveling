@@ -6,6 +6,7 @@
 import { createTestDataGenerators, TestDataGenerators } from './index';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { CharacterClass } from './ClassGenerator';
 
 /**
  * Service for centralized access to all test data generators
@@ -127,7 +128,7 @@ export class TestDataGeneratorService {
       // Generate class changes if requested
       if (includeClasses) {
         await this.generators.class.simulateClassChangeHistory(userId, {
-          sequence: ['Guerreiro', 'Monge', 'Ninja'],
+          sequence: [CharacterClass.GUERREIRO, CharacterClass.MONGE, CharacterClass.NINJA],
           daysBetweenChanges: 20,
           bypassCooldown: true,
           testDataTag: 'standard-test-data',
