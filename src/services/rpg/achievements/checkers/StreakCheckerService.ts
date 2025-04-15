@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { BaseAchievementChecker } from './BaseAchievementChecker';
@@ -22,9 +21,10 @@ export class StreakCheckerService extends BaseAchievementChecker {
           .from('profiles')
           .select('streak')
           .eq('id', userId)
-          .single();
+          .maybeSingle();
           
         if (profileError) throw profileError;
+        if (!profile) throw new Error('Profile not found');
 
         // Get streak achievements from database
         const { data: streakAchievements, error: achievementsError } = await supabase
@@ -55,7 +55,7 @@ export class StreakCheckerService extends BaseAchievementChecker {
                 userId,
                 'streak-achievement',
                 profile.streak,
-                profile.streak + 5, // Target is slightly higher to show progress
+                profile.streak + 5,
                 false
               );
             }

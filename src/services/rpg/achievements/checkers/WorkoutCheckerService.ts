@@ -1,6 +1,5 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceResponse, ErrorHandlingService, createSuccessResponse } from '@/services/common/ErrorHandlingService';
+import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { BaseAchievementChecker } from './BaseAchievementChecker';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { TransactionService } from '@/services/common/TransactionService';
@@ -22,9 +21,10 @@ export class WorkoutCheckerService extends BaseAchievementChecker {
           .from('profiles')
           .select('workouts_count, streak')
           .eq('id', userId)
-          .single();
+          .maybeSingle();
           
         if (profileError) throw profileError;
+        if (!profile) throw new Error('Profile not found');
         
         // Get workout achievements from database
         const { data: workoutAchievements, error: achievementsError } = await supabase
@@ -53,10 +53,10 @@ export class WorkoutCheckerService extends BaseAchievementChecker {
             if (profile.workouts_count > 0) {
               await AchievementService.updateAchievementProgress(
                 userId,
-                'workout-count-achievement',
-                profile.workouts_count,
-                Math.max(profile.workouts_count + 5, 10), // Target is at least 10 or current+5
-                false
+                'workout-count-achievement', // achievementId
+                profile.workouts_count,      // currentValue
+                Math.max(profile.workouts_count + 5, 10), // targetValue
+                false                        // isComplete
               );
             }
             
