@@ -108,11 +108,15 @@ export class AchievementIdMappingService {
 
   private static getAllConstantIds(): string[] {
     const ids: string[] = [];
+    
+    // Iterate through the nested structure of ACHIEVEMENT_IDS
     Object.values(ACHIEVEMENT_IDS).forEach(rankAchievements => {
       Object.values(rankAchievements).forEach(categoryAchievements => {
-        ids.push(...categoryAchievements.map(a => a.id));
+        // Changed from .map(a => a.id) to .map(a => a)
+        ids.push(...categoryAchievements);
       });
     });
+    
     return ids;
   }
 
