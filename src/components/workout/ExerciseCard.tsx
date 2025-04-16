@@ -49,7 +49,7 @@ const ExerciseCard: React.FC<ExerciseCardProps> = memo(({
       case 'Calistenia': return 'bg-achievement-15 text-achievement border-achievement-30';
       case 'Cardio': return 'bg-valor-15 text-valor border-valor-30';
       case 'Esportes': return 'bg-arcane-15 text-arcane-60 border-arcane-30';
-      case 'Flexibilidade & Mobilidade': return 'bg-achievement-15 text-achievement-60 border-achievement-30';
+      case 'Mobilidade & Flexibilidade': return 'bg-achievement-15 text-achievement-60 border-achievement-30';
       default: return 'bg-arcane-15 text-arcane border-arcane-30';
     }
   };

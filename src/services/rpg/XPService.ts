@@ -14,7 +14,6 @@ export class XPService {
   static readonly PR_BONUS_XP = XPCalculationService.PR_BONUS_XP;
   static readonly BASE_EXERCISE_XP = XPCalculationService.BASE_EXERCISE_XP;
   static readonly BASE_SET_XP = XPCalculationService.BASE_SET_XP;
-  static readonly DIFFICULTY_MULTIPLIERS = XPCalculationService.DIFFICULTY_MULTIPLIERS;
   static readonly TIME_XP_TIERS = XPCalculationService.TIME_XP_TIERS;
   
   // Power Day constants (2x/week can exceed 300 XP cap up to 500 XP)
@@ -33,10 +32,9 @@ export class XPService {
       difficulty?: 'iniciante' | 'intermediario' | 'avancado'
     },
     userClass?: string | null,
-    streak: number = 0,
-    difficulty: 'iniciante' | 'intermediario' | 'avancado' = 'intermediario'
+    streak: number = 0
   ): number {
-    const result = XPCalculationService.calculateWorkoutXP(workout, userClass, streak, difficulty);
+    const result = XPCalculationService.calculateWorkoutXP(workout, userClass, streak);
     return result.totalXP; // Return just the totalXP number instead of the full object
   }
   

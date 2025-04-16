@@ -27,7 +27,7 @@ const ExerciseEditForm: React.FC<ExerciseEditFormProps> = ({
     'Calistenia',
     'Cardio',
     'Esportes',
-    'Flexibilidade & Mobilidade'
+    'Mobilidade & Flexibilidade'
   ];
 
   const difficultyLevels: DifficultyLevel[] = [
