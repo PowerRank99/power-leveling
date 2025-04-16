@@ -1,8 +1,7 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { XP_CONSTANTS } from './constants/xpConstants';
 import { XPCalculationService } from './XPCalculationService';
-import { PersonalRecord, PersonalRecordService } from './PersonalRecordService';
+import { PersonalRecordService, PersonalRecord } from './PersonalRecordService';
 import { PowerDayService } from './bonus/PowerDayService';
 import { CompletionBonusService } from './bonus/CompletionBonusService';
 import { PassiveSkillService } from './bonus/PassiveSkillService';
@@ -88,11 +87,15 @@ export class XPBonusService {
         
         // Record which exercises had PRs (for weekly cooldown)
         for (const record of personalRecords) {
-          await PersonalRecordService.recordPersonalRecord(
-            userId, 
-            record.exerciseId, 
-            record.weight, 
-            record.previousWeight
+          // Use supabase RPC to record the personal record
+          await supabase.rpc(
+            'insert_personal_record',
+            {
+              p_user_id: userId,
+              p_exercise_id: record.exerciseId,
+              p_weight: record.weight,
+              p_previous_weight: record.previousWeight
+            }
           );
         }
       }
