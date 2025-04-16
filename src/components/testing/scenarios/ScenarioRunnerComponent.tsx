@@ -1,738 +1,354 @@
+
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
-import { Slider } from '@/components/ui/slider';
-import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { 
-  Play, 
-  Pause, 
-  StopCircle, 
-  Download, 
-  CheckCircle, 
-  XCircle, 
-  Clock,
-  RotateCw,
-  Settings,
-  ChevronDown,
-  ChevronUp,
-  Timer,
-  AlertTriangle,
-  Trash2,
-  BarChart,
-  Info
-} from 'lucide-react';
+import { ScenarioRunner, ScenarioAction, ScenarioResult, ScenarioProgress, TestScenario } from '@/services/testing/scenarios';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-import { 
-  scenarioRunner, 
-  ScenarioOptions,
-  SpeedOption,
-  ScenarioProgress, 
-  ScenarioResult,
-  ScenarioAction,
-  TestScenario
-} from '@/services/testing/scenarios';
-import { useAuth } from '@/hooks/useAuth';
-import { AchievementScenarioAdapter } from '@/services/testing/adapters/AchievementScenarioAdapter';
-import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
-import { Achievement } from '@/types/achievementTypes';
-
-interface ScenarioRunnerProps {
-  userId?: string;
+interface ScenarioRunnerComponentProps {
+  userId: string;
+  scenarioRunner: ScenarioRunner;
+  onScenarioComplete?: (result: ScenarioResult) => void;
 }
 
-interface ExecutionTab {
-  id: string;
-  name: string;
-  icon: React.ReactNode;
-  component: React.ReactNode;
-}
-
-const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
-  const { user } = useAuth();
+export function ScenarioRunnerComponent({
+  userId,
+  scenarioRunner,
+  onScenarioComplete
+}: ScenarioRunnerComponentProps) {
   const [selectedScenario, setSelectedScenario] = useState<string | null>(null);
-  const [scenarioOptions, setScenarioOptions] = useState<Record<string, any>>({});
+  const [scenarios, setScenarios] = useState<TestScenario[]>([]);
+  const [isRunning, setIsRunning] = useState(false);
+  const [result, setResult] = useState<ScenarioResult | null>(null);
+  const [actions, setActions] = useState<ScenarioAction[]>([]);
   const [progress, setProgress] = useState<ScenarioProgress>({
-    percentage: 0,
+    isRunning: false,
+    isPaused: false,
     totalActions: 0,
     completedActions: 0,
-    isRunning: false,
-    isPaused: false
-  });
-  const [result, setResult] = useState<ScenarioResult | null>(null);
-  const [isConfigOpen, setIsConfigOpen] = useState(true);
-  const [activeTab, setActiveTab] = useState('execution');
-  const [executionLog, setExecutionLog] = useState<ScenarioAction[]>([]);
-  const [activeOptions, setActiveOptions] = useState<Partial<ScenarioOptions>>({
-    speed: 'normal' as SpeedOption,
-    silent: false,
-    autoCleanup: true
+    percentage: 0,
+    currentAction: undefined
   });
 
-  const targetUserId = userId || user?.id || '';
-
-  const scenarios = scenarioRunner.getScenarios();
-
   useEffect(() => {
-    if (scenarios.length > 0 && !selectedScenario) {
-      setSelectedScenario(scenarios[0].id);
-      loadScenarioOptions(scenarios[0].id);
-    }
-  }, [scenarios, selectedScenario]);
-
-  useEffect(() => {
-    scenarioRunner.setProgressCallback(handleProgressUpdate);
-    return () => {
-      scenarioRunner.setProgressCallback(() => {});
-    };
-  }, []);
-
-  const loadScenarioOptions = (scenarioId: string) => {
-    const scenario = scenarioRunner.getScenario(scenarioId);
-    if (scenario) {
-      const options = scenario.getConfigurationOptions();
-      setScenarioOptions(options);
-      
-      const initialOptions: Record<string, any> = {};
-      Object.entries(options).forEach(([key, config]) => {
-        initialOptions[key] = config.default;
-      });
-      
-      setActiveOptions(prev => ({
-        ...prev,
-        ...initialOptions
-      }));
-    }
-  };
-
-  const handleScenarioChange = (scenarioId: string) => {
-    setSelectedScenario(scenarioId);
-    setResult(null);
-    setExecutionLog([]);
-    setProgress({
-      percentage: 0,
-      totalActions: 0,
-      completedActions: 0,
-      isRunning: false,
-      isPaused: false
-    });
-    loadScenarioOptions(scenarioId);
-  };
-
-  const handleOptionChange = (key: string, value: any) => {
-    setActiveOptions(prev => ({
-      ...prev,
-      [key]: value
-    }));
-  };
-
-  const handleProgressUpdate = (newProgress: ScenarioProgress) => {
-    setProgress(newProgress);
+    const availableScenarios = scenarioRunner.getAvailableScenarios();
+    setScenarios(availableScenarios);
     
-    if (newProgress.currentAction && newProgress.completedActions > executionLog.length) {
-      setExecutionLog(prev => [
-        ...prev,
-        { 
-          type: 'PROGRESS_UPDATE', 
-          description: newProgress.currentAction || 'Running scenario', 
-          timestamp: new Date(),
-          success: true,
-          status: 'completed'
-        }
-      ]);
+    if (availableScenarios.length > 0) {
+      setSelectedScenario(availableScenarios[0].id);
     }
-  };
+  }, [scenarioRunner]);
 
-  const runScenario = async () => {
-    if (!selectedScenario || !targetUserId) {
-      toast.error('Cannot run scenario', {
-        description: !selectedScenario ? 'No scenario selected' : 'No user ID provided'
-      });
+  const handleRunScenario = async () => {
+    if (!selectedScenario || !userId) {
+      toast.error('Please select a scenario and ensure user ID is provided');
       return;
     }
 
     try {
+      setIsRunning(true);
+      setActions([]);
       setResult(null);
-      setExecutionLog([]);
       setProgress({
-        percentage: 0,
+        isRunning: true,
+        isPaused: false,
         totalActions: 0,
         completedActions: 0,
-        isRunning: true,
-        isPaused: false
+        percentage: 0,
+        currentAction: 'Starting scenario...'
       });
+
+      const scenarioResult = await scenarioRunner.runScenario(selectedScenario, userId);
       
-      const result = await scenarioRunner.runScenario(
-        selectedScenario,
-        targetUserId,
-        activeOptions
-      );
-      
-      setResult(result);
-      if (result.actions) {
-        setExecutionLog(result.actions);
-      }
-      
-      setProgress(prev => ({
-        ...prev,
+      setResult(scenarioResult);
+      setActions(scenarioResult.actions || []);
+      setProgress({
         isRunning: false,
         isPaused: false,
-        percentage: 100
-      }));
-      
-      if (result.success) {
-        toast.success('Scenario completed successfully', {
-          description: `Unlocked ${result.achievementsUnlocked.length} achievements`
-        });
-      } else {
-        toast.error('Scenario failed', {
-          description: result.error || 'Unknown error'
-        });
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      toast.error('Error running scenario', {
-        description: errorMessage
+        totalActions: scenarioResult.actions.length,
+        completedActions: scenarioResult.actions.length,
+        percentage: 100,
+        currentAction: undefined
       });
       
-      setProgress(prev => ({
-        ...prev,
+      if (scenarioResult.success) {
+        toast.success(`Scenario completed: ${scenarioResult.message || 'Success!'}`);
+        
+        if (onScenarioComplete) {
+          onScenarioComplete(scenarioResult);
+        }
+      } else {
+        toast.error(`Scenario failed: ${scenarioResult.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error running scenario:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      setResult({
+        success: false,
+        error: errorMessage,
+        actions: [],
+        achievementsUnlocked: [],
+        duration: 0
+      });
+      
+      setProgress({
         isRunning: false,
-        isPaused: false
-      }));
-    }
-  };
-
-  const pauseExecution = () => {
-    if (progress.isRunning && !progress.isPaused) {
-      scenarioRunner.pauseCurrentScenario();
-    }
-  };
-
-  const resumeExecution = () => {
-    if (progress.isRunning && progress.isPaused) {
-      scenarioRunner.resumeCurrentScenario();
-    }
-  };
-
-  const stopExecution = () => {
-    toast.info('Stopping scenario execution is not yet implemented', {
-      description: 'Please wait for the scenario to complete'
-    });
-  };
-
-  const downloadResults = () => {
-    if (!result) return;
-    
-    const dataStr = JSON.stringify(result, null, 2);
-    const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
-    
-    const exportFileDefaultName = `scenario-result-${selectedScenario}-${new Date().toISOString()}.json`;
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-  };
-
-  const cleanupTestData = async () => {
-    if (!selectedScenario || !targetUserId) return;
-    
-    const scenario = scenarioRunner.getScenario(selectedScenario);
-    if (!scenario) return;
-    
-    try {
-      toast.info('Cleaning up test data', {
-        description: 'This may take a moment'
+        isPaused: false,
+        totalActions: 0,
+        completedActions: 0,
+        percentage: 0,
+        currentAction: undefined
       });
       
-      const success = await scenario.cleanup();
-      
-      if (success) {
-        toast.success('Test data cleaned up successfully');
-      } else {
-        toast.error('Failed to clean up all test data');
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      toast.error('Error cleaning up test data', {
-        description: errorMessage
-      });
+      toast.error(`Error running scenario: ${errorMessage}`);
+    } finally {
+      setIsRunning(false);
     }
   };
 
-  const currentScenario = selectedScenario ? scenarioRunner.getScenario(selectedScenario) : null;
+  const handlePauseScenario = () => {
+    // Implementation for pausing the scenario
+    setProgress(prev => ({
+      ...prev,
+      isPaused: !prev.isPaused
+    }));
+  };
 
-  const ConfigPanel = (
-    <Card className="mb-4">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Configuration</CardTitle>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setIsConfigOpen(!isConfigOpen)}
-          >
-            {isConfigOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          </Button>
-        </div>
-        <CardDescription>
-          Configure the scenario parameters
-        </CardDescription>
-      </CardHeader>
-      
-      {isConfigOpen && (
-        <CardContent>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="scenario-select">Scenario</Label>
-              <Select
-                value={selectedScenario || ''}
-                onValueChange={handleScenarioChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a scenario" />
-                </SelectTrigger>
-                <SelectContent>
-                  {scenarios.map(scenario => (
-                    <SelectItem key={scenario.id} value={scenario.id}>
-                      {scenario.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              
-              {currentScenario && (
-                <p className="text-sm text-text-secondary mt-1">
-                  {currentScenario.description}
-                </p>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium">Global Options</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <Label htmlFor="speed-slider">Execution Speed</Label>
-                  <div className="flex items-center space-x-2">
-                    <Timer className="h-4 w-4 text-text-secondary" />
-                    <Select
-                      value={String(activeOptions.speed || 'normal')}
-                      onValueChange={(value) => handleOptionChange('speed', value)}
-                    >
-                      <SelectTrigger id="speed-select">
-                        <SelectValue placeholder="Speed" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="slow">Slow (Realistic)</SelectItem>
-                        <SelectItem value="normal">Normal</SelectItem>
-                        <SelectItem value="fast">Fast (Quick)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <RotateCw className="h-4 w-4 text-text-secondary" />
-                  </div>
-                  <p className="text-xs text-text-tertiary">
-                    {activeOptions.speed === 'slow' ? 'Slow (realistic timing)' :
-                     activeOptions.speed === 'fast' ? 'Fast (minimal delays)' : 'Medium'}
-                  </p>
-                </div>
-                
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="auto-cleanup"
-                      checked={activeOptions.autoCleanup}
-                      onCheckedChange={(checked) => handleOptionChange('autoCleanup', checked)}
-                    />
-                    <Label htmlFor="auto-cleanup">Auto Cleanup</Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2 mt-2">
-                    <Switch
-                      id="silent-mode"
-                      checked={activeOptions.silent}
-                      onCheckedChange={(checked) => handleOptionChange('silent', checked)}
-                    />
-                    <Label htmlFor="silent-mode">Silent Mode</Label>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {currentScenario && Object.keys(scenarioOptions).length > 0 && (
-              <div className="space-y-2">
-                <Separator />
-                <h3 className="text-sm font-medium">Scenario Options</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {Object.entries(scenarioOptions).map(([key, config]) => {
-                    if (['speed', 'silent', 'autoCleanup'].includes(key)) {
-                      return null;
-                    }
-                    
-                    switch (config.type) {
-                      case 'number':
-                        return (
-                          <div key={key} className="space-y-1">
-                            <Label htmlFor={`option-${key}`}>{config.label}</Label>
-                            <Input
-                              id={`option-${key}`}
-                              type="number"
-                              min={config.min}
-                              max={config.max}
-                              value={activeOptions[key] || config.default}
-                              onChange={(e) => handleOptionChange(key, Number(e.target.value))}
-                            />
-                            {config.description && (
-                              <p className="text-xs text-text-tertiary">{config.description}</p>
-                            )}
-                          </div>
-                        );
-                        
-                      case 'boolean':
-                        return (
-                          <div key={key} className="space-y-1">
-                            <div className="flex items-center space-x-2">
-                              <Switch
-                                id={`option-${key}`}
-                                checked={activeOptions[key] || config.default}
-                                onCheckedChange={(checked) => handleOptionChange(key, checked)}
-                              />
-                              <Label htmlFor={`option-${key}`}>{config.label}</Label>
-                            </div>
-                            {config.description && (
-                              <p className="text-xs text-text-tertiary">{config.description}</p>
-                            )}
-                          </div>
-                        );
-                        
-                      case 'select':
-                        return (
-                          <div key={key} className="space-y-1">
-                            <Label htmlFor={`option-${key}`}>{config.label}</Label>
-                            <Select
-                              value={String(activeOptions[key] || config.default)}
-                              onValueChange={(value) => handleOptionChange(key, value)}
-                            >
-                              <SelectTrigger id={`option-${key}`}>
-                                <SelectValue placeholder="Select option" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {config.options.map((option: any) => {
-                                  const value = typeof option === 'object' ? option.value : option;
-                                  const label = typeof option === 'object' ? option.label : option;
-                                  return (
-                                    <SelectItem key={value} value={String(value)}>
-                                      {label}
-                                    </SelectItem>
-                                  );
-                                })}
-                              </SelectContent>
-                            </Select>
-                            {config.description && (
-                              <p className="text-xs text-text-tertiary">{config.description}</p>
-                            )}
-                          </div>
-                        );
-                        
-                      case 'string':
-                        return (
-                          <div key={key} className="space-y-1">
-                            <Label htmlFor={`option-${key}`}>{config.label}</Label>
-                            <Input
-                              id={`option-${key}`}
-                              value={activeOptions[key] || config.default}
-                              onChange={(e) => handleOptionChange(key, e.target.value)}
-                            />
-                            {config.description && (
-                              <p className="text-xs text-text-tertiary">{config.description}</p>
-                            )}
-                          </div>
-                        );
-                        
-                      case 'multiselect':
-                        return (
-                          <div key={key} className="space-y-1">
-                            <Label htmlFor={`option-${key}`}>{config.label}</Label>
-                            <p className="text-xs text-text-tertiary">
-                              Multi-select not implemented yet. Using defaults.
-                            </p>
-                          </div>
-                        );
-                        
-                      default:
-                        return null;
-                    }
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      )}
-    </Card>
-  );
-
-  const ProgressIndicator = (
-    <div className="space-y-2 mb-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <h3 className="text-sm font-medium">Progress</h3>
-          {progress.isRunning && (
-            <Badge variant={progress.isPaused ? "outline" : "default"}>
-              {progress.isPaused ? 'Paused' : 'Running'}
-            </Badge>
-          )}
-        </div>
-        <div className="text-sm text-text-secondary">
-          {progress.completedActions} / {progress.totalActions > 0 ? progress.totalActions : '?'} actions
-        </div>
-      </div>
-      
-      <div className="h-2 w-full bg-midnight-card rounded-full overflow-hidden">
-        <div 
-          className="h-full bg-arcane-gradient rounded-full transition-all duration-300 ease-in-out"
-          style={{ width: `${progress.percentage}%` }}
-        />
-      </div>
-      
-      {progress.currentAction && (
-        <p className="text-sm text-text-secondary italic">
-          {progress.currentAction}
-        </p>
-      )}
-      
-      <div className="flex items-center space-x-2">
-        {progress.isRunning ? (
-          <>
-            {progress.isPaused ? (
-              <Button size="sm" variant="outline" onClick={resumeExecution}>
-                <Play className="h-4 w-4 mr-1" />
-                Resume
-              </Button>
-            ) : (
-              <Button size="sm" variant="outline" onClick={pauseExecution}>
-                <Pause className="h-4 w-4 mr-1" />
-                Pause
-              </Button>
-            )}
-            <Button size="sm" variant="destructive" onClick={stopExecution}>
-              <StopCircle className="h-4 w-4 mr-1" />
-              Stop
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button size="sm" variant="arcane" onClick={runScenario} disabled={!currentScenario || !targetUserId}>
-              <Play className="h-4 w-4 mr-1" />
-              Run Scenario
-            </Button>
-            
-            {result && (
-              <>
-                <Button size="sm" variant="outline" onClick={downloadResults}>
-                  <Download className="h-4 w-4 mr-1" />
-                  Download Results
-                </Button>
-                
-                <Button size="sm" variant="outline" onClick={cleanupTestData}>
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Clean Up Data
-                </Button>
-              </>
-            )}
-          </>
-        )}
-      </div>
-    </div>
-  );
-
-  const ExecutionLog = (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg">Execution Log</CardTitle>
-        <CardDescription>
-          Real-time log of scenario actions
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[400px] pr-4">
-          {executionLog.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-[200px] text-text-tertiary">
-              <Info className="h-8 w-8 mb-2 opacity-50" />
-              <p>Run a scenario to see the execution log</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {executionLog.map((action, index) => (
-                <div 
-                  key={index} 
-                  className={`p-2 rounded-md text-sm border ${
-                    action.success ? 'border-divider/30 bg-midnight-card/50' : 
-                    'border-valor-30 bg-valor-15'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      {action.success ? (
-                        <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      ) : (
-                        <XCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
-                      )}
-                      <span className="font-medium">{action.type}</span>
-                    </div>
-                    <div className="text-xs text-text-tertiary whitespace-nowrap">
-                      {action.timestamp ? new Date(action.timestamp).toLocaleTimeString() : ''}
-                    </div>
-                  </div>
-                  <p className="mt-1 text-text-secondary">
-                    {action.description}
-                  </p>
-                  {action.error && (
-                    <p className="mt-1 text-red-500 text-xs">
-                      {typeof action.error === 'string' ? action.error : action.error.message}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </ScrollArea>
-      </CardContent>
-    </Card>
-  );
-
-  const ResultsSummary = (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg">Results Summary</CardTitle>
-        <CardDescription>
-          Summary of scenario execution results
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {!result ? (
-          <div className="flex flex-col items-center justify-center h-[200px] text-text-tertiary">
-            <BarChart className="h-8 w-8 mb-2 opacity-50" />
-            <p>Run a scenario to see results</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              {result.success ? (
-                <Badge className="bg-green-600">Success</Badge>
-              ) : (
-                <Badge variant="destructive">Failed</Badge>
-              )}
-              <span className="text-sm">
-                Execution time: {(result.executionTimeMs / 1000).toFixed(2)}s
-              </span>
-            </div>
-            
-            {result.error && (
-              <div className="p-2 rounded-md border border-red-400 bg-red-400/10 text-sm">
-                <div className="flex items-center space-x-2">
-                  <AlertTriangle className="h-4 w-4 text-red-500" />
-                  <span>{typeof result.error === 'string' ? result.error : result.error.message}</span>
-                </div>
-              </div>
-            )}
-            
-            <div>
-              <h3 className="text-sm font-medium mb-2">Achievements Unlocked: {result.achievementsUnlocked.length}</h3>
-              
-              {result.achievementsUnlocked.length === 0 ? (
-                <p className="text-sm text-text-tertiary">No achievements were unlocked</p>
-              ) : (
-                <ScrollArea className="h-[200px] pr-4">
-                  <div className="space-y-1">
-                    {result.achievementsUnlocked.map((id, index) => {
-                      const achievementId = typeof id === 'string' ? id : id.id || 'unknown';
-                      const achievementName = achievement?.name || (typeof id === 'string' ? id : id.id || 'Unknown Achievement');
-                      
-                      return (
-                        <div key={index} className="flex items-center space-x-2 p-1 text-sm">
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                          <span className="font-medium">{achievementName}</span>
-                          {achievement?.rank && (
-                            <Badge variant="outline" className="ml-auto">
-                              Rank {achievement.rank}
-                            </Badge>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
-              )}
-            </div>
-            
-            {result.completionPercentage !== undefined && (
-              <div>
-                <h3 className="text-sm font-medium mb-2">Completion Rate</h3>
-                <div className="h-2 w-full bg-midnight-card rounded-full overflow-hidden mb-1">
-                  <div 
-                    className="h-full bg-arcane-gradient rounded-full"
-                    style={{ width: `${result.completionPercentage}%` }}
-                  />
-                </div>
-                <p className="text-sm text-text-secondary">
-                  {result.unlockedCount} of {result.targetCount} achievements ({result.completionPercentage.toFixed(1)}%)
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-
-  const resultTabs: ExecutionTab[] = [
-    {
-      id: 'execution',
-      name: 'Execution Log',
-      icon: <Clock className="h-4 w-4" />,
-      component: ExecutionLog
-    },
-    {
-      id: 'results',
-      name: 'Results',
-      icon: <BarChart className="h-4 w-4" />,
-      component: ResultsSummary
+  const getActionStatusColor = (status: string) => {
+    switch (status) {
+      case 'success':
+        return 'text-green-500';
+      case 'error':
+        return 'text-red-500';
+      case 'warning':
+        return 'text-yellow-500';
+      case 'info':
+        return 'text-blue-500';
+      default:
+        return 'text-text-secondary';
     }
-  ];
+  };
+
+  const getProgressPercentage = () => {
+    if (!progress.totalActions) return 0;
+    return Math.round((progress.completedActions / progress.totalActions) * 100);
+  };
+
+  const selectedScenarioObj = scenarios.find(s => s.id === selectedScenario);
 
   return (
     <div className="space-y-4">
-      {ConfigPanel}
-      
-      {ProgressIndicator}
-      
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-4 bg-midnight-card/80 border border-divider/30">
-          {resultTabs.map(tab => (
-            <TabsTrigger key={tab.id} value={tab.id} className="flex items-center">
-              {tab.icon}
-              <span className="ml-2">{tab.name}</span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        
-        {resultTabs.map(tab => (
-          <TabsContent key={tab.id} value={tab.id}>
-            {tab.component}
-          </TabsContent>
-        ))}
-      </Tabs>
+      <Card className="p-4 bg-midnight-card border-divider/30">
+        <h3 className="text-lg font-medium mb-4">Run Achievement Scenario</h3>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-text-secondary mb-2">Select Scenario</label>
+            <select
+              className="w-full p-2 rounded bg-midnight-elevated border border-divider/30"
+              value={selectedScenario || ''}
+              onChange={(e) => setSelectedScenario(e.target.value)}
+              disabled={isRunning}
+            >
+              {scenarios.map((scenario) => (
+                <option key={scenario.id} value={scenario.id}>
+                  {scenario.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {selectedScenarioObj && (
+            <div className="text-text-secondary">
+              <p>{selectedScenarioObj.description}</p>
+              <div className="mt-2 flex flex-wrap gap-1">
+                {selectedScenarioObj.tags.map((tag) => (
+                  <span key={tag} className="px-2 py-1 bg-arcane-15 text-arcane rounded-full text-xs">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-between items-center">
+            <Button 
+              onClick={handleRunScenario} 
+              disabled={isRunning || !selectedScenario}
+              variant="default"
+            >
+              Run Scenario
+            </Button>
+            
+            {isRunning && (
+              <Button 
+                onClick={handlePauseScenario} 
+                variant="outline"
+              >
+                {progress.isPaused ? 'Resume' : 'Pause'}
+              </Button>
+            )}
+          </div>
+        </div>
+      </Card>
+
+      {(isRunning || result) && (
+        <Card className="p-4 bg-midnight-card border-divider/30">
+          <Tabs defaultValue="progress">
+            <TabsList className="mb-4">
+              <TabsTrigger value="progress">Progress</TabsTrigger>
+              <TabsTrigger value="actions">Actions</TabsTrigger>
+              <TabsTrigger value="achievements">Achievements</TabsTrigger>
+              <TabsTrigger value="result">Result</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="progress">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-text-secondary">Status</span>
+                    <span className={isRunning ? 'text-green-500' : 'text-text-primary'}>
+                      {isRunning ? (progress.isPaused ? 'Paused' : 'Running') : 'Completed'}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <span className="text-text-secondary">Actions</span>
+                    <span className="text-text-primary">
+                      {progress.completedActions} / {progress.totalActions || '?'}
+                    </span>
+                  </div>
+                  
+                  {result && (
+                    <div className="flex justify-between">
+                      <span className="text-text-secondary">Duration</span>
+                      <span className="text-text-primary">{result.duration}ms</span>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Progress value={progress.percentage} className="h-2" />
+                  <div className="text-center text-text-secondary text-sm">
+                    {progress.currentAction || 'Waiting to start...'}
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="actions">
+              <ScrollArea className="h-60 rounded-md">
+                <div className="space-y-2">
+                  {actions.length === 0 ? (
+                    <div className="text-center text-text-secondary py-4">
+                      No actions recorded yet
+                    </div>
+                  ) : (
+                    actions.map((action, index) => (
+                      <div 
+                        key={index} 
+                        className="p-2 border-b border-divider/20 last:border-0"
+                      >
+                        <div className="flex justify-between">
+                          <span className={getActionStatusColor(action.status)}>
+                            {action.type}
+                          </span>
+                          <span className="text-text-tertiary text-xs">
+                            {action.timestamp.toLocaleTimeString()}
+                          </span>
+                        </div>
+                        <p className="text-text-secondary text-sm">{action.description}</p>
+                        {action.details && (
+                          <pre className="mt-1 text-xs bg-midnight-elevated rounded p-1 overflow-x-auto">
+                            {typeof action.details === 'string' 
+                              ? action.details 
+                              : JSON.stringify(action.details, null, 2)}
+                          </pre>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="achievements">
+              <ScrollArea className="h-60 rounded-md">
+                {result && result.achievementsUnlocked && result.achievementsUnlocked.length > 0 ? (
+                  <div className="space-y-2">
+                    {result.achievementsUnlocked.map((achievementId, index) => (
+                      <div 
+                        key={index} 
+                        className="p-2 bg-midnight-elevated rounded-md"
+                      >
+                        <div className="font-medium">{achievementId}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center text-text-secondary py-4">
+                    No achievements unlocked
+                  </div>
+                )}
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="result">
+              {result ? (
+                <div className="space-y-4">
+                  <div 
+                    className={`p-3 rounded-md ${
+                      result.success ? 'bg-green-900/20 text-green-400' : 'bg-red-900/20 text-red-400'
+                    }`}
+                  >
+                    <div className="font-medium">
+                      {result.success ? 'Success' : 'Failed'}
+                    </div>
+                    <div>
+                      {result.message || (result.error && String(result.error))}
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-text-secondary">Duration</span>
+                      <span className="text-text-primary">{result.duration}ms</span>
+                    </div>
+                    
+                    <div className="flex justify-between">
+                      <span className="text-text-secondary">Actions</span>
+                      <span className="text-text-primary">{result.actions.length}</span>
+                    </div>
+                    
+                    <div className="flex justify-between">
+                      <span className="text-text-secondary">Achievements</span>
+                      <span className="text-text-primary">{result.achievementsUnlocked.length}</span>
+                    </div>
+                  </div>
+                  
+                  {result.raw && (
+                    <div>
+                      <div className="text-text-secondary mb-1">Raw Data</div>
+                      <pre className="text-xs bg-midnight-elevated rounded p-2 overflow-x-auto">
+                        {JSON.stringify(result.raw, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center text-text-secondary py-4">
+                  No result available
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </Card>
+      )}
     </div>
   );
-};
-
-export default ScenarioRunnerComponent;
+}

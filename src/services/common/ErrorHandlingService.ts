@@ -1,120 +1,18 @@
+export type ErrorCategory = 'DATA_ERROR' | 'AUTH_ERROR' | 'API_ERROR' | 'VALIDATION_ERROR' | 'UNKNOWN_ERROR';
 
-/**
- * Error categories for consistent error handling
- */
-export enum ErrorCategory {
-  AUTHENTICATION = 'authentication',
-  AUTHORIZATION = 'authorization',
-  VALIDATION = 'validation',
-  DATABASE = 'database',
-  NETWORK = 'network',
-  BUSINESS_LOGIC = 'business_logic',
-  EXCEPTION = 'exception',
-  UNKNOWN = 'unknown',
-  PROCESSING_ERROR = 'processing_error',
-  PROCESSING = 'processing',
-  NOT_FOUND = 'not_found',
-  INITIALIZATION_ERROR = 'initialization_error',
-  DATA_MAPPING_ERROR = 'data_mapping_error'
-}
-
-/**
- * Error structure for consistent error handling
- */
 export interface ServiceError {
   message: string;
-  technical?: string;
-  category?: ErrorCategory;
-  code?: string;
-  details?: any;
+  details?: string;
+  category: ErrorCategory;
+  originalError?: any;
 }
 
-/**
- * Generic response object for service operations
- */
-export interface ServiceResponse<T> {
+export interface ServiceResponse<T = any> {
   success: boolean;
   data?: T;
-  message?: string;
-  error?: Error | ServiceError;
-  details?: string;
+  error?: ServiceError;
 }
 
-// Backward compatibility type alias (deprecated)
-export type ServiceErrorResponse = ServiceResponse<any>;
-
-/**
- * Service for handling errors consistently
- */
-export class ErrorHandlingService {
-  /**
-   * Execute a function with standardized error handling
-   */
-  static async executeWithErrorHandling<T>(
-    fn: () => Promise<T>,
-    operation: string,
-    options: { 
-      showToast?: boolean; 
-      userMessage?: string;
-      logError?: boolean;
-    } = { showToast: true, logError: true }
-  ): Promise<ServiceResponse<T>> {
-    try {
-      const result = await fn();
-      return {
-        success: true,
-        data: result
-      };
-    } catch (error) {
-      if (options.logError !== false) {
-        console.error(`Error during ${operation}:`, error);
-      }
-      
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : 'An unknown error occurred',
-        error: error instanceof Error ? error : new Error('Unknown error'),
-        details: error instanceof Error ? error.stack : undefined
-      };
-    }
-  }
-  
-  /**
-   * Transform an error to a consistent service error format
-   */
-  static formatError(
-    error: any,
-    defaultMessage: string = 'An error occurred',
-    category: ErrorCategory = ErrorCategory.UNKNOWN
-  ): ServiceError {
-    if (!error) {
-      return { message: defaultMessage, category };
-    }
-    
-    if (typeof error === 'string') {
-      return { message: error, category };
-    }
-    
-    if (error instanceof Error) {
-      return {
-        message: error.message || defaultMessage,
-        technical: error.stack,
-        category
-      };
-    }
-    
-    return {
-      message: error.message || defaultMessage,
-      technical: JSON.stringify(error),
-      category,
-      details: error
-    };
-  }
-}
-
-/**
- * Create a success response
- */
 export function createSuccessResponse<T>(data: T): ServiceResponse<T> {
   return {
     success: true,
@@ -122,23 +20,52 @@ export function createSuccessResponse<T>(data: T): ServiceResponse<T> {
   };
 }
 
-/**
- * Create an error response
- */
 export function createErrorResponse(
   message: string,
-  technical: string = '',
-  category: ErrorCategory = ErrorCategory.UNKNOWN,
-  code: string = 'ERROR'
-): ServiceResponse<any> {
+  details?: string,
+  category: ErrorCategory = 'UNKNOWN_ERROR',
+  originalError?: any
+): ServiceResponse {
   return {
     success: false,
-    message,
     error: {
       message,
-      technical,
+      details,
       category,
-      code
+      originalError
     }
   };
+}
+
+export class ErrorHandlingService {
+  static handleError(error: any, defaultMessage = 'An unexpected error occurred'): ServiceError {
+    const message = error?.message || defaultMessage;
+    const category = this.determineErrorCategory(error);
+    
+    return {
+      message,
+      category,
+      originalError: error
+    };
+  }
+  
+  private static determineErrorCategory(error: any): ErrorCategory {
+    if (error?.code === 'PGRST301' || error?.code?.startsWith('PGRST')) {
+      return 'DATA_ERROR';
+    }
+    
+    if (error?.message?.includes('auth') || error?.code === 'auth/') {
+      return 'AUTH_ERROR';
+    }
+    
+    if (error?.response || error?.request) {
+      return 'API_ERROR';
+    }
+    
+    if (error?.name === 'ValidationError') {
+      return 'VALIDATION_ERROR';
+    }
+    
+    return 'UNKNOWN_ERROR';
+  }
 }

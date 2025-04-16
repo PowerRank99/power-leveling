@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 type AchievementIdMap = Record<string, string>;
@@ -39,6 +40,10 @@ export class AchievementIdMappingService {
   
   static getMappings(): AchievementIdMap {
     return this.mappings;
+  }
+  
+  static getAllMappings(): { stringId: string; uuid: string }[] {
+    return Object.entries(this.mappings).map(([stringId, uuid]) => ({ stringId, uuid }));
   }
   
   static getDbId(stringId: string): string | undefined {
