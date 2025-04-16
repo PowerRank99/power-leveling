@@ -24,7 +24,14 @@ export enum AchievementCategory {
   EXERCISE_VARIETY = 'exercise_variety',
   ACHIEVEMENT = 'achievement',
   SOCIAL = 'social',
-  WORKOUT_HISTORY = 'workout_history'
+  WORKOUT_HISTORY = 'workout_history',
+  RANK_E = 'rank_e',
+  RANK_D = 'rank_d',
+  RANK_C = 'rank_c',
+  RANK_B = 'rank_b',
+  RANK_A = 'rank_a',
+  RANK_S = 'rank_s',
+  WORKOUT_CATEGORY = 'workout_category'
 }
 
 export enum AchievementRank {

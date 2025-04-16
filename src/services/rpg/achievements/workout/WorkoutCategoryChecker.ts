@@ -1,6 +1,5 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
+import { ServiceResponse } from '@/services/common/ErrorHandlingService';
 import { BaseAchievementChecker } from '../BaseAchievementChecker';
 import { AchievementCategory } from '@/types/achievementTypes';
 
@@ -10,9 +9,8 @@ export class WorkoutCategoryChecker extends BaseAchievementChecker {
       async () => {
         // Get category-specific achievements
         const { data: achievements } = await this.fetchAchievementsByCategory(
-          AchievementCategory.WORKOUT,
-          'requirements->count',
-          { category_type: 'category' }
+          AchievementCategory.WORKOUT_CATEGORY,
+          'requirements->count'
         );
         
         // Get workout categories
@@ -49,11 +47,8 @@ export class WorkoutCategoryChecker extends BaseAchievementChecker {
     );
   }
   
-  // Add the missing static method that's referenced in other files
-  static async checkWorkoutCategoryAchievements(
-    userId: string, 
-    achievementsToCheck: string[]
-  ): Promise<void> {
+  // Static method for backward compatibility
+  static async checkWorkoutCategoryAchievements(userId: string, achievementsToCheck: string[]): Promise<void> {
     try {
       // Get workout categories
       const { data: workouts, error } = await supabase
