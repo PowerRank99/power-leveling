@@ -16,7 +16,6 @@ export class RankAchievementProcessor {
     await RankDAchievementChecker.checkAchievements(userId, workoutStats, userProfile);
     await RankCAchievementChecker.checkAchievements(userId, workoutStats, userProfile);
     
-    // Higher ranks will be added as needed
     return {
       success: true,
       data: undefined

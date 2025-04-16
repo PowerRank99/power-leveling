@@ -1,10 +1,11 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { UserWorkoutStats, UserProfileData } from '../AchievementCheckerInterface';
 import { AchievementCategory } from '@/types/achievementTypes';
 
-export class RankCAchievementChecker {
+export class RankEAchievementChecker {
   static async checkAchievements(
     userId: string,
     workoutStats: UserWorkoutStats,
@@ -12,12 +13,12 @@ export class RankCAchievementChecker {
   ): Promise<ServiceResponse<void>> {
     return ErrorHandlingService.executeWithErrorHandling(
       async () => {
-        // Fetch Rank C achievements with proper category
+        // Fetch Rank E achievements
         const { data: achievements, error: achievementsError } = await supabase
           .from('achievements')
           .select('id, requirements')
-          .eq('rank', 'C')
-          .eq('category', AchievementCategory.RANK_C);
+          .eq('rank', 'E')
+          .eq('category', AchievementCategory.RANK_E);
           
         if (achievementsError) throw achievementsError;
         
@@ -25,20 +26,13 @@ export class RankCAchievementChecker {
         
         if (achievements) {
           for (const achievement of achievements) {
-            const requirements = achievement.requirements;
-            
-            if (requirements.type === 'total_count' && 
-                workoutStats.totalCount >= requirements.count) {
+            if (achievement.requirements?.total_count && 
+                workoutStats.totalCount >= achievement.requirements.total_count) {
               achievementChecks.push(achievement.id);
             }
             
-            if (requirements.type === 'weekly_count' && 
-                workoutStats.weeklyCount >= requirements.count) {
-              achievementChecks.push(achievement.id);
-            }
-            
-            if (requirements.type === 'streak' && 
-                userProfile.streak >= requirements.days) {
+            if (achievement.requirements?.weekly_count && 
+                workoutStats.weeklyCount >= achievement.requirements.weekly_count) {
               achievementChecks.push(achievement.id);
             }
           }
@@ -48,7 +42,7 @@ export class RankCAchievementChecker {
           await AchievementService.checkAndAwardAchievements(userId, achievementChecks);
         }
       },
-      'CHECK_RANK_C_ACHIEVEMENTS',
+      'CHECK_RANK_E_ACHIEVEMENTS',
       { showToast: false }
     );
   }
