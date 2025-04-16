@@ -1,14 +1,15 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Play, RotateCcw, Check, Ban } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Play, X, Database, Trash2 } from 'lucide-react';
 
 interface TestControlPanelProps {
   selectedCount: number;
+  filteredCount: number;
   onRunSelected: () => void;
   onSelectAll: () => void;
   onClearSelection: () => void;
-  filteredCount: number;
   isLoading: boolean;
   onGenerateData?: () => void;
   onCleanupData?: () => void;
@@ -17,70 +18,76 @@ interface TestControlPanelProps {
 
 const TestControlPanel: React.FC<TestControlPanelProps> = ({
   selectedCount,
+  filteredCount,
   onRunSelected,
   onSelectAll,
   onClearSelection,
-  filteredCount,
   isLoading,
   onGenerateData,
   onCleanupData,
   showDataControls = false
 }) => {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-      <div className="space-x-2">
-        <Button
-          variant="outline"
+    <div className="flex flex-wrap gap-2 items-center justify-between p-2 border border-divider/30 rounded-md bg-midnight-card mb-4">
+      <div className="flex items-center space-x-2">
+        <Badge variant="outline" className="bg-midnight-elevated">
+          {selectedCount} selected / {filteredCount} filtered
+        </Badge>
+        
+        <Button 
+          variant="outline" 
           size="sm"
           onClick={onSelectAll}
-          disabled={filteredCount === 0 || isLoading}
+          disabled={isLoading || filteredCount === 0}
         >
-          <Check className="mr-1 h-4 w-4" />
-          Select All ({filteredCount})
+          Select All Visible
         </Button>
-        <Button
-          variant="outline"
+        
+        <Button 
+          variant="outline" 
           size="sm"
           onClick={onClearSelection}
-          disabled={selectedCount === 0 || isLoading}
+          disabled={isLoading || selectedCount === 0}
         >
-          <Ban className="mr-1 h-4 w-4" />
+          <X className="mr-1 h-3 w-3" />
           Clear Selection
         </Button>
       </div>
       
-      <div className="flex gap-2">
+      <div className="flex items-center space-x-2">
         {showDataControls && (
           <>
-            <Button
-              variant="outline"
+            <Button 
+              variant="outline" 
               size="sm"
               onClick={onGenerateData}
-              disabled={isLoading || !onGenerateData}
+              disabled={isLoading}
             >
-              <RotateCcw className="mr-1 h-4 w-4" />
+              <Database className="mr-1 h-3 w-3" />
               Generate Test Data
             </Button>
-            <Button
-              variant="ghost"
+            
+            <Button 
+              variant="outline" 
               size="sm"
               onClick={onCleanupData}
-              disabled={isLoading || !onCleanupData}
+              disabled={isLoading}
+              className="text-valor hover:text-valor hover:bg-valor-15"
             >
-              <Ban className="mr-1 h-4 w-4" />
-              Cleanup Test Data
+              <Trash2 className="mr-1 h-3 w-3" />
+              Cleanup Data
             </Button>
           </>
         )}
         
-        <Button
-          variant="arcane"
+        <Button 
+          variant="arcane" 
           size="sm"
           onClick={onRunSelected}
-          disabled={selectedCount === 0 || isLoading}
+          disabled={isLoading || selectedCount === 0}
         >
-          <Play className="mr-2 h-4 w-4" />
-          Run Selected ({selectedCount})
+          <Play className="mr-1 h-3 w-3" />
+          Run {selectedCount} Tests
         </Button>
       </div>
     </div>

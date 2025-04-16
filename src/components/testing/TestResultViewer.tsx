@@ -1,15 +1,12 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Download, Trash2, Filter } from 'lucide-react';
+import { Clock, Eye, Download, Trash2, Search, FilterX, CheckSquare, XSquare } from 'lucide-react';
 import { AchievementTestResult } from '@/services/testing/AchievementTestingService';
-import { TestResultFilters } from './result-viewer/TestResultFilters';
-import { TestResultSortControls } from './result-viewer/TestResultSortControls';
-import { TestResultCard } from './result-viewer/TestResultCard';
 
 interface TestResultViewerProps {
   results: AchievementTestResult[];
@@ -17,185 +14,292 @@ interface TestResultViewerProps {
   onExportResults: () => void;
 }
 
-export function TestResultViewer({ results, onClearResults, onExportResults }: TestResultViewerProps) {
+export const TestResultViewer: React.FC<TestResultViewerProps> = ({
+  results,
+  onClearResults,
+  onExportResults
+}) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('recent');
-  const [sortOrder, setSortOrder] = useState('desc');
-  const [activeTab, setActiveTab] = useState('all');
+  const [rankFilter, setRankFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedResult, setSelectedResult] = useState<AchievementTestResult | null>(null);
   
-  // Count stats
-  const passedCount = results.filter(r => r.success).length;
-  const failedCount = results.filter(r => !r.success).length;
+  // Get unique categories and ranks
+  const categories = Array.from(new Set(results.map(r => r.category)));
+  const ranks = Array.from(new Set(results.map(r => r.rank)));
   
-  // Apply filters and sort
+  // Filter results
   const filteredResults = results.filter(result => {
+    // Filter by search query
     const matchesSearch = 
       searchQuery === '' || 
-      result.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      result.achievementId.toLowerCase().includes(searchQuery.toLowerCase());
+      result.name.toLowerCase().includes(searchQuery.toLowerCase());
     
+    // Filter by category
+    const matchesCategory = categoryFilter === 'all' || result.category === categoryFilter;
+    
+    // Filter by rank
+    const matchesRank = rankFilter === 'all' || result.rank === rankFilter;
+    
+    // Filter by status
     const matchesStatus = 
       statusFilter === 'all' || 
-      (statusFilter === 'passed' && result.success) ||
+      (statusFilter === 'passed' && result.success) || 
       (statusFilter === 'failed' && !result.success);
     
-    const matchesCategory = 
-      categoryFilter === 'all' || 
-      result.category === categoryFilter;
-    
-    return matchesSearch && matchesStatus && matchesCategory;
+    return matchesSearch && matchesCategory && matchesRank && matchesStatus;
   });
   
-  // Sort results
-  const sortedResults = [...filteredResults].sort((a, b) => {
-    let comparison = 0;
-    
-    switch (sortBy) {
-      case 'recent':
-        comparison = new Date(b.testedAt).getTime() - new Date(a.testedAt).getTime();
-        break;
-      case 'name':
-        comparison = a.name.localeCompare(b.name);
-        break;
-      case 'duration':
-        comparison = a.testDurationMs - b.testDurationMs;
-        break;
-      case 'category':
-        comparison = a.category.localeCompare(b.category);
-        break;
-      case 'rank':
-        comparison = a.rank.localeCompare(b.rank);
-        break;
-      default:
-        comparison = 0;
-    }
-    
-    return sortOrder === 'asc' ? comparison : -comparison;
-  });
+  // Stats
+  const totalTests = results.length;
+  const passedTests = results.filter(r => r.success).length;
+  const failedTests = results.filter(r => !r.success).length;
   
-  // Filter displayed results based on tab
-  const displayedResults = activeTab === 'all' 
-    ? sortedResults 
-    : activeTab === 'passed' 
-      ? sortedResults.filter(r => r.success) 
-      : sortedResults.filter(r => !r.success);
+  // Function to view result details
+  const viewResultDetails = (result: AchievementTestResult) => {
+    setSelectedResult(result);
+  };
   
   return (
-    <div className="space-y-4">
-      <Card className="bg-midnight-elevated border-divider/30">
-        <CardHeader className="pb-3">
-          <div className="flex justify-between items-center">
-            <CardTitle className="text-lg font-orbitron text-text-primary">
-              Test Results ({results.length})
-            </CardTitle>
-            <div className="flex space-x-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={onClearResults}
-                disabled={results.length === 0}
-                className="bg-midnight-card border-valor-30 text-text-primary hover:bg-valor-15"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Clear
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={onExportResults}
-                disabled={results.length === 0}
-                className="bg-midnight-card border-arcane-30 text-text-primary hover:bg-arcane-15"
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Export
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold">Test Results</h2>
+        <div className="flex space-x-2">
+          <Button
+            variant="outline"
+            onClick={onExportResults}
+            disabled={results.length === 0}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export Results
+          </Button>
+          <Button
+            variant="outline"
+            onClick={onClearResults}
+            disabled={results.length === 0}
+            className="text-valor hover:text-valor hover:bg-valor-15"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Clear Results
+          </Button>
+        </div>
+      </div>
+      
+      <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-midnight-elevated p-3 rounded-md border border-divider/20">
+          <h3 className="text-sm font-medium mb-1">Total Tests</h3>
+          <p className="text-2xl font-bold">{totalTests}</p>
+        </div>
+        <div className="bg-midnight-elevated p-3 rounded-md border border-divider/20">
+          <h3 className="text-sm font-medium mb-1 text-green-500">Passed</h3>
+          <p className="text-2xl font-bold text-green-500">
+            {passedTests} 
+            <span className="text-sm font-normal text-text-secondary ml-2">
+              ({totalTests > 0 ? Math.round((passedTests / totalTests) * 100) : 0}%)
+            </span>
+          </p>
+        </div>
+        <div className="bg-midnight-elevated p-3 rounded-md border border-divider/20">
+          <h3 className="text-sm font-medium mb-1 text-valor">Failed</h3>
+          <p className="text-2xl font-bold text-valor">
+            {failedTests}
+            <span className="text-sm font-normal text-text-secondary ml-2">
+              ({totalTests > 0 ? Math.round((failedTests / totalTests) * 100) : 0}%)
+            </span>
+          </p>
+        </div>
+      </div>
+      
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-text-tertiary" />
+          <Input
+            placeholder="Search by achievement name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 bg-midnight-elevated border-divider"
+          />
+          {searchQuery && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setSearchQuery('')}
+              className="absolute right-1 top-1 h-7 w-7"
+            >
+              <FilterX className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
         
-        <CardContent>
-          <div className="space-y-4">
-            <TestResultFilters
-              searchQuery={searchQuery}
-              statusFilter={statusFilter}
-              categoryFilter={categoryFilter}
-              onSearchChange={setSearchQuery}
-              onStatusChange={setStatusFilter}
-              onCategoryChange={setCategoryFilter}
-            />
-            
-            <div className="flex justify-between items-center">
-              <TestResultSortControls
-                sortBy={sortBy}
-                sortOrder={sortOrder}
-                onSortByChange={setSortBy}
-                onSortOrderChange={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-              />
-              
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="bg-midnight-card text-text-secondary">
-                  {filteredResults.length} results
-                </Badge>
-                {passedCount > 0 && (
-                  <Badge variant="outline" className="bg-green-900/20 text-green-500 border-green-900/30">
-                    {passedCount} passed
-                  </Badge>
-                )}
-                {failedCount > 0 && (
-                  <Badge variant="outline" className="bg-red-900/20 text-red-500 border-red-900/30">
-                    {failedCount} failed
-                  </Badge>
-                )}
-              </div>
-            </div>
-            
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-3 bg-midnight-card">
-                <TabsTrigger 
-                  value="all"
-                  className="data-[state=active]:bg-arcane-15 data-[state=active]:text-arcane"
-                >
-                  All ({sortedResults.length})
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="passed"
-                  className="data-[state=active]:bg-green-900/20 data-[state=active]:text-green-500"
-                >
-                  Passed ({sortedResults.filter(r => r.success).length})
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="failed"
-                  className="data-[state=active]:bg-red-900/20 data-[state=active]:text-red-500"
-                >
-                  Failed ({sortedResults.filter(r => !r.success).length})
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value={activeTab} className="mt-4">
-                <ScrollArea className="h-[500px] rounded-md border border-divider/30 p-2 bg-midnight-card">
-                  {displayedResults.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-[400px] text-text-secondary">
-                      <Filter className="h-10 w-10 mb-2 opacity-40" />
-                      <p>No results match your filters</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {displayedResults.map(result => (
-                        <TestResultCard 
-                          key={`${result.achievementId}-${result.testedAt}`} 
-                          result={result}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </ScrollArea>
-              </TabsContent>
-            </Tabs>
+        <Select 
+          value={categoryFilter} 
+          onValueChange={setCategoryFilter}
+        >
+          <SelectTrigger className="w-32 bg-midnight-elevated border-divider">
+            <SelectValue placeholder="Category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            {categories.map(category => (
+              <SelectItem key={category} value={category}>{category}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        
+        <Select 
+          value={rankFilter} 
+          onValueChange={setRankFilter}
+        >
+          <SelectTrigger className="w-24 bg-midnight-elevated border-divider">
+            <SelectValue placeholder="Rank" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Ranks</SelectItem>
+            {ranks.map(rank => (
+              <SelectItem key={rank} value={rank}>Rank {rank}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        
+        <Select 
+          value={statusFilter} 
+          onValueChange={setStatusFilter}
+        >
+          <SelectTrigger className="w-28 bg-midnight-elevated border-divider">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="passed">Passed</SelectItem>
+            <SelectItem value="failed">Failed</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="border border-divider/30 rounded-md">
+          <div className="border-b border-divider/30 p-3 bg-midnight-elevated flex items-center justify-between">
+            <h3 className="text-sm font-medium">Test Results ({filteredResults.length})</h3>
           </div>
-        </CardContent>
-      </Card>
+          
+          <ScrollArea className="h-[400px]">
+            {filteredResults.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-[300px] text-text-tertiary">
+                <FilterX className="h-10 w-10 mb-2 opacity-40" />
+                <p>No results match your filters</p>
+              </div>
+            ) : (
+              <div className="space-y-1 p-2">
+                {filteredResults.map((result, index) => (
+                  <div 
+                    key={index}
+                    className={`
+                      flex items-center p-2 rounded-md cursor-pointer
+                      ${result === selectedResult ? 'bg-arcane-15 border border-arcane-30' : 'hover:bg-midnight-elevated border border-divider/10'}
+                    `}
+                    onClick={() => viewResultDetails(result)}
+                  >
+                    <div className="mr-2">
+                      {result.success ? (
+                        <CheckSquare className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <XSquare className="h-4 w-4 text-valor" />
+                      )}
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center">
+                        <span className="font-medium text-sm truncate">{result.name}</span>
+                        <Badge variant="outline" className="ml-2 text-xs">
+                          {result.category}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center text-xs text-text-secondary">
+                        <Clock className="h-3 w-3 mr-1" />
+                        {result.testDurationMs}ms
+                        <Badge 
+                          variant="outline" 
+                          className="ml-2 text-xs"
+                        >
+                          Rank {result.rank}
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="opacity-60 hover:opacity-100"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </div>
+        
+        <div className="border border-divider/30 rounded-md">
+          <div className="border-b border-divider/30 p-3 bg-midnight-elevated">
+            <h3 className="text-sm font-medium">Result Details</h3>
+          </div>
+          
+          {selectedResult ? (
+            <div className="p-4 space-y-4">
+              <div>
+                <h3 className="text-lg font-medium">{selectedResult.name}</h3>
+                <div className="flex items-center mt-1">
+                  <Badge 
+                    variant={selectedResult.success ? "success" : "valor"}
+                    className="mr-2"
+                  >
+                    {selectedResult.success ? 'PASSED' : 'FAILED'}
+                  </Badge>
+                  
+                  <Badge variant="outline" className="mr-2">
+                    {selectedResult.category}
+                  </Badge>
+                  
+                  <Badge variant="outline">
+                    Rank {selectedResult.rank}
+                  </Badge>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-medium mb-1">Test Duration</h4>
+                <div className="flex items-center text-sm">
+                  <Clock className="h-4 w-4 mr-1.5 text-text-secondary" />
+                  {selectedResult.testDurationMs}ms
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-medium mb-1">Achievement ID</h4>
+                <code className="block p-2 bg-midnight-elevated rounded text-xs font-mono border border-divider/20 overflow-x-auto">
+                  {selectedResult.achievementId}
+                </code>
+              </div>
+              
+              {!selectedResult.success && selectedResult.errorMessage && (
+                <div>
+                  <h4 className="text-sm font-medium mb-1 text-valor">Error Details</h4>
+                  <div className="p-3 bg-valor-15 border border-valor-30 rounded text-sm">
+                    {selectedResult.errorMessage}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-[400px] text-text-tertiary">
+              <Eye className="h-10 w-10 mb-2 opacity-40" />
+              <p>Select a test result to view details</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
-}
+};

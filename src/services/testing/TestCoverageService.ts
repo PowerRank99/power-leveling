@@ -1,118 +1,145 @@
-import { Achievement, AchievementCategory } from '@/types/achievementTypes';
-import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 
-export interface TestCoverageReport {
-  totalAchievements: number;
-  testedAchievements: number;
-  coveragePercentage: number;
-  byCategory: Record<AchievementCategory, {
-    total: number;
-    tested: number;
-    coverage: number;
-  }>;
-  untestedAchievements: Achievement[];
-}
+import { supabase } from '@/integrations/supabase/client';
+import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
+import { Achievement, AchievementCategory, AchievementRank } from '@/types/achievementTypes';
 
 export class TestCoverageService {
-  private static testedAchievements = new Set<string>();
-  private static cachedAchievements: Achievement[] | null = null;
-
+  private static achievements: Achievement[] = [];
+  private static testMap: Map<string, boolean> = new Map();
+  private static initialized = false;
+  
   /**
-   * Record a tested achievement
+   * Initialize the service by loading all achievements
    */
-  static recordTestedAchievement(achievementId: string): void {
-    this.testedAchievements.add(achievementId);
-  }
-
-  /**
-   * Clear test coverage data
-   */
-  static clearCoverage(): void {
-    this.testedAchievements.clear();
-    this.cachedAchievements = null;
+  static async initialize(): Promise<void> {
+    if (this.initialized) return;
+    
+    try {
+      this.achievements = await AchievementUtils.getAllAchievements();
+      this.initialized = true;
+    } catch (error) {
+      console.error('Error initializing TestCoverageService:', error);
+      throw new Error('Failed to initialize test coverage service');
+    }
   }
   
   /**
-   * Get all achievements, caching results for performance
+   * Mark an achievement as tested
    */
-  static async getAllAchievements(): Promise<Achievement[]> {
-    if (this.cachedAchievements) {
-      return this.cachedAchievements;
-    }
-    
-    try {
-      const achievements = await AchievementUtils.getAllAchievements();
-      this.cachedAchievements = achievements;
-      return achievements;
-    } catch (error) {
-      console.error('Error fetching achievements for test coverage:', error);
-      return [];
-    }
+  static markTested(achievementId: string, success: boolean): void {
+    this.testMap.set(achievementId, success);
   }
-
+  
   /**
-   * Generate coverage report with improved type safety
+   * Check if an achievement has been tested
    */
-  static generateCoverageReport(): TestCoverageReport {
-    // If we don't have cached achievements yet, return an empty report
-    if (!this.cachedAchievements) {
-      // Initialize with empty data for all categories
-      const emptyCategoryStats = Object.values(AchievementCategory).reduce((acc, category) => ({
-        ...acc,
-        [category]: { total: 0, tested: 0, coverage: 0 }
-      }), {} as Record<AchievementCategory, { total: number; tested: number; coverage: number }>);
-      
-      return {
-        totalAchievements: 0,
-        testedAchievements: 0,
-        coveragePercentage: 0,
-        byCategory: emptyCategoryStats,
-        untestedAchievements: []
-      };
+  static isTested(achievementId: string): boolean {
+    return this.testMap.has(achievementId);
+  }
+  
+  /**
+   * Check if an achievement has been successfully tested
+   */
+  static isSuccessfullyTested(achievementId: string): boolean {
+    return this.testMap.get(achievementId) === true;
+  }
+  
+  /**
+   * Generate a coverage report
+   */
+  static generateCoverageReport() {
+    if (!this.initialized) {
+      throw new Error('TestCoverageService not initialized');
     }
     
-    // Use the sync version to avoid Promise issues
-    const allAchievements = this.cachedAchievements;
+    const totalAchievements = this.achievements.length;
+    const testedAchievements = this.testMap.size;
+    const coveragePercentage = totalAchievements > 0 
+      ? Math.round((testedAchievements / totalAchievements) * 100) 
+      : 0;
     
-    const byCategory: Record<AchievementCategory, { total: number; tested: number; coverage: number }> = 
-      Object.values(AchievementCategory).reduce((acc, category) => ({
-        ...acc,
-        [category]: { total: 0, tested: 0, coverage: 0 }
-      }), {} as Record<AchievementCategory, { total: number; tested: number; coverage: number }>);
-
-    // Count achievements by category
-    allAchievements.forEach(achievement => {
-      const category = achievement.category as AchievementCategory;
-      if (byCategory[category]) {
-        byCategory[category].total++;
-        if (this.testedAchievements.has(achievement.id)) {
-          byCategory[category].tested++;
-        }
-      }
-    });
-
-    // Calculate coverage percentages
-    Object.values(byCategory).forEach(stats => {
-      stats.coverage = stats.total > 0 ? (stats.tested / stats.total) * 100 : 0;
-    });
-
-    const untestedAchievements = allAchievements.filter(
-      achievement => !this.testedAchievements.has(achievement.id)
-    );
-
+    const categoryBreakdown = this.getCategoryBreakdown();
+    const rankBreakdown = this.getRankBreakdown();
+    
     return {
-      totalAchievements: allAchievements.length,
-      testedAchievements: this.testedAchievements.size,
-      coveragePercentage: allAchievements.length > 0 ? (this.testedAchievements.size / allAchievements.length) * 100 : 0,
-      byCategory,
-      untestedAchievements
+      totalAchievements,
+      testedAchievements,
+      coveragePercentage,
+      categoryBreakdown,
+      rankBreakdown
     };
   }
   
   /**
-   * Initialize the service by preloading achievements
+   * Get coverage breakdown by category
    */
-  static async initialize(): Promise<void> {
-    this.cachedAchievements = await this.getAllAchievements();
+  private static getCategoryBreakdown() {
+    const categories = Object.values(AchievementCategory);
+    const result: Record<string, { total: number; tested: number; coverage: number }> = {};
+    
+    // Initialize all categories with zeros
+    categories.forEach(category => {
+      result[category] = { total: 0, tested: 0, coverage: 0 };
+    });
+    
+    // Count achievements by category
+    this.achievements.forEach(achievement => {
+      const category = achievement.category;
+      if (result[category]) {
+        result[category].total++;
+        
+        if (this.isTested(achievement.id)) {
+          result[category].tested++;
+        }
+      }
+    });
+    
+    // Calculate coverage percentages
+    Object.keys(result).forEach(category => {
+      const { total, tested } = result[category];
+      result[category].coverage = total > 0 ? Math.round((tested / total) * 100) : 0;
+    });
+    
+    return result;
+  }
+  
+  /**
+   * Get coverage breakdown by rank
+   */
+  private static getRankBreakdown() {
+    const ranks = Object.values(AchievementRank);
+    const result: Record<string, { total: number; tested: number; coverage: number }> = {};
+    
+    // Initialize all ranks with zeros
+    ranks.forEach(rank => {
+      result[rank] = { total: 0, tested: 0, coverage: 0 };
+    });
+    
+    // Count achievements by rank
+    this.achievements.forEach(achievement => {
+      const rank = achievement.rank;
+      if (result[rank]) {
+        result[rank].total++;
+        
+        if (this.isTested(achievement.id)) {
+          result[rank].tested++;
+        }
+      }
+    });
+    
+    // Calculate coverage percentages
+    Object.keys(result).forEach(rank => {
+      const { total, tested } = result[rank];
+      result[rank].coverage = total > 0 ? Math.round((tested / total) * 100) : 0;
+    });
+    
+    return result;
+  }
+  
+  /**
+   * Reset test coverage data
+   */
+  static reset(): void {
+    this.testMap.clear();
   }
 }

@@ -1,171 +1,122 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { AchievementStandardizationService } from '@/services/common/AchievementStandardizationService';
-import { toast } from 'sonner';
+import { Copy, Search } from 'lucide-react';
+import { AchievementIdMappingService } from '@/services/common/AchievementIdMappingService';
 
-interface StandardizationResult {
-  valid: string[];
-  invalid: string[];
-  missing: string[];
-  suggestions: Array<{
-    id: string;
-    issue: string;
-    suggestion: string;
-  }>;
-}
-
-export function AchievementIdDebugger() {
-  const [results, setResults] = useState<StandardizationResult>({
-    valid: [],
-    invalid: [],
-    missing: [],
-    suggestions: []
-  });
-  const [isValidating, setIsValidating] = useState(false);
+export const AchievementIdDebugger = () => {
+  const [mappings, setMappings] = useState<{ stringId: string; uuid: string }[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isVisible, setIsVisible] = useState(false);
   
-  const runValidation = async () => {
-    setIsValidating(true);
-    try {
-      const validationResults = await AchievementStandardizationService.validateAndStandardize();
-      setResults(validationResults);
-      
-      if (validationResults.valid.length > 0 && validationResults.missing.length === 0) {
-        toast.success('All achievements have valid string IDs!');
-      }
-    } catch (error) {
-      console.error('Validation failed:', error);
-      toast.error('Validation failed');
-    } finally {
-      setIsValidating(false);
-    }
-  };
-
-  const handleMigrate = async () => {
-    setIsValidating(true);
-    try {
-      const count = await AchievementStandardizationService.migrateUnmappedAchievements();
-      if (count === 0) {
-        toast.success('All achievements have string IDs - no migration needed');
-      } else {
-        toast.success(`Migrated ${count} achievement mappings`);
-      }
-      await runValidation();
-    } catch (error) {
-      console.error('Migration failed:', error);
-      toast.error('Failed to migrate achievements');
-    } finally {
-      setIsValidating(false);
-    }
-  };
-
   useEffect(() => {
-    runValidation();
-  }, []);
-
+    if (isVisible) {
+      const loadMappings = () => {
+        const allMappings = AchievementIdMappingService.getAllMappings();
+        setMappings(allMappings);
+      };
+      
+      loadMappings();
+    }
+  }, [isVisible]);
+  
+  const filteredMappings = mappings.filter(mapping => 
+    mapping.stringId.includes(searchQuery) || 
+    mapping.uuid.includes(searchQuery)
+  );
+  
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
+  
+  if (!isVisible) {
+    return (
+      <Button 
+        variant="outline" 
+        size="sm" 
+        className="mb-2"
+        onClick={() => setIsVisible(true)}
+      >
+        <Search className="h-3 w-3 mr-1" />
+        Show Achievement ID Mapper
+      </Button>
+    );
+  }
+  
   return (
-    <Card className="p-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Achievement ID Validation</h3>
-        <div className="flex gap-2">
-          <Button 
-            onClick={handleMigrate}
-            disabled={isValidating || results.suggestions.length === 0}
-            variant="outline"
-          >
-            Run Migration
-          </Button>
-          <Button 
-            onClick={runValidation} 
-            disabled={isValidating}
-          >
-            {isValidating ? 'Validating...' : 'Re-run Validation'}
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-4">
-        <Card className="p-4">
-          <h4 className="font-medium mb-2 flex items-center gap-2">
-            Valid IDs
-            <Badge variant="success" className="ml-2">
-              {results.valid.length}
-            </Badge>
-          </h4>
-          <ScrollArea className="h-[200px]">
-            <div className="space-y-1">
-              {results.valid.map(id => (
-                <div key={id} className="text-sm text-success p-1">
-                  {id}
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
-        </Card>
-        
-        <Card className="p-4">
-          <h4 className="font-medium mb-2 flex items-center gap-2">
-            Invalid IDs
-            <Badge variant="destructive" className="ml-2">
-              {results.invalid.length}
-            </Badge>
-          </h4>
-          <ScrollArea className="h-[200px]">
-            <div className="space-y-1">
-              {results.invalid.map(id => (
-                <div key={id} className="text-sm text-destructive p-1">
-                  {id}
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
-        </Card>
-        
-        <Card className="p-4">
-          <h4 className="font-medium mb-2 flex items-center gap-2">
-            Missing String IDs
-            <Badge variant="arcane" className="ml-2">
-              {results.missing.length}
-            </Badge>
-          </h4>
-          <ScrollArea className="h-[200px]">
-            <div className="space-y-1">
-              {results.missing.map(id => (
-                <div key={id} className="text-sm text-text-secondary p-1">
-                  {id}
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
-        </Card>
+    <Card className="p-4 mb-4 bg-midnight-card border-divider/30">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-medium">Achievement ID Mappings</h3>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => setIsVisible(false)}
+        >
+          Hide
+        </Button>
       </div>
       
-      {results.suggestions.length > 0 && (
-        <Card className="p-4">
-          <h4 className="font-medium mb-2">Migration Actions</h4>
-          <ScrollArea className="h-[200px]">
-            <div className="space-y-2">
-              {results.suggestions.map((suggestion, index) => (
-                <Alert 
-                  key={index} 
-                  variant="default"
-                  className={`text-sm ${suggestion.issue.includes('Automatic match') ? 'border-green-500/30 bg-green-500/10' : ''}`}
-                >
-                  <AlertTitle>{suggestion.id}</AlertTitle>
-                  <AlertDescription>
-                    <strong>Issue:</strong> {suggestion.issue}<br />
-                    <strong>Action:</strong> {suggestion.suggestion}
-                  </AlertDescription>
-                </Alert>
-              ))}
-            </div>
-          </ScrollArea>
-        </Card>
-      )}
+      <div className="relative mb-3">
+        <Search className="absolute left-3 top-2.5 h-4 w-4 text-text-tertiary" />
+        <Input
+          placeholder="Search by ID..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9 bg-midnight-elevated border-divider"
+        />
+      </div>
+      
+      <ScrollArea className="h-[200px]">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-divider/20">
+              <th className="text-left p-2 text-xs text-text-secondary">String ID</th>
+              <th className="text-left p-2 text-xs text-text-secondary">UUID</th>
+              <th className="text-right p-2 text-xs text-text-secondary">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredMappings.length === 0 ? (
+              <tr>
+                <td colSpan={3} className="text-center p-4 text-text-tertiary">
+                  {searchQuery ? 'No mappings match your search' : 'No mappings available'}
+                </td>
+              </tr>
+            ) : (
+              filteredMappings.map((mapping, index) => (
+                <tr key={index} className="border-b border-divider/10 hover:bg-midnight-elevated">
+                  <td className="p-2 text-xs">
+                    <code className="font-mono">{mapping.stringId}</code>
+                  </td>
+                  <td className="p-2 text-xs">
+                    <code className="font-mono truncate">{mapping.uuid}</code>
+                  </td>
+                  <td className="p-2 text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => handleCopy(mapping.uuid)}
+                      title="Copy UUID"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </ScrollArea>
+      
+      <div className="mt-3 text-xs text-text-tertiary">
+        {mappings.length} total mappings available
+      </div>
     </Card>
   );
-}
+};
+
+export default AchievementIdDebugger;

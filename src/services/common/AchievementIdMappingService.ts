@@ -1,65 +1,98 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { AchievementIdentifierService } from '@/services/rpg/achievements/AchievementIdentifierService';
 
 /**
- * @deprecated Use AchievementIdentifierService instead
+ * Service to handle mapping between string IDs and UUIDs for achievements
  */
 export class AchievementIdMappingService {
+  private static stringIdToUuidMap: Map<string, string> = new Map();
+  private static uuidToStringIdMap: Map<string, string> = new Map();
   private static initialized = false;
-  private static mappingCache: Map<string, string> = new Map();
-
+  
   /**
-   * @deprecated Use AchievementIdentifierService.getIdByStringId instead
+   * Initialize the mapping service by loading all mappings
    */
   static async initialize(): Promise<void> {
-    console.warn('AchievementIdMappingService is deprecated. Use AchievementIdentifierService instead.');
     if (this.initialized) return;
-
+    
     try {
-      const result = await AchievementIdentifierService.convertToIds(Array.from(this.mappingCache.keys()));
-      if (result.success) {
-        this.initialized = true;
+      // Check if mapped ID table exists
+      const { data: mappedIds, error: mappedError } = await supabase
+        .from('achievement_id_mappings')
+        .select('string_id, uuid');
+      
+      if (!mappedError && mappedIds) {
+        // Add mappings to our maps
+        mappedIds.forEach(mapping => {
+          this.stringIdToUuidMap.set(mapping.string_id, mapping.uuid);
+          this.uuidToStringIdMap.set(mapping.uuid, mapping.string_id);
+        });
       }
+      
+      // If we need to dynamically generate mappings, we could add that here
+      // For example, for any achievements that don't have mappings yet
+      
+      this.initialized = true;
     } catch (error) {
-      console.error('Failed to initialize achievement ID mappings:', error);
-      throw error;
+      console.error('Error initializing achievement ID mapping service:', error);
     }
   }
-
+  
   /**
-   * @deprecated Use AchievementIdentifierService.getIdByStringId instead
+   * Get UUID from string ID
    */
   static getUuid(stringId: string): string | undefined {
-    console.warn('getUuid is deprecated. Use AchievementIdentifierService.getIdByStringId instead.');
-    return this.mappingCache.get(stringId);
+    return this.stringIdToUuidMap.get(stringId);
   }
-
+  
   /**
-   * @deprecated Use AchievementIdentifierService.getIdByStringId instead
+   * Get string ID from UUID
    */
-  static async getUuidAsync(stringId: string): Promise<string | undefined> {
-    console.warn('getUuidAsync is deprecated. Use AchievementIdentifierService.getIdByStringId instead.');
-    const result = await AchievementIdentifierService.getIdByStringId(stringId);
-    return result.success ? result.data : undefined;
+  static getStringId(uuid: string): string | undefined {
+    return this.uuidToStringIdMap.get(uuid);
   }
-
+  
   /**
-   * @deprecated Use AchievementIdentifierService directly
+   * Add a mapping
    */
-  static getAllMappings(): Map<string, string> {
-    console.warn('getAllMappings is deprecated. Use AchievementIdentifierService directly.');
-    return new Map(this.mappingCache);
+  static addMapping(stringId: string, uuid: string): void {
+    this.stringIdToUuidMap.set(stringId, uuid);
+    this.uuidToStringIdMap.set(uuid, stringId);
   }
-
+  
   /**
-   * @deprecated Validation is now handled by AchievementIdentifierService
+   * Check if a string ID is mapped
    */
-  static validateMappings(): { 
-    unmapped: string[]; 
-    missingDatabaseEntries: string[] 
-  } {
-    console.warn('validateMappings is deprecated. Use AchievementIdentifierService.validateRequiredAchievements instead.');
-    return { unmapped: [], missingDatabaseEntries: [] };
+  static isStringIdMapped(stringId: string): boolean {
+    return this.stringIdToUuidMap.has(stringId);
+  }
+  
+  /**
+   * Check if a UUID is mapped
+   */
+  static isUuidMapped(uuid: string): boolean {
+    return this.uuidToStringIdMap.has(uuid);
+  }
+  
+  /**
+   * Get all mappings
+   */
+  static getAllMappings(): { stringId: string; uuid: string }[] {
+    const result: { stringId: string; uuid: string }[] = [];
+    
+    this.stringIdToUuidMap.forEach((uuid, stringId) => {
+      result.push({ stringId, uuid });
+    });
+    
+    return result;
+  }
+  
+  /**
+   * Reset mappings
+   */
+  static reset(): void {
+    this.stringIdToUuidMap.clear();
+    this.uuidToStringIdMap.clear();
+    this.initialized = false;
   }
 }

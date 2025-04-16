@@ -1,74 +1,83 @@
 
-import { useState, useEffect } from 'react';
-import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
-import { Achievement, AchievementCategory, AchievementRank } from '@/types/achievementTypes';
+import { useState, useEffect, useMemo } from 'react';
 import { AchievementTestingService } from '@/services/testing/AchievementTestingService';
-import { testDataGenerator } from '@/services/testing/generators/TestDataGeneratorService';
+import { AchievementCategory, AchievementRank, Achievement } from '@/types/achievementTypes';
+import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 import { toast } from 'sonner';
+import { testDataGenerator } from '@/services/testing/generators/TestDataGeneratorService';
 
-export function useAchievementTestState(userId: string) {
+export const useAchievementTestState = (userId: string) => {
   const [testService, setTestService] = useState<AchievementTestingService | null>(null);
   const [allAchievements, setAllAchievements] = useState<Achievement[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedRank, setSelectedRank] = useState('all');
   const [selectedAchievements, setSelectedAchievements] = useState<Set<string>>(new Set());
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [isDataGenerating, setIsDataGenerating] = useState(false);
   const [isDataCleaning, setIsDataCleaning] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedRank, setSelectedRank] = useState('all');
   
-  // Initialize the test service and load achievements
+  // Initialize
   useEffect(() => {
     const initialize = async () => {
-      try {
-        // Create test service
+      if (userId) {
+        // Create testing service
         const service = new AchievementTestingService(userId);
         setTestService(service);
         
         // Load achievements
-        const achievements = await AchievementUtils.getAllAchievements();
-        setAllAchievements(achievements);
-        
-        // Expand first category by default if we have achievements
-        if (achievements.length > 0) {
-          const firstCategory = achievements[0].category;
-          setExpandedCategories(new Set([firstCategory]));
+        try {
+          const achievements = await AchievementUtils.getAllAchievements();
+          setAllAchievements(achievements);
+          
+          // Expand the first category by default
+          if (achievements.length > 0) {
+            const categories = new Set<string>();
+            categories.add(achievements[0].category);
+            setExpandedCategories(categories);
+          }
+        } catch (error) {
+          console.error('Error loading achievements:', error);
+          toast.error('Failed to load achievements');
         }
-      } catch (error) {
-        console.error('Error initializing achievement test state:', error);
-        toast.error('Failed to initialize test runner');
       }
     };
     
-    if (userId) {
-      initialize();
-    }
+    initialize();
   }, [userId]);
   
-  // Filter achievements based on search and filters
-  const filteredAchievements = allAchievements.filter(achievement => {
-    // Filter by search query
-    const matchesSearch = searchQuery === '' || 
-      achievement.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      achievement.description.toLowerCase().includes(searchQuery.toLowerCase());
+  // Filter achievements based on search and category/rank filters
+  const filteredAchievements = useMemo(() => {
+    return allAchievements.filter(achievement => {
+      // Match search query
+      const matchesSearch = 
+        searchQuery === '' || 
+        achievement.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        achievement.description.toLowerCase().includes(searchQuery.toLowerCase());
       
-    // Filter by category
-    const matchesCategory = selectedCategory === 'all' || achievement.category === selectedCategory;
-    
-    // Filter by rank
-    const matchesRank = selectedRank === 'all' || achievement.rank === selectedRank;
-    
-    return matchesSearch && matchesCategory && matchesRank;
-  });
+      // Match category
+      const matchesCategory = selectedCategory === 'all' || achievement.category === selectedCategory;
+      
+      // Match rank
+      const matchesRank = selectedRank === 'all' || achievement.rank === selectedRank;
+      
+      return matchesSearch && matchesCategory && matchesRank;
+    });
+  }, [allAchievements, searchQuery, selectedCategory, selectedRank]);
   
-  // Group achievements by category
-  const achievementsByCategory = filteredAchievements.reduce((acc, achievement) => {
-    if (!acc[achievement.category]) {
-      acc[achievement.category] = [];
-    }
-    acc[achievement.category].push(achievement);
-    return acc;
-  }, {} as Record<string, Achievement[]>);
+  // Group achievements by category for display
+  const achievementsByCategory = useMemo(() => {
+    const result: Record<string, Achievement[]> = {};
+    
+    filteredAchievements.forEach(achievement => {
+      if (!result[achievement.category]) {
+        result[achievement.category] = [];
+      }
+      result[achievement.category].push(achievement);
+    });
+    
+    return result;
+  }, [filteredAchievements]);
   
   // Toggle category expansion
   const toggleCategoryExpansion = (category: string) => {
@@ -119,10 +128,10 @@ export function useAchievementTestState(userId: string) {
     setIsDataGenerating(true);
     try {
       await testDataGenerator.generateStandardTestData(userId);
-      toast.success('Test data generated');
+      toast.success('Test data generated successfully');
     } catch (error) {
-      toast.error('Error generating test data');
-      console.error(error);
+      console.error('Error generating test data:', error);
+      toast.error('Failed to generate test data');
     } finally {
       setIsDataGenerating(false);
     }
@@ -135,10 +144,10 @@ export function useAchievementTestState(userId: string) {
     setIsDataCleaning(true);
     try {
       await testDataGenerator.cleanupAllTestData(userId);
-      toast.success('Test data cleaned up');
+      toast.success('Test data cleaned up successfully');
     } catch (error) {
-      toast.error('Error cleaning up test data');
-      console.error(error);
+      console.error('Error cleaning up test data:', error);
+      toast.error('Failed to clean up test data');
     } finally {
       setIsDataCleaning(false);
     }
@@ -147,12 +156,12 @@ export function useAchievementTestState(userId: string) {
   return {
     testService,
     allAchievements,
-    achievementsByCategory,
-    expandedCategories,
-    selectedAchievements,
     searchQuery,
     selectedCategory,
     selectedRank,
+    selectedAchievements,
+    expandedCategories,
+    achievementsByCategory,
     filteredAchievements,
     isDataGenerating,
     isDataCleaning,
@@ -166,4 +175,4 @@ export function useAchievementTestState(userId: string) {
     generateTestData,
     cleanupTestData
   };
-}
+};

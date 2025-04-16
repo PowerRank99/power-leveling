@@ -1,247 +1,322 @@
 
-/**
- * Test Data Generator Service
- * Provides centralized access to all data generators
- */
-import { createTestDataGenerators, TestDataGenerators } from './index';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { CharacterClass } from './ClassGenerator';
 
-/**
- * Service for centralized access to all test data generators
- */
-export class TestDataGeneratorService {
-  private static instance: TestDataGeneratorService;
-  private generators: TestDataGenerators;
-
-  private constructor() {
-    this.generators = createTestDataGenerators();
-  }
-
+export class TestDataGenerator {
   /**
-   * Get the singleton instance of the generator service
+   * Generate standard test data for achievement testing
    */
-  public static getInstance(): TestDataGeneratorService {
-    if (!TestDataGeneratorService.instance) {
-      TestDataGeneratorService.instance = new TestDataGeneratorService();
-    }
-    return TestDataGeneratorService.instance;
-  }
-
-  /**
-   * Access all available generators
-   */
-  public getGenerators(): TestDataGenerators {
-    return this.generators;
-  }
-
-  /**
-   * Generate a standard set of test data for achievement testing
-   * @param userId User ID to generate data for
-   * @param options Configuration options
-   */
-  public async generateStandardTestData(
-    userId: string,
-    options: {
-      includeWorkouts?: boolean;
-      includeStreaks?: boolean;
-      includePRs?: boolean;
-      includeClasses?: boolean;
-      includeActivities?: boolean;
-      silent?: boolean;
-    } = {}
-  ): Promise<{ success: boolean; error?: string }> {
-    if (!userId) {
-      return { success: false, error: 'User ID is required' };
-    }
-
+  async generateStandardTestData(userId: string): Promise<boolean> {
     try {
-      const {
-        includeWorkouts = true,
-        includeStreaks = true,
-        includePRs = true,
-        includeClasses = true,
-        includeActivities = true,
-        silent = false
-      } = options;
-
-      // Get sample exercise IDs
-      const { data: exercises } = await supabase
-        .from('exercises')
-        .select('id, type')
-        .limit(10);
-
-      if (!exercises || exercises.length === 0) {
-        return { success: false, error: 'No exercises found in database' };
-      }
-
-      const strengthExercises = exercises
-        .filter(e => ['strength', 'weightlifting', 'powerlifting'].includes(e.type))
-        .map(e => e.id);
-
-      const cardioExercises = exercises
-        .filter(e => ['cardio', 'running', 'cycling'].includes(e.type))
-        .map(e => e.id);
-
-      if (!silent) {
-        toast.info('Generating test data...', {
-          description: 'This may take a moment'
-        });
-      }
-
-      // Generate workouts if requested
-      if (includeWorkouts) {
-        await this.generators.workout.generateWorkoutSeries(userId, {
-          count: 5,
-          startDate: new Date(new Date().setDate(new Date().getDate() - 15)),
-          consecutive: false,
-          randomizeWorkouts: true,
-          testDataTag: 'standard-test-data',
-          silent: true
-        });
-      }
-
-      // Generate streak if requested
-      if (includeStreaks) {
-        await this.generators.streak.generateStreak(userId, 3, {
-          startDate: new Date(new Date().setDate(new Date().getDate() - 3)),
-          testDataTag: 'standard-test-data',
-          silent: true
-        });
-      }
-
-      // Generate PRs if requested
-      if (includePRs && strengthExercises.length > 0) {
-        await this.generators.pr.generatePRsForMultipleExercises(userId, {
-          exerciseIds: strengthExercises.slice(0, Math.min(3, strengthExercises.length)),
-          withProgression: true,
-          progressionOptions: {
-            steps: 3,
-            progressionType: 'linear'
-          },
-          testDataTag: 'standard-test-data',
-          silent: true
-        });
-      }
-
-      // Generate class changes if requested
-      if (includeClasses) {
-        await this.generators.class.simulateClassChangeHistory(userId, {
-          sequence: [CharacterClass.GUERREIRO, CharacterClass.MONGE, CharacterClass.NINJA],
-          daysBetweenChanges: 20,
-          bypassCooldown: true,
-          testDataTag: 'standard-test-data',
-          silent: true
-        });
-      }
-
-      // Generate activities if requested
-      if (includeActivities) {
-        await this.generators.activity.generateActivityMix(userId, {
-          count: 3,
-          startDate: new Date(new Date().setDate(new Date().getDate() - 10)),
-          includePowerDays: true,
-          testDataTag: 'standard-test-data',
-          silent: true
-        });
-      }
-
-      if (!silent) {
-        toast.success('Test data generated', {
-          description: 'Standard test data has been created for achievement testing'
-        });
-      }
-
-      return { success: true };
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error generating standard test data';
-      if (!options.silent) {
-        toast.error('Failed to generate standard test data', {
-          description: errorMessage
-        });
-      }
+      await this.generateUserProfile(userId);
+      await this.generateWorkoutHistory(userId);
+      await this.generateExerciseData(userId);
+      await this.generateStreakData(userId);
       
-      return {
-        success: false,
-        error: errorMessage
-      };
+      return true;
+    } catch (error) {
+      console.error('Error generating test data:', error);
+      throw error;
     }
   }
-
+  
   /**
    * Clean up all test data for a user
-   * @param userId User ID to clean up data for
-   * @param options Cleanup options
    */
-  public async cleanupAllTestData(
-    userId: string,
-    options: {
-      silent?: boolean;
-      testDataTag?: string;
-    } = {}
-  ): Promise<{ success: boolean; error?: string }> {
-    if (!userId) {
-      return { success: false, error: 'User ID is required' };
-    }
-
+  async cleanupAllTestData(userId: string): Promise<boolean> {
     try {
-      const {
-        silent = false,
-        testDataTag = 'standard-test-data'
-      } = options;
-
-      if (!silent) {
-        toast.info('Cleaning up test data...', {
-          description: 'This may take a moment'
-        });
-      }
-
-      // Clean up workouts
-      await this.generators.workout.cleanupGeneratedWorkouts(userId, {
-        testDataTag,
-        silent: true
-      });
-
-      // Clean up PRs
-      await this.generators.pr.cleanupGeneratedPRs(userId, {
-        testDataTag,
-        silent: true
-      });
-
-      // Clean up activities
-      await this.generators.activity.cleanupActivityData(userId, {
-        testDataTag,
-        silent: true
-      });
-
-      // Reset class data
-      await this.generators.class.cleanupClassData(userId, {
-        silent: true
-      });
-
-      if (!silent) {
-        toast.success('Test data cleaned up', {
-          description: 'All test data has been removed'
-        });
-      }
-
-      return { success: true };
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error cleaning up test data';
-      if (!options.silent) {
-        toast.error('Failed to clean up test data', {
-          description: errorMessage
-        });
+      // Clean up user achievements
+      const { error: achievementError } = await supabase
+        .from('user_achievements')
+        .delete()
+        .eq('user_id', userId);
+        
+      if (achievementError) {
+        console.error('Error cleaning up user achievements:', achievementError);
       }
       
-      return {
-        success: false,
-        error: errorMessage
-      };
+      // Clean up achievement progress
+      const { error: progressError } = await supabase
+        .from('achievement_progress')
+        .delete()
+        .eq('user_id', userId);
+        
+      if (progressError) {
+        console.error('Error cleaning up achievement progress:', progressError);
+      }
+      
+      // Clean up workouts and workout sets
+      const { data: workouts, error: workoutsError } = await supabase
+        .from('workouts')
+        .select('id')
+        .eq('user_id', userId);
+        
+      if (workoutsError) {
+        console.error('Error fetching workouts:', workoutsError);
+      } else if (workouts?.length) {
+        for (const workout of workouts) {
+          const { error: setsError } = await supabase
+            .from('workout_sets')
+            .delete()
+            .eq('workout_id', workout.id);
+            
+          if (setsError) {
+            console.error(`Error cleaning up sets for workout ${workout.id}:`, setsError);
+          }
+        }
+        
+        const { error: deleteWorkoutsError } = await supabase
+          .from('workouts')
+          .delete()
+          .eq('user_id', userId);
+          
+        if (deleteWorkoutsError) {
+          console.error('Error cleaning up workouts:', deleteWorkoutsError);
+        }
+      }
+      
+      // Clean up manual workouts
+      const { error: manualWorkoutError } = await supabase
+        .from('manual_workouts')
+        .delete()
+        .eq('user_id', userId);
+        
+      if (manualWorkoutError) {
+        console.error('Error cleaning up manual workouts:', manualWorkoutError);
+      }
+      
+      // Clean up personal records
+      const { error: recordsError } = await supabase
+        .from('personal_records')
+        .delete()
+        .eq('user_id', userId);
+        
+      if (recordsError) {
+        console.error('Error cleaning up personal records:', recordsError);
+      }
+      
+      // Clean up exercise history
+      const { error: exerciseHistoryError } = await supabase
+        .from('exercise_history')
+        .delete()
+        .eq('user_id', userId);
+        
+      if (exerciseHistoryError) {
+        console.error('Error cleaning up exercise history:', exerciseHistoryError);
+      }
+      
+      // Reset profile data
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          workouts_count: 0,
+          achievements_count: 0,
+          records_count: 0,
+          streak: 0,
+          xp: 0,
+          daily_xp: 0,
+          achievement_points: 0,
+          last_workout_at: null
+        })
+        .eq('id', userId);
+        
+      if (profileError) {
+        console.error('Error resetting profile:', profileError);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error cleaning up test data:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Generate user profile data
+   */
+  private async generateUserProfile(userId: string): Promise<void> {
+    // Reset profile to clean state
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        workouts_count: 0,
+        achievements_count: 0,
+        records_count: 0,
+        streak: 0,
+        xp: 0,
+        daily_xp: 0,
+        achievement_points: 0,
+        last_workout_at: null,
+        class: 'Aventureiro',
+        level: 1
+      })
+      .eq('id', userId);
+      
+    if (error) {
+      throw new Error(`Error generating user profile: ${error.message}`);
+    }
+  }
+  
+  /**
+   * Generate workout history
+   */
+  private async generateWorkoutHistory(userId: string): Promise<void> {
+    try {
+      // Get sample exercises
+      const { data: exercises, error: exerciseError } = await supabase
+        .from('exercises')
+        .select('id, name, category')
+        .limit(5);
+        
+      if (exerciseError || !exercises?.length) {
+        throw new Error(`Error getting exercises: ${exerciseError?.message}`);
+      }
+      
+      // Create sample workouts
+      for (let i = 0; i < 3; i++) {
+        const { data: workout, error: workoutError } = await supabase
+          .from('workouts')
+          .insert({
+            user_id: userId,
+            started_at: new Date(Date.now() - (i * 24 * 60 * 60 * 1000) - 1000 * 60 * 60).toISOString(),
+            completed_at: new Date(Date.now() - (i * 24 * 60 * 60 * 1000)).toISOString(),
+            duration_seconds: 3600,
+            routine_id: null
+          })
+          .select('id')
+          .single();
+          
+        if (workoutError || !workout) {
+          throw new Error(`Error creating workout: ${workoutError?.message}`);
+        }
+        
+        // Add sets to the workout
+        for (let j = 0; j < 3; j++) {
+          const exercise = exercises[j % exercises.length];
+          
+          const { error: setError } = await supabase
+            .from('workout_sets')
+            .insert({
+              workout_id: workout.id,
+              exercise_id: exercise.id,
+              set_order: j + 1,
+              weight: 50 + j * 5,
+              reps: 10,
+              completed: true,
+              completed_at: new Date(Date.now() - (i * 24 * 60 * 60 * 1000) - 1000 * 60 * (30 - j * 10)).toISOString()
+            });
+            
+          if (setError) {
+            throw new Error(`Error creating workout set: ${setError.message}`);
+          }
+        }
+      }
+      
+      // Update profile workout count
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          workouts_count: 3,
+          last_workout_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+        
+      if (profileError) {
+        throw new Error(`Error updating profile: ${profileError.message}`);
+      }
+    } catch (error) {
+      console.error('Error generating workout history:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Generate exercise data
+   */
+  private async generateExerciseData(userId: string): Promise<void> {
+    try {
+      // Get sample exercises
+      const { data: exercises, error: exerciseError } = await supabase
+        .from('exercises')
+        .select('id, name, category')
+        .limit(5);
+        
+      if (exerciseError || !exercises?.length) {
+        throw new Error(`Error getting exercises: ${exerciseError?.message}`);
+      }
+      
+      // Create exercise history
+      for (const exercise of exercises) {
+        const { error } = await supabase
+          .from('exercise_history')
+          .insert({
+            user_id: userId,
+            exercise_id: exercise.id,
+            weight: 50,
+            reps: 10,
+            sets: 3,
+            last_used_at: new Date().toISOString()
+          });
+          
+        if (error) {
+          throw new Error(`Error creating exercise history: ${error.message}`);
+        }
+      }
+      
+      // Create personal records
+      const { error: recordError } = await supabase
+        .from('personal_records')
+        .insert({
+          user_id: userId,
+          exercise_id: exercises[0].id,
+          weight: 100,
+          previous_weight: 90,
+          recorded_at: new Date().toISOString()
+        });
+        
+      if (recordError) {
+        throw new Error(`Error creating personal record: ${recordError.message}`);
+      }
+      
+      // Update profile record count
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          records_count: 1
+        })
+        .eq('id', userId);
+        
+      if (profileError) {
+        throw new Error(`Error updating profile: ${profileError.message}`);
+      }
+    } catch (error) {
+      console.error('Error generating exercise data:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Generate streak data
+   */
+  private async generateStreakData(userId: string): Promise<void> {
+    try {
+      // Set streak
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          streak: 3
+        })
+        .eq('id', userId);
+        
+      if (error) {
+        throw new Error(`Error updating streak: ${error.message}`);
+      }
+    } catch (error) {
+      console.error('Error generating streak data:', error);
+      throw error;
     }
   }
 }
 
-// Export a singleton instance
-export const testDataGenerator = TestDataGeneratorService.getInstance();
+// Singleton instance
+export const testDataGenerator = new TestDataGenerator();
