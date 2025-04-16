@@ -1,35 +1,39 @@
 
-import { ServiceResponse, ErrorHandlingService, createSuccessResponse } from '@/services/common/ErrorHandlingService';
+import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
+import { supabase } from '@/integrations/supabase/client';
 import { AchievementService } from '@/services/rpg/AchievementService';
-import { AchievementCategory, AchievementRank } from '@/types/achievementTypes';
-import { AchievementChecker } from './AchievementCheckerInterface';
+import { AchievementCategory } from '@/types/achievementTypes';
 
-/**
- * Base abstract class for all specialized achievement checkers
- * Provides common functionality and enforces consistent interface
- */
-export abstract class BaseAchievementChecker implements AchievementChecker {
+export abstract class BaseAchievementChecker {
   /**
    * Abstract method that must be implemented by all checker classes
-   * Performs the specific achievement checks for a given category 
    */
   abstract checkAchievements(userId: string, data?: any): Promise<ServiceResponse<string[]>>;
   
   /**
-   * Helper method to check achievements based on rank and category
+   * Helper method to fetch achievements by category with optional sorting and filters
    */
-  protected async checkCategoryAchievements(
-    userId: string, 
-    rank: AchievementRank,
+  protected async fetchAchievementsByCategory(
     category: AchievementCategory,
-    currentValue: number
-  ): Promise<string[]> {
-    const achievementsToCheck: string[] = [];
+    orderBy?: string,
+    additionalFilters?: Record<string, any>
+  ): Promise<{ data: any[] | null; error: any }> {
+    let query = supabase
+      .from('achievements')
+      .select('*')
+      .eq('category', category);
     
-    // Check for achievements in the specified category and rank
-    // Implementation will be based on specific checker classes
+    if (orderBy) {
+      query = query.order(orderBy, { ascending: true });
+    }
     
-    return achievementsToCheck;
+    if (additionalFilters) {
+      Object.entries(additionalFilters).forEach(([key, value]) => {
+        query = query.eq(key, value);
+      });
+    }
+    
+    return query;
   }
   
   /**
