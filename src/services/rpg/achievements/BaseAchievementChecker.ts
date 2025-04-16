@@ -1,3 +1,4 @@
+
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { supabase } from '@/integrations/supabase/client';
 import { AchievementService } from '@/services/rpg/AchievementService';
@@ -74,14 +75,24 @@ export abstract class BaseAchievementChecker {
       .eq('user_id', userId);
       
     const categoryStats = new Map<string, number>();
-    categoryData?.forEach(workout => {
-      workout.workout_sets?.forEach(set => {
-        if (set.exercises?.category) {
-          const count = categoryStats.get(set.exercises.category) || 0;
-          categoryStats.set(set.exercises.category, count + 1);
+    
+    if (categoryData) {
+      categoryData.forEach(workout => {
+        if (workout.workout_sets) {
+          workout.workout_sets.forEach((set: any) => {
+            if (set.exercises && set.exercises.category) {
+              const count = categoryStats.get(set.exercises.category) || 0;
+              categoryStats.set(set.exercises.category, count + 1);
+            }
+            
+            if (set.exercises && set.exercises.type) {
+              const count = categoryStats.get(set.exercises.type) || 0;
+              categoryStats.set(set.exercises.type, count + 1);
+            }
+          });
         }
       });
-    });
+    }
     
     return {
       totalCount: stats?.workouts_count || 0,

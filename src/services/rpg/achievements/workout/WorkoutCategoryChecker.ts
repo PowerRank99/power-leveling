@@ -36,18 +36,24 @@ export class WorkoutCategoryChecker extends BaseAchievementChecker {
         
         // Count unique categories
         const categoryStats = new Map<string, number>();
-        workouts?.forEach(workout => {
-          workout.workout_sets?.forEach(set => {
-            if (set.exercises?.category) {
-              const count = categoryStats.get(set.exercises.category) || 0;
-              categoryStats.set(set.exercises.category, count + 1);
-            }
-            if (set.exercises?.type) {
-              const count = categoryStats.get(set.exercises.type) || 0;
-              categoryStats.set(set.exercises.type, count + 1);
+        
+        if (workouts) {
+          workouts.forEach(workout => {
+            if (workout.workout_sets) {
+              workout.workout_sets.forEach((set: any) => {
+                if (set.exercises && set.exercises.category) {
+                  const count = categoryStats.get(set.exercises.category) || 0;
+                  categoryStats.set(set.exercises.category, count + 1);
+                }
+                
+                if (set.exercises && set.exercises.type) {
+                  const count = categoryStats.get(set.exercises.type) || 0;
+                  categoryStats.set(set.exercises.type, count + 1);
+                }
+              });
             }
           });
-        });
+        }
         
         // Check achievements
         const achievementsToCheck: string[] = [];
@@ -65,5 +71,15 @@ export class WorkoutCategoryChecker extends BaseAchievementChecker {
       },
       'WORKOUT_CATEGORY_ACHIEVEMENTS'
     );
+  }
+  
+  // Add a static method to be compatible with current calls
+  static async checkWorkoutCategoryAchievements(userId: string, achievementsToCheck: string[]): Promise<void> {
+    const checker = new WorkoutCategoryChecker();
+    const result = await checker.checkAchievements(userId);
+    
+    if (result.success && result.data) {
+      achievementsToCheck.push(...result.data);
+    }
   }
 }
