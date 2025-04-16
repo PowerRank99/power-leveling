@@ -6,23 +6,23 @@ import { AuthProvider } from './hooks/useAuth';
 import { ClassProvider } from './contexts/ClassContext';
 import { initializeClassSystem, isClassSystemInitialized } from './services/rpg/ClassSystemInitializer';
 
-// Import all pages
-import LandingPage from './pages/LandingPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
+// Import all pages with correct extensions
+import LandingPage from './pages/Index';
+import LoginPage from './pages/AuthPage';
+import RegisterPage from './pages/AuthPage';
 import ProfilePage from './pages/ProfilePage';
 import WorkoutPage from './pages/WorkoutPage';
-import ExerciseSearchPage from './pages/ExerciseSearchPage';
-import ExerciseDetailsPage from './pages/ExerciseDetailsPage';
+import ExerciseSearchPage from './pages/ExerciseLibraryPage';
+import ExerciseDetailsPage from './pages/ExerciseLibraryPage';
 import CreateRoutinePage from './pages/CreateRoutinePage';
-import EditRoutinePage from './pages/EditRoutinePage';
+import EditRoutinePage from './pages/CreateRoutinePage';
 import ClassSelectionPage from './pages/class-selection/ClassSelectionPage';
-import AdminPanelPage from './pages/AdminPanelPage';
-import NotFoundPage from './pages/NotFoundPage';
-import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
-import TermsOfServicePage from './pages/TermsOfServicePage';
-import PasswordResetPage from './pages/PasswordResetPage';
-import PasswordUpdatePage from './pages/PasswordUpdatePage';
+import AdminPanelPage from './pages/AdminPage';
+import NotFoundPage from './pages/NotFound';
+import PrivacyPolicyPage from './pages/NotFound';
+import TermsOfServicePage from './pages/NotFound';
+import PasswordResetPage from './pages/AuthPage';
+import PasswordUpdatePage from './pages/AuthPage';
 
 // Create a client for React Query
 const queryClient = new QueryClient({
