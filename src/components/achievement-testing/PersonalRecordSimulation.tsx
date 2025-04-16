@@ -114,7 +114,7 @@ const PersonalRecordSimulation: React.FC<PersonalRecordSimulationProps> = ({ use
         });
       } else {
         toast.error('Error', {
-          description: result.message || 'Failed to record personal record',
+          description: result.error?.message || 'Failed to record personal record',
         });
       }
     } catch (error) {

@@ -48,7 +48,7 @@ export class ErrorFactory {
     return createErrorResponse(
       message,
       details,
-      ErrorCategory.VALIDATION,
+      ErrorCategory.VALIDATION_ERROR,
       'VALIDATION_ERROR'
     );
   }

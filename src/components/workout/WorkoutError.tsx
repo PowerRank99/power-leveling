@@ -17,7 +17,7 @@ interface WorkoutErrorProps {
 const WorkoutError: React.FC<WorkoutErrorProps> = ({ 
   errorMessage, 
   details,
-  category = ErrorCategory.UNKNOWN 
+  category = ErrorCategory.UNKNOWN_ERROR 
 }) => {
   const navigate = useNavigate();
 

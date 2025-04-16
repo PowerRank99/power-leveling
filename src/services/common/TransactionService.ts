@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceResponse, ErrorHandlingService } from './ErrorHandlingService';
+import { ServiceResponse, ErrorHandlingService, ErrorCategory, createErrorResponse } from './ErrorHandlingService';
 
 /**
  * Service for handling database transactions
@@ -25,11 +25,12 @@ export class TransactionService {
       } catch (error) {
         if (attempt >= maxRetries) {
           console.error(`[TransactionService] ${operationName} failed after ${maxRetries} attempts:`, error);
-          return {
-            success: false,
-            message: errorMessage,
-            error: error instanceof Error ? error : new Error(String(error))
-          };
+          return createErrorResponse(
+            errorMessage,
+            error instanceof Error ? error.message : String(error),
+            ErrorCategory.DATABASE,
+            error
+          );
         }
         
         console.warn(`[TransactionService] ${operationName} attempt ${attempt} failed, retrying...`);
@@ -37,11 +38,11 @@ export class TransactionService {
       }
     }
     
-    return {
-      success: false,
-      message: `${errorMessage} - max retries exceeded`,
-      error: new Error('Max retries exceeded')
-    };
+    return createErrorResponse(
+      `${errorMessage} - max retries exceeded`,
+      'Max retries exceeded',
+      ErrorCategory.DATABASE
+    );
   }
 
   /**

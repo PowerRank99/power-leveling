@@ -347,7 +347,7 @@ const TemplateGenerationSystem: React.FC<TemplateGenerationSystemProps> = ({ use
                 <h3 className="text-lg font-medium">Generator Parameters</h3>
                 
                 {template.generator.getGenerators && (
-                  <Alert variant="warning">
+                  <Alert variant="destructive" className="mb-4">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Nested Generators</AlertTitle>
                     <AlertDescription>

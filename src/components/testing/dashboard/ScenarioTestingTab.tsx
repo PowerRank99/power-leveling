@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -141,11 +140,15 @@ const ScenarioTestingTab: React.FC<ScenarioTestingTabProps> = ({ userId }) => {
                       </Badge>
                     ))}
                     
-                    {scenario.achievementTypes?.map((type: string) => (
-                      <Badge key={type} variant="outline" className="text-xs bg-arcane-15 border-arcane-30">
-                        {type}
-                      </Badge>
-                    ))}
+                    {scenario.supportedAchievementCategories && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {scenario.supportedAchievementCategories.map((type) => (
+                          <Badge key={type} variant="outline" className="text-xs">
+                            {type}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   
                   {result && (

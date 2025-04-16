@@ -24,7 +24,7 @@ const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
   title = 'Ocorreu um erro',
   message,
   details,
-  category = ErrorCategory.UNKNOWN,
+  category = ErrorCategory.UNKNOWN_ERROR,
   onRetry,
   className = '',
   showDetails = true,

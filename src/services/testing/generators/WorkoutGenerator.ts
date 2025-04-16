@@ -88,11 +88,11 @@ export class WorkoutGenerator implements TestDataGenerator {
     }
   }
   
-  async createRandomWorkouts(userId: string, count: number, options: any = {}): Promise<GeneratorResult> {
+  async createRandomWorkouts(userId: string, count: number, options: WorkoutGenerationOptions = {}): Promise<GeneratorResult> {
     return this.generate(userId, { ...options, count });
   }
   
-  async createWorkout(userId: string, options: any = {}): Promise<GeneratorResult> {
+  async createWorkout(userId: string, options: WorkoutGenerationOptions = {}): Promise<GeneratorResult> {
     return this.generate(userId, { ...options, count: 1 });
   }
   
@@ -114,5 +114,9 @@ export class WorkoutGenerator implements TestDataGenerator {
   
   async cleanupGeneratedWorkouts(userId: string): Promise<boolean> {
     return this.cleanup(userId);
+  }
+  
+  getGenerators(): TestDataGenerator[] {
+    return [this];
   }
 }

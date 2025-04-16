@@ -19,16 +19,16 @@ const AchievementErrorHandler: React.FC<AchievementErrorHandlerProps> = ({
 }) => {
   if (!error) return null;
   
-  const errorMessage = error.message || 'Erro desconhecido';
+  const errorMessage = error.error?.message || error.message || 'Erro desconhecido';
   const technicalDetails = error.error && typeof error.error === 'object' && 'technical' in error.error 
     ? (error.error as any).technical 
     : error.error instanceof Error 
       ? error.error.message 
-      : 'Detalhes técnicos não disponíveis';
+      : error.details || 'Detalhes técnicos não disponíveis';
       
   const errorCategory = error.error && typeof error.error === 'object' && 'category' in error.error
     ? (error.error as any).category
-    : ErrorCategory.UNKNOWN;
+    : ErrorCategory.UNKNOWN_ERROR;
     
   const errorCode = error.error && typeof error.error === 'object' && 'code' in error.error
     ? (error.error as any).code

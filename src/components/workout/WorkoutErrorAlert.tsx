@@ -15,7 +15,7 @@ interface WorkoutErrorAlertProps {
 const WorkoutErrorAlert: React.FC<WorkoutErrorAlertProps> = ({ 
   error, 
   onRetry,
-  category = ErrorCategory.UNKNOWN 
+  category = ErrorCategory.UNKNOWN_ERROR 
 }) => {
   if (!error) return null;
   

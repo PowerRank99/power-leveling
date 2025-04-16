@@ -35,7 +35,12 @@ const AchievementsPage = () => {
           const achievementsResponse = await AchievementService.getUnlockedAchievements(profile.id);
           
           if (!achievementsResponse.success) {
-            setError({ error: { message: achievementsResponse.message, technical: achievementsResponse.details } });
+            setError({ 
+              error: { 
+                message: achievementsResponse.error?.message || 'Não foi possível carregar conquistas', 
+                technical: achievementsResponse.error?.details 
+              } 
+            });
             return;
           }
           
@@ -44,7 +49,12 @@ const AchievementsPage = () => {
           const achievementStatsResponse = await AchievementService.getAchievementStats(profile.id);
           
           if (!achievementStatsResponse.success) {
-            setError({ error: { message: achievementStatsResponse.message, technical: achievementStatsResponse.details } });
+            setError({ 
+              error: { 
+                message: achievementStatsResponse.error?.message || 'Não foi possível carregar estatísticas', 
+                technical: achievementStatsResponse.error?.details 
+              } 
+            });
             return;
           }
           

@@ -1,4 +1,17 @@
-export type ErrorCategory = 'DATA_ERROR' | 'AUTH_ERROR' | 'API_ERROR' | 'VALIDATION_ERROR' | 'UNKNOWN_ERROR';
+
+export enum ErrorCategory {
+  DATA_ERROR = 'DATA_ERROR',
+  AUTH_ERROR = 'AUTH_ERROR',
+  API_ERROR = 'API_ERROR',
+  VALIDATION_ERROR = 'VALIDATION_ERROR',
+  UNKNOWN_ERROR = 'UNKNOWN_ERROR',
+  AUTHENTICATION = 'AUTHENTICATION',
+  AUTHORIZATION = 'AUTHORIZATION',
+  DATABASE = 'DATABASE',
+  NETWORK = 'NETWORK',
+  BUSINESS_LOGIC = 'BUSINESS_LOGIC',
+  NOT_FOUND = 'NOT_FOUND'
+}
 
 export interface ServiceError {
   message: string;
@@ -11,6 +24,8 @@ export interface ServiceResponse<T = any> {
   success: boolean;
   data?: T;
   error?: ServiceError;
+  message?: string;
+  details?: string;
 }
 
 export function createSuccessResponse<T>(data: T): ServiceResponse<T> {
@@ -23,11 +38,13 @@ export function createSuccessResponse<T>(data: T): ServiceResponse<T> {
 export function createErrorResponse(
   message: string,
   details?: string,
-  category: ErrorCategory = 'UNKNOWN_ERROR',
+  category: ErrorCategory = ErrorCategory.UNKNOWN_ERROR,
   originalError?: any
 ): ServiceResponse {
   return {
     success: false,
+    message: message,
+    details: details,
     error: {
       message,
       details,
@@ -49,23 +66,48 @@ export class ErrorHandlingService {
     };
   }
   
+  static executeWithErrorHandling<T>(
+    operation: () => Promise<T>,
+    operationName: string,
+    options: {
+      showToast?: boolean;
+      errorMessage?: string;
+      successMessage?: string;
+    } = {}
+  ): Promise<ServiceResponse<T>> {
+    return new Promise<ServiceResponse<T>>(async (resolve) => {
+      try {
+        const result = await operation();
+        resolve(createSuccessResponse(result));
+      } catch (error) {
+        console.error(`Error in ${operationName}:`, error);
+        resolve(createErrorResponse(
+          options.errorMessage || `Error in ${operationName}`,
+          error instanceof Error ? error.message : String(error),
+          this.determineErrorCategory(error),
+          error
+        ));
+      }
+    });
+  }
+  
   private static determineErrorCategory(error: any): ErrorCategory {
     if (error?.code === 'PGRST301' || error?.code?.startsWith('PGRST')) {
-      return 'DATA_ERROR';
+      return ErrorCategory.DATA_ERROR;
     }
     
     if (error?.message?.includes('auth') || error?.code === 'auth/') {
-      return 'AUTH_ERROR';
+      return ErrorCategory.AUTH_ERROR;
     }
     
     if (error?.response || error?.request) {
-      return 'API_ERROR';
+      return ErrorCategory.API_ERROR;
     }
     
     if (error?.name === 'ValidationError') {
-      return 'VALIDATION_ERROR';
+      return ErrorCategory.VALIDATION_ERROR;
     }
     
-    return 'UNKNOWN_ERROR';
+    return ErrorCategory.UNKNOWN_ERROR;
   }
 }
