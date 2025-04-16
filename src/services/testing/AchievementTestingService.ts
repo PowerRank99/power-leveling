@@ -1,30 +1,23 @@
 
-/**
- * This is a placeholder file for the removed achievement testing system.
- */
-
-export interface AchievementTestResult {
-  id: string;
-  name: string;
-  category: string;
-  rank: string;
-  success: boolean;
-  errorMessage?: string;
-  testDurationMs: number;
-  testedAt: string;
-}
+import { AchievementTestResult } from '@/types/achievementTypes';
 
 export class AchievementTestingService {
-  static async testAchievement(): Promise<AchievementTestResult> {
-    return {
+  static testAchievement(): Promise<AchievementTestResult> {
+    return Promise.resolve({
       id: 'placeholder',
-      name: 'Achievement Testing Removed',
-      category: 'placeholder',
+      name: 'Placeholder Test',
+      category: 'Special',
       rank: 'E',
       success: false,
-      errorMessage: 'Achievement testing system has been removed',
       testDurationMs: 0,
       testedAt: new Date().toISOString()
-    };
+    });
   }
+
+  // Stub methods to prevent build errors
+  static runAllTests = () => Promise.resolve([]);
+  static runCategoryTests = () => Promise.resolve([]);
+  static runRankTests = () => Promise.resolve([]);
+  static getTestReport = () => Promise.resolve([]);
+  static updateConfig = () => {};
 }
