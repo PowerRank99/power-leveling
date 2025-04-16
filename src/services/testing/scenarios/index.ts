@@ -1,3 +1,4 @@
+
 import { Achievement } from '@/types/achievementTypes';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -9,6 +10,17 @@ export interface TestScenario {
   tags: string[];
   achievementTypes?: string[];
   execute: (userId: string, options?: ScenarioOptions) => Promise<ScenarioResult>;
+  cleanup?: () => Promise<void>;
+  getConfigurationOptions?: () => Record<string, any>;
+}
+
+export interface ScenarioOptions {
+  verbose?: boolean;
+  skipCleanup?: boolean;
+  maxSteps?: number;
+  speed?: 'slow' | 'normal' | 'fast';
+  autoCleanup?: boolean;
+  silent?: boolean;
 }
 
 export interface ScenarioResult {
@@ -23,12 +35,6 @@ export interface ScenarioResult {
   completionPercentage?: number;
   unlockedCount?: number;
   targetCount?: number;
-}
-
-export interface ScenarioOptions {
-  verbose?: boolean;
-  skipCleanup?: boolean;
-  maxSteps?: number;
 }
 
 export interface ScenarioProgress {
@@ -46,6 +52,65 @@ export interface ScenarioAction {
   status: 'pending' | 'running' | 'completed' | 'failed';
   timestamp?: Date;
   details?: string;
+  description?: string;
+  success?: boolean;
+  error?: string;
+}
+
+export class BaseScenario {
+  protected userId: string;
+  protected startTime: number = 0;
+  protected actions: ScenarioAction[] = [];
+  protected achievementsUnlocked: Achievement[] = [];
+
+  constructor(userId: string) {
+    this.userId = userId;
+  }
+
+  protected createResult(success: boolean, message: string): ScenarioResult {
+    return {
+      success,
+      message,
+      executionTimeMs: Date.now() - this.startTime,
+      actions: this.actions,
+      achievementsUnlocked: this.achievementsUnlocked
+    };
+  }
+
+  protected async logAction(name: string, type: string, details?: string): Promise<void> {
+    this.actions.push({
+      name,
+      type,
+      status: 'running',
+      timestamp: new Date(),
+      details
+    });
+  }
+
+  protected async delayBySpeed(speed: 'slow' | 'normal' | 'fast'): Promise<void> {
+    const delays = {
+      slow: 1000,
+      normal: 500,
+      fast: 0
+    };
+    await new Promise(resolve => setTimeout(resolve, delays[speed]));
+  }
+
+  protected async checkAchievementUnlock(achievementId: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .from('user_achievements')
+        .select('*')
+        .eq('user_id', this.userId)
+        .eq('achievement_id', achievementId)
+        .maybeSingle();
+      
+      return !!data;
+    } catch (error) {
+      console.error('Error checking achievement unlock:', error);
+      return false;
+    }
+  }
 }
 
 class ScenarioRunner {
@@ -119,6 +184,13 @@ class ScenarioRunner {
         });
       }
     }
+  }
+
+  /**
+   * Get all scenarios (alias for getAvailableScenarios)
+   */
+  getScenarios(): TestScenario[] {
+    return this.getAvailableScenarios();
   }
 
   /**

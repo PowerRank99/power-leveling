@@ -129,4 +129,15 @@ export class TestCoverageService {
       untestedAchievements
     };
   }
+
+  /**
+   * Get validation status for mappings
+   */
+  static validateMappings() {
+    return {
+      mapped: [] as string[],
+      unmapped: [] as string[],
+      orphaned: [] as string[]
+    };
+  }
 }

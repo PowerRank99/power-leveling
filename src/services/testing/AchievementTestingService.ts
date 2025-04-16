@@ -247,7 +247,7 @@ export class AchievementTestingService {
       return createErrorResponse(
         'Failed to run all tests',
         error instanceof Error ? error.message : 'Unknown error',
-        'ERROR'
+        'API_ERROR'
       );
     }
   }
@@ -264,7 +264,7 @@ export class AchievementTestingService {
       return createErrorResponse(
         `Failed to run tests for category ${category}`,
         error instanceof Error ? error.message : 'Unknown error',
-        'ERROR'
+        'API_ERROR'
       );
     }
   }
@@ -281,7 +281,7 @@ export class AchievementTestingService {
       return createErrorResponse(
         `Failed to run tests for rank ${rank}`,
         error instanceof Error ? error.message : 'Unknown error',
-        'ERROR'
+        'API_ERROR'
       );
     }
   }
@@ -497,10 +497,10 @@ class AchievementTestGenerator {
       case AchievementCategory.STREAK:
         return new StreakAchievementTestPlan(this.userId, achievement);
         
-      case 'personal_record':
+      case AchievementCategory.RECORD:
         return new RecordAchievementTestPlan(this.userId, achievement);
         
-      case 'workout_category':
+      case AchievementCategory.WORKOUT_CATEGORY:
         return new WorkoutCategoryTestPlan(this.userId, achievement);
         
       // Add more cases for other achievement types
@@ -565,6 +565,8 @@ class WorkoutAchievementTestPlan extends AchievementTestPlan {
     if (!this.achievement) return false;
     
     try {
+      const requirements = this.achievement.requirements || { type: 'workout_count', value: 1 };
+      
       // Create a workout
       const { data: workout, error: workoutError } = await supabase
         .from('workouts')
@@ -610,33 +612,6 @@ class WorkoutAchievementTestPlan extends AchievementTestPlan {
         throw new Error(`Error updating profile: ${profileError.message}`);
       }
       
-      // Update profile last_workout_at
-      const { error: lastWorkoutError } = await supabase
-        .from('profiles')
-        .update({
-          last_workout_at: new Date().toISOString()
-        })
-        .eq('id', this.userId);
-        
-      if (lastWorkoutError) {
-        throw new Error(`Error updating last workout time: ${lastWorkoutError.message}`);
-      }
-      
-      // Trigger achievement check
-      // In a real implementation, we would call the actual achievement service
-      // For now, we'll simulate it by directly inserting the achievement
-      const { error: achievementError } = await supabase
-        .from('user_achievements')
-        .insert({
-          user_id: this.userId,
-          achievement_id: this.achievement.id,
-          achieved_at: new Date().toISOString()
-        });
-        
-      if (achievementError) {
-        throw new Error(`Error awarding achievement: ${achievementError.message}`);
-      }
-      
       return true;
     } catch (error) {
       console.error('Error executing workout test plan:', error);
@@ -653,32 +628,20 @@ class StreakAchievementTestPlan extends AchievementTestPlan {
     if (!this.achievement) return false;
     
     try {
-      // Determine streak requirement from achievement
-      const requiredStreak = this.achievement.requirements?.streak || 3;
+      const requirements = this.achievement.requirements || { type: 'streak', value: 3 };
+      const streakValue = requirements.value || 3;
       
-      // Update profile to set streak
-      const { error: streakError } = await supabase
+      // Update the user's streak directly
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
-          streak: requiredStreak
+          streak: streakValue,
+          last_workout_at: new Date().toISOString()
         })
         .eq('id', this.userId);
         
-      if (streakError) {
-        throw new Error(`Error updating streak: ${streakError.message}`);
-      }
-      
-      // Simulate the achievement check by directly awarding it
-      const { error: achievementError } = await supabase
-        .from('user_achievements')
-        .insert({
-          user_id: this.userId,
-          achievement_id: this.achievement.id,
-          achieved_at: new Date().toISOString()
-        });
-        
-      if (achievementError) {
-        throw new Error(`Error awarding achievement: ${achievementError.message}`);
+      if (profileError) {
+        throw new Error(`Error updating profile streak: ${profileError.message}`);
       }
       
       return true;
@@ -690,28 +653,61 @@ class StreakAchievementTestPlan extends AchievementTestPlan {
 }
 
 /**
- * Test plan for personal record achievements
+ * Test plan for record-related achievements
  */
 class RecordAchievementTestPlan extends AchievementTestPlan {
   async execute(): Promise<boolean> {
     if (!this.achievement) return false;
     
     try {
+      // First, make sure we have an exercise to work with
+      const { data: exercise, error: exerciseError } = await supabase
+        .from('exercises')
+        .select('id')
+        .limit(1)
+        .maybeSingle();
+        
+      if (exerciseError) {
+        throw new Error(`Error fetching exercise: ${exerciseError.message}`);
+      }
+      
+      // If no exercise exists, create a test one
+      let exerciseId = exercise?.id;
+      if (!exerciseId) {
+        const { data: newExercise, error: newExerciseError } = await supabase
+          .from('exercises')
+          .insert({
+            name: 'Test Bench Press',
+            category: 'chest',
+            type: 'strength',
+            level: 'intermediate'
+          })
+          .select('id')
+          .single();
+          
+        if (newExerciseError || !newExercise) {
+          throw new Error(`Error creating exercise: ${newExerciseError?.message}`);
+        }
+        
+        exerciseId = newExercise.id;
+      }
+      
       // Create a personal record
       const { error: recordError } = await supabase
         .from('personal_records')
         .insert({
           user_id: this.userId,
-          exercise_id: '550e8400-e29b-41d4-a716-446655440000', // Sample exercise ID
+          exercise_id: exerciseId,
           weight: 100,
-          previous_weight: 90
+          previous_weight: 90,
+          recorded_at: new Date().toISOString()
         });
         
       if (recordError) {
         throw new Error(`Error creating personal record: ${recordError.message}`);
       }
       
-      // Update the record count in the profile
+      // Update profile records count
       const { error: profileError } = await supabase
         .rpc('increment_profile_counter', {
           user_id_param: this.userId,
@@ -721,19 +717,6 @@ class RecordAchievementTestPlan extends AchievementTestPlan {
         
       if (profileError) {
         throw new Error(`Error updating profile: ${profileError.message}`);
-      }
-      
-      // Award the achievement
-      const { error: achievementError } = await supabase
-        .from('user_achievements')
-        .insert({
-          user_id: this.userId,
-          achievement_id: this.achievement.id,
-          achieved_at: new Date().toISOString()
-        });
-        
-      if (achievementError) {
-        throw new Error(`Error awarding achievement: ${achievementError.message}`);
       }
       
       return true;
@@ -752,106 +735,35 @@ class WorkoutCategoryTestPlan extends AchievementTestPlan {
     if (!this.achievement) return false;
     
     try {
-      // Get the required category from achievement
-      const requiredCategory = this.achievement.requirements?.category;
-      const requiredCount = this.achievement.requirements?.count || 1;
+      const requirements = this.achievement.requirements || { type: 'workout_category', category: 'strength', count: 1 };
       
-      if (!requiredCategory) {
-        throw new Error('No category requirement specified for workout category achievement');
+      // Create a workout with the required category
+      const { data: workout, error: workoutError } = await supabase
+        .from('workouts')
+        .insert({
+          user_id: this.userId,
+          started_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+          completed_at: new Date().toISOString(),
+          duration_seconds: 1800,
+          type: requirements.category || 'strength'
+        })
+        .select('id')
+        .single();
+        
+      if (workoutError || !workout) {
+        throw new Error(`Error creating workout: ${workoutError?.message}`);
       }
       
-      // Create workouts with the required category
-      for (let i = 0; i < requiredCount; i++) {
-        // Create a workout
-        const { data: workout, error: workoutError } = await supabase
-          .from('workouts')
-          .insert({
-            user_id: this.userId,
-            started_at: new Date(Date.now() - 1000 * 60 * 30 - (i * 24 * 60 * 60 * 1000)).toISOString(),
-            completed_at: new Date(Date.now() - (i * 24 * 60 * 60 * 1000)).toISOString(),
-            duration_seconds: 1800
-          })
-          .select('id')
-          .single();
-          
-        if (workoutError || !workout) {
-          throw new Error(`Error creating workout: ${workoutError?.message}`);
-        }
-        
-        // Create an exercise with the required category
-        const { data: exercise, error: exerciseError } = await supabase
-          .from('exercises')
-          .select('id')
-          .eq('category', requiredCategory)
-          .limit(1)
-          .maybeSingle();
-          
-        if (exerciseError) {
-          throw new Error(`Error finding exercise: ${exerciseError.message}`);
-        }
-        
-        // If no exercise with the category exists, create one
-        let exerciseId = exercise?.id;
-        if (!exerciseId) {
-          const { data: newExercise, error: newExerciseError } = await supabase
-            .from('exercises')
-            .insert({
-              name: `Test ${requiredCategory} Exercise`,
-              category: requiredCategory,
-              type: 'strength',
-              level: 'intermediate'
-            })
-            .select('id')
-            .single();
-            
-          if (newExerciseError || !newExercise) {
-            throw new Error(`Error creating exercise: ${newExerciseError?.message}`);
-          }
-          
-          exerciseId = newExercise.id;
-        }
-        
-        // Add a set using the exercise
-        const { error: setError } = await supabase
-          .from('workout_sets')
-          .insert({
-            workout_id: workout.id,
-            exercise_id: exerciseId,
-            set_order: 1,
-            weight: 50,
-            reps: 10,
-            completed: true,
-            completed_at: new Date(Date.now() - (i * 24 * 60 * 60 * 1000)).toISOString()
-          });
-          
-        if (setError) {
-          throw new Error(`Error creating workout set: ${setError.message}`);
-        }
-      }
-      
-      // Update profile workout count
+      // Update user profile to reflect the workout
       const { error: profileError } = await supabase
         .rpc('increment_profile_counter', {
           user_id_param: this.userId,
           counter_name: 'workouts_count',
-          increment_amount: requiredCount
+          increment_amount: 1
         });
         
       if (profileError) {
         throw new Error(`Error updating profile: ${profileError.message}`);
-      }
-      
-      // Award the achievement
-      const { error: achievementError } = await supabase
-        .from('user_achievements')
-        .insert({
-          user_id: this.userId,
-          achievement_id: this.achievement.id,
-          achieved_at: new Date().toISOString()
-        });
-        
-      if (achievementError) {
-        throw new Error(`Error awarding achievement: ${achievementError.message}`);
       }
       
       return true;

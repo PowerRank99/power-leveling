@@ -9,10 +9,24 @@ import { AchievementCategory } from '@/types/achievementTypes';
 import { ShieldCheck, AlertTriangle } from 'lucide-react';
 
 interface TestCoverageReportProps {
-  coverage: TestCoverageReportType;
+  coverage: {
+    totalAchievements: number;
+    testedAchievements: number;
+    coveragePercentage: number;
+    byCategory: Record<string, {
+      total: number;
+      tested: number;
+      coverage: number;
+    }>;
+    untestedAchievements: Array<any>;
+  };
 }
 
 const TestCoverageReport: React.FC<TestCoverageReportProps> = ({ coverage }) => {
+  if (!coverage) {
+    return null;
+  }
+  
   return (
     <Card>
       <CardHeader>
@@ -40,7 +54,7 @@ const TestCoverageReport: React.FC<TestCoverageReportProps> = ({ coverage }) => 
               <div key={category} className="p-2 border border-divider/20 rounded-lg">
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-xs">{category}</span>
-                  <Badge variant={stats.coverage >= 80 ? "achievement" : "valor"} className="text-xs">
+                  <Badge variant={stats.coverage >= 80 ? "success" : "destructive"} className="text-xs">
                     {stats.coverage.toFixed(0)}%
                   </Badge>
                 </div>
@@ -50,7 +64,7 @@ const TestCoverageReport: React.FC<TestCoverageReportProps> = ({ coverage }) => 
           </div>
         </div>
 
-        {coverage.untestedAchievements.length > 0 && (
+        {coverage.untestedAchievements && coverage.untestedAchievements.length > 0 && (
           <div className="space-y-2">
             <h4 className="text-sm font-semibold flex items-center">
               <AlertTriangle className="mr-2 h-4 w-4 text-valor" />

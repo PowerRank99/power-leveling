@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +9,6 @@ import {
   AchievementTestingService, 
   AchievementTestResult, 
   AchievementTestProgress,
-  AchievementTestRunners
 } from '@/services/testing/AchievementTestingService';
 import { AchievementCategory, AchievementRank } from '@/types/achievementTypes';
 import { Award, CircleCheck, CircleX, Clock, Filter, Play, RotateCcw } from 'lucide-react';
@@ -44,7 +44,7 @@ const AchievementTestRunner: React.FC<AchievementTestRunnerProps> = ({ userId, a
   useEffect(() => {
     if (userId) {
       const service = new AchievementTestingService(userId, {
-        cleanup: useCleanup,
+        useCleanup,
         useTransaction,
         verbose
       });
@@ -116,7 +116,7 @@ const AchievementTestRunner: React.FC<AchievementTestRunnerProps> = ({ userId, a
     if (!testService) return;
     
     testService.updateConfig({
-      cleanup: useCleanup,
+      useCleanup,
       useTransaction,
       verbose
     });
@@ -320,8 +320,8 @@ const AchievementTestRunner: React.FC<AchievementTestRunnerProps> = ({ userId, a
               </ScrollArea>
             </div>
             
-            {results.length > 0 && (
-              <TestCoverageReport coverage={testService?.getTestReport().summary.coverage} />
+            {results.length > 0 && testService?.getTestReport() && (
+              <TestCoverageReport coverage={testService.getTestReport().summary.coverage} />
             )}
           </div>
         </div>
