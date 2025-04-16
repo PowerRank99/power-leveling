@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -598,7 +597,7 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
                   </p>
                   {action.error && (
                     <p className="mt-1 text-red-500 text-xs">
-                      {action.error}
+                      {typeof action.error === 'string' ? action.error : action.error.message}
                     </p>
                   )}
                 </div>
@@ -641,7 +640,7 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
               <div className="p-2 rounded-md border border-red-400 bg-red-400/10 text-sm">
                 <div className="flex items-center space-x-2">
                   <AlertTriangle className="h-4 w-4 text-red-500" />
-                  <span>{String(result.error)}</span>
+                  <span>{typeof result.error === 'string' ? result.error : result.error.message}</span>
                 </div>
               </div>
             )}
@@ -655,24 +654,13 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
                 <ScrollArea className="h-[200px] pr-4">
                   <div className="space-y-1">
                     {result.achievementsUnlocked.map((id, index) => {
-                      const [achievement, setAchievement] = useState<Achievement | null>(null);
-                      
-                      useEffect(() => {
-                        const loadAchievement = async () => {
-                          try {
-                            const achievementData = await AchievementScenarioAdapter.getAchievementById(id);
-                            setAchievement(achievementData);
-                          } catch (error) {
-                            console.error(`Error loading achievement ${id}:`, error);
-                          }
-                        };
-                        loadAchievement();
-                      }, [id]);
+                      const achievementId = typeof id === 'string' ? id : id.id || 'unknown';
+                      const achievementName = achievement?.name || (typeof id === 'string' ? id : id.id || 'Unknown Achievement');
                       
                       return (
                         <div key={index} className="flex items-center space-x-2 p-1 text-sm">
                           <CheckCircle className="h-4 w-4 text-green-500" />
-                          <span className="font-medium">{achievement?.name || id}</span>
+                          <span className="font-medium">{achievementName}</span>
                           {achievement?.rank && (
                             <Badge variant="outline" className="ml-auto">
                               Rank {achievement.rank}

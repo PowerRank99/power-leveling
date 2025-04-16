@@ -334,6 +334,102 @@ export class PowerUserScenario extends BaseScenario {
       return false;
     }
   }
+
+  async execute(userId: string, options?: ScenarioOptions): Promise<ScenarioResult> {
+    this.startTime = performance.now();
+    this.actions = [];
+    this.achievementsUnlocked = [];
+    
+    // Default options for power user
+    const defaultOptions: PowerUserScenarioOptions = {
+      speed: 'normal' as SpeedOption,
+      silent: false,
+      autoCleanup: true,
+      streakDays: 7,
+      recordCount: 5,
+      workoutCount: 10,
+      generateGuild: true
+    };
+    
+    const mergedOptions = { ...defaultOptions, ...options };
+    
+    try {
+      // Log the start of the scenario
+      this.logAction('SCENARIO_START', `Starting power user scenario for user ${userId}`);
+      
+      // Generate a streak
+      this.logAction('GENERATE_STREAK', `Generating ${mergedOptions.streakDays} day streak`);
+      
+      const streakGen = this.generators.streak;
+      const streakResult = await streakGen.generate(userId, { 
+        days: mergedOptions.streakDays,
+        mixedTypes: true
+      });
+      
+      if (!streakResult.success) {
+        return this.createResult(false, `Failed to generate streak: ${streakResult.message}`);
+      }
+      
+      await this.delayBySpeed(mergedOptions.speed);
+      
+      // Generate multiple personal records
+      this.logAction('GENERATE_RECORDS', `Creating ${mergedOptions.recordCount} personal records`);
+      
+      const recordGen = this.generators.record;
+      for (let i = 0; i < mergedOptions.recordCount; i++) {
+        await recordGen.generate(userId);
+        await this.delayBySpeed(mergedOptions.speed);
+      }
+      
+      // Generate additional workouts if needed
+      const additionalWorkouts = Math.max(0, mergedOptions.workoutCount - mergedOptions.streakDays);
+      if (additionalWorkouts > 0) {
+        this.logAction('GENERATE_ADDITIONAL_WORKOUTS', `Generating ${additionalWorkouts} additional workouts`);
+        
+        const workoutGen = this.generators.workout;
+        await workoutGen.generate(userId, { 
+          count: additionalWorkouts
+        });
+        
+        await this.delayBySpeed(mergedOptions.speed);
+      }
+      
+      // Check for unlocked achievements
+      this.logAction('CHECK_ACHIEVEMENTS', 'Checking for unlocked achievements');
+      
+      const { data: achievements, error: achievementsError } = await supabase
+        .from('user_achievements')
+        .select('achievement_id')
+        .eq('user_id', userId);
+        
+      if (achievementsError) {
+        this.logAction('ERROR', `Failed to check achievements: ${achievementsError.message}`, false);
+      } else if (achievements && achievements.length > 0) {
+        this.achievementsUnlocked = achievements.map(a => a.achievement_id);
+        this.logAction('ACHIEVEMENTS_UNLOCKED', `User has unlocked ${achievements.length} achievements`);
+      }
+      
+      // Return success
+      return this.createResult(true, 'Power user scenario completed successfully');
+    } catch (error) {
+      this.logAction('ERROR', `Scenario failed: ${error instanceof Error ? error.message : String(error)}`, false);
+      return this.createResult(false, `Scenario failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  async cleanup(): Promise<boolean> {
+    try {
+      // Cleanup generated data using the generators
+      await this.generators.workout.cleanup(this.userId);
+      await this.generators.activity.cleanup(this.userId);
+      await this.generators.record.cleanup(this.userId);
+      await this.generators.streak.cleanup(this.userId);
+      return true;
+    } catch (error) {
+      console.error('Error cleaning up power user scenario:', error);
+      return false;
+    }
+  }
 }
 
 // Register the scenario with the scenario runner

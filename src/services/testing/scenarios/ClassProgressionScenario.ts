@@ -1,201 +1,154 @@
 
-import { BaseScenario, ScenarioOptions, ScenarioResult } from './index';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { createTestDataGenerators } from '../generators';
+import { BaseScenario, ScenarioOptions, ScenarioResult } from './index';
+import { WorkoutType } from '../generators/WorkoutGenerator';
 
 export interface ClassProgressionScenarioOptions extends ScenarioOptions {
-  className: string;
-  workoutsToGenerate: number;
+  classType?: string;
+  workoutCount?: number;
+  includePR?: boolean;
+  generateCompletion?: boolean;
 }
 
 export class ClassProgressionScenario extends BaseScenario {
-  private generators = createTestDataGenerators();
-  
   constructor() {
     super(
       'class-progression',
-      'Class Progression Scenario',
-      'Tests achievements related to class selection and progression',
-      ['class', 'progression', 'rpg']
+      'Class Progression',
+      'Simulates a user progressing through class-specific content',
+      ['class', 'progression', 'achievement'],
+      ['class', 'workout', 'achievement']
     );
   }
-  
-  getConfigurationOptions(): Record<string, any> {
-    const baseOptions = super.getConfigurationOptions();
-    
-    return {
-      ...baseOptions,
-      className: {
-        type: 'select',
-        label: 'Character Class',
-        options: [
-          { value: 'guerreiro', label: 'Guerreiro' },
-          { value: 'monge', label: 'Monge' },
-          { value: 'ninja', label: 'Ninja' },
-          { value: 'druida', label: 'Druida' },
-          { value: 'bruxo', label: 'Bruxo' },
-          { value: 'paladino', label: 'Paladino' }
-        ],
-        default: 'guerreiro',
-        description: 'Character class to simulate progression for'
-      },
-      workoutsToGenerate: {
-        type: 'number',
-        label: 'Workouts to Generate',
-        default: 5,
-        min: 1,
-        max: 30,
-        description: 'Number of workouts to generate for the class'
-      }
-    };
-  }
-  
-  async execute(userId: string, options?: ScenarioOptions): Promise<ScenarioResult> {
+
+  async execute(userId: string, options?: ClassProgressionScenarioOptions): Promise<ScenarioResult> {
     this.startTime = performance.now();
     this.actions = [];
     this.achievementsUnlocked = [];
     
+    // Default options
+    const defaultOptions: Required<ClassProgressionScenarioOptions> = {
+      speed: 'normal',
+      silent: false,
+      autoCleanup: true,
+      testDataTag: 'class-progression',
+      classType: 'guerreiro',
+      workoutCount: 5,
+      includePR: true,
+      generateCompletion: true
+    };
+    
+    const mergedOptions = { ...defaultOptions, ...(options || {}) };
+    
     try {
-      const mergedOptions: Required<ClassProgressionScenarioOptions> = {
-        speed: options?.speed || 'normal',
-        silent: options?.silent || false,
-        autoCleanup: options?.autoCleanup !== false,
-        className: options?.className || 'guerreiro',
-        workoutsToGenerate: options?.workoutsToGenerate || 5,
-        testDataTag: 'test-data'
-      };
+      // Set the user's class
+      this.logAction('SET_CLASS', `Setting user class to ${mergedOptions.classType}`);
       
-      // Log start of scenario
-      this.logAction('START_SCENARIO', `Starting class progression scenario for ${mergedOptions.className}`);
-      
-      // Set user's class
-      await this.setUserClass(userId, mergedOptions.className);
-      
-      // Generate workouts appropriate for the class
-      await this.generateClassWorkouts(userId, mergedOptions);
-      
-      // Check for class-specific achievements
-      const achievements = await this.checkClassAchievements(userId, mergedOptions.className);
-      
-      // Return successful result
-      return this.createResult(true);
-      
-    } catch (error) {
-      // Log error and return failure
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      this.logAction('ERROR', errorMessage, false, errorMessage);
-      return this.createResult(false, errorMessage);
-    }
-  }
-  
-  private async setUserClass(userId: string, className: string): Promise<void> {
-    try {
-      const { error } = await supabase
+      const { error: classError } = await supabase
         .from('profiles')
         .update({
-          class: className,
+          class: mergedOptions.classType,
           class_selected_at: new Date().toISOString()
         })
         .eq('id', userId);
         
-      if (error) throw error;
+      if (classError) {
+        throw new Error(`Failed to set user class: ${classError.message}`);
+      }
       
-      this.logAction('SET_CLASS', `Set user class to ${className}`);
+      await this.delayBySpeed(mergedOptions.speed);
       
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.logAction('SET_CLASS_ERROR', message, false, message);
-      throw error;
-    }
-  }
-  
-  private async generateClassWorkouts(userId: string, options: Required<ClassProgressionScenarioOptions>): Promise<void> {
-    try {
-      const { workoutsToGenerate, className } = options;
+      // Generate workouts based on class type
+      let workoutType = WorkoutType.STRENGTH;
       
-      // Different workout types based on class
-      let workoutType = 'strength';
-      switch (className) {
+      switch (mergedOptions.classType.toLowerCase()) {
         case 'guerreiro':
-          workoutType = 'strength';
+          workoutType = WorkoutType.STRENGTH;
           break;
         case 'monge':
-          workoutType = 'calisthenics';
+          workoutType = WorkoutType.MOBILITY;
           break;
         case 'ninja':
-          workoutType = 'cardio';
+          workoutType = WorkoutType.HIIT;
           break;
         case 'druida':
-          workoutType = 'mobility';
+          workoutType = WorkoutType.MOBILITY;
           break;
         case 'bruxo':
-          workoutType = 'flexibility';
+          workoutType = WorkoutType.STRENGTH;
           break;
         case 'paladino':
-          workoutType = 'sport';
+          workoutType = WorkoutType.SPORT;
           break;
       }
       
-      // Generate the workouts
-      this.logAction('GENERATE_WORKOUTS', `Generating ${workoutsToGenerate} ${workoutType} workouts`);
+      this.logAction('GENERATE_WORKOUTS', `Generating ${mergedOptions.workoutCount} ${workoutType} workouts`);
       
-      // Use workout generator
-      const result = await this.generators.workout.createRandomWorkouts(userId, {
-        workoutCount: workoutsToGenerate,
-        workoutType: workoutType,
+      // Generate workouts with workout generator
+      const workoutOptions = {
+        count: mergedOptions.workoutCount,
+        type: workoutType,
         isTestData: true
-      });
+      };
       
-      if (!result.success) {
-        throw new Error(result.error);
+      const workoutResult = await this.generators.workout.generate(userId, workoutOptions);
+      
+      if (!workoutResult.success) {
+        throw new Error(`Failed to generate workouts: ${workoutResult.message}`);
       }
       
-      this.logAction('WORKOUTS_GENERATED', `Successfully generated ${workoutsToGenerate} workouts`);
+      await this.delayBySpeed(mergedOptions.speed);
       
+      // Generate personal records if needed
+      if (mergedOptions.includePR) {
+        this.logAction('GENERATE_PR', 'Creating personal record');
+        
+        const prResult = await this.generators.record.generate(userId);
+        
+        if (!prResult.success) {
+          this.logAction('WARNING', `Failed to generate PR: ${prResult.message}`, false);
+        }
+        
+        await this.delayBySpeed(mergedOptions.speed);
+      }
+      
+      // Check for unlocked achievements
+      this.logAction('CHECK_ACHIEVEMENTS', 'Checking for unlocked class achievements');
+      
+      // Get potential class achievements
+      const { data: classAchievements, error: achievementsError } = await supabase
+        .from('achievements')
+        .select('id')
+        .ilike('requirements', `%${mergedOptions.classType}%`);
+        
+      if (achievementsError) {
+        this.logAction('WARNING', `Failed to fetch class achievements: ${achievementsError.message}`, false);
+      } else if (classAchievements && classAchievements.length > 0) {
+        const achievementIds = classAchievements.map(a => a.id);
+        
+        // Check which ones the user has unlocked
+        const unlockedAchievements = await this.checkAchievementUnlock(userId, achievementIds);
+        
+        if (unlockedAchievements.length > 0) {
+          this.achievementsUnlocked = unlockedAchievements;
+          this.logAction('ACHIEVEMENTS_UNLOCKED', `Unlocked ${unlockedAchievements.length} class achievements`);
+        }
+      }
+      
+      if (this.achievementsUnlocked.length === 0) {
+        this.logAction('INFO', 'No class achievements were unlocked');
+      }
+      
+      // Return success result
+      return this.createResult(true, 'Class progression scenario completed successfully');
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.logAction('GENERATE_WORKOUTS_ERROR', message, false, message);
-      throw error;
-    }
-  }
-  
-  private async checkClassAchievements(userId: string, className: string): Promise<string[]> {
-    const unlockedAchievements: string[] = [];
-    
-    // Check for class-specific achievements
-    const classAchievements = this.getClassAchievements(className);
-    
-    for (const achievementId of classAchievements) {
-      const unlocked = await this.checkAchievementUnlock(userId, achievementId);
-      if (unlocked) {
-        unlockedAchievements.push(achievementId);
-      }
-    }
-    
-    return unlockedAchievements;
-  }
-  
-  private getClassAchievements(className: string): string[] {
-    // Return achievement IDs related to the specified class
-    switch (className) {
-      case 'guerreiro':
-        return ['guerreiro_iniciado', 'forca_bruta'];
-      case 'monge':
-        return ['monge_iniciado', 'forca_interior'];
-      case 'ninja':
-        return ['ninja_iniciado', 'hiit_and_run'];
-      case 'druida':
-        return ['druida_iniciado', 'ritmo_da_natureza'];
-      case 'bruxo':
-        return ['bruxo_iniciado', 'pijama_arcano'];
-      case 'paladino':
-        return ['paladino_iniciado', 'caminho_do_heroi'];
-      default:
-        return [];
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logAction('ERROR', `Scenario failed: ${errorMessage}`, false);
+      
+      return this.createResult(false, `Failed to execute class progression scenario: ${errorMessage}`);
     }
   }
 }
 
-// Create the scenario instance
+// Register the scenario
 export const classProgressionScenario = new ClassProgressionScenario();

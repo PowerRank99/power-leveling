@@ -36,11 +36,12 @@ export interface ScenarioAction {
 }
 
 export interface ScenarioProgress {
-  total: number;
-  completed: number;
-  success: boolean;
+  percentage: number;
+  totalActions: number;
+  completedActions: number;
   isRunning: boolean;
-  actions: ScenarioAction[];
+  isPaused: boolean;
+  actions?: ScenarioAction[];
   currentAction?: string;
 }
 
@@ -114,7 +115,9 @@ export abstract class BaseScenario implements TestScenario {
       description,
       timestamp: new Date(),
       success,
-      error
+      error,
+      status: success ? 'completed' : 'failed',
+      name: type
     });
   }
 
@@ -168,6 +171,10 @@ export class ScenarioRunner {
 
   getAvailableScenarios(): TestScenario[] {
     return Array.from(this.scenarios.values());
+  }
+  
+  getScenarios(): TestScenario[] {
+    return this.getAvailableScenarios();
   }
 
   getScenario(id: string): TestScenario | undefined {

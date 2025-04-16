@@ -1,12 +1,12 @@
 
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { Settings, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
-interface TestConfigurationPanelProps {
+export interface TestConfigurationPanelProps {
   useCleanup: boolean;
   useTransaction: boolean;
   verbose: boolean;
@@ -30,84 +30,75 @@ const TestConfigurationPanel: React.FC<TestConfigurationPanelProps> = ({
   onClose
 }) => {
   return (
-    <Card className="bg-midnight-elevated border-divider/30">
-      <CardHeader className="space-y-1">
+    <Card className="p-4 mb-4 bg-midnight-card border-divider/30">
+      <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-orbitron text-text-primary">Test Configuration</CardTitle>
+          <CardTitle className="text-lg">Test Configuration</CardTitle>
           {onClose && (
-            <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="h-6 w-6"
+              aria-label="Close configuration panel"
+            >
               <X className="h-4 w-4" />
             </Button>
           )}
         </div>
-        <CardDescription className="text-text-secondary">
-          Configure how tests are executed and what happens after each test
+        <CardDescription>
+          Configure how achievement tests are executed
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="cleanup" className="cursor-pointer text-text-primary hover:text-text-primary/90">
-                Cleanup After Tests
-              </Label>
-              <Switch 
-                id="cleanup" 
-                checked={useCleanup}
-                onCheckedChange={onCleanupChange}
-                disabled={isLoading}
-                className="data-[state=checked]:bg-arcane"
-              />
-            </div>
-            <p className="text-xs text-text-secondary">
-              When enabled, test data will be cleaned up after each test
-            </p>
+      <CardContent className="space-y-4">
+        <div className="space-y-3">
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="cleanup"
+              checked={useCleanup}
+              onCheckedChange={onCleanupChange}
+            />
+            <Label htmlFor="cleanup">Cleanup After Test</Label>
           </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="transaction" className="cursor-pointer text-text-primary hover:text-text-primary/90">
-                Use Transactions
-              </Label>
-              <Switch 
-                id="transaction" 
-                checked={useTransaction}
-                onCheckedChange={onTransactionChange}
-                disabled={isLoading}
-                className="data-[state=checked]:bg-arcane"
-              />
-            </div>
-            <p className="text-xs text-text-secondary">
-              When enabled, each test will run in a database transaction
-            </p>
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="verbose" className="cursor-pointer text-text-primary hover:text-text-primary/90">
-                Verbose Logging
-              </Label>
-              <Switch 
-                id="verbose" 
-                checked={verbose}
-                onCheckedChange={onVerboseChange}
-                disabled={isLoading}
-                className="data-[state=checked]:bg-arcane"
-              />
-            </div>
-            <p className="text-xs text-text-secondary">
-              Enable detailed logging to console during test execution
-            </p>
-          </div>
+          <p className="text-xs text-text-secondary ml-6">
+            Automatically remove test data after test completion
+          </p>
         </div>
-        
+
+        <div className="space-y-3">
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="transaction"
+              checked={useTransaction}
+              onCheckedChange={onTransactionChange}
+            />
+            <Label htmlFor="transaction">Use Transactions</Label>
+          </div>
+          <p className="text-xs text-text-secondary ml-6">
+            Run tests in database transactions to prevent side effects
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="verbose"
+              checked={verbose}
+              onCheckedChange={onVerboseChange}
+            />
+            <Label htmlFor="verbose">Verbose Logging</Label>
+          </div>
+          <p className="text-xs text-text-secondary ml-6">
+            Show detailed log information during test execution
+          </p>
+        </div>
+
         <Button 
-          variant="outline"
-          className="w-full bg-midnight-card border-arcane-30 text-text-primary hover:bg-arcane-15 transition-colors"
-          onClick={onUpdateConfig}
+          onClick={onUpdateConfig} 
           disabled={isLoading}
+          variant="outline"
+          className="w-full"
         >
-          <Settings className="mr-2 h-4 w-4" />
           Update Configuration
         </Button>
       </CardContent>

@@ -7,16 +7,29 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Copy, Search } from 'lucide-react';
 import { AchievementIdMappingService } from '@/services/common/AchievementIdMappingService';
 
+interface IdMapping {
+  stringId: string;
+  uuid: string;
+}
+
 export const AchievementIdDebugger = () => {
-  const [mappings, setMappings] = useState<{ stringId: string; uuid: string }[]>([]);
+  const [mappings, setMappings] = useState<IdMapping[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isVisible, setIsVisible] = useState(false);
   
   useEffect(() => {
     if (isVisible) {
-      const loadMappings = () => {
-        const allMappings = AchievementIdMappingService.getAllMappings();
-        setMappings(allMappings);
+      const loadMappings = async () => {
+        try {
+          await AchievementIdMappingService.initialize();
+          // Convert the mapping format to match our component's expected format
+          const allMappings = Object.entries(AchievementIdMappingService.getMappings() || {}).map(
+            ([codeId, dbId]) => ({ stringId: codeId, uuid: dbId })
+          );
+          setMappings(allMappings);
+        } catch (error) {
+          console.error('Error loading achievement ID mappings:', error);
+        }
       };
       
       loadMappings();

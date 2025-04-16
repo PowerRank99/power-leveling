@@ -281,6 +281,107 @@ export class NewUserScenario extends BaseScenario {
       return false;
     }
   }
+
+  async execute(userId: string, options?: ScenarioOptions): Promise<ScenarioResult> {
+    this.startTime = performance.now();
+    this.actions = [];
+    this.achievementsUnlocked = [];
+    
+    const defaultOptions = {
+      speed: 'normal' as SpeedOption,
+      silent: false,
+      autoCleanup: true,
+      workoutCount: 3,
+      includeManualWorkout: true,
+      includePersonalRecord: true
+    };
+    
+    const mergedOptions = { ...defaultOptions, ...options };
+    
+    try {
+      // Log the start of the scenario
+      this.logAction('SCENARIO_START', `Starting new user scenario for user ${userId}`);
+      
+      // Generate initial workouts
+      this.logAction('GENERATE_WORKOUTS', `Generating ${mergedOptions.workoutCount} workouts for new user`);
+      
+      const workoutGen = this.generators.workout;
+      const workoutResult = await workoutGen.generate(userId, { 
+        count: mergedOptions.workoutCount
+      });
+      
+      if (!workoutResult.success) {
+        return this.createResult(false, `Failed to generate workouts: ${workoutResult.message}`);
+      }
+      
+      await this.delayBySpeed(mergedOptions.speed);
+      
+      // Include manual workout if enabled
+      if (mergedOptions.includeManualWorkout) {
+        this.logAction('GENERATE_MANUAL_WORKOUT', 'Adding a manual workout submission');
+        
+        const activityGen = this.generators.activity;
+        const manualResult = await activityGen.generate(userId, {
+          type: 'yoga',
+          description: 'Test manual workout for new user'
+        });
+        
+        if (!manualResult.success) {
+          this.logAction('WARNING', `Failed to generate manual workout: ${manualResult.message}`, false);
+        }
+        
+        await this.delayBySpeed(mergedOptions.speed);
+      }
+      
+      // Include personal record if enabled
+      if (mergedOptions.includePersonalRecord) {
+        this.logAction('GENERATE_PERSONAL_RECORD', 'Creating a personal record achievement');
+        
+        const recordGen = this.generators.record;
+        const recordResult = await recordGen.generate(userId);
+        
+        if (!recordResult.success) {
+          this.logAction('WARNING', `Failed to generate personal record: ${recordResult.message}`, false);
+        }
+        
+        await this.delayBySpeed(mergedOptions.speed);
+      }
+      
+      // Check for unlocked achievements
+      this.logAction('CHECK_ACHIEVEMENTS', 'Checking for unlocked achievements');
+      
+      const { data: achievements, error: achievementsError } = await supabase
+        .from('user_achievements')
+        .select('achievement_id')
+        .eq('user_id', userId);
+        
+      if (achievementsError) {
+        this.logAction('ERROR', `Failed to check achievements: ${achievementsError.message}`, false);
+      } else if (achievements && achievements.length > 0) {
+        this.achievementsUnlocked = achievements.map(a => a.achievement_id);
+        this.logAction('ACHIEVEMENTS_UNLOCKED', `User has unlocked ${achievements.length} achievements`);
+      }
+      
+      // Return success
+      return this.createResult(true, 'New user scenario completed successfully');
+    } catch (error) {
+      this.logAction('ERROR', `Scenario failed: ${error instanceof Error ? error.message : String(error)}`, false);
+      return this.createResult(false, `Scenario failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  async cleanup(): Promise<boolean> {
+    try {
+      // Cleanup generated data using the generators
+      await this.generators.workout.cleanup(this.userId);
+      await this.generators.activity.cleanup(this.userId);
+      await this.generators.record.cleanup(this.userId);
+      return true;
+    } catch (error) {
+      console.error('Error cleaning up new user scenario:', error);
+      return false;
+    }
+  }
 }
 
 // Register the scenario with the scenario runner

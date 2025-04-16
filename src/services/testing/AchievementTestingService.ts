@@ -219,7 +219,7 @@ export class AchievementTestingService {
       return createErrorResponse(
         'Failed to run all tests',
         error instanceof Error ? error.message : 'Unknown error',
-        'API_ERROR' as ErrorCategory
+        'UNKNOWN_ERROR'
       );
     }
   }
@@ -233,7 +233,7 @@ export class AchievementTestingService {
       return createErrorResponse(
         `Failed to run tests for category ${category}`,
         error instanceof Error ? error.message : 'Unknown error',
-        'API_ERROR' as ErrorCategory
+        'UNKNOWN_ERROR'
       );
     }
   }
@@ -247,7 +247,7 @@ export class AchievementTestingService {
       return createErrorResponse(
         `Failed to run tests for rank ${rank}`,
         error instanceof Error ? error.message : 'Unknown error',
-        'API_ERROR' as ErrorCategory
+        'UNKNOWN_ERROR'
       );
     }
   }
@@ -332,9 +332,6 @@ export class AchievementTestingService {
         const requirements = achievement.requirements || {};
         const category = 'category' in requirements ? requirements.category : undefined;
         const count = 'count' in requirements ? requirements.count : 1;
-        
-        // Implementation of test logic based on achievement type and requirements
-        // This would use the specific test generators for different achievement types
         
         const testGenerator = new AchievementTestGenerator(this.userId);
         const testPlan = await testGenerator.generateTestPlan(achievement);

@@ -1,148 +1,126 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { GeneratorOptions, GeneratorResult, CleanupOptions, TestDataGenerator } from './index';
+import { TestDataGenerator, GeneratorResult } from './index';
 
-export interface ManualWorkoutOptions extends GeneratorOptions {
-  date?: Date;
-  activityType?: string;
-  description?: string;
-  isPowerDay?: boolean;
+export enum ActivityType {
+  YOGA = 'yoga',
+  RUNNING = 'running',
+  SWIMMING = 'swimming',
+  CYCLING = 'cycling',
+  HIKING = 'hiking',
+  OTHER = 'other'
 }
 
-export interface ActivityMixOptions extends GeneratorOptions {
-  count: number;
-  startDate?: Date;
-  types?: string[];
+export interface ActivityGenerationOptions {
+  count?: number;
+  type?: ActivityType | string;
+  daysAgo?: number;
+  isTestData?: boolean;
+  activityDate?: Date;
+  description?: string;
 }
 
 export class ActivityGenerator implements TestDataGenerator {
-  /**
-   * Generate a manual workout
-   */
-  async generateManualWorkout(userId: string, options: ManualWorkoutOptions = {}): Promise<GeneratorResult> {
+  async generate(userId: string, options: ActivityGenerationOptions = {}): Promise<GeneratorResult> {
     try {
-      const date = options.date || new Date();
-      const activityType = options.activityType || 'running';
-      const description = options.description || `Manual ${activityType} workout`;
-      const isPowerDay = options.isPowerDay || false;
-      const testDataTag = options.testDataTag || 'test-data';
-      
-      // Create manual workout record
-      const { data, error } = await supabase
-        .from('manual_workouts')
-        .insert({
-          user_id: userId,
-          description,
-          activity_type: activityType,
-          photo_url: 'https://via.placeholder.com/300x200?text=Manual+Workout',
-          xp_awarded: isPowerDay ? 200 : 100,
-          workout_date: date.toISOString(),
-          is_power_day: isPowerDay,
-          meta: options.isTestData !== false ? { testData: true, tag: testDataTag } : undefined
-        })
-        .select('id')
-        .single();
-      
-      if (error || !data) {
-        return {
-          success: false,
-          error: error?.message || 'Failed to create manual workout'
-        };
-      }
-
-      // Update profile workout count
-      await supabase.rpc('increment_profile_counter', {
-        user_id_param: userId,
-        counter_name: 'workouts_count',
-        increment_amount: 1
-      });
-
-      return {
-        success: true,
-        ids: [data.id]
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
-    }
-  }
-
-  /**
-   * Generate a mix of different activities
-   */
-  async generateActivityMix(userId: string, options: ActivityMixOptions): Promise<GeneratorResult> {
-    try {
-      const count = options.count;
-      const startDate = options.startDate || new Date();
-      const types = options.types || ['running', 'yoga', 'swimming', 'cycling', 'hiking'];
+      const {
+        count = 1,
+        type = ActivityType.YOGA,
+        daysAgo = 0,
+        isTestData = true,
+        description = `Generated test activity: ${type}`
+      } = options;
       
       const activityIds: string[] = [];
       
       for (let i = 0; i < count; i++) {
-        const date = new Date(startDate);
-        date.setDate(date.getDate() - i);
+        // Create a base activity date
+        const activityDate = options.activityDate || new Date();
         
-        const randomType = types[Math.floor(Math.random() * types.length)];
-        const isPowerDay = Math.random() > 0.8; // 20% chance of power day
+        // If daysAgo is specified, adjust the date
+        if (daysAgo > 0) {
+          activityDate.setDate(activityDate.getDate() - daysAgo - i);
+        }
         
-        const result = await this.generateManualWorkout(userId, {
-          ...options,
-          date,
-          activityType: randomType,
-          isPowerDay
-        });
+        // Create manual workout
+        const { data: activity, error: activityError } = await supabase
+          .from('manual_workouts')
+          .insert({
+            user_id: userId,
+            workout_date: activityDate.toISOString(),
+            description: description,
+            activity_type: type,
+            photo_url: 'https://example.com/test-activity.jpg', // Placeholder URL
+            xp_awarded: 100,
+            is_power_day: false
+          })
+          .select('id')
+          .single();
+          
+        if (activityError || !activity) {
+          throw new Error(`Error creating activity: ${activityError?.message}`);
+        }
         
-        if (result.success && result.ids) {
-          activityIds.push(...result.ids);
+        activityIds.push(activity.id);
+        
+        // Update profile
+        const { error: profileError } = await supabase
+          .rpc('increment_profile_counter', {
+            user_id_param: userId,
+            counter_name: 'workouts_count',
+            increment_amount: 1
+          });
+          
+        if (profileError) {
+          console.error(`Error updating profile: ${profileError.message}`);
         }
       }
       
       return {
         success: true,
-        ids: activityIds
+        message: `Generated ${count} manual workout(s)`,
+        ids: activityIds,
+        data: { activityIds }
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : String(error)
       };
     }
   }
-
-  /**
-   * Create a manual workout (alias for generateManualWorkout)
-   */
-  async createManualWorkout(userId: string, options: ManualWorkoutOptions = {}): Promise<GeneratorResult> {
-    return this.generateManualWorkout(userId, options);
-  }
-
-  /**
-   * Clean up test data
-   */
-  async cleanup(userId: string, options: CleanupOptions = {}): Promise<boolean> {
+  
+  async generateManualWorkout(userId: string, options: ActivityGenerationOptions = {}): Promise<string | null> {
     try {
-      const tag = options.testDataTag || 'test-data';
-      
-      // Delete test manual workouts
-      await supabase
+      const result = await this.generate(userId, { ...options, count: 1 });
+      if (result.success && result.ids && result.ids.length > 0) {
+        return result.ids[0];
+      }
+      return null;
+    } catch (error) {
+      console.error('Error creating manual workout:', error);
+      return null;
+    }
+  }
+  
+  async cleanup(userId: string): Promise<boolean> {
+    try {
+      // Delete manual workouts
+      const { error: activityError } = await supabase
         .from('manual_workouts')
         .delete()
         .eq('user_id', userId)
-        .contains('meta', { testData: true, tag });
+        .eq('workout_date', new Date().toISOString().substring(0, 10));
         
+      if (activityError) {
+        console.error(`Error cleaning up manual workouts: ${activityError.message}`);
+        return false;
+      }
+      
       return true;
     } catch (error) {
-      console.error('Error cleaning up test manual workouts:', error);
+      console.error('Error cleaning up manual workouts:', error);
       return false;
     }
-  }
-
-  /**
-   * Get the generators associated with this test data generator
-   */
-  getGenerators(): any[] {
-    return [];
   }
 }

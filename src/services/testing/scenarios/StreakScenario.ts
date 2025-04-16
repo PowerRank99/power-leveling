@@ -1,4 +1,3 @@
-
 import { BaseScenario, ScenarioOptions, ScenarioResult } from './index';
 import { supabase } from '@/integrations/supabase/client';
 import { createTestDataGenerators } from '../generators';
@@ -183,19 +182,25 @@ export class StreakScenario extends BaseScenario {
     return Math.floor(Math.abs((d2.getTime() - d1.getTime()) / (24 * 60 * 60 * 1000)));
   }
   
-  async cleanup(userId: string): Promise<boolean> {
+  async cleanup(): Promise<boolean> {
     try {
-      // Clean up workouts and manual workouts
-      await this.generators.workout.cleanup(userId);
-      await this.generators.activity.cleanup(userId);
+      // Clean up streak data
+      await this.generators.workout.cleanup(this.userId);
+      await this.generators.activity.cleanup(this.userId);
       
-      // Reset streak to 0
-      await supabase
+      // Reset streak
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
-          streak: 0
+          streak: 0,
+          last_workout_at: null
         })
-        .eq('id', userId);
+        .eq('id', this.userId);
+        
+      if (profileError) {
+        console.error(`Error resetting profile streak: ${profileError.message}`);
+        return false;
+      }
       
       return true;
     } catch (error) {
