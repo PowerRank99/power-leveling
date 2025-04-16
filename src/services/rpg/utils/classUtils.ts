@@ -1,6 +1,6 @@
-
 import { ClassMetadata } from '../types/classTypes';
 import { CLASS_PASSIVE_SKILLS } from '../constants/exerciseTypes';
+import { Hand } from 'lucide-react';
 
 /**
  * Utility functions for class system
@@ -18,7 +18,7 @@ export class ClassUtils {
     },
     'Monge': {
       class_name: 'Monge',
-      icon: 'Fist',  // Changed from Dumbbell to Fist
+      icon: 'Hand',
       description: 'Especialista em Calistenia',
       color: 'from-amber-600 to-amber-800'
     },

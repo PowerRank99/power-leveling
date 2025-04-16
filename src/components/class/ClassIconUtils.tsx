@@ -1,5 +1,4 @@
-
-import { Dumbbell, Flame, Timer, Star, Activity, Zap, Lightbulb, Heart, PlayCircle, Sword, Wind, Sparkles, Shield, Leaf, Fist } from 'lucide-react';
+import { Dumbbell, Flame, Timer, Star, Activity, Zap, Lightbulb, Heart, PlayCircle, Sword, Wind, Sparkles, Shield, Leaf, Hand } from 'lucide-react';
 import React from 'react';
 
 /**
@@ -13,7 +12,7 @@ export const getBonusTypeIcon = (bonusType: string): React.ReactNode => {
   } else if (lowerType.includes('strength') || lowerType.includes('força')) {
     return <Flame className="h-4 w-4 text-white" />; // Changed from Fire to Flame
   } else if (lowerType.includes('bodyweight') || lowerType.includes('corpo') || lowerType.includes('calistenia')) {
-    return <Fist className="h-4 w-4 text-white" />;
+    return <Hand className="h-4 w-4 text-white" />;
   } else if (lowerType.includes('cardio') || lowerType.includes('hiit')) {
     return <Zap className="h-4 w-4 text-white" />;
   } else if (lowerType.includes('flex') || lowerType.includes('yoga') || lowerType.includes('mobil')) {
@@ -40,7 +39,7 @@ export const getClassIcon = (className: string | null): React.ReactNode => {
   
   switch (className.toLowerCase()) {
     case 'guerreiro': return <Sword className="h-6 w-6 text-white" />;
-    case 'monge': return <Fist className="h-6 w-6 text-white" />; // Changed from Dumbbell to Fist
+    case 'monge': return <Hand className="h-6 w-6 text-white" />; // Changed from Dumbbell to Fist
     case 'ninja': return <Wind className="h-6 w-6 text-white" />;
     case 'bruxo': return <Sparkles className="h-6 w-6 text-white" />;
     case 'paladino': return <Shield className="h-6 w-6 text-white" />;

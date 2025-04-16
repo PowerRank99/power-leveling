@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Sword, Wind, Sparkles, Shield, Dumbbell, Leaf, Fist } from 'lucide-react';
+import { Sword, Wind, Sparkles, Shield, Dumbbell, Leaf, Hand } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface ClassIconSelectorProps {
@@ -14,7 +13,6 @@ const ClassIconSelector: React.FC<ClassIconSelectorProps> = ({
   size = 'md',
   animate = false
 }) => {
-  // Determine icon size based on size prop
   const getIconSize = () => {
     switch(size) {
       case 'sm': return 'w-4 h-4';
@@ -24,7 +22,6 @@ const ClassIconSelector: React.FC<ClassIconSelectorProps> = ({
     }
   };
   
-  // Get color based on class
   const getColor = () => {
     if (!className) return 'text-gray-400';
     
@@ -42,7 +39,6 @@ const ClassIconSelector: React.FC<ClassIconSelectorProps> = ({
   const sizeClass = getIconSize();
   const colorClass = getColor();
   
-  // Animation variants
   const iconAnimationVariants = {
     idle: { rotate: 0 },
     hover: { 
@@ -55,14 +51,13 @@ const ClassIconSelector: React.FC<ClassIconSelectorProps> = ({
     }
   };
   
-  // Select the proper icon based on class
   const getClassIcon = () => {
     if (!className) return <Shield className={`${sizeClass} ${colorClass}`} />;
     
     const IconComponent = () => {
       switch (className.toLowerCase()) {
         case 'guerreiro': return <Sword className={`${sizeClass} ${colorClass}`} />;
-        case 'monge': return <Fist className={`${sizeClass} ${colorClass}`} />;
+        case 'monge': return <Hand className={`${sizeClass} ${colorClass}`} />;
         case 'ninja': return <Wind className={`${sizeClass} ${colorClass}`} />;
         case 'bruxo': return <Sparkles className={`${sizeClass} ${colorClass}`} />;
         case 'paladino': return <Shield className={`${sizeClass} ${colorClass}`} />;
