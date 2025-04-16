@@ -2,6 +2,7 @@
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { ClassBonusCalculator } from '../ClassBonusCalculator';
 import { ClassBonusBreakdown } from '../../types/classTypes';
+import { XPCalculationService } from '../../XPCalculationService';
 
 /**
  * Guerreiro class bonus calculator
@@ -28,15 +29,24 @@ export class GuerreiroBonus {
     let bonusXP = 0;
     const bonusBreakdown: ClassBonusBreakdown[] = [];
     
-    // Força Bruta: +20% XP for weight training exercises
+    // Força Bruta: +20% XP directly on exercise and set XP parts for weight training exercises
     const weightTrainingExercises = workout.exercises.filter(
       ex => ex.type === 'Musculação'
     );
     
     if (weightTrainingExercises.length > 0) {
-      // Calculate percentage of weight training exercises
-      const weightTrainingRatio = weightTrainingExercises.length / workout.exercises.length;
-      const weightTrainingBonus = Math.round(baseXP * this.WEIGHT_TRAINING_BONUS * weightTrainingRatio);
+      // Calculate the exercise and set XP parts only
+      const exerciseXP = workout.exercises.length * XPCalculationService.BASE_EXERCISE_XP;
+      
+      // Count completed sets
+      const completedSets = workout.exercises.reduce((sum, ex) => {
+        return sum + ex.sets.filter(set => set.completed).length;
+      }, 0);
+      
+      const setXP = completedSets * XPCalculationService.BASE_SET_XP;
+      
+      // Apply the flat 20% bonus to exercise and set XP
+      const weightTrainingBonus = Math.round((exerciseXP + setXP) * this.WEIGHT_TRAINING_BONUS);
       
       if (weightTrainingBonus > 0) {
         bonusXP += weightTrainingBonus;

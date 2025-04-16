@@ -17,6 +17,8 @@ export interface PassiveSkillContext {
   durationMinutes: number;
   exerciseTypes: Record<string, number>; // Mapping of exercise type to count
   totalExercises: number;
+  exerciseCount: number; // Count of exercises for direct XP calculations
+  setCount: number; // Count of sets for direct XP calculations
   hasPR: boolean;
   isRestDay?: boolean;
   

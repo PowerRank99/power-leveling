@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { PassiveSkill, PassiveSkillContext, PassiveSkillResult, SpecialPassiveSkill } from '../types/PassiveSkillTypes';
+import { XPCalculationService } from '../XPCalculationService';
 
 /**
  * Implementation of Bruxo's primary ability: Fluxo Arcano
@@ -24,12 +25,16 @@ export class FluxoArcano implements PassiveSkill {
   }
   
   calculate(context: PassiveSkillContext): PassiveSkillResult {
-    // Calculate ratio of flexibility exercises
+    // Get flexibility exercise count
     const flexibilityCount = context.exerciseTypes['Mobilidade & Flexibilidade'] || 0;
-    const flexibilityRatio = flexibilityCount / context.totalExercises;
     
-    // Calculate bonus XP
-    const bonusXP = Math.round(context.baseXP * this.FLEXIBILITY_BONUS * flexibilityRatio);
+    // Only apply to the exercise and set portion of XP
+    const exerciseXP = context.exerciseCount * XPCalculationService.BASE_EXERCISE_XP;
+    const setXP = context.setCount * XPCalculationService.BASE_SET_XP;
+    const exerciseAndSetXP = exerciseXP + setXP;
+    
+    // Apply 40% bonus flat
+    const bonusXP = Math.round(exerciseAndSetXP * this.FLEXIBILITY_BONUS);
     
     return {
       bonusXP,
@@ -112,6 +117,7 @@ export class PijamaArcano implements SpecialPassiveSkill {
   
   /**
    * Execute ability - record usage and preserve streak with reduction
+   * Now reduces by 5 percentage points rather than percentage of streak
    */
   async execute(userId: string, context: any): Promise<boolean> {
     try {
@@ -127,10 +133,10 @@ export class PijamaArcano implements SpecialPassiveSkill {
         return false;
       }
       
-      // Calculate reduced streak (lose 5% rounded down)
+      // Calculate reduced streak (lose 5 percentage points - 1 day of streak)
       const oldStreak = profile.streak || 0;
-      const reduction = Math.floor(oldStreak * this.STREAK_REDUCTION);
-      const newStreak = Math.max(1, oldStreak - reduction); // Minimum streak of 1
+      // Instead of percentage reduction, we reduce by 1 (equivalent to 5 percentage points)
+      const newStreak = Math.max(1, oldStreak - 1);
       
       // Update streak with reduction
       const { error: updateError } = await supabase
@@ -158,7 +164,7 @@ export class PijamaArcano implements SpecialPassiveSkill {
       }
           
       toast.success('Pijama Arcano Ativado!', {
-        description: `Seu Bruxo perdeu apenas ${reduction} dias de sequência ao invés de perder tudo!`
+        description: `Seu Bruxo perdeu apenas 1 dia de sequência ao invés de perder tudo!`
       });
       
       return true;

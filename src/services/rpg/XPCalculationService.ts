@@ -84,7 +84,7 @@ export class XPCalculationService {
         }
       }
       
-      // Create context for passive skill calculation
+      // Create context for passive skill calculation with added exercise and set counts
       const context: PassiveSkillContext = {
         userId: '', // Not needed for XP calculation
         userClass: userClass || null,
@@ -92,6 +92,8 @@ export class XPCalculationService {
         durationMinutes: timeMinutes,
         exerciseTypes: exerciseTypes,
         totalExercises: workout.exercises.length,
+        exerciseCount: cappedExercisesCount, // Added for direct XP calculations
+        setCount: cappedCompletedSets, // Added for direct XP calculations
         hasPR: workout.hasPR || false,
         baseXP: baseXP,
         streakMultiplier: this.getStreakMultiplier(streak)

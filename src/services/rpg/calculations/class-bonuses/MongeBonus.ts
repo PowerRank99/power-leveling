@@ -2,6 +2,7 @@
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { ClassBonusCalculator } from '../ClassBonusCalculator';
 import { ClassBonusBreakdown } from '../../types/classTypes';
+import { XPCalculationService } from '../../XPCalculationService';
 
 /**
  * Monge class bonus calculator
@@ -28,15 +29,24 @@ export class MongeBonus {
     let bonusXP = 0;
     const bonusBreakdown: ClassBonusBreakdown[] = [];
     
-    // Força Interior: +20% XP from calisthenics/bodyweight exercises
+    // Força Interior: +20% XP directly on exercise and set XP parts for bodyweight exercises
     const bodyweightExercises = workout.exercises.filter(
       ex => ex.type === 'Calistenia'
     );
     
     if (bodyweightExercises.length > 0) {
-      // Calculate percentage of bodyweight exercises
-      const bodyweightRatio = bodyweightExercises.length / workout.exercises.length;
-      const bodyweightBonus = Math.round(baseXP * this.BODYWEIGHT_BONUS * bodyweightRatio);
+      // Calculate the exercise and set XP parts only
+      const exerciseXP = workout.exercises.length * XPCalculationService.BASE_EXERCISE_XP;
+      
+      // Count completed sets
+      const completedSets = workout.exercises.reduce((sum, ex) => {
+        return sum + ex.sets.filter(set => set.completed).length;
+      }, 0);
+      
+      const setXP = completedSets * XPCalculationService.BASE_SET_XP;
+      
+      // Apply the flat 20% bonus to exercise and set XP
+      const bodyweightBonus = Math.round((exerciseXP + setXP) * this.BODYWEIGHT_BONUS);
       
       if (bodyweightBonus > 0) {
         bonusXP += bodyweightBonus;

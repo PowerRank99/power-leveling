@@ -1,5 +1,6 @@
 
 import { PassiveSkill, PassiveSkillContext, PassiveSkillResult } from '../types/PassiveSkillTypes';
+import { XPCalculationService } from '../XPCalculationService';
 
 /**
  * Força Bruta: +20% XP from weight training exercises
@@ -19,13 +20,16 @@ export class ForcaBruta implements PassiveSkill {
   }
   
   calculate(context: PassiveSkillContext): PassiveSkillResult {
-    // Calculate the ratio of weight training exercises to total exercises
+    // Apply 20% bonus directly to exercise and set XP
     const weightTrainingCount = context.exerciseTypes['Musculação'] || 0;
-    const weightTrainingRatio = weightTrainingCount / context.totalExercises;
     
-    // Apply 20% bonus scaled by the ratio of weight training exercises
-    const bonusMultiplier = 0.2 * weightTrainingRatio;
-    const bonusXP = Math.round(context.baseXP * bonusMultiplier);
+    // Only apply to the exercise and set portion of XP
+    const exerciseXP = context.exerciseCount * XPCalculationService.BASE_EXERCISE_XP;
+    const setXP = context.setCount * XPCalculationService.BASE_SET_XP;
+    const exerciseAndSetXP = exerciseXP + setXP;
+    
+    const bonusMultiplier = 0.2; // Flat 20% bonus
+    const bonusXP = Math.round(exerciseAndSetXP * bonusMultiplier);
     
     return {
       bonusXP,

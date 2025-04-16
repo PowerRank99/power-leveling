@@ -1,5 +1,6 @@
 
 import { PassiveSkill, PassiveSkillContext, PassiveSkillResult } from '../types/PassiveSkillTypes';
+import { XPCalculationService } from '../XPCalculationService';
 
 /**
  * Forrest Gump: +20% XP from cardio exercises
@@ -19,13 +20,17 @@ export class ForrestGump implements PassiveSkill {
   }
   
   calculate(context: PassiveSkillContext): PassiveSkillResult {
-    // Calculate the ratio of cardio exercises to total exercises
+    // Calculate the cardio exercises
     const cardioCount = context.exerciseTypes['Cardio'] || 0;
-    const cardioRatio = cardioCount / context.totalExercises;
     
-    // Apply 20% bonus scaled by the ratio of cardio exercises
-    const bonusMultiplier = 0.2 * cardioRatio;
-    const bonusXP = Math.round(context.baseXP * bonusMultiplier);
+    // Only apply to the exercise and set portion of XP
+    const exerciseXP = context.exerciseCount * XPCalculationService.BASE_EXERCISE_XP;
+    const setXP = context.setCount * XPCalculationService.BASE_SET_XP;
+    const exerciseAndSetXP = exerciseXP + setXP;
+    
+    // Apply 20% bonus flat, not scaled by ratio
+    const bonusMultiplier = 0.2;
+    const bonusXP = Math.round(exerciseAndSetXP * bonusMultiplier);
     
     return {
       bonusXP,
@@ -53,9 +58,14 @@ export class HIITAndRun implements PassiveSkill {
   }
   
   calculate(context: PassiveSkillContext): PassiveSkillResult {
-    // Apply 40% bonus for short workouts
+    // Apply 40% bonus for short workouts - but only to the time-based XP portion
     const bonusMultiplier = 0.4;
-    const bonusXP = Math.round(context.baseXP * bonusMultiplier);
+    
+    // Calculate time-based XP
+    const timeXP = XPCalculationService.calculateTimeXP(context.durationMinutes);
+    
+    // Apply the bonus to time XP only
+    const bonusXP = Math.round(timeXP * bonusMultiplier);
     
     return {
       bonusXP,
