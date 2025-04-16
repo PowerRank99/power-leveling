@@ -5,13 +5,13 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Play, CheckCircle, XCircle } from 'lucide-react';
-import { scenarioRunner } from '@/services/testing/scenarios';
+import { scenarioRunner, TestScenario, ScenarioResult } from '@/services/testing/scenarios';
 
 interface ScenarioTestingTabProps {
   userId: string;
 }
 
-interface ScenarioResult {
+interface ScenarioResultState {
   id: string;
   name: string;
   success: boolean;
@@ -20,8 +20,8 @@ interface ScenarioResult {
 }
 
 const ScenarioTestingTab: React.FC<ScenarioTestingTabProps> = ({ userId }) => {
-  const [scenarios, setScenarios] = useState<any[]>([]);
-  const [results, setResults] = useState<Record<string, ScenarioResult>>({});
+  const [scenarios, setScenarios] = useState<TestScenario[]>([]);
+  const [results, setResults] = useState<Record<string, ScenarioResultState>>({});
   const [runningScenario, setRunningScenario] = useState<string | null>(null);
   
   useEffect(() => {

@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Settings } from 'lucide-react';
+import { Settings, X } from 'lucide-react';
 
 interface TestConfigurationPanelProps {
   useCleanup: boolean;
@@ -15,6 +15,7 @@ interface TestConfigurationPanelProps {
   onVerboseChange: (value: boolean) => void;
   onUpdateConfig: () => void;
   isLoading: boolean;
+  onClose?: () => void;
 }
 
 const TestConfigurationPanel: React.FC<TestConfigurationPanelProps> = ({
@@ -25,12 +26,20 @@ const TestConfigurationPanel: React.FC<TestConfigurationPanelProps> = ({
   onTransactionChange,
   onVerboseChange,
   onUpdateConfig,
-  isLoading
+  isLoading,
+  onClose
 }) => {
   return (
     <Card className="bg-midnight-elevated border-divider/30">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-lg font-orbitron text-text-primary">Test Configuration</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg font-orbitron text-text-primary">Test Configuration</CardTitle>
+          {onClose && (
+            <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
         <CardDescription className="text-text-secondary">
           Configure how tests are executed and what happens after each test
         </CardDescription>

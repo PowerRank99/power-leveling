@@ -10,7 +10,6 @@ const personalRecordScenario: TestScenario = {
   name: 'Personal Record',
   description: 'Simulates achieving a personal record',
   tags: ['record', 'achievement'],
-  achievementTypes: ['personal_record'],
   
   execute: async (userId: string): Promise<ScenarioResult> => {
     try {

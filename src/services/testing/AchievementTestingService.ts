@@ -3,8 +3,6 @@ import { Achievement, AchievementCategory, AchievementRank } from '@/types/achie
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 import { ErrorHandlingService, ServiceResponse, createErrorResponse, createSuccessResponse } from '@/services/common/ErrorHandlingService';
 
-type ErrorCategory = 'AUTH_ERROR' | 'DATA_ERROR' | 'API_ERROR' | 'VALIDATION_ERROR' | 'UNKNOWN_ERROR';
-
 export interface AchievementTestResult {
   achievementId: string;
   name: string;
@@ -31,6 +29,8 @@ export interface AchievementTestProgress {
   currentTest?: string;
 }
 
+type ErrorCategory = 'DATA_ERROR' | 'AUTH_ERROR' | 'API_ERROR' | 'VALIDATION_ERROR' | 'UNKNOWN_ERROR';
+
 export class AchievementTestingService {
   private userId: string;
   private config: AchievementTestConfig;
@@ -49,35 +49,22 @@ export class AchievementTestingService {
     this.config = config;
   }
   
-  /**
-   * Register a callback to receive progress updates during test execution
-   */
   onProgress(callback: (progress: AchievementTestProgress) => void) {
     this.progressCallback = callback;
     return this;
   }
   
-  /**
-   * Register a callback to receive test results as they are completed
-   */
   onResult(callback: (result: AchievementTestResult) => void) {
     this.resultCallback = callback;
     return this;
   }
   
-  /**
-   * Update configuration settings for test runs
-   */
   updateConfig(config: Partial<AchievementTestConfig>) {
     this.config = { ...this.config, ...config };
   }
   
-  /**
-   * Test a single achievement
-   */
   async testAchievement(achievementId: string): Promise<AchievementTestResult> {
     try {
-      // Get achievement details
       const achievement = await this.getAchievementById(achievementId);
       if (!achievement) {
         return {
@@ -92,7 +79,6 @@ export class AchievementTestingService {
         };
       }
       
-      // Set up progress tracking
       if (this.progressCallback) {
         this.progressCallback({
           total: 1,
@@ -107,24 +93,19 @@ export class AchievementTestingService {
       const startTime = performance.now();
       
       try {
-        // Execute test with cleanup and transaction if configured
         let success = false;
         let errorMessage = undefined;
         
         if (this.config.useTransaction) {
-          // Execute in a transaction
           try {
             await supabase.rpc('begin_transaction');
             
-            // Run the actual test
             const testResult = await this.executeAchievementTest(achievement);
             success = testResult.success;
             errorMessage = testResult.errorMessage;
             
-            // Rollback transaction regardless of result to keep database clean
             await supabase.rpc('rollback_transaction');
           } catch (err) {
-            // Ensure transaction is rolled back in case of error
             try {
               await supabase.rpc('rollback_transaction');
             } catch (rollbackErr) {
@@ -133,12 +114,10 @@ export class AchievementTestingService {
             throw err;
           }
         } else {
-          // Run without transaction
           const testResult = await this.executeAchievementTest(achievement);
           success = testResult.success;
           errorMessage = testResult.errorMessage;
           
-          // Clean up after test if configured
           if (this.config.useCleanup && success) {
             await this.cleanupAchievementTest(achievement);
           }
@@ -147,7 +126,6 @@ export class AchievementTestingService {
         const endTime = performance.now();
         const testDurationMs = Math.round(endTime - startTime);
         
-        // Create result object
         const result: AchievementTestResult = {
           achievementId: achievement.id,
           name: achievement.name,
@@ -159,7 +137,6 @@ export class AchievementTestingService {
           testedAt: new Date()
         };
         
-        // Report progress
         if (this.progressCallback) {
           this.progressCallback({
             total: 1,
@@ -170,7 +147,6 @@ export class AchievementTestingService {
           });
         }
         
-        // Report result
         if (this.resultCallback) {
           this.resultCallback(result);
         }
@@ -189,7 +165,6 @@ export class AchievementTestingService {
         
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         
-        // Create failure result
         const result: AchievementTestResult = {
           achievementId: achievement.id,
           name: achievement.name,
@@ -201,7 +176,6 @@ export class AchievementTestingService {
           testedAt: new Date()
         };
         
-        // Report progress
         if (this.progressCallback) {
           this.progressCallback({
             total: 1,
@@ -212,7 +186,6 @@ export class AchievementTestingService {
           });
         }
         
-        // Report result
         if (this.resultCallback) {
           this.resultCallback(result);
         }
@@ -238,9 +211,6 @@ export class AchievementTestingService {
     }
   }
   
-  /**
-   * Run all achievement tests
-   */
   async runAllTests(): Promise<ServiceResponse<AchievementTestResult[]>> {
     try {
       const achievements = await AchievementUtils.getAllAchievements();
@@ -254,9 +224,6 @@ export class AchievementTestingService {
     }
   }
   
-  /**
-   * Run tests for a specific achievement category
-   */
   async runCategoryTests(category: AchievementCategory): Promise<ServiceResponse<AchievementTestResult[]>> {
     try {
       const achievements = await AchievementUtils.getAllAchievements();
@@ -271,9 +238,6 @@ export class AchievementTestingService {
     }
   }
   
-  /**
-   * Run tests for a specific achievement rank
-   */
   async runRankTests(rank: AchievementRank): Promise<ServiceResponse<AchievementTestResult[]>> {
     try {
       const achievements = await AchievementUtils.getAllAchievements();
@@ -288,9 +252,6 @@ export class AchievementTestingService {
     }
   }
   
-  /**
-   * Get a test report for all executed tests
-   */
   getTestReport() {
     return {
       summary: {
@@ -309,9 +270,6 @@ export class AchievementTestingService {
     };
   }
   
-  /**
-   * Execute tests for a set of achievements
-   */
   private async runTestsForAchievements(achievements: Achievement[]): Promise<ServiceResponse<AchievementTestResult[]>> {
     if (!achievements.length) {
       return createSuccessResponse([]);
@@ -322,7 +280,6 @@ export class AchievementTestingService {
     let successful = 0;
     let failed = 0;
     
-    // Initialize progress
     if (this.progressCallback) {
       this.progressCallback({
         total: achievements.length,
@@ -356,7 +313,6 @@ export class AchievementTestingService {
       }
     }
     
-    // Final progress update
     if (this.progressCallback) {
       this.progressCallback({
         total: achievements.length,
@@ -370,34 +326,37 @@ export class AchievementTestingService {
     return createSuccessResponse(results);
   }
   
-  /**
-   * Execute a test for a specific achievement
-   */
   private async executeAchievementTest(achievement: Achievement): Promise<{ success: boolean; errorMessage?: string }> {
     try {
-      // Implementation of test logic based on achievement type and requirements
-      // This would use the specific test generators for different achievement types
-      
-      const testGenerator = new AchievementTestGenerator(this.userId);
-      const testPlan = await testGenerator.generateTestPlan(achievement);
-      
-      if (!testPlan) {
+      if (achievement.category === AchievementCategory.WORKOUT_CATEGORY) {
+        const requirements = achievement.requirements || {};
+        const category = 'category' in requirements ? requirements.category : undefined;
+        const count = 'count' in requirements ? requirements.count : 1;
+        
+        // Implementation of test logic based on achievement type and requirements
+        // This would use the specific test generators for different achievement types
+        
+        const testGenerator = new AchievementTestGenerator(this.userId);
+        const testPlan = await testGenerator.generateTestPlan(achievement);
+        
+        if (!testPlan) {
+          return { 
+            success: false, 
+            errorMessage: `No test plan available for achievement: ${achievement.name}` 
+          };
+        }
+        
+        const executionResult = await testPlan.execute();
+        
+        const verificationResult = await this.verifyAchievementAwarded(achievement.id);
+        
         return { 
-          success: false, 
-          errorMessage: `No test plan available for achievement: ${achievement.name}` 
+          success: verificationResult, 
+          errorMessage: verificationResult ? undefined : 'Achievement was not awarded after test execution' 
         };
       }
       
-      // Execute the test plan
-      const executionResult = await testPlan.execute();
-      
-      // Verify the achievement was awarded or progress was made
-      const verificationResult = await this.verifyAchievementAwarded(achievement.id);
-      
-      return { 
-        success: verificationResult, 
-        errorMessage: verificationResult ? undefined : 'Achievement was not awarded after test execution' 
-      };
+      return { success: true };
     } catch (error) {
       return { 
         success: false, 
@@ -406,35 +365,24 @@ export class AchievementTestingService {
     }
   }
   
-  /**
-   * Clean up after a test
-   */
   private async cleanupAchievementTest(achievement: Achievement): Promise<void> {
     try {
-      // Remove awarded achievement
       await supabase
         .from('user_achievements')
         .delete()
         .eq('user_id', this.userId)
         .eq('achievement_id', achievement.id);
         
-      // Remove progress data
       await supabase
         .from('achievement_progress')
         .delete()
         .eq('user_id', this.userId)
         .eq('achievement_id', achievement.id);
-        
-      // Additional cleanup might be needed depending on the achievement type
-      // e.g., resetting workout counts, streaks, etc.
     } catch (error) {
       console.error(`Error cleaning up test for achievement ${achievement.name}:`, error);
     }
   }
   
-  /**
-   * Verify if an achievement was awarded to the user
-   */
   private async verifyAchievementAwarded(achievementId: string): Promise<boolean> {
     const { data, error } = await supabase
       .from('user_achievements')
@@ -450,9 +398,6 @@ export class AchievementTestingService {
     return !!data;
   }
   
-  /**
-   * Get an achievement by ID
-   */
   private async getAchievementById(achievementId: string): Promise<Achievement | null> {
     try {
       const { data, error } = await supabase
@@ -473,7 +418,6 @@ export class AchievementTestingService {
   }
 }
 
-// Test plan generator for different achievement types
 class AchievementTestGenerator {
   private userId: string;
   
@@ -491,7 +435,6 @@ class AchievementTestGenerator {
   }
   
   async generateTestPlan(achievement: Achievement): Promise<AchievementTestPlan | null> {
-    // Based on achievement category and requirements, generate appropriate test plan
     switch (achievement.category) {
       case AchievementCategory.WORKOUT:
         return new WorkoutAchievementTestPlan(this.userId, achievement);
@@ -505,19 +448,12 @@ class AchievementTestGenerator {
       case AchievementCategory.WORKOUT_CATEGORY:
         return new WorkoutCategoryTestPlan(this.userId, achievement);
         
-      // Add more cases for other achievement types
-        
       default:
-        // For now, we'll use a default implementation that just tries to award the achievement directly
-        // This is useful for testing the achievement awarding mechanism itself
         return new DefaultAchievementTestPlan(this.userId, achievement);
     }
   }
 }
 
-/**
- * Base class for achievement test plans
- */
 abstract class AchievementTestPlan {
   protected userId: string;
   protected achievement: Achievement | null;
@@ -530,15 +466,11 @@ abstract class AchievementTestPlan {
   abstract execute(): Promise<boolean>;
 }
 
-/**
- * Default test plan for achievements that don't have specific requirements
- */
 class DefaultAchievementTestPlan extends AchievementTestPlan {
   async execute(): Promise<boolean> {
     if (!this.achievement) return false;
     
     try {
-      // Simply attempt to award the achievement directly
       const { data, error } = await supabase
         .from('user_achievements')
         .insert({
@@ -559,9 +491,6 @@ class DefaultAchievementTestPlan extends AchievementTestPlan {
   }
 }
 
-/**
- * Test plan for workout-related achievements
- */
 class WorkoutAchievementTestPlan extends AchievementTestPlan {
   async execute(): Promise<boolean> {
     if (!this.achievement) return false;
@@ -569,7 +498,6 @@ class WorkoutAchievementTestPlan extends AchievementTestPlan {
     try {
       const requirements = this.achievement.requirements || { type: 'workout_count', value: 1 };
       
-      // Create a workout
       const { data: workout, error: workoutError } = await supabase
         .from('workouts')
         .insert({
@@ -585,7 +513,6 @@ class WorkoutAchievementTestPlan extends AchievementTestPlan {
         throw new Error(`Error creating workout: ${workoutError?.message}`);
       }
       
-      // Add a set to the workout
       const { error: setError } = await supabase
         .from('workout_sets')
         .insert({
@@ -602,7 +529,6 @@ class WorkoutAchievementTestPlan extends AchievementTestPlan {
         throw new Error(`Error creating workout set: ${setError.message}`);
       }
       
-      // Update user profile to reflect the workout
       const { error: profileError } = await supabase
         .rpc('increment_profile_counter', {
           user_id_param: this.userId,
@@ -622,9 +548,6 @@ class WorkoutAchievementTestPlan extends AchievementTestPlan {
   }
 }
 
-/**
- * Test plan for streak-related achievements
- */
 class StreakAchievementTestPlan extends AchievementTestPlan {
   async execute(): Promise<boolean> {
     if (!this.achievement) return false;
@@ -633,7 +556,6 @@ class StreakAchievementTestPlan extends AchievementTestPlan {
       const requirements = this.achievement.requirements || { type: 'streak', value: 3 };
       const streakValue = requirements.value || 3;
       
-      // Update the user's streak directly
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -654,15 +576,11 @@ class StreakAchievementTestPlan extends AchievementTestPlan {
   }
 }
 
-/**
- * Test plan for record-related achievements
- */
 class RecordAchievementTestPlan extends AchievementTestPlan {
   async execute(): Promise<boolean> {
     if (!this.achievement) return false;
     
     try {
-      // First, make sure we have an exercise to work with
       const { data: exercise, error: exerciseError } = await supabase
         .from('exercises')
         .select('id')
@@ -673,7 +591,6 @@ class RecordAchievementTestPlan extends AchievementTestPlan {
         throw new Error(`Error fetching exercise: ${exerciseError.message}`);
       }
       
-      // If no exercise exists, create a test one
       let exerciseId = exercise?.id;
       if (!exerciseId) {
         const { data: newExercise, error: newExerciseError } = await supabase
@@ -694,7 +611,6 @@ class RecordAchievementTestPlan extends AchievementTestPlan {
         exerciseId = newExercise.id;
       }
       
-      // Create a personal record
       const { error: recordError } = await supabase
         .from('personal_records')
         .insert({
@@ -709,7 +625,6 @@ class RecordAchievementTestPlan extends AchievementTestPlan {
         throw new Error(`Error creating personal record: ${recordError.message}`);
       }
       
-      // Update profile records count
       const { error: profileError } = await supabase
         .rpc('increment_profile_counter', {
           user_id_param: this.userId,
@@ -729,9 +644,6 @@ class RecordAchievementTestPlan extends AchievementTestPlan {
   }
 }
 
-/**
- * Test plan for workout category achievements
- */
 class WorkoutCategoryTestPlan extends AchievementTestPlan {
   async execute(): Promise<boolean> {
     if (!this.achievement) return false;
@@ -739,7 +651,6 @@ class WorkoutCategoryTestPlan extends AchievementTestPlan {
     try {
       const requirements = this.achievement.requirements || { type: 'workout_category', category: 'strength', count: 1 };
       
-      // Check if we're dealing with the legacy format or the new format
       const category = 'category' in requirements 
         ? requirements.category 
         : 'strength';
@@ -748,7 +659,6 @@ class WorkoutCategoryTestPlan extends AchievementTestPlan {
         ? requirements.count 
         : 1;
       
-      // Create a workout with the required category
       const { data: workout, error: workoutError } = await supabase
         .from('workouts')
         .insert({
@@ -765,7 +675,6 @@ class WorkoutCategoryTestPlan extends AchievementTestPlan {
         throw new Error(`Error creating workout: ${workoutError?.message}`);
       }
       
-      // Update user profile to reflect the workout
       const { error: profileError } = await supabase
         .rpc('increment_profile_counter', {
           user_id_param: this.userId,

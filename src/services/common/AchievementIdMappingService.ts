@@ -143,4 +143,14 @@ export class AchievementIdMappingService {
       orphaned: Array.from(this.mappings.keys()).filter(id => !codeIds.includes(id))
     };
   }
+
+  /**
+   * Get all mappings for debugging
+   */
+  static getAllMappings(): Array<{codeId: string, dbId: string}> {
+    return Array.from(this.mappings.entries()).map(([codeId, dbId]) => ({
+      codeId,
+      dbId
+    }));
+  }
 }

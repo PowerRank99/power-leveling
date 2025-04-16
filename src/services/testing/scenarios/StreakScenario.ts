@@ -1,12 +1,12 @@
+
 import { BaseScenario, ScenarioOptions, ScenarioResult } from './index';
 import { supabase } from '@/integrations/supabase/client';
 import { createTestDataGenerators } from '../generators';
-import { toast } from 'sonner';
 
 export interface StreakScenarioOptions extends ScenarioOptions {
   streakDays: number;
-  withGaps: boolean;
-  streakType: 'workout' | 'login' | 'mixed';
+  addGap: boolean;
+  includeManualWorkouts: boolean;
 }
 
 export class StreakScenario extends BaseScenario {
@@ -15,9 +15,9 @@ export class StreakScenario extends BaseScenario {
   constructor() {
     super(
       'streak-scenario',
-      'Streak Achievement Tester',
-      'Tests achievements related to workout streaks and consistency',
-      ['streak', 'consistency', 'achievements']
+      'Streak Achievements',
+      'Tests streak achievements by simulating workouts over consecutive days',
+      ['streak', 'workout', 'achievement']
     );
   }
   
@@ -28,28 +28,23 @@ export class StreakScenario extends BaseScenario {
       ...baseOptions,
       streakDays: {
         type: 'number',
-        label: 'Streak Length',
+        label: 'Streak Days',
         default: 7,
         min: 1,
         max: 30,
-        description: 'Number of consecutive days to simulate'
+        description: 'Number of consecutive days to create streak'
       },
-      withGaps: {
+      addGap: {
         type: 'boolean',
-        label: 'Include Gaps',
+        label: 'Add Gap',
         default: false,
-        description: 'Whether to include gaps in the streak to test streak reset'
+        description: 'Add a gap in the streak to test reset behavior'
       },
-      streakType: {
-        type: 'select',
-        label: 'Streak Type',
-        options: [
-          { value: 'workout', label: 'Workout Streak' },
-          { value: 'login', label: 'Login Streak' },
-          { value: 'mixed', label: 'Mixed Activity' }
-        ],
-        default: 'workout',
-        description: 'Type of streak to simulate'
+      includeManualWorkouts: {
+        type: 'boolean',
+        label: 'Include Manual Workouts',
+        default: true,
+        description: 'Include manual workouts in the streak'
       }
     };
   }
@@ -65,315 +60,146 @@ export class StreakScenario extends BaseScenario {
         silent: options?.silent || false,
         autoCleanup: options?.autoCleanup !== false,
         streakDays: options?.streakDays || 7,
-        withGaps: options?.withGaps || false,
-        streakType: options?.streakType || 'workout',
+        addGap: options?.addGap || false,
+        includeManualWorkouts: options?.includeManualWorkouts !== false,
         testDataTag: options?.testDataTag || 'test-data'
       };
       
       // Log start of scenario
-      this.logAction('START_SCENARIO', `Starting streak scenario with ${mergedOptions.streakDays} days streak`);
+      this.logAction('START_SCENARIO', `Starting streak scenario with ${mergedOptions.streakDays} days`);
       
-      if (!mergedOptions.silent) {
-        toast.info('Starting streak simulation', {
-          description: `Simulating a ${mergedOptions.streakDays}-day streak`
-        });
-      }
+      // Get current date as baseline
+      const today = new Date();
       
-      // Reset user streak to ensure clean state
-      await this.resetUserStreak(userId);
-      
-      // Generate streak data
-      if (mergedOptions.streakType === 'workout') {
-        await this.generateWorkoutStreak(userId, mergedOptions);
-      } else if (mergedOptions.streakType === 'login') {
-        await this.generateLoginStreak(userId, mergedOptions);
-      } else {
-        await this.generateMixedStreak(userId, mergedOptions);
+      // Create workouts for streak
+      for (let i = 0; i < mergedOptions.streakDays; i++) {
+        // Skip a day if adding a gap and at the midpoint
+        if (mergedOptions.addGap && i === Math.floor(mergedOptions.streakDays / 2)) {
+          this.logAction('ADD_GAP', 'Adding a gap day in the streak to test reset behavior');
+          continue;
+        }
+        
+        // Calculate workout date
+        const workoutDate = new Date(today);
+        workoutDate.setDate(today.getDate() - (mergedOptions.streakDays - 1) + i);
+        
+        if (i % 2 === 0 || !mergedOptions.includeManualWorkouts) {
+          // Create regular workout on even days or if manual workouts are disabled
+          await this.createRegularWorkout(userId, workoutDate, mergedOptions);
+        } else {
+          // Create manual workout on odd days if enabled
+          await this.createManualSubmission(userId, workoutDate, mergedOptions);
+        }
+        
+        // Add delay based on speed
+        await this.delayBySpeed(mergedOptions.speed);
       }
       
       // Check for streak achievements
-      const streakAchievements = await this.checkStreakAchievements(userId, mergedOptions.streakDays);
+      this.logAction('CHECK_ACHIEVEMENTS', 'Checking for streak achievements');
+      const streakAchievements = ['trinca_poderosa', 'semana_impecavel'];
+      const unlockedAchievements = await this.checkAchievementUnlock(userId, streakAchievements);
       
-      // Log completion
-      this.logAction('COMPLETE', `Streak scenario completed with ${streakAchievements.length} achievements unlocked`);
-      
-      if (!mergedOptions.silent) {
-        toast.success('Streak simulation completed', {
-          description: `Unlocked ${streakAchievements.length} achievements`
-        });
+      if (unlockedAchievements.length > 0) {
+        this.achievementsUnlocked = unlockedAchievements;
+        this.logAction('ACHIEVEMENTS_UNLOCKED', `Unlocked ${unlockedAchievements.length} streak achievements`, true);
+      } else {
+        this.logAction('NO_ACHIEVEMENTS', 'No streak achievements were unlocked', false);
       }
       
-      // Return successful result with achievements
-      return {
-        success: true,
-        executionTimeMs: performance.now() - this.startTime,
-        actions: this.actions,
-        achievementsUnlocked: this.achievementsUnlocked,
-        completionPercentage: 100,
-        unlockedCount: streakAchievements.length,
-        targetCount: streakAchievements.length
-      };
+      // Verify the streak value in profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('streak, last_workout_at')
+        .eq('id', userId)
+        .single();
+        
+      if (profileError) {
+        this.logAction('ERROR', `Error fetching profile: ${profileError.message}`, false);
+      } else if (profile) {
+        const expectedStreak = mergedOptions.addGap ? 
+          Math.min(
+            Math.floor(mergedOptions.streakDays / 2) + 1, 
+            this.getDaysDifference(new Date(profile.last_workout_at), today) + 1
+          ) :
+          Math.min(mergedOptions.streakDays, this.getDaysDifference(new Date(profile.last_workout_at), today) + 1);
+        
+        this.logAction(
+          profile.streak === expectedStreak ? 'STREAK_VERIFIED' : 'STREAK_MISMATCH',
+          `User streak: ${profile.streak}, Expected: ${expectedStreak}`,
+          profile.streak === expectedStreak
+        );
+      }
+      
+      // Return success result
+      return this.createResult(true);
     } catch (error) {
       // Log error and return failure
       const errorMessage = error instanceof Error ? error.message : String(error);
       this.logAction('ERROR', errorMessage, false, errorMessage);
-      
-      if (!options?.silent) {
-        toast.error('Streak simulation failed', {
-          description: errorMessage
-        });
-      }
-      
       return this.createResult(false, errorMessage);
     }
   }
   
-  private async resetUserStreak(userId: string): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          streak: 0,
-          last_workout_at: null
-        })
-        .eq('id', userId);
-        
-      if (error) throw error;
-      
-      this.logAction('RESET_STREAK', 'Reset user streak to 0');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.logAction('RESET_ERROR', message, false, message);
-      throw error;
-    }
-  }
-  
-  private async generateWorkoutStreak(userId: string, options: Required<StreakScenarioOptions>): Promise<void> {
-    try {
-      const { streakDays, withGaps, speed } = options;
-      
-      // Calculate dates for the streak
-      const dates = this.calculateStreakDates(streakDays, withGaps);
-      
-      // Generate workouts for each date
-      for (let i = 0; i < dates.length; i++) {
-        const date = dates[i];
-        
-        this.logAction('GENERATE_WORKOUT', `Generating workout for day ${i + 1} (${date.toISOString().split('T')[0]})`);
-        
-        // Use workout generator to create a workout for this date
-        const result = await this.generators.workout.createWorkout(userId, {
-          workoutDate: date,
-          isTestData: true,
-          testDataTag: options.testDataTag
-        });
-        
-        if (!result.success) {
-          throw new Error(result.error);
-        }
-        
-        // Update profile streak directly
-        await this.updateProfileStreak(userId, i + 1, date);
-        
-        // Check for streak achievements after each day
-        await this.checkStreakAchievements(userId, i + 1);
-        
-        // Add delay based on speed
-        await this.delayBySpeed(speed);
-      }
-      
-      this.logAction('STREAK_COMPLETE', `Completed ${dates.length}-day streak`);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.logAction('GENERATE_STREAK_ERROR', message, false, message);
-      throw error;
-    }
-  }
-  
-  private async generateLoginStreak(userId: string, options: Required<StreakScenarioOptions>): Promise<void> {
-    try {
-      const { streakDays, withGaps, speed } = options;
-      
-      // Calculate dates for the streak
-      const dates = this.calculateStreakDates(streakDays, withGaps);
-      
-      // Generate login entries for each date
-      for (let i = 0; i < dates.length; i++) {
-        const date = dates[i];
-        
-        this.logAction('GENERATE_LOGIN', `Simulating login for day ${i + 1} (${date.toISOString().split('T')[0]})`);
-        
-        // Update last login date
-        const { error } = await supabase
-          .from('profiles')
-          .update({
-            last_login_at: date.toISOString()
-          })
-          .eq('id', userId);
-          
-        if (error) throw error;
-        
-        // Update profile streak directly
-        await this.updateProfileStreak(userId, i + 1, date);
-        
-        // Check for streak achievements after each day
-        await this.checkStreakAchievements(userId, i + 1);
-        
-        // Add delay based on speed
-        await this.delayBySpeed(speed);
-      }
-      
-      this.logAction('STREAK_COMPLETE', `Completed ${dates.length}-day login streak`);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.logAction('GENERATE_LOGIN_STREAK_ERROR', message, false, message);
-      throw error;
-    }
-  }
-  
-  private async generateMixedStreak(userId: string, options: Required<StreakScenarioOptions>): Promise<void> {
-    try {
-      const { streakDays, withGaps, speed } = options;
-      
-      // Calculate dates for the streak
-      const dates = this.calculateStreakDates(streakDays, withGaps);
-      
-      // Generate mixed activity for each date
-      for (let i = 0; i < dates.length; i++) {
-        const date = dates[i];
-        const isEven = i % 2 === 0;
-        
-        if (isEven) {
-          // Generate workout on even days
-          this.logAction('GENERATE_WORKOUT', `Generating workout for day ${i + 1} (${date.toISOString().split('T')[0]})`);
-          
-          const result = await this.generators.workout.createWorkout(userId, {
-            workoutDate: date,
-            isTestData: true,
-            testDataTag: options.testDataTag
-          });
-          
-          if (!result.success) {
-            throw new Error(result.error);
-          }
-        } else {
-          // Generate manual workout on odd days
-          this.logAction('GENERATE_MANUAL', `Generating manual workout for day ${i + 1} (${date.toISOString().split('T')[0]})`);
-          
-          const result = await this.generators.activity.createManualWorkout(userId, {
-            activityDate: date,
-            activityType: 'running',
-            durationMinutes: 30,
-            isTestData: true,
-            testDataTag: options.testDataTag
-          });
-          
-          if (!result.success) {
-            throw new Error(result.error);
-          }
-        }
-        
-        // Update profile streak directly
-        await this.updateProfileStreak(userId, i + 1, date);
-        
-        // Check for streak achievements after each day
-        await this.checkStreakAchievements(userId, i + 1);
-        
-        // Add delay based on speed
-        await this.delayBySpeed(speed);
-      }
-      
-      this.logAction('STREAK_COMPLETE', `Completed ${dates.length}-day mixed activity streak`);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.logAction('GENERATE_MIXED_STREAK_ERROR', message, false, message);
-      throw error;
-    }
-  }
-  
-  private calculateStreakDates(days: number, withGaps: boolean): Date[] {
-    const dates: Date[] = [];
-    const today = new Date();
+  private async createRegularWorkout(userId: string, date: Date, options: Required<StreakScenarioOptions>): Promise<void> {
+    this.logAction('CREATE_WORKOUT', `Creating workout for ${date.toISOString().split('T')[0]}`);
     
-    // Start from 'days' ago and work forward to today
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(today.getDate() - i);
-      
-      // If we want gaps, skip some days
-      if (withGaps && i > 0 && i % 3 === 0) {
-        continue;
-      }
-      
-      dates.push(date);
-    }
+    const result = await this.generators.workout.generateWorkout(userId, {
+      date,
+      isTestData: true,
+      testDataTag: options.testDataTag,
+      silent: options.silent
+    });
     
-    return dates;
-  }
-  
-  private async updateProfileStreak(userId: string, streak: number, date: Date): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          streak: streak,
-          last_workout_at: date.toISOString()
-        })
-        .eq('id', userId);
-        
-      if (error) throw error;
-      
-      this.logAction('UPDATE_STREAK', `Updated user streak to ${streak}`);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.logAction('UPDATE_STREAK_ERROR', message, false, message);
-      throw error;
+    if (!result.success) {
+      throw new Error(`Failed to create workout: ${result.error}`);
     }
   }
   
-  private async checkStreakAchievements(userId: string, currentStreak: number): Promise<string[]> {
-    const streakAchievements = [
-      { id: 'trinca-poderosa', requiredStreak: 3 },
-      { id: 'embalo-fitness', requiredStreak: 5 },
-      { id: 'semana-impecavel', requiredStreak: 7 },
-      { id: 'mestre-da-consistencia', requiredStreak: 14 },
-      { id: 'lendario', requiredStreak: 30 }
-    ];
+  private async createManualSubmission(userId: string, date: Date, options: Required<StreakScenarioOptions>): Promise<void> {
+    this.logAction('CREATE_MANUAL', `Creating manual workout for ${date.toISOString().split('T')[0]}`);
     
-    const unlockedAchievements: string[] = [];
+    const result = await this.generators.activity.generateManualWorkout(userId, {
+      date,
+      isTestData: true,
+      testDataTag: options.testDataTag,
+      silent: options.silent,
+      activityType: ['running', 'yoga', 'swimming', 'cycling'][Math.floor(Math.random() * 4)]
+    });
     
-    for (const achievement of streakAchievements) {
-      if (currentStreak >= achievement.requiredStreak) {
-        const unlocked = await this.checkAchievementUnlock(userId, achievement.id);
-        
-        if (unlocked) {
-          this.logAction('ACHIEVEMENT_UNLOCKED', `Unlocked streak achievement: ${achievement.id} (${achievement.requiredStreak} days)`);
-          unlockedAchievements.push(achievement.id);
-        }
-      }
+    if (!result.success) {
+      throw new Error(`Failed to create manual workout: ${result.error}`);
     }
+  }
+  
+  private getDaysDifference(date1: Date, date2: Date): number {
+    // Normalize dates to midnight to avoid time issues
+    const d1 = new Date(date1);
+    d1.setHours(0, 0, 0, 0);
+    const d2 = new Date(date2);
+    d2.setHours(0, 0, 0, 0);
     
-    return unlockedAchievements;
+    // Calculate difference in days
+    return Math.floor(Math.abs((d2.getTime() - d1.getTime()) / (24 * 60 * 60 * 1000)));
   }
   
   async cleanup(userId: string): Promise<boolean> {
     try {
-      this.logAction('CLEANUP', 'Cleaning up streak test data');
+      // Clean up workouts and manual workouts
+      await this.generators.workout.cleanup(userId);
+      await this.generators.activity.cleanup(userId);
       
-      // Reset streak
-      await this.resetUserStreak(userId);
+      // Reset streak to 0
+      await supabase
+        .from('profiles')
+        .update({
+          streak: 0
+        })
+        .eq('id', userId);
       
-      // Clean up workouts
-      await this.generators.workout.cleanup(userId, { silent: true });
-      
-      // Clean up manual workouts
-      await this.generators.activity.cleanup(userId, { silent: true });
-      
-      this.logAction('CLEANUP_COMPLETE', 'Successfully cleaned up streak test data');
       return true;
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.logAction('CLEANUP_ERROR', message, false, message);
+      console.error('Error cleaning up streak scenario:', error);
       return false;
     }
   }
