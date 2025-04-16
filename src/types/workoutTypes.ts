@@ -1,49 +1,49 @@
 
-/**
- * Common workout types for the application
- */
-
-import { 
-  WorkoutExercise,
-  WorkoutSet,
-  WorkoutExerciseData,
-  SetData,
-  PreviousSetData,
-  ExerciseHistory,
-  DatabaseResult,
-  PersonalRecord
-} from './workout';
-
-// Re-export with more descriptive naming
-export type {
-  WorkoutExercise,
-  WorkoutSet, 
-  WorkoutExerciseData,
-  SetData,
-  PreviousSetData,
-  ExerciseHistory,
-  DatabaseResult,
-  PersonalRecord
-};
-
-/**
- * Additional type definitions for workout module
- */
-
-export interface Routine {
-  id: string;
-  name: string;
-  exercises_count?: number;
-  last_used_at?: string | null;
-  created_at?: string;
+export interface PreviousSetData {
+  weight: string;
+  reps: string;
 }
 
-export interface RecentWorkout {
+export interface SetData {
+  id: string;
+  weight: string;
+  reps: string;
+  completed: boolean;
+  previous?: PreviousSetData;
+  set_order?: number; // Added this property to fix errors
+}
+
+export interface WorkoutExercise {
   id: string;
   name: string;
-  date: string;
-  exercises_count: number;
-  sets_count: number;
-  prs: number;
-  duration_seconds: number | null;
+  sets: Array<SetData>;
+}
+
+export interface TimerState {
+  isActive: boolean;
+  isPaused: boolean;
+  remainingSeconds: number;
+  totalSeconds: number;
+  progress: number;
+  exerciseId?: string;
+  exerciseName?: string;
+}
+
+// Add ExerciseHistory interface to fix import errors
+export interface ExerciseHistory {
+  id: string;
+  user_id: string;
+  exercise_id: string;
+  weight: number;
+  reps: number;
+  sets: number;
+  last_used_at: string;
+  created_at: string;
+}
+
+// Add DatabaseResult type to fix import errors
+export interface DatabaseResult<T> {
+  success: boolean;
+  data?: T;
+  error?: any;
 }

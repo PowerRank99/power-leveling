@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
-import { ClassInfo, LegacyClassInfo } from '@/services/rpg/types/classTypes';
+import { ClassInfo } from '@/services/rpg/ClassService';
 import ClassSelectionCard from './ClassSelectionCard';
 import { ChevronLeft, ChevronRight, MoveHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -38,7 +39,7 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
       setFocusedIndex(emblaApi.selectedScrollSnap());
       const currentClass = classes[emblaApi.selectedScrollSnap()];
       if (currentClass) {
-        onClassSelect(currentClass.className);
+        onClassSelect(currentClass.class_name);
       }
       
       setCanScrollPrev(emblaApi.canScrollPrev());
@@ -65,7 +66,7 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
   useEffect(() => {
     if (!emblaApi || !classes.length || !selectedClass) return;
     
-    const classIndex = classes.findIndex(cls => cls.className === selectedClass);
+    const classIndex = classes.findIndex(cls => cls.class_name === selectedClass);
     if (classIndex !== -1 && classIndex !== focusedIndex) {
       emblaApi.scrollTo(classIndex);
     }
@@ -74,7 +75,7 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
   useEffect(() => {
     if (!emblaApi || !classes.length || !userClass) return;
     
-    const classIndex = classes.findIndex(cls => cls.className === userClass);
+    const classIndex = classes.findIndex(cls => cls.class_name === userClass);
     if (classIndex !== -1) {
       emblaApi.scrollTo(classIndex);
     }
@@ -99,40 +100,24 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
     }
   };
   
-  // Convert ClassInfo to LegacyClassInfo for backward compatibility with ClassSelectionCard
-  const getLegacyClassInfo = (classInfo: ClassInfo): LegacyClassInfo => {
-    return {
-      class_name: classInfo.className,
-      description: classInfo.description,
-      icon: classInfo.icon,
-      color: classInfo.color,
-      bonuses: classInfo.bonuses.map(bonus => ({
-        bonus_type: bonus.bonusType,
-        bonus_value: bonus.bonusValue,
-        description: bonus.description,
-        skill_name: bonus.skillName
-      }))
-    };
-  };
-  
   return (
     <div className="relative mb-8 mx-auto max-w-xl">
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex py-8">
           {classes.map((classInfo, index) => (
             <div 
-              key={classInfo.className} 
+              key={classInfo.class_name} 
               className="flex-[0_0_100%] min-w-0 pl-4 md:flex-[0_0_85%] transition-all duration-300"
             >
               <ClassSelectionCard
-                classInfo={getLegacyClassInfo(classInfo)}
-                isCurrentClass={userClass === classInfo.className}
-                isSelected={selectedClass === classInfo.className}
+                classInfo={classInfo}
+                isCurrentClass={userClass === classInfo.class_name}
+                isSelected={selectedClass === classInfo.class_name}
                 isFocused={index === focusedIndex}
                 isOnCooldown={isOnCooldown}
                 onClick={() => {
-                  if (!isOnCooldown || userClass === classInfo.className) {
-                    onClassSelect(classInfo.className);
+                  if (!isOnCooldown || userClass === classInfo.class_name) {
+                    onClassSelect(classInfo.class_name);
                     if (emblaApi) emblaApi.scrollTo(index);
                   }
                 }}
@@ -204,7 +189,7 @@ const ClassCarousel: React.FC<ClassCarouselProps> = ({
         <div className="flex gap-2">
           {classes.map((classInfo, index) => (
             <motion.button
-              key={`dot-${classInfo.className}`}
+              key={`dot-${classInfo.class_name}`}
               variants={indicatorVariants}
               initial="inactive"
               animate={index === focusedIndex ? "active" : "inactive"}

@@ -1,8 +1,7 @@
 
 import { useState } from 'react';
-import { WorkoutExercise, SetData, WorkoutSet } from '@/types/workout';
+import { WorkoutExercise } from '@/types/workoutTypes';
 import { useSetPersistence } from '../workout/useSetPersistence';
-import { mapSetDataToWorkoutSet } from '@/utils/typeMappers';
 
 /**
  * Hook responsible for managing set operations (add, remove, update, complete)
@@ -23,39 +22,9 @@ export const useWorkoutSets = (
     if (isProcessing) return;
     console.log(`[useWorkoutSets] Adding set for exercise index ${exerciseIndex}`);
     
-    try {
-      const currentExercise = exercises[exerciseIndex];
-      if (!currentExercise) return;
-      
-      // Extract the sets array from the current exercise and convert to SetData
-      const currentSets = currentExercise.sets.map(set => ({
-        id: set.id,
-        exercise_id: set.exercise_id || currentExercise.exerciseId,
-        weight: set.weight,
-        reps: set.reps,
-        completed: set.completed,
-        set_order: set.set_order || 0,
-        previous: set.previous
-      })) as SetData[];
-      
-      // Call the addSet function with proper params
-      const result = await addSet(exerciseIndex, currentSets, routineId);
-      
-      if (result) {
-        // Convert back to WorkoutSet type for compatibility
-        const workoutSets = result.map(setData => mapSetDataToWorkoutSet(setData));
-        
-        // Update the exercises array with the new sets
-        const updatedExercises = [...exercises];
-        updatedExercises[exerciseIndex] = {
-          ...updatedExercises[exerciseIndex],
-          sets: workoutSets
-        };
-        
-        setProcessedExercises(updatedExercises);
-      }
-    } catch (error) {
-      console.error("[useWorkoutSets] Error in handleAddSet:", error);
+    const result = await addSet(exerciseIndex, exercises, routineId);
+    if (result) {
+      setProcessedExercises(result);
     }
   };
   
@@ -66,81 +35,21 @@ export const useWorkoutSets = (
     if (isProcessing) return;
     console.log(`[useWorkoutSets] Removing set ${setIndex} from exercise ${exerciseIndex}`);
     
-    try {
-      const currentExercise = exercises[exerciseIndex];
-      if (!currentExercise) return;
-      
-      // Convert to SetData for the operation
-      const currentSets = currentExercise.sets.map(set => ({
-        id: set.id,
-        exercise_id: set.exercise_id || currentExercise.exerciseId,
-        weight: set.weight,
-        reps: set.reps,
-        completed: set.completed,
-        set_order: set.set_order || 0,
-        previous: set.previous
-      })) as SetData[];
-      
-      // Call the removeSet function with proper params
-      const result = await removeSet(exerciseIndex, currentSets, setIndex, routineId);
-      
-      if (result) {
-        // Convert back to WorkoutSet for compatibility
-        const workoutSets = result.map(setData => mapSetDataToWorkoutSet(setData));
-        
-        // Update the exercises array with the modified sets
-        const updatedExercises = [...exercises];
-        updatedExercises[exerciseIndex] = {
-          ...updatedExercises[exerciseIndex],
-          sets: workoutSets
-        };
-        
-        setProcessedExercises(updatedExercises);
-      }
-    } catch (error) {
-      console.error("[useWorkoutSets] Error in handleRemoveSet:", error);
+    const result = await removeSet(exerciseIndex, exercises, setIndex, routineId);
+    if (result) {
+      setProcessedExercises(result);
     }
   };
   
   /**
    * Handles updating a set's data
    */
-  const handleUpdateSet = async (exerciseIndex: number, setIndex: number, data: { weight?: string; reps?: string; completed?: boolean }) => {
+  const handleUpdateSet = async (exerciseIndex: number, setIndex: number, data: { weight?: string; reps?: string }) => {
     if (isProcessing) return;
     
-    try {
-      const currentExercise = exercises[exerciseIndex];
-      if (!currentExercise) return;
-      
-      // Convert to SetData for the operation
-      const currentSets = currentExercise.sets.map(set => ({
-        id: set.id,
-        exercise_id: set.exercise_id || currentExercise.exerciseId,
-        weight: set.weight,
-        reps: set.reps,
-        completed: set.completed,
-        set_order: set.set_order || 0,
-        previous: set.previous
-      })) as SetData[];
-      
-      // Call the updateSet function with proper params
-      const result = await updateSet(exerciseIndex, currentSets, setIndex, data);
-      
-      if (result) {
-        // Convert back to WorkoutSet for compatibility
-        const workoutSets = result.map(setData => mapSetDataToWorkoutSet(setData));
-        
-        // Update the exercises array with the modified sets
-        const updatedExercises = [...exercises];
-        updatedExercises[exerciseIndex] = {
-          ...updatedExercises[exerciseIndex],
-          sets: workoutSets
-        };
-        
-        setProcessedExercises(updatedExercises);
-      }
-    } catch (error) {
-      console.error("[useWorkoutSets] Error in handleUpdateSet:", error);
+    const result = await updateSet(exerciseIndex, exercises, setIndex, data);
+    if (result) {
+      setProcessedExercises(result);
     }
   };
   
@@ -155,9 +64,13 @@ export const useWorkoutSets = (
       const newCompleted = !currentExercise.sets[setIndex].completed;
       console.log(`[useWorkoutSets] Setting complete=${newCompleted} for exercise ${exerciseIndex}, set ${setIndex}`);
       
-      await handleUpdateSet(exerciseIndex, setIndex, { 
+      const result = await updateSet(exerciseIndex, exercises, setIndex, { 
         completed: newCompleted
       });
+      
+      if (result) {
+        setProcessedExercises(result);
+      }
     }
   };
 

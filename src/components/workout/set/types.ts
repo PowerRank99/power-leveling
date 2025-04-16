@@ -1,11 +1,14 @@
 
-/**
- * @deprecated These types are deprecated in favor of the consolidated types in src/types/workoutTypes.ts
- * Please import from src/types/workoutTypes.ts instead.
- */
+export interface PreviousSetData {
+  weight: string;
+  reps: string;
+}
 
-// Re-export from workoutTypes.ts to maintain backward compatibility
-export type {
-  PreviousSetData,
-  SetData
-} from '@/types/workoutTypes';
+export interface SetData {
+  id: string;
+  weight: string;
+  reps: string;
+  completed: boolean;
+  previous?: PreviousSetData;
+  set_order?: number; // Added to match the main workoutTypes.ts
+}

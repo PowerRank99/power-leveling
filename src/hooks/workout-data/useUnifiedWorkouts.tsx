@@ -84,7 +84,7 @@ export const useUnifiedWorkouts = (
         toast.success('Treino manual excluído com sucesso');
         return true;
       } else {
-        throw new Error(result.error?.message || 'Erro desconhecido');
+        throw new Error(result.error || 'Erro desconhecido');
       }
     } catch (error: any) {
       console.error('Error deleting manual workout:', error);

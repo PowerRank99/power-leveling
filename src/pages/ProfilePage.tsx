@@ -1,93 +1,107 @@
-
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
+import { useClass } from '@/contexts/ClassContext';
+import PageHeader from '@/components/ui/PageHeader';
+import BottomNavBar from '@/components/navigation/BottomNavBar';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import ProfileProgressSection from '@/components/profile/ProfileProgressSection';
-import ProfileDataProvider from '@/components/profile/ProfileDataProvider';
-import StreakAchievementsSection from '@/components/profile/StreakAchievementsSection';
+import ClassSection from '@/components/profile/ClassSection';
 import RecentAchievementsList from '@/components/profile/RecentAchievementsList';
-import { getMockAchievements } from '@/components/profile/MockAchievements';
-import UserDataFormatter from '@/components/profile/UserDataFormatter';
 import ProfileActions from '@/components/profile/ProfileActions';
-import BottomNavBar from '@/components/navigation/BottomNavBar';
-import ClassCard from '@/components/profile/ClassCard';
-import AchievementPopup from '@/components/profile/AchievementPopup';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import ClassIconSelector from '@/components/profile/ClassIconSelector';
+import ProfileDataProvider from '@/components/profile/ProfileDataProvider';
+import UserDataFormatter from '@/components/profile/UserDataFormatter';
+import { getMockAchievements } from '@/components/profile/MockAchievements';
+import { supabase } from '@/integrations/supabase/client';
+import { XPBonusService } from '@/services/rpg/XPBonusService';
 
 const ProfilePage = () => {
-  const { user, profile, signOut, loading } = useAuth();
-  const navigate = useNavigate();
-  const mockAchievements = getMockAchievements();
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-midnight-deep">
-        <LoadingSpinner size="lg" message="Carregando perfil..." />
-      </div>
-    );
-  }
-
+  const { user, profile, signOut } = useAuth();
+  const { userClass } = useClass();
+  const [classBonuses, setClassBonuses] = useState<{description: string; value: string}[]>([]);
+  const [weeklyBonus, setWeeklyBonus] = useState(0);
+  const [monthlyBonus, setMonthlyBonus] = useState(0);
+  
+  useEffect(() => {
+    const fetchClassBonuses = async () => {
+      if (userClass) {
+        try {
+          const { data } = await supabase
+            .from('class_bonuses')
+            .select('description, bonus_value')
+            .eq('class_name', userClass);
+            
+          if (data) {
+            setClassBonuses(data.map(bonus => ({
+              description: bonus.description,
+              value: `+${Math.round(bonus.bonus_value * 100)}%`
+            })));
+          }
+        } catch (error) {
+          console.error('Error fetching class bonuses:', error);
+        }
+      }
+    };
+    
+    const calculateBonuses = async () => {
+      if (user?.id && profile?.last_workout_at) {
+        setWeeklyBonus(XPBonusService.WEEKLY_COMPLETION_BONUS);
+        setMonthlyBonus(0);
+      }
+    };
+    
+    fetchClassBonuses();
+    calculateBonuses();
+  }, [userClass, user?.id, profile?.last_workout_at]);
+  
+  const recentAchievements = getMockAchievements();
+  
   return (
-    <div className="min-h-screen bg-midnight-base pb-20">
-      {/* Profile Header with Actions */}
-      <div className="relative">
+    <div className="pb-20 min-h-screen bg-midnight-base">
+      <PageHeader 
+        title="Perfil" 
+        rightContent={<ProfileActions onSignOut={signOut} />}
+      />
+      
+      <div className="px-4">
         <UserDataFormatter user={user} profile={profile}>
-          {(userData) => (
-            <ProfileDataProvider userId={user?.id || ''}>
+          {({ avatar, name, username, workoutsCount }) => (
+            <ProfileDataProvider profile={profile} userClass={userClass}>
               {(profileData) => (
                 <>
-                  <div className="flex justify-end absolute right-4 top-4 z-10">
-                    <ProfileActions onSignOut={signOut} />
-                  </div>
-                  
-                  <ProfileHeader
-                    avatar={userData.avatar}
-                    name={userData.name}
-                    username={userData.username}
+                  <ProfileHeader 
+                    avatar={avatar}
+                    name={name}
+                    username={username}
                     level={profileData.level}
                     className={profileData.className}
-                    workoutsCount={userData.workoutsCount}
-                    ranking={profileData.ranking}
+                    workoutsCount={workoutsCount}
+                    ranking={42}
                     currentXP={profileData.currentXP}
                     nextLevelXP={profileData.nextLevelXP}
                     rank={profileData.rank}
                     achievementPoints={profileData.achievementPoints}
                   />
                   
-                  <div className="px-4">
-                    {/* Progress Section */}
-                    <ProfileProgressSection
-                      dailyXP={profileData.dailyXP}
-                      dailyXPCap={profileData.dailyXPCap}
-                      lastActivity={profileData.lastActivity}
-                      xpGain={profileData.xpGain}
-                      streak={profileData.streak}
-                    />
-                    
-                    {/* Streak and Achievements Section */}
-                    <StreakAchievementsSection
-                      streak={profileData.streak}
-                      achievementsUnlocked={profileData.achievementPoints}
-                      achievementsTotal={50} // Example total
-                    />
-                    
-                    {/* Class Card */}
-                    <ClassCard
-                      className={profileData.className}
-                      description={profileData.classDescription}
-                      bonuses={[
-                        { description: "Bônus principal", value: "+20% XP em treinos de força" },
-                        { description: "Bônus secundário", value: "+10% XP em dias de recorde" }
-                      ]}
-                      showAvatar={true}
-                    />
-                    
-                    {/* Recent Achievements */}
-                    <RecentAchievementsList
-                      achievements={mockAchievements.slice(0, 4)}
-                    />
+                  <ProfileProgressSection 
+                    dailyXP={profileData.dailyXP}
+                    dailyXPCap={profileData.dailyXPCap}
+                    lastActivity={profileData.lastActivity}
+                    xpGain={profileData.xpGain}
+                    streak={profileData.streak}
+                    weeklyBonus={weeklyBonus}
+                    monthlyBonus={monthlyBonus}
+                  />
+                  
+                  <ClassSection 
+                    className={profileData.className}
+                    classDescription={profileData.classDescription}
+                    icon={<ClassIconSelector className={profileData.className} />}
+                    bonuses={classBonuses}
+                  />
+                  
+                  <div className="mb-5">
+                    <RecentAchievementsList achievements={recentAchievements} />
                   </div>
                 </>
               )}
@@ -96,11 +110,7 @@ const ProfilePage = () => {
         </UserDataFormatter>
       </div>
       
-      {/* Bottom Navigation */}
       <BottomNavBar />
-      
-      {/* Achievement Popup System */}
-      <AchievementPopup />
     </div>
   );
 };

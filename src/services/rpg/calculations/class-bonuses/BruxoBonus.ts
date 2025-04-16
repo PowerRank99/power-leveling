@@ -3,17 +3,19 @@ import { EXERCISE_TYPES, CLASS_PASSIVE_SKILLS } from '../../constants/exerciseTy
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { ClassBonusBreakdown } from '../../types/classTypes';
 import { supabase } from '@/integrations/supabase/client';
-import { XPComponents } from '../../types/xpTypes';
 
 /**
  * Calculates Bruxo class-specific bonuses
  */
 export class BruxoBonus {
+  // One week in milliseconds for cooldown checks
+  private static readonly ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
   /**
    * Apply Bruxo-specific bonuses to XP
    */
   static applyBonuses(
-    components: XPComponents,
+    baseXP: number,
     workout: {
       id: string;
       exercises: WorkoutExercise[];
@@ -22,67 +24,54 @@ export class BruxoBonus {
     const bonusBreakdown: ClassBonusBreakdown[] = [];
     let bonusXP = 0;
     
-    // Bruxo's bonuses are more passive and not exercise-type specific
-    // Pijama Arcano allows for streak maintenance (handled separately)
-    bonusBreakdown.push({
-      skill: CLASS_PASSIVE_SKILLS.BRUXO.PRIMARY,
-      amount: 0,
-      description: 'Redução de streak reduzida em dias sem treino'
-    });
+    const exerciseNames = workout.exercises.map(ex => ex.name.toLowerCase());
     
-    // Topo da Montanha gives achievement point bonuses (handled separately)
+    // Check for flexibility exercises - Fluxo Arcano
+    const hasFlexibility = exerciseNames.some(name => 
+      EXERCISE_TYPES.FLEXIBILITY.some(flex => name.includes(flex))
+    );
+    
+    if (hasFlexibility) {
+      const flexibilityBonus = Math.round(baseXP * 0.40);
+      bonusBreakdown.push({
+        skill: CLASS_PASSIVE_SKILLS.BRUXO.PRIMARY,
+        amount: flexibilityBonus,
+        description: '+40% XP de yoga e alongamentos'
+      });
+      bonusXP += flexibilityBonus;
+    }
+    
+    // Streak preservation bonus is handled separately
+    // But we add it to the breakdown for display purposes
     bonusBreakdown.push({
       skill: CLASS_PASSIVE_SKILLS.BRUXO.SECONDARY,
       amount: 0,
-      description: '+50% em pontos de conquistas'
+      description: 'Preserva sequência se faltar um dia (semanal)'
     });
     
     return { bonusXP, bonusBreakdown };
   }
-
-  /**
-   * Calculate streak reduction for Bruxo's Pijama Arcano
-   * Reduces streak bonus by 5 percentage points per day missed
-   * 
-   * @param currentStreakPercentage Current streak bonus percentage (not days)
-   * @param daysMissed Number of days missed
-   * @returns New streak percentage (0-35)
-   */
-  static getStreakReductionPercentage(currentStreakPercentage: number, daysMissed: number): number {
-    // Calculate reduction in percentage points (5 per day)
-    const reductionPoints = daysMissed * 5;
-    
-    // Apply reduction to current streak percentage
-    const newStreakPercentage = Math.max(0, currentStreakPercentage - reductionPoints);
-    
-    return newStreakPercentage;
-  }
   
   /**
-   * Check if Bruxo should get achievement point bonus
-   * @param userId User ID
-   * @returns Whether to apply 50% bonus
+   * Check if Bruxo should preserve streak using the database
    */
-  static async shouldApplyAchievementBonus(userId: string): Promise<boolean> {
+  static async shouldPreserveStreak(userId: string): Promise<boolean> {
     if (!userId) return false;
     
     try {
-      // Check if user has completed 100 workouts
+      // Use regular query to check passive skill usage
       const { data, error } = await supabase
-        .from('workouts')
-        .select('count')
-        .eq('user_id', userId);
+        .from('passive_skill_usage')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('skill_name', 'Folga Mística')
+        .gte('used_at', new Date(Date.now() - this.ONE_WEEK_MS).toISOString())
+        .maybeSingle();
       
-      if (error) {
-        console.error('Error fetching workout count:', error);
-        return false;
-      }
-      
-      // Safely access the count from the returned data
-      const workoutCount = data && data.length > 0 ? parseInt(data[0].count as unknown as string, 10) : 0;
-      return workoutCount >= 100;
+      // If no data and no error, the skill hasn't been used recently
+      return !data && !error;
     } catch (error) {
-      console.error('Error checking achievement bonus:', error);
+      console.error('Error checking Bruxo streak preservation:', error);
       return false;
     }
   }

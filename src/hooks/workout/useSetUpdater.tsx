@@ -1,86 +1,126 @@
 
-import { useState } from 'react';
-import { SetData } from '@/types/workout';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { WorkoutExercise, SetData } from '@/types/workoutTypes';
+import { SetService } from '@/services/SetService';
+import { useSetOperations } from './useSetOperations';
 
 /**
- * A specialized hook for updating sets in a workout
+ * Hook for updating workout sets
  */
-export const useSetUpdater = (workoutId: string | null) => {
-  const [isUpdating, setIsUpdating] = useState(false);
-
+export function useSetUpdater(workoutId: string | null) {
+  const { executeOperation, isProcessing } = useSetOperations(workoutId);
+  
   /**
-   * Updates a set with new values
-   * @param exerciseIndex The index of the exercise in the array
-   * @param exerciseSets The sets of the exercise to update
-   * @param setIndex The index of the set to update
-   * @param data The data to update (weight, reps, completed status)
-   * @returns An array of updated sets or null if there was an error
+   * Updates a set with new data
    */
   const updateSet = async (
     exerciseIndex: number,
-    exerciseSets: SetData[],
+    exercises: WorkoutExercise[],
     setIndex: number,
     data: { weight?: string; reps?: string; completed?: boolean }
-  ): Promise<SetData[] | null> => {
-    if (!workoutId) {
-      toast.error("Erro ao atualizar série", {
-        description: "Treino não encontrado"
-      });
-      return null;
-    }
-
-    setIsUpdating(true);
-    
-    try {
-      // Clone the array
-      const updatedSets = [...exerciseSets];
+  ) => {
+    return executeOperation('atualizar série', async () => {
+      const currentExercise = exercises[exerciseIndex];
       
-      // Create a properly updated set with all fields preserved
-      updatedSets[setIndex] = {
-        ...updatedSets[setIndex],
-        weight: data.weight !== undefined ? data.weight : updatedSets[setIndex].weight,
-        reps: data.reps !== undefined ? data.reps : updatedSets[setIndex].reps,
-        completed: data.completed !== undefined ? data.completed : updatedSets[setIndex].completed
-      };
-      
-      // Update in database if it's a permanent ID (not a temporary one)
-      const setId = exerciseSets[setIndex].id;
-      if (!setId.startsWith('new-') && !setId.startsWith('default-')) {
-        const setData: Record<string, any> = {};
-        if (data.weight !== undefined) setData.weight = parseFloat(data.weight) || 0;
-        if (data.reps !== undefined) setData.reps = parseInt(data.reps) || 0;
-        if (data.completed !== undefined) {
-          setData.completed = data.completed;
-          setData.completed_at = data.completed ? new Date().toISOString() : null;
-        }
-        
-        const { error } = await supabase
-          .from('workout_sets')
-          .update(setData)
-          .eq('id', setId);
-          
-        if (error) {
-          console.error("Error updating set in database:", error);
-          // Don't show toast on every update, as it can be annoying during rapid updates
-        }
+      if (!currentExercise) {
+        throw new Error(`Exercise not found at index ${exerciseIndex}`);
       }
       
-      return updatedSets;
-    } catch (error) {
-      console.error("Error in updateSet:", error);
-      toast.error("Erro ao atualizar série", {
-        description: "Não foi possível salvar as alterações"
-      });
-      return null;
-    } finally {
-      setIsUpdating(false);
-    }
+      const currentSet = currentExercise.sets[setIndex];
+      
+      if (!currentSet) {
+        throw new Error(`Set not found at index ${setIndex} for exercise ${currentExercise.name}`);
+      }
+      
+      console.log(`[useSetUpdater] Updating set for ${currentExercise.name}, set #${setIndex + 1}`, data);
+      
+      // If this is a temporary ID, create a new set in the database first
+      if (currentSet.id.startsWith('default-') || currentSet.id.startsWith('new-')) {
+        console.log(`[useSetUpdater] Creating new database record for temp set ID: ${currentSet.id}`);
+        
+        // Parse values for database
+        const weightValue = parseFloat(data.weight ?? currentSet.weight) || 0;
+        const repsValue = parseInt(data.reps ?? currentSet.reps) || 0;
+        const completedValue = data.completed !== undefined ? data.completed : currentSet.completed;
+        
+        // Create the set in the database
+        const createResult = await SetService.createSet(
+          workoutId!,
+          currentExercise.id,
+          setIndex, // Use consistent set order
+          weightValue,
+          repsValue,
+          completedValue
+        );
+        
+        if (!createResult.success) {
+          SetService.displayError('salvar série', createResult.error);
+          return exercises;
+        }
+        
+        // Update our local state with the real database ID
+        const updatedExercises = [...exercises];
+        const setData = createResult.data!;
+        
+        updatedExercises[exerciseIndex].sets[setIndex] = {
+          ...updatedExercises[exerciseIndex].sets[setIndex],
+          id: setData.id,
+          weight: data.weight ?? currentSet.weight,
+          reps: data.reps ?? currentSet.reps,
+          completed: data.completed ?? currentSet.completed,
+          set_order: setIndex
+        };
+        
+        // We don't need to update exercise history immediately on set update
+        // This will be handled comprehensively during workout completion
+        
+        return updatedExercises;
+      } 
+      // Regular update for existing database records
+      else {
+        // Prepare the data for update
+        const updateData: { weight?: number; reps?: number; completed?: boolean } = {};
+        
+        if (data.weight !== undefined) {
+          updateData.weight = parseFloat(data.weight) || 0;
+        }
+        
+        if (data.reps !== undefined) {
+          updateData.reps = parseInt(data.reps) || 0;
+        }
+        
+        if (data.completed !== undefined) {
+          updateData.completed = data.completed;
+        }
+        
+        // Only update if we have something to change
+        if (Object.keys(updateData).length > 0) {
+          const updateResult = await SetService.updateSet(currentSet.id, updateData);
+          
+          if (!updateResult.success) {
+            SetService.displayError('atualizar série', updateResult.error);
+            return exercises;
+          }
+        }
+        
+        // Update local state with the new data
+        const updatedExercises = [...exercises];
+        
+        updatedExercises[exerciseIndex].sets[setIndex] = {
+          ...updatedExercises[exerciseIndex].sets[setIndex],
+          ...data
+        };
+        
+        // Don't update exercise history immediately - defer to workout completion
+        // This ensures a comprehensive update with all set data
+        console.log(`[useSetUpdater] Set updated but deferring history update until workout completion`);
+        
+        return updatedExercises;
+      }
+    });
   };
-
+  
   return {
     updateSet,
-    isUpdating
+    isProcessing
   };
-};
+}

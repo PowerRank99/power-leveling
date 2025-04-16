@@ -59,15 +59,15 @@ export const ClassProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
   
   // Compute cooldown text
-  const cooldownText = ClassService.formatCooldownTime(cooldownInfo?.cooldownEndsAt || null);
+  const cooldownText = ClassService.formatCooldownTime(cooldownInfo?.cooldown_ends_at || null);
   
   return (
     <ClassContext.Provider
       value={{
         classes,
-        userClass: cooldownInfo?.currentClass || profile?.class || null,
-        isOnCooldown: cooldownInfo?.onCooldown || false,
-        cooldownEndsAt: cooldownInfo?.cooldownEndsAt || null,
+        userClass: cooldownInfo?.current_class || null,
+        isOnCooldown: cooldownInfo?.on_cooldown || false,
+        cooldownEndsAt: cooldownInfo?.cooldown_ends_at || null,
         cooldownText,
         loading,
         selectClass,

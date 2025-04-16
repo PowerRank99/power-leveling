@@ -1,9 +1,7 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { ManualWorkoutService } from '@/services/workout/manual/ManualWorkoutService';
@@ -25,7 +23,6 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [description, setDescription] = useState('');
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
-  const [activityType, setActivityType] = useState<string>('strength');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   
@@ -108,21 +105,20 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
       
       const parsedDate = new Date(workoutDate);
       
-      console.log('Submitting manual workout with exercise:', selectedExercise.id, selectedExercise.name, 'activity type:', activityType);
+      console.log('Submitting manual workout with exercise:', selectedExercise.id, selectedExercise.name);
       
       const result = await ManualWorkoutService.submitManualWorkout(
         user.id,
-        {
-          photoUrl: publicUrlData.publicUrl,
-          description: description,
-          exerciseId: selectedExercise.id,
-          activityType: activityType,
-          workoutDate: parsedDate
-        }
+        publicUrlData.publicUrl,
+        description,
+        selectedExercise.id,
+        selectedExercise.name,
+        selectedExercise.muscle_group || 'Não especificado',
+        parsedDate
       );
       
       if (!result.success) {
-        throw new Error(result.error?.message || 'Erro ao registrar treino');
+        throw new Error(result.error || 'Erro ao registrar treino');
       }
       
       toast.success('Treino registrado com sucesso!', {
@@ -158,23 +154,6 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
               selectedExercise={selectedExercise} 
               onExerciseSelect={setSelectedExercise} 
             />
-            
-            <div className="space-y-2">
-              <Label htmlFor="activityType">Tipo de Atividade</Label>
-              <Select value={activityType} onValueChange={setActivityType}>
-                <SelectTrigger id="activityType" className="bg-midnight-elevated border-arcane/30">
-                  <SelectValue placeholder="Escolha o tipo de atividade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="strength">Musculação</SelectItem>
-                  <SelectItem value="bodyweight">Calistenia</SelectItem>
-                  <SelectItem value="cardio">Cardio</SelectItem>
-                  <SelectItem value="yoga">Yoga/Flexibilidade</SelectItem>
-                  <SelectItem value="sports">Esportes</SelectItem>
-                  <SelectItem value="other">Outro</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
             
             <div>
               <Label htmlFor="description">Descrição (opcional)</Label>

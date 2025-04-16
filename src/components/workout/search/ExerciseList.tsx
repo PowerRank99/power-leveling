@@ -52,6 +52,7 @@ const ExerciseList: React.FC<ExerciseListProps> = ({
           <ExerciseCard
             name={exercise.name}
             category={exercise.muscle_group || 'Não especificado'}
+            level={exercise.level as any}
             type={exercise.type || 'Musculação'}
             image={exercise.image_url || '/placeholder.svg'}
             description={exercise.description || ''}

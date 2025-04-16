@@ -1,79 +1,46 @@
 
 import { toast } from 'sonner';
-import { ClassBonusBreakdown } from '../types/classTypes';
 
 /**
- * XP breakdown for toast notifications
+ * Interface for XP breakdown
  */
 export interface XPBreakdown {
-  /** Base XP before any modifiers */
   base: number;
-  
-  /** Bonus from class skills */
   classBonus: number;
-  
-  /** Bonus from streak */
   streakBonus: number;
-  
-  /** Bonus from personal records */
   recordBonus: number;
-  
-  /** Weekly completion bonus */
   weeklyBonus: number;
-  
-  /** Monthly goal completion bonus */
   monthlyBonus: number;
-  
-  /** Detailed breakdown of all bonuses */
-  bonusDetails: ClassBonusBreakdown[];
+  bonusDetails: { skill: string, amount: number, description: string }[];
 }
 
 /**
- * Service for showing XP-related toast notifications
+ * Service for handling XP notifications
  */
 export class XPToastService {
   /**
-   * Show an XP gain toast with breakdown
-   * 
-   * @param amount - Total XP gained
-   * @param breakdown - Optional detailed breakdown of XP components
-   * @param leveledUp - Whether user leveled up from this XP gain
+   * Show toast notification with XP breakdown
    */
-  static showXPToast(
-    amount: number, 
-    breakdown?: XPBreakdown, 
-    leveledUp: boolean = false
-  ): void {
-    if (amount <= 0) return;
+  static showXPToast(totalXP: number, xpBreakdown: XPBreakdown, isPowerDay: boolean = false): void {
+    let toastDesc = 'Treino completo!';
     
-    let description = `+${amount} XP`;
+    const bonuses = [];
+    if (xpBreakdown.classBonus > 0) bonuses.push(`Classe: +${xpBreakdown.classBonus}`);
+    if (xpBreakdown.streakBonus > 0) bonuses.push(`Streak: +${xpBreakdown.streakBonus}`);
+    if (xpBreakdown.recordBonus > 0) bonuses.push(`Recorde: +${xpBreakdown.recordBonus}`);
+    if (xpBreakdown.weeklyBonus > 0) bonuses.push(`Semanal: +${xpBreakdown.weeklyBonus}`);
+    if (xpBreakdown.monthlyBonus > 0) bonuses.push(`Mensal: +${xpBreakdown.monthlyBonus}`);
     
-    if (breakdown?.bonusDetails && breakdown.bonusDetails.length > 0) {
-      // If we have detailed breakdown, add the first bonus to the description
-      const firstBonus = breakdown.bonusDetails[0];
-      description += ` (${firstBonus.description})`;
+    if (bonuses.length > 0) {
+      toastDesc = `Base: ${xpBreakdown.base} | ${bonuses.join(' | ')}`;
     }
     
-    // Show different toast based on level up status
-    if (leveledUp) {
-      toast.success('Nível Aumentado! 🎉', {
-        description: `${description}`
-      });
-    } else {
-      toast.success('XP Ganho!', {
-        description
-      });
+    if (isPowerDay) {
+      toastDesc += ' | Power Day Ativado!';
     }
-  }
-  
-  /**
-   * Legacy method for backward compatibility
-   * @deprecated Use showXPToast instead
-   */
-  static showXPGainToast(
-    amount: number, 
-    source: string = 'workout'
-  ): void {
-    this.showXPToast(amount);
+    
+    toast.success(`+${totalXP} XP`, {
+      description: toastDesc
+    });
   }
 }

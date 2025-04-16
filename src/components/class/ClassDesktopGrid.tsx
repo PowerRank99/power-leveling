@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ClassInfo, LegacyClassInfo } from '@/services/rpg/types/classTypes';
+import { ClassInfo } from '@/services/rpg/ClassService';
 import ClassSelectionCard from './ClassSelectionCard';
 
 interface ClassDesktopGridProps {
@@ -41,22 +41,6 @@ const ClassDesktopGrid: React.FC<ClassDesktopGridProps> = ({
     }
   };
 
-  // Convert ClassInfo to LegacyClassInfo for backward compatibility with ClassSelectionCard
-  const getLegacyClassInfo = (classInfo: ClassInfo): LegacyClassInfo => {
-    return {
-      class_name: classInfo.className,
-      description: classInfo.description,
-      icon: classInfo.icon,
-      color: classInfo.color,
-      bonuses: classInfo.bonuses.map(bonus => ({
-        bonus_type: bonus.bonusType,
-        bonus_value: bonus.bonusValue,
-        description: bonus.description,
-        skill_name: bonus.skillName
-      }))
-    };
-  };
-
   return (
     <motion.div 
       className="hidden lg:grid lg:grid-cols-3 gap-8 mb-8 mt-12"
@@ -66,19 +50,19 @@ const ClassDesktopGrid: React.FC<ClassDesktopGridProps> = ({
     >
       {classes.map((classInfo, index) => (
         <motion.div 
-          key={`grid-${classInfo.className}`} 
+          key={`grid-${classInfo.class_name}`} 
           className="h-full"
           variants={itemVariants}
         >
           <ClassSelectionCard
-            classInfo={getLegacyClassInfo(classInfo)}
-            isCurrentClass={userClass === classInfo.className}
-            isSelected={selectedClass === classInfo.className}
+            classInfo={classInfo}
+            isCurrentClass={userClass === classInfo.class_name}
+            isSelected={selectedClass === classInfo.class_name}
             isFocused={index === focusedIndex}
             isOnCooldown={isOnCooldown}
             onClick={() => {
-              if (!isOnCooldown || userClass === classInfo.className) {
-                onClassSelect(classInfo.className, index);
+              if (!isOnCooldown || userClass === classInfo.class_name) {
+                onClassSelect(classInfo.class_name, index);
               }
             }}
           />

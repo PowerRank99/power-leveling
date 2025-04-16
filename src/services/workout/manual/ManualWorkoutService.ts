@@ -1,181 +1,110 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { XPService } from '@/services/rpg/XPService';
-import { PowerDayService } from '@/services/rpg/bonus/PowerDayService';
-import { ActivityBonusService } from './ActivityBonusService';
-import { ManualWorkoutData, ManualWorkout } from '@/types/manualWorkoutTypes';
-import { ServiceResponse } from '@/services/common/ErrorHandlingService';
+import { ManualWorkout } from '@/types/manualWorkoutTypes';
+import { ManualWorkoutValidationService } from './ManualWorkoutValidationService';
+import { XPService } from '@/services/xp/XPService';
 
-/**
- * Service for handling manual workout submission
- */
 export class ManualWorkoutService {
   /**
    * Submit a manual workout
    */
   static async submitManualWorkout(
     userId: string,
-    workoutData: ManualWorkoutData
-  ): Promise<ServiceResponse<boolean>> {
+    photoUrl: string,
+    description: string,
+    exerciseId: string,
+    exerciseName: string,
+    exerciseCategory: string,
+    workoutDate: Date
+  ): Promise<{ success: boolean; error?: string; data?: any }> {
     try {
-      // Check if user has already submitted a manual workout today
-      const { data: recentWorkouts, error: countError } = await supabase
-        .rpc('check_recent_manual_workouts', { 
-          p_user_id: userId, 
-          p_hours: 24 
-        });
+      // Validate the submission
+      const isValid = await ManualWorkoutValidationService.validateWorkoutSubmission(
+        userId,
+        photoUrl,
+        workoutDate
+      );
       
-      if (countError) {
-        console.error('Error checking recent manual workouts:', countError);
-        return { 
-          success: false, 
-          error: { 
-            message: 'Failed to check recent manual workouts',
-            technical: countError.message
-          }
-        };
+      if (!isValid) {
+        return { success: false, error: 'Validação falhou' };
       }
       
-      const recentCount = recentWorkouts?.[0]?.count || 0;
+      // Check if this is a power day (user has completed a workout today)
+      const isPowerDay = await ManualWorkoutValidationService.checkPowerDay(userId);
       
-      if (recentCount >= 1) {
-        return { 
-          success: false, 
-          error: {
-            message: 'Você já enviou um treino manual hoje. Aguarde 24 horas para enviar outro.',
-            technical: 'Daily manual workout limit reached'
-          }
-        };
-      }
+      // Calculate XP (base: 100 XP, power day bonus: +50 XP)
+      const xpAwarded = isPowerDay 
+        ? XPService.MANUAL_WORKOUT_BASE_XP + XPService.POWER_DAY_BONUS_XP 
+        : XPService.MANUAL_WORKOUT_BASE_XP;
       
-      // Get user's class to apply bonuses
-      const { data: userProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('class')
-        .eq('id', userId)
-        .single();
+      // Add XP to user - fixing the argument count here (passing metadata as part of the source parameter)
+      await XPService.addXP(userId, xpAwarded, `manual_workout:${exerciseName}:${exerciseCategory}`);
       
-      if (profileError) {
-        console.error('Error getting user profile:', profileError);
-        // Continue without class bonuses
-      }
+      console.log('Creating manual workout with exercise_id:', exerciseId);
       
-      const userClass = userProfile?.class || null;
-      
-      // Check if workout should use Power Day
-      let isUserPowerDay = false;
-      let xpAwarded = XPService.MANUAL_WORKOUT_BASE_XP;
-      
-      if (workoutData.usePowerDay) {
-        // Check Power Day availability
-        const powerDayStatus = await PowerDayService.checkPowerDayAvailability(userId);
-        
-        if (powerDayStatus.available) {
-          isUserPowerDay = true;
-          await PowerDayService.recordPowerDayUsage(
-            userId,
-            powerDayStatus.week,
-            powerDayStatus.year
-          );
-        }
-      }
-      
-      // Apply class-specific bonus if applicable
-      let bonusXP = 0;
-      if (userClass && workoutData.activityType) {
-        const bonusMultiplier = ActivityBonusService.getClassBonus(userClass, workoutData.activityType);
-        if (bonusMultiplier > 0) {
-          bonusXP = Math.round(xpAwarded * bonusMultiplier);
-          xpAwarded += bonusXP;
-        }
-      }
-      
-      // Create the manual workout record
+      // Since we're getting a TypeScript error about the p_exercise_id parameter,
+      // let's check if the SQL migration was properly applied by using a more direct approach
+      // We'll execute a direct INSERT query instead of using the RPC function
       const { data, error } = await supabase
-        .rpc('create_manual_workout', {
-          p_user_id: userId,
-          p_description: workoutData.description || '',
-          p_activity_type: workoutData.activityType || 'Outro',
-          p_exercise_id: workoutData.exerciseId || null,
-          p_photo_url: workoutData.photoUrl || '',
-          p_xp_awarded: xpAwarded,
-          p_workout_date: new Date(workoutData.workoutDate || new Date()).toISOString(),
-          p_is_power_day: isUserPowerDay
-        });
+        .from('manual_workouts')
+        .insert({
+          user_id: userId,
+          description: description || null,
+          activity_type: exerciseName || null,
+          exercise_id: exerciseId,
+          photo_url: photoUrl,
+          xp_awarded: xpAwarded,
+          workout_date: workoutDate.toISOString(),
+          is_power_day: isPowerDay
+        })
+        .select()
+        .single();
       
       if (error) {
         console.error('Error creating manual workout:', error);
-        return { 
-          success: false, 
-          error: {
-            message: 'Não foi possível salvar o treino manual',
-            technical: error.message
-          }
-        };
+        return { success: false, error: error.message };
       }
       
-      // Award XP with metadata for class bonus tracking
-      const result = await XPService.awardXP(
-        userId, 
-        xpAwarded, 
-        'manual_workout',
-        {
-          activityType: workoutData.activityType,
-          isPowerDay: isUserPowerDay,
-          classBonus: bonusXP > 0 ? {
-            class: userClass,
-            amount: bonusXP,
-            description: ActivityBonusService.getBonusDescription(userClass, workoutData.activityType)
-          } : null
-        }
-      );
+      return { success: true, data };
       
-      if (!result) {
-        console.error('Error awarding XP for manual workout');
-      }
-      
-      // Update user's streak
-      await this.updateUserStreak(userId);
-      
-      return { success: true, data: true };
     } catch (error: any) {
-      console.error('Error submitting manual workout:', error);
-      return { 
-        success: false, 
-        error: {
-          message: 'Ocorreu um erro ao enviar o treino manual',
-          technical: error.message
-        }
-      };
+      console.error('Error in submitManualWorkout:', error);
+      return { success: false, error: error.message || 'Unknown error occurred' };
     }
   }
   
   /**
-   * Get user's manual workouts
+   * Get manual workouts for a user
    */
   static async getUserManualWorkouts(userId: string): Promise<ManualWorkout[]> {
     try {
+      // We'll also switch to using a direct query instead of the RPC function
+      // to make sure we're getting all fields including exercise_id
       const { data, error } = await supabase
-        .rpc('get_user_manual_workouts', {
-          p_user_id: userId
-        });
+        .from('manual_workouts')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching manual workouts:', error);
+        return [];
+      }
       
-      // Map the database response to our ManualWorkout interface
-      return (data || []).map(item => ({
-        id: item.id,
-        description: item.description,
-        activityType: item.activity_type,
-        exerciseId: item.exercise_id,
-        photoUrl: item.photo_url,
-        xpAwarded: item.xp_awarded,
-        createdAt: item.created_at,
-        workoutDate: item.workout_date,
-        isPowerDay: item.is_power_day
+      return data.map((workout: any) => ({
+        id: workout.id,
+        description: workout.description,
+        activityType: workout.activity_type,
+        exerciseId: workout.exercise_id,
+        photoUrl: workout.photo_url,
+        xpAwarded: workout.xp_awarded,
+        isPowerDay: workout.is_power_day,
+        createdAt: workout.created_at,
+        workoutDate: workout.workout_date
       }));
+      
     } catch (error) {
-      console.error('Error getting user manual workouts:', error);
+      console.error('Error in getUserManualWorkouts:', error);
       return [];
     }
   }
@@ -184,65 +113,64 @@ export class ManualWorkoutService {
    * Delete a manual workout
    */
   static async deleteManualWorkout(
-    userId: string, 
+    userId: string,
     workoutId: string
-  ): Promise<ServiceResponse<boolean>> {
+  ): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabase
+      // First get the workout to check if it belongs to the user
+      const { data: workouts, error: fetchError } = await supabase
+        .from('manual_workouts')
+        .select('id, user_id, photo_url')
+        .eq('id', workoutId)
+        .eq('user_id', userId)
+        .limit(1);
+        
+      if (fetchError) {
+        throw new Error(`Error fetching workout: ${fetchError.message}`);
+      }
+      
+      if (!workouts || workouts.length === 0) {
+        return { success: false, error: 'Treino não encontrado ou você não tem permissão' };
+      }
+      
+      const workout = workouts[0];
+      
+      // Delete the workout from database
+      const { error: deleteError } = await supabase
         .from('manual_workouts')
         .delete()
         .eq('id', workoutId)
         .eq('user_id', userId);
+        
+      if (deleteError) {
+        throw new Error(`Error deleting workout: ${deleteError.message}`);
+      }
       
-      if (error) {
-        return {
-          success: false,
-          error: {
-            message: 'Não foi possível excluir o treino',
-            technical: error.message
+      // Try to delete the photo from storage if available
+      // We don't throw errors here as the workout was already deleted
+      try {
+        if (workout.photo_url) {
+          // Extract the file path from the URL
+          const url = new URL(workout.photo_url);
+          const pathSegments = url.pathname.split('/');
+          const fileName = pathSegments[pathSegments.length - 1];
+          
+          if (fileName) {
+            await supabase.storage
+              .from('workout-photos')
+              .remove([fileName]);
           }
-        };
-      }
-      
-      return { success: true, data: true };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: {
-          message: 'Erro ao excluir o treino',
-          technical: error.message
         }
-      };
-    }
-  }
-  
-  /**
-   * Update user's streak after manual workout
-   */
-  private static async updateUserStreak(userId: string): Promise<void> {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('streak')
-        .eq('id', userId)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching user streak:', error);
-        return;
+      } catch (photoError) {
+        console.warn('Failed to delete workout photo:', photoError);
+        // Continue anyway as the workout record was deleted
       }
       
-      const currentStreak = data?.streak || 0;
+      return { success: true };
       
-      await supabase
-        .from('profiles')
-        .update({ 
-          streak: currentStreak + 1,
-          last_workout_at: new Date().toISOString()
-        })
-        .eq('id', userId);
-    } catch (error) {
-      console.error('Error updating user streak:', error);
+    } catch (error: any) {
+      console.error('Error in deleteManualWorkout:', error);
+      return { success: false, error: error.message || 'Error deleting workout' };
     }
   }
 }

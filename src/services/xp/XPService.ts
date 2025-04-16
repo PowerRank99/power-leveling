@@ -24,31 +24,19 @@ export class XPService {
   /**
    * Add XP to a user's profile
    * Uses the awardXP method from the RPGXPService for implementation
-   * 
-   * @param userId - The ID of the user to award XP to
-   * @param amount - The amount of XP to award
-   * @param source - The source of the XP (e.g., 'workout', 'achievement')
-   * @param metadata - Optional metadata about the XP award (for logging/debugging)
    */
   static async addXP(
     userId: string, 
     amount: number, 
-    source: string = 'workout',
+    source: string,
     metadata?: any
   ): Promise<boolean> {
     try {
       // Use the existing RPGXPService to award XP
-      return await RPGXPService.awardXP(userId, amount, source, metadata);
+      return await RPGXPService.awardXP(userId, amount);
     } catch (error) {
       console.error('Exception in addXP:', error);
       return false;
     }
   }
-  
-  // Expose methods from RPGXPService
-  static awardXP = RPGXPService.awardXP;
-  static checkPowerDayAvailability = RPGXPService.checkPowerDayAvailability;
-  static recordPowerDayUsage = RPGXPService.recordPowerDayUsage;
-  static checkForPersonalRecords = RPGXPService.checkForPersonalRecords;
-  static awardWorkoutXP = RPGXPService.awardWorkoutXP;
 }

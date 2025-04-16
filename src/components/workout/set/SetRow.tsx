@@ -14,9 +14,6 @@ interface SetRowProps {
   showRemoveButton: boolean;
 }
 
-/**
- * SetRow component that uses the composition pattern with specialized components
- */
 const SetRow: React.FC<SetRowProps> = ({
   index,
   set,

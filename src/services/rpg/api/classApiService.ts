@@ -47,21 +47,15 @@ export class ClassApiService {
             }
             
             processedBonuses.push({
-              bonusType: bonus.bonus_type,
-              bonusValue: bonus.bonus_value,
-              description: bonus.description,
-              skillName: skillName
+              ...bonus,
+              skill_name: skillName
             });
           }
         }
         
         // Combine database bonuses with UI metadata
-        const metadata = ClassUtils.CLASS_METADATA[className];
         classInfos.push({
-          className,
-          description: metadata.description,
-          icon: metadata.icon,
-          color: metadata.color,
+          ...ClassUtils.CLASS_METADATA[className],
           bonuses: processedBonuses
         });
       }
@@ -172,17 +166,17 @@ export class ClassApiService {
       
       // Safe conversion with default values
       const cooldownInfo: CooldownInfo = {
-        onCooldown: false,
-        currentClass: null,
-        cooldownEndsAt: null
+        on_cooldown: false,
+        current_class: null,
+        cooldown_ends_at: null
       };
       
       // Check if data has the expected structure and extract values safely
       if (data && typeof data === 'object') {
         const typedData = data as any;
-        cooldownInfo.onCooldown = typedData.on_cooldown === true;
-        cooldownInfo.currentClass = typedData.current_class || null;
-        cooldownInfo.cooldownEndsAt = typedData.cooldown_ends_at || null;
+        cooldownInfo.on_cooldown = typedData.on_cooldown === true;
+        cooldownInfo.current_class = typedData.current_class || null;
+        cooldownInfo.cooldown_ends_at = typedData.cooldown_ends_at || null;
       }
       
       return cooldownInfo;

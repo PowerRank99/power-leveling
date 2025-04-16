@@ -21,7 +21,9 @@ export const useWorkoutCompletion = (workoutId: string | null, elapsedTime: numb
       setIsCompleting(true);
       console.log('Finishing workout with ID:', workoutId);
       
-      // Call workout completion service
+      // Call workout completion service to:
+      // 1. Update workout completion status
+      // 2. Process RPG rewards (XP, achievements, records)
       const success = await WorkoutCompletionService.finishWorkout(
         workoutId, 
         elapsedTime

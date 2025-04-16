@@ -2,7 +2,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { SetData, DatabaseResult } from '@/types/workoutTypes';
 import { toast } from 'sonner';
-import { createSuccessResult, createErrorResult } from '@/utils/serviceUtils';
 
 /**
  * Service responsible for creating workout sets
@@ -37,7 +36,7 @@ export class SetCreationService {
         
       if (error) {
         console.error("[SetCreationService] Error creating set:", error);
-        return createErrorResult(error);
+        return { success: false, error };
       }
       
       console.log(`[SetCreationService] Successfully created set with ID: ${data.id}`);
@@ -45,17 +44,16 @@ export class SetCreationService {
       // Format to our SetData interface
       const formattedData: SetData = {
         id: data.id,
-        exercise_id: data.exercise_id,
         weight: data.weight?.toString() || '0',
         reps: data.reps?.toString() || '0',
         completed: data.completed || false,
         set_order: data.set_order
       };
       
-      return createSuccessResult(formattedData);
-    } catch (error: any) {
+      return { success: true, data: formattedData };
+    } catch (error) {
       console.error("[SetCreationService] Exception creating set:", error);
-      return createErrorResult(error);
+      return { success: false, error };
     }
   }
   
@@ -72,13 +70,13 @@ export class SetCreationService {
         
       if (error) {
         console.error(`[SetCreationService] Set verification failed for ID ${setId}:`, error);
-        return createErrorResult(error);
+        return { success: false, error };
       }
       
-      return createSuccessResult(true);
-    } catch (error: any) {
+      return { success: true, data: true };
+    } catch (error) {
       console.error(`[SetCreationService] Exception verifying set ${setId}:`, error);
-      return createErrorResult(error);
+      return { success: false, error };
     }
   }
 }

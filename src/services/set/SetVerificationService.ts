@@ -1,6 +1,7 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { DatabaseResult } from '@/types/workoutTypes';
-import { createSuccessResult, createErrorResult } from '@/utils/serviceUtils';
+import { toast } from 'sonner';
 
 /**
  * Service responsible for verifying and reconciling set counts
@@ -27,7 +28,7 @@ export class SetVerificationService {
         
       if (error) {
         console.error("[SetVerificationService] Error counting sets:", error);
-        return createErrorResult(error);
+        return { success: false, error };
       }
       
       const actualCount = count || 0;
@@ -35,14 +36,17 @@ export class SetVerificationService {
       
       console.log(`[SetVerificationService] Verification result: actual=${actualCount}, expected=${expectedCount}, match=${match}`);
       
-      return createSuccessResult({
-        actual: actualCount,
-        expected: expectedCount,
-        match
-      });
+      return { 
+        success: true, 
+        data: {
+          actual: actualCount,
+          expected: expectedCount,
+          match
+        }
+      };
     } catch (error) {
       console.error("[SetVerificationService] Exception verifying set count:", error);
-      return createErrorResult(error as Error);
+      return { success: false, error };
     }
   }
   
@@ -58,7 +62,7 @@ export class SetVerificationService {
     try {
       if (!routineId) {
         console.warn("[SetVerificationService] No routineId provided, cannot reconcile");
-        return createErrorResult(new Error("Missing routineId"));
+        return { success: false, error: new Error("Missing routineId") };
       }
       
       console.log(`[SetVerificationService] Reconciling set count for workout=${workoutId}, exercise=${exerciseId}, routine=${routineId}`);
@@ -72,13 +76,13 @@ export class SetVerificationService {
         
       if (countError) {
         console.error("[SetVerificationService] Error counting sets:", countError);
-        return createErrorResult(countError);
+        return { success: false, error: countError };
       }
       
       console.log(`[SetVerificationService] Actual set count from DB: ${actualCount}`);
       
       // For safety, ensure we always have at least one set
-      const safeCount = 1; // Use a default value for type checking
+      const safeCount = actualCount === 0 ? 1 : actualCount;
       
       // Update routine_exercises target_sets to match actual count
       const { data: updateData, error: updateError } = await supabase
@@ -90,12 +94,12 @@ export class SetVerificationService {
         
       if (updateError) {
         console.error("[SetVerificationService] Error updating target sets:", updateError);
-        return createErrorResult(updateError);
+        return { success: false, error: updateError };
       }
       
       if (!updateData || updateData.length === 0) {
         console.warn("[SetVerificationService] Routine exercise not found");
-        return createErrorResult(new Error("Routine exercise not found"));
+        return { success: false, error: new Error("Routine exercise not found") };
       }
       
       console.log(`[SetVerificationService] Updated target_sets to ${updateData[0].target_sets}`);
@@ -130,10 +134,10 @@ export class SetVerificationService {
         // Non-critical so continue
       }
       
-      return createSuccessResult(safeCount);
+      return { success: true, data: safeCount };
     } catch (error) {
       console.error("[SetVerificationService] Exception reconciling set count:", error);
-      return createErrorResult(error as Error);
+      return { success: false, error };
     }
   }
 }

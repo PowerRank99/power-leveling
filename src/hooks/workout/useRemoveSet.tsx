@@ -1,18 +1,8 @@
-
-import { useState } from 'react';
-import { SetData } from '@/types/workout';
 import { supabase } from '@/integrations/supabase/client';
+import { WorkoutExercise } from '@/types/workout';
 import { toast } from 'sonner';
 
-/**
- * A specialized hook for removing sets from a workout
- */
 export const useRemoveSet = (workoutId: string | null) => {
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  /**
-   * Updates the target set count for a routine exercise
-   */
   const updateRoutineExerciseSetCount = async (exerciseId: string, routineId: string, newSetCount: number) => {
     try {
       const { error } = await supabase
@@ -31,100 +21,78 @@ export const useRemoveSet = (workoutId: string | null) => {
     }
   };
 
-  /**
-   * Removes a set from an exercise
-   * @param exerciseIndex The index of the exercise in the array
-   * @param exerciseSets The sets of the exercise to remove a set from
-   * @param setIndex The index of the set to remove
-   * @param routineId The routine ID for updating target sets
-   * @returns An array of updated sets or null if there was an error
-   */
   const removeSet = async (
-    exerciseIndex: number,
-    exerciseSets: SetData[],
-    setIndex: number,
+    exerciseIndex: number, 
+    exercises: WorkoutExercise[], 
+    setIndex: number, 
     routineId: string
-  ): Promise<SetData[] | null> => {
-    if (!workoutId) {
-      toast.error("Erro ao remover série", {
-        description: "Treino não encontrado"
-      });
-      return null;
-    }
-
-    setIsProcessing(true);
-    
+  ) => {
     try {
-      // Clone the sets
-      const updatedSets = [...exerciseSets];
-      
-      // Get the set to remove
-      const setToRemove = updatedSets[setIndex];
-      if (!setToRemove) {
-        console.error(`Set not found at index ${setIndex}`);
+      if (!workoutId || !exercises[exerciseIndex]) {
+        toast.error("Erro ao remover série", {
+          description: "Treino ou exercício não encontrado"
+        });
         return null;
       }
       
-      if (updatedSets.length <= 1) {
+      const currentExercise = exercises[exerciseIndex];
+      const setId = currentExercise.sets[setIndex].id;
+      
+      if (currentExercise.sets.length <= 1) {
         toast.error("Não é possível remover", {
           description: "Deve haver pelo menos uma série"
         });
-        return exerciseSets;
+        return exercises;
       }
       
-      // Remove the set from our local array
-      updatedSets.splice(setIndex, 1);
+      console.log(`Removing set ${setIndex + 1} for exercise ${currentExercise.name}, ID: ${setId}`);
       
-      // If this is a temporary ID (not persisted to the database yet), just return the updated sets
-      if (setToRemove.id.startsWith('new-') || setToRemove.id.startsWith('default-')) {
-        return updatedSets;
-      }
+      const updatedExercises = [...exercises];
+      updatedExercises[exerciseIndex].sets = [
+        ...currentExercise.sets.slice(0, setIndex),
+        ...currentExercise.sets.slice(setIndex + 1)
+      ];
       
-      // Otherwise, remove the set from the database
-      const { error } = await supabase
-        .from('workout_sets')
-        .delete()
-        .eq('id', setToRemove.id);
+      // If this is a temporary ID (not in the database yet), we don't need to delete it
+      if (!setId.startsWith('default-') && !setId.startsWith('new-')) {
+        const { error } = await supabase
+          .from('workout_sets')
+          .delete()
+          .eq('id', setId);
         
-      if (error) {
-        console.error("Error removing set:", error);
-        toast.error("Erro ao remover série", {
-          description: "Não foi possível remover a série"
-        });
-        return null;
+        if (error) {
+          console.error("Error removing set:", error);
+          toast.error("Erro ao remover série", {
+            description: "A série pode não ter sido removida corretamente"
+          });
+        } else {
+          console.log(`Successfully removed set ${setId} from database`);
+          
+          // Update the set_order for all remaining sets to keep them sequential
+          // This is critical to maintain consistency
+          await reorderRemainingDatabaseSets(currentExercise.id, workoutId, exerciseIndex, updatedExercises[exerciseIndex].sets);
+        }
       }
       
-      // Reorder the remaining sets to keep the set_order sequential
-      await reorderRemainingDatabaseSets(setToRemove.exercise_id, workoutId, exerciseIndex, updatedSets);
+      // Update the routine exercise set count for persistence
+      await updateRoutineExerciseSetCount(currentExercise.id, routineId, currentExercise.sets.length - 1);
       
-      // Update the routine's target set count
-      await updateRoutineExerciseSetCount(setToRemove.exercise_id, routineId, updatedSets.length);
-      
-      return updatedSets;
+      return updatedExercises;
     } catch (error) {
-      console.error("Error in removeSet:", error);
+      console.error("Error removing set:", error);
       toast.error("Erro ao remover série", {
         description: "Não foi possível remover a série"
       });
       return null;
-    } finally {
-      setIsProcessing(false);
     }
   };
   
-  /**
-   * Reorders the remaining sets after a set has been removed
-   */
-  const reorderRemainingDatabaseSets = async (
-    exerciseId: string,
-    workoutId: string,
-    exerciseIndex: number,
-    remainingSets: SetData[]
-  ) => {
+  // Helper function to reorder sets after a deletion
+  const reorderRemainingDatabaseSets = async (exerciseId: string, workoutId: string, exerciseIndex: number, remainingSets: any[]) => {
     try {
       // Only update sets that are in the database (not temporary)
       const databaseSets = remainingSets.filter(set => 
-        !set.id.startsWith('new-') && !set.id.startsWith('default-')
+        !set.id.startsWith('default-') && !set.id.startsWith('new-')
       );
       
       console.log(`Reordering ${databaseSets.length} database sets after removal`);
@@ -150,11 +118,5 @@ export const useRemoveSet = (workoutId: string | null) => {
     }
   };
 
-  return {
-    removeSet,
-    isProcessing
-  };
+  return { removeSet };
 };
-
-// Add an alias for backward compatibility
-export const useSetRemover = useRemoveSet;

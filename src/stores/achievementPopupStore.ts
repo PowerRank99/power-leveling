@@ -1,10 +1,13 @@
 
-/**
- * This is a placeholder file for the removed achievement popup system.
- */
-
 import { create } from 'zustand';
-import { Achievement } from '@/types/achievementTypes';
+
+interface Achievement {
+  title: string;
+  description: string;
+  xpReward: number;
+  bonusText?: string;
+  points?: number;
+}
 
 interface AchievementPopupState {
   isVisible: boolean;
@@ -13,9 +16,9 @@ interface AchievementPopupState {
   hideAchievement: () => void;
 }
 
-export const achievementPopupStore = create<AchievementPopupState>(() => ({
+export const achievementPopupStore = create<AchievementPopupState>((set) => ({
   isVisible: false,
   achievement: null,
-  showAchievement: () => {},
-  hideAchievement: () => {}
+  showAchievement: (achievement) => set({ isVisible: true, achievement }),
+  hideAchievement: () => set({ isVisible: false }),
 }));

@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef } from 'react';
-import { SetData, PreviousSetData } from '@/types/workoutTypes';
+import { SetData } from './types';
 
 interface SetInputManagerProps {
   set: SetData;
@@ -9,14 +9,14 @@ interface SetInputManagerProps {
 }
 
 /**
- * Custom hook to manage set input values and handle state synchronization
+ * Custom hook to manage set input values and handle synchronization
  */
-const useSetInputValues = ({ set, onWeightChange, onRepsChange }: SetInputManagerProps) => {
-  const [weightValue, setWeightValue] = useState(set.weight ? set.weight.toString() : '0');
-  const [repsValue, setRepsValue] = useState(set.reps ? set.reps.toString() : '0');
+const SetInputManager = ({ set, onWeightChange, onRepsChange }: SetInputManagerProps) => {
+  const [weightValue, setWeightValue] = useState(set.weight || '0');
+  const [repsValue, setRepsValue] = useState(set.reps || '0');
   const isInitializedRef = useRef(false);
   const setIdRef = useRef(set.id);
-  const previousValuesRef = useRef({ weight: set.weight?.toString(), reps: set.reps?.toString() });
+  const previousValuesRef = useRef({ weight: set.weight, reps: set.reps });
   const lastUserEditRef = useRef<number | null>(null);
   
   // Initialize values on first render or when set ID changes
@@ -29,10 +29,9 @@ const useSetInputValues = ({ set, onWeightChange, onRepsChange }: SetInputManage
     }
     
     if (!isInitializedRef.current) {
-      let newWeightValue = set.weight ? set.weight.toString() : '0';
-      let newRepsValue = set.reps ? set.reps.toString() : '0';
+      let newWeightValue = set.weight;
+      let newRepsValue = set.reps;
       
-      // Use previous values if current values are empty
       if (!newWeightValue || newWeightValue === '0') {
         newWeightValue = set.previous?.weight && set.previous.weight !== '0' ? 
           set.previous.weight : '0';
@@ -52,11 +51,8 @@ const useSetInputValues = ({ set, onWeightChange, onRepsChange }: SetInputManage
   
   // Update local state if props change and no recent user edits
   useEffect(() => {
-    const currentWeight = set.weight ? set.weight.toString() : '0';
-    const currentReps = set.reps ? set.reps.toString() : '0';
-    
-    if (currentWeight === previousValuesRef.current.weight && 
-        currentReps === previousValuesRef.current.reps) {
+    if (set.weight === previousValuesRef.current.weight && 
+        set.reps === previousValuesRef.current.reps) {
       return;
     }
     
@@ -66,14 +62,14 @@ const useSetInputValues = ({ set, onWeightChange, onRepsChange }: SetInputManage
       return;
     }
     
-    if (currentWeight && currentWeight !== '0' && currentWeight !== weightValue) {
-      setWeightValue(currentWeight);
-      previousValuesRef.current.weight = currentWeight;
+    if (set.weight && set.weight !== '0' && set.weight !== weightValue) {
+      setWeightValue(set.weight);
+      previousValuesRef.current.weight = set.weight;
     }
     
-    if (currentReps && currentReps !== '0' && currentReps !== repsValue) {
-      setRepsValue(currentReps);
-      previousValuesRef.current.reps = currentReps;
+    if (set.reps && set.reps !== '0' && set.reps !== repsValue) {
+      setRepsValue(set.reps);
+      previousValuesRef.current.reps = set.reps;
     }
   }, [set.weight, set.reps, weightValue, repsValue]);
   
@@ -92,25 +88,6 @@ const useSetInputValues = ({ set, onWeightChange, onRepsChange }: SetInputManage
     lastUserEditRef.current = Date.now();
     onRepsChange(value);
   };
-  
-  return {
-    weightValue,
-    repsValue,
-    handleWeightChange,
-    handleRepsChange
-  };
-};
-
-/**
- * A component that manages the input state for workout sets
- */
-const SetInputManager = (props: SetInputManagerProps) => {
-  const {
-    weightValue,
-    repsValue,
-    handleWeightChange,
-    handleRepsChange
-  } = useSetInputValues(props);
   
   return {
     weightValue,

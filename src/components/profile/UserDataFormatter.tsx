@@ -27,7 +27,7 @@ const UserDataFormatter: React.FC<UserDataFormatterProps> = ({
   // Format user data for display
   const userAvatar = profile?.avatar_url || "/lovable-uploads/c6066df0-70c1-48cf-b017-126e8f7e850a.png";
   const userName = profile?.name || user?.email || 'User';
-  const userName1 = typeof userName === 'string' ? userName.split('@')[0] : 'user';
+  const userName1 = userName.split('@')[0] || 'user';
   const userName2 = userName1.toLowerCase().replace(/\s/g, '');
   
   const formattedData: FormattedUserData = {

@@ -144,6 +144,7 @@ const ExerciseLibraryPage = () => {
               key={exercise.id}
               name={exercise.name}
               category={exercise.muscle_group || 'Não especificado'}
+              level={exercise.level as any}
               type={exercise.type as any}
               image={exercise.image_url || '/placeholder.svg'}
               description={exercise.description || ''}

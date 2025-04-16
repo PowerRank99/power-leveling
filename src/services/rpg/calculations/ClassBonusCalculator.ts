@@ -7,32 +7,17 @@ import { MongeBonus } from './class-bonuses/MongeBonus';
 import { NinjaBonus } from './class-bonuses/NinjaBonus';
 import { BruxoBonus } from './class-bonuses/BruxoBonus';
 import { PaladinoBonus } from './class-bonuses/PaladinoBonus';
-import { DruidaBonus } from './class-bonuses/DruidaBonus';
-import { XPCalculationInput, XPComponents } from '../types/xpTypes';
-import { ExerciseTypeClassifier } from './ExerciseTypeClassifier';
 
 /**
- * Service that coordinates class-specific XP bonus calculations
- * Uses the Strategy pattern to delegate calculations to specialized class calculators
- * 
- * Class-specific bonuses are calculated based on:
- * - Workout type and exercises
- * - User's current streak
- * - Personal records
- * - Time-based conditions
+ * Service for calculating class-specific XP bonuses
+ * Coordinates the individual class bonus calculators
  */
 export class ClassBonusCalculator {
   /**
    * Apply class-specific bonuses to XP
-   * 
-   * @param components - XP components breakdown (time, exercises, sets)
-   * @param workout - Workout data including exercises and duration
-   * @param userClass - User's selected class (Guerreiro, Monge, etc.)
-   * @param streak - Current streak count in days
-   * @returns Total XP after applying class bonuses and breakdown of bonuses applied
    */
   static applyClassBonuses(
-    components: XPComponents,
+    baseXP: number,
     workout: {
       id: string;
       exercises: WorkoutExercise[];
@@ -40,78 +25,45 @@ export class ClassBonusCalculator {
       hasPR?: boolean;
     },
     userClass?: string | null,
-    streak: number = 0,
-    userId?: string
+    streak: number = 0
   ): { totalXP: number, bonusBreakdown: ClassBonusBreakdown[] } {
-    if (!userClass) return { totalXP: components.totalBaseXP, bonusBreakdown: [] };
+    if (!userClass) return { totalXP: baseXP, bonusBreakdown: [] };
     
-    let totalXP = components.totalBaseXP;
+    let totalXP = baseXP;
     let bonusBreakdown: ClassBonusBreakdown[] = [];
     
     // Apply class-specific bonuses by delegating to appropriate class calculator
     switch(userClass) {
       case 'Guerreiro': {
-        const { bonusXP, bonusBreakdown: breakdown } = GuerreiroBonus.applyBonuses(
-          components,
-          workout,
-          ExerciseTypeClassifier.isGuerreiroExercise
-        );
+        const { bonusXP, bonusBreakdown: breakdown } = GuerreiroBonus.applyBonuses(baseXP, workout);
         totalXP += bonusXP;
         bonusBreakdown = breakdown;
         break;
       }
         
       case 'Monge': {
-        const { bonusXP, bonusBreakdown: breakdown } = MongeBonus.applyBonuses(
-          components,
-          workout,
-          streak,
-          ExerciseTypeClassifier.isMongeExercise
-        );
+        const { bonusXP, bonusBreakdown: breakdown } = MongeBonus.applyBonuses(baseXP, workout, streak);
         totalXP += bonusXP;
         bonusBreakdown = breakdown;
         break;
       }
         
       case 'Ninja': {
-        const { bonusXP, bonusBreakdown: breakdown } = NinjaBonus.applyBonuses(
-          components,
-          workout,
-          ExerciseTypeClassifier.isNinjaExercise
-        );
+        const { bonusXP, bonusBreakdown: breakdown } = NinjaBonus.applyBonuses(baseXP, workout);
         totalXP += bonusXP;
         bonusBreakdown = breakdown;
         break;
       }
         
       case 'Bruxo': {
-        const { bonusXP, bonusBreakdown: breakdown } = BruxoBonus.applyBonuses(
-          components,
-          workout
-        );
+        const { bonusXP, bonusBreakdown: breakdown } = BruxoBonus.applyBonuses(baseXP, workout);
         totalXP += bonusXP;
         bonusBreakdown = breakdown;
         break;
       }
         
       case 'Paladino': {
-        const { bonusXP, bonusBreakdown: breakdown } = PaladinoBonus.applyBonuses(
-          components,
-          workout,
-          ExerciseTypeClassifier.isPaladinoExercise
-        );
-        totalXP += bonusXP;
-        bonusBreakdown = breakdown;
-        break;
-      }
-        
-      case 'Druida': {
-        const { bonusXP, bonusBreakdown: breakdown } = DruidaBonus.applyBonuses(
-          components,
-          workout,
-          ExerciseTypeClassifier.isDruidaExercise,
-          userId
-        );
+        const { bonusXP, bonusBreakdown: breakdown } = PaladinoBonus.applyBonuses(baseXP, workout);
         totalXP += bonusXP;
         bonusBreakdown = breakdown;
         break;
@@ -122,76 +74,15 @@ export class ClassBonusCalculator {
   }
   
   /**
-   * Get streak reduction percentage for Bruxo using Pijama Arcano
-   * 
-   * @param userId - User ID to check
-   * @param userClass - User's selected class
-   * @param currentStreakPercentage - Current streak bonus percentage
-   * @param daysMissed - Number of days missed
-   * @returns New streak percentage (0-35)
+   * Check if Bruxo should preserve streak using the database
    */
-  static getStreakReductionPercentage(
-    userId: string, 
-    userClass: string | null, 
-    currentStreakPercentage: number,
-    daysMissed: number
-  ): number {
-    if (!userId || userClass !== 'Bruxo' || daysMissed <= 0) return 0;
-    return BruxoBonus.getStreakReductionPercentage(currentStreakPercentage, daysMissed);
-  }
-  
-  /**
-   * Apply bonus to achievement points for Bruxo using Topo da Montanha
-   * 
-   * @param userId - User ID to check
-   * @param userClass - User's selected class
-   * @param basePoints - Base achievement points
-   * @returns Modified achievement points
-   */
-  static async applyAchievementPointsBonus(
-    userId: string, 
-    userClass: string | null, 
-    basePoints: number
-  ): Promise<number> {
-    if (!userId || userClass !== 'Bruxo') return basePoints;
-    
-    const shouldApplyBonus = await BruxoBonus.shouldApplyAchievementBonus(userId);
-    if (shouldApplyBonus) {
-      return Math.round(basePoints * 1.5); // 50% bonus
-    }
-    
-    return basePoints;
-  }
-  
-  /**
-   * Apply Druida's rest bonus using Cochilada Mística
-   * 
-   * @param userId - User ID to check
-   * @param userClass - User's selected class
-   * @param baseXP - Base XP amount
-   * @returns Modified XP amount
-   */
-  static async applyDruidaRestBonus(
-    userId: string, 
-    userClass: string | null, 
-    baseXP: number
-  ): Promise<number> {
-    if (!userId || userClass !== 'Druida') return baseXP;
-    
-    const { applyBonus, multiplier } = await DruidaBonus.shouldApplyRestBonus(userId);
-    if (applyBonus) {
-      return Math.round(baseXP * multiplier);
-    }
-    
-    return baseXP;
+  static async shouldPreserveStreak(userId: string, userClass: string | null): Promise<boolean> {
+    if (!userId || userClass !== 'Bruxo') return false;
+    return BruxoBonus.shouldPreserveStreak(userId);
   }
   
   /**
    * Calculate Paladino guild XP bonus
-   * 
-   * @param userId - User ID
-   * @param userClass - User's selected class
-   * @param currentContribution - Current guild contribution level
    * @returns Bonus multiplier (1.1 to 1.3)
    */
   static getPaladinoGuildBonus(userId: string, userClass: string | null, currentContribution: number): number {

@@ -1,18 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workoutTypes';
-import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
-import { TransactionService } from '../common/TransactionService';
-import { AchievementCheckerService, PersonalRecordData } from './achievements/AchievementCheckerService';
-import { AchievementProgressService } from './achievements/AchievementProgressService';
-import { toast } from 'sonner';
-import { normalizePersonalRecord } from '@/utils/caseConversions';
-import { DatabaseResult } from '@/types/workout';
-import { createSuccessResult, createErrorResult } from '@/utils/serviceUtils';
 
-/**
- * Interface for personal record data
- */
 export interface PersonalRecord {
   exerciseId: string;
   weight: number;
@@ -24,183 +13,151 @@ export interface PersonalRecord {
  */
 export class PersonalRecordService {
   /**
-   * Check workout for personal records
+   * Records a personal record for an exercise
+   */
+  static async recordPersonalRecord(
+    userId: string, 
+    exerciseId: string, 
+    weight: number,
+    previousWeight: number
+  ): Promise<void> {
+    try {
+      // Insert the personal record using the RPC function with a type assertion
+      // to work around the TypeScript type limitation
+      const { error } = await supabase.rpc(
+        'insert_personal_record' as any, 
+        {
+          p_user_id: userId,
+          p_exercise_id: exerciseId,
+          p_weight: weight,
+          p_previous_weight: previousWeight
+        }
+      );
+        
+      if (error) {
+        console.error('Error recording personal record:', error);
+        return;
+      }
+      
+      // Update the records count in profile using the RPC function
+      const { error: rpcError } = await supabase.rpc('increment_profile_counter', {
+        user_id_param: userId,
+        counter_name: 'records_count',
+        increment_amount: 1
+      });
+      
+      if (rpcError) {
+        console.error('Error incrementing profile counter:', rpcError);
+      }
+        
+    } catch (error) {
+      console.error('Error recording personal record:', error);
+    }
+  }
+  
+  /**
+   * Check if an exercise is on cooldown for PR bonuses
+   * (1 PR bonus per exercise per calendar week)
+   */
+  static async checkPersonalRecordCooldown(
+    userId: string, 
+    exerciseId: string
+  ): Promise<boolean> {
+    try {
+      // Get current calendar week start (Monday of current week)
+      const now = new Date();
+      const dayOfWeek = now.getDay() || 7; // Convert Sunday (0) to 7
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - (dayOfWeek - 1)); // Set to Monday
+      weekStart.setHours(0, 0, 0, 0);
+      
+      // Check if a PR was recorded for this exercise in the current calendar week
+      const { data, error } = await supabase
+        .from('personal_records')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('exercise_id', exerciseId)
+        .gte('recorded_at', weekStart.toISOString())
+        .limit(1);
+        
+      if (error) {
+        console.error('Error checking PR cooldown:', error);
+        return false;
+      }
+      
+      // If no records found for this exercise this week, then it's not on cooldown
+      // (true means the user CAN earn a PR bonus)
+      return data.length === 0;
+    } catch (error) {
+      console.error('Error checking personal record cooldown:', error);
+      return false; // Default to not allowing PR bonus on error
+    }
+  }
+  
+  /**
+   * Check if the user has earned a personal record for any exercise
+   * in this workout by checking their exercise history
    */
   static async checkForPersonalRecords(
-    userId: string,
+    userId: string, 
     workout: {
       id: string;
       exercises: WorkoutExercise[];
       durationSeconds: number;
+      difficulty?: 'iniciante' | 'intermediario' | 'avancado'
     }
-  ): Promise<DatabaseResult<PersonalRecord[]>> {
+  ): Promise<PersonalRecord[]> {
     try {
-      const newRecords: PersonalRecord[] = [];
-
-      // Optimize by fetching all current records in a single query
-      const { data: currentRecords, error: recordsError } = await supabase
-        .from('personal_records')
+      const personalRecords: PersonalRecord[] = [];
+      
+      // Get the user's exercise history
+      const { data: exerciseHistory } = await supabase
+        .from('exercise_history')
         .select('exercise_id, weight')
-        .eq('user_id', userId)
-        .in('exercise_id', workout.exercises.map(e => e.exerciseId).filter(Boolean));
-
-      if (recordsError) throw recordsError;
-
-      // Create a map for faster lookups
-      const recordsMap = new Map();
-      currentRecords?.forEach(record => {
-        recordsMap.set(record.exercise_id, record.weight);
-      });
-
-      for (const exercise of workout.exercises) {
-        if (!exercise.exerciseId) continue;
-
-        // Get the maximum weight lifted in this workout for the exercise
-        let maxWeight = 0;
-        if (Array.isArray(exercise.sets)) {
-          for (const set of exercise.sets) {
-            const weight = parseFloat(set.weight);
-            if (!isNaN(weight) && weight > maxWeight) {
-              maxWeight = weight;
-            }
-          }
-        }
-
-        if (maxWeight === 0) continue;
-
-        // Compare with current personal record using the map
-        const currentWeight = recordsMap.get(exercise.exerciseId) || 0;
+        .eq('user_id', userId);
         
-        if (maxWeight > currentWeight) {
-          newRecords.push({
-            exerciseId: exercise.exerciseId,
-            weight: maxWeight,
-            previousWeight: currentWeight
-          });
+      if (!exerciseHistory || exerciseHistory.length === 0) {
+        return personalRecords;
+      }
+      
+      // Create a lookup map for easier access
+      const historyMap = exerciseHistory.reduce((map, record) => {
+        map[record.exercise_id] = record.weight;
+        return map;
+      }, {} as Record<string, number>);
+      
+      // Check each exercise in the workout for a PR
+      for (const exercise of workout.exercises) {
+        const exerciseId = exercise.id;
+        const previousBest = historyMap[exerciseId] || 0;
+        
+        // Find the highest weight used for this exercise in the workout
+        const highestWeight = exercise.sets.reduce((max, set) => {
+          if (set.completed && parseFloat(set.weight) > max) {
+            return parseFloat(set.weight);
+          }
+          return max;
+        }, 0);
+        
+        // If a new PR was set, add it to the list
+        if (highestWeight > previousBest && highestWeight > 0) {
+          // Check for cooldown period (1 PR per exercise per calendar week)
+          const canEarnPR = await this.checkPersonalRecordCooldown(userId, exerciseId);
+          
+          if (canEarnPR) {
+            personalRecords.push({
+              exerciseId,
+              weight: highestWeight,
+              previousWeight: previousBest
+            });
+          }
         }
       }
       
-      // Make sure the returned records use consistent property names
-      return createSuccessResult(
-        newRecords.map(record => normalizePersonalRecord(record))
-      );
+      return personalRecords;
     } catch (error) {
-      console.error(`Error in CHECK_PERSONAL_RECORDS:`, error);
-      return createErrorResult(error);
+      console.error('Error checking for personal records:', error);
+      return [];
     }
-  }
-
-  /**
-   * Record a personal record with transaction support
-   * Ensures personal record is recorded and achievements are updated atomically
-   */
-  static async recordPersonalRecord(
-    userId: string,
-    exerciseId: string,
-    weight: number,
-    previousWeight: number
-  ): Promise<ServiceResponse<PersonalRecord>> {
-    return ErrorHandlingService.executeWithErrorHandling(
-      async () => {
-        // Use transaction service for atomicity
-        const { data, error } = await TransactionService.executeInTransaction(async () => {
-          // Record the personal record
-          const { error } = await supabase
-            .from('personal_records')
-            .upsert(
-              {
-                user_id: userId,
-                exercise_id: exerciseId,
-                weight: weight,
-                previous_weight: previousWeight,
-                recorded_at: new Date().toISOString()
-              },
-              { onConflict: 'user_id, exercise_id' }
-            );
-
-          if (error) throw error;
-
-          // Get total PR count for achievement progress
-          const { count, error: countError } = await supabase
-            .from('personal_records')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', userId);
-            
-          if (countError) throw countError;
-          
-          // Update achievement progress for PR count
-          if (count) {
-            const progressResult = await AchievementProgressService.updatePersonalRecordProgress(userId, count);
-            if (!progressResult.success) {
-              console.warn('Failed to update PR achievement progress', progressResult.message);
-            }
-          }
-          
-          // Check for PR increase achievements
-          if (previousWeight > 0) {
-            const increasePercentage = ((weight - previousWeight) / previousWeight) * 100;
-            
-            if (increasePercentage >= 10) {
-              const checkResult = await AchievementCheckerService.checkPersonalRecordAchievements(userId, {
-                exerciseId,
-                weight,
-                previousWeight
-              });
-              
-              if (!checkResult.success) {
-                console.warn('Failed to check PR achievements', checkResult.message);
-              }
-            }
-          }
-
-          // Return the PR data
-          return {
-            exerciseId: exerciseId,
-            weight: weight,
-            previousWeight: previousWeight
-          };
-        }, 'record_personal_record');
-
-        if (error) {
-          toast.error('Erro ao salvar recorde pessoal', {
-            description: 'Não foi possível salvar o novo recorde pessoal.'
-          });
-          throw error;
-        }
-
-        toast.success('Novo recorde pessoal!', {
-          description: `Você levantou ${weight}kg, superando seu recorde anterior de ${previousWeight}kg!`
-        });
-        
-        // Normalize the response to use consistent property names
-        return normalizePersonalRecord({
-          exerciseId: exerciseId,
-          weight: weight,
-          previousWeight: previousWeight
-        });
-      },
-      'RECORD_PERSONAL_RECORD'
-    );
-  }
-
-  /**
-   * Get user personal records
-   */
-  static async getUserPersonalRecords(userId: string): Promise<ServiceResponse<PersonalRecord[]>> {
-    return ErrorHandlingService.executeWithErrorHandling(
-      async () => {
-        const { data, error } = await supabase
-          .from('personal_records')
-          .select('*')
-          .eq('user_id', userId);
-
-        if (error) throw error;
-
-        // Normalize all records to use consistent property names
-        return data.map(record => normalizePersonalRecord(record));
-      },
-      'GET_USER_PERSONAL_RECORDS',
-      { showToast: false }
-    );
   }
 }

@@ -33,8 +33,7 @@ export const useWorkoutManager = (routineId: string) => {
     handleRemoveSet,
     handleCompleteSet,
     currentExerciseIndex,
-    setCurrentExerciseIndex,
-    isProcessing: isSetProcessing
+    setCurrentExerciseIndex
   } = useWorkoutSetManagement(workoutId, exercises, setExercises, routineId);
 
   const {
@@ -71,7 +70,6 @@ export const useWorkoutManager = (routineId: string) => {
     elapsedTime,
     formatTime,
     isSubmitting,
-    isSetProcessing,
     notes,
     workoutId
   };

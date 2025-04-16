@@ -1,136 +1,56 @@
 
-import React from 'react';
-import { Route, Routes } from 'react-router-dom';
-import { AuthProvider } from './hooks/useAuth';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from '@/hooks/useAuth';
+import { ClassProvider } from '@/contexts/ClassContext';
+import { Toaster } from 'sonner';
+
+// Pages
+import Index from './pages/Index';
+import NotFound from './pages/NotFound';
 import ProfilePage from './pages/ProfilePage';
-import WorkoutPage from './pages/WorkoutPage';
-import ExercisePage from './pages/ExercisePage';
-import PremiumPage from './pages/PremiumPage';
-import AchievementPage from './pages/AchievementPage';
-import ClassBonusTestPage from './pages/ClassBonusTestPage';
-import IndexPage from './pages/IndexPage';
+import AchievementsPage from './pages/AchievementsPage';
 import AuthPage from './pages/AuthPage';
-import ClassSelectionPage from './pages/class-selection/ClassSelectionPage';
-import AuthRequiredRoute from './components/AuthRequiredRoute';
+import EditProfilePage from './pages/EditProfilePage';
+import WorkoutPage from './pages/WorkoutPage';
+import ExerciseLibraryPage from './pages/ExerciseLibraryPage';
+import CreateRoutinePage from './pages/CreateRoutinePage';
+import ActiveWorkoutPage from './pages/ActiveWorkoutPage';
+import GuildLeaderboardPage from './pages/GuildLeaderboardPage';
 import GuildsListPage from './pages/GuildsListPage';
+import AdminPage from './pages/AdminPage';
+import TimerSettingsPage from './pages/TimerSettingsPage';
 import GuildQuestsPage from './pages/GuildQuestsPage';
 import CreateQuestPage from './pages/CreateQuestPage';
-import GuildLeaderboardPage from './pages/GuildLeaderboardPage';
-import ActiveWorkoutPage from './pages/ActiveWorkoutPage';
-import EditProfilePage from './pages/EditProfilePage';
-import AchievementNotificationSystem from './components/achievements/AchievementNotificationSystem';
-import PerformanceDashboardPage from './pages/PerformanceDashboardPage';
-import AdminPage from './pages/AdminPage';
-import AchievementTestingPage from './pages/AchievementTestingPage';
-import TestingDashboardPage from "./pages/TestingDashboardPage";
+import AchievementPopup from './components/profile/AchievementPopup';
+import ClassSelectionPage from './pages/class-selection/ClassSelectionPage';
 
 function App() {
   return (
     <AuthProvider>
-      <AchievementNotificationSystem />
-      
-      <Routes>
-        <Route path="/" element={<IndexPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/auth" element={<AuthPage />} />
-        
-        {/* English routes */}
-        <Route path="/profile" element={
-          <AuthRequiredRoute>
-            <ProfilePage />
-          </AuthRequiredRoute>
-        } />
-        <Route path="/profile/edit" element={
-          <AuthRequiredRoute>
-            <EditProfilePage />
-          </AuthRequiredRoute>
-        } />
-        <Route path="/workout" element={
-          <AuthRequiredRoute>
-            <WorkoutPage />
-          </AuthRequiredRoute>
-        } />
-        
-        {/* Portuguese routes */}
-        <Route path="/perfil" element={
-          <AuthRequiredRoute>
-            <ProfilePage />
-          </AuthRequiredRoute>
-        } />
-        <Route path="/perfil/editar" element={
-          <AuthRequiredRoute>
-            <EditProfilePage />
-          </AuthRequiredRoute>
-        } />
-        <Route path="/treino" element={
-          <AuthRequiredRoute>
-            <WorkoutPage />
-          </AuthRequiredRoute>
-        } />
-        <Route path="/treino/ativo/:id" element={
-          <AuthRequiredRoute>
-            <ActiveWorkoutPage />
-          </AuthRequiredRoute>
-        } />
-        
-        <Route path="/exercises" element={<ExercisePage />} />
-        <Route path="/exercicios" element={<ExercisePage />} />
-        <Route path="/premium" element={<PremiumPage />} />
-        <Route path="/achievements" element={<AchievementPage />} />
-        <Route path="/classes" element={
-          <AuthRequiredRoute>
-            <ClassSelectionPage />
-          </AuthRequiredRoute>
-        } />
-        
-        {/* Guild Routes */}
-        <Route path="/guilds" element={
-          <AuthRequiredRoute>
-            <GuildsListPage />
-          </AuthRequiredRoute>
-        } />
-        <Route path="/guilds/:id/quests" element={
-          <AuthRequiredRoute>
-            <GuildQuestsPage />
-          </AuthRequiredRoute>
-        } />
-        <Route path="/guilds/:guildId/create-quest" element={
-          <AuthRequiredRoute>
-            <CreateQuestPage />
-          </AuthRequiredRoute>
-        } />
-        <Route path="/guilds/:id/leaderboard" element={
-          <AuthRequiredRoute>
-            <GuildLeaderboardPage />
-          </AuthRequiredRoute>
-        } />
-        
-        {/* Test pages */}
-        <Route path="/testing/class-bonus" element={<ClassBonusTestPage />} />
-        <Route path="/achievement-testing" element={
-          <AuthRequiredRoute>
-            <AchievementTestingPage />
-          </AuthRequiredRoute>
-        } />
-        <Route path="/testing-dashboard" element={<TestingDashboardPage />} />
-        
-        {/* Admin Route */}
-        <Route path="/admin" element={
-          <AuthRequiredRoute>
-            <AdminPage />
-          </AuthRequiredRoute>
-        } />
-        
-        {/* Performance Dashboard Route */}
-        <Route path="/performance" element={
-          <AuthRequiredRoute>
-            <PerformanceDashboardPage />
-          </AuthRequiredRoute>
-        } />
-      </Routes>
+      <ClassProvider>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/index" element={<Index />} />
+          <Route path="/perfil" element={<ProfilePage />} />
+          <Route path="/perfil/editar" element={<EditProfilePage />} />
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/treino" element={<WorkoutPage />} />
+          <Route path="/treino/ativo/:id" element={<ActiveWorkoutPage />} />
+          <Route path="/treino/criar" element={<CreateRoutinePage />} />
+          <Route path="/exercicios" element={<ExerciseLibraryPage />} />
+          <Route path="/guilds" element={<GuildsListPage />} />
+          <Route path="/guilds/:id/leaderboard" element={<GuildLeaderboardPage />} />
+          <Route path="/guilds/:id/quests" element={<GuildQuestsPage />} />
+          <Route path="/guilds/:id/quests/criar" element={<CreateQuestPage />} />
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/configuracoes/timer" element={<TimerSettingsPage />} />
+          <Route path="/conquistas" element={<AchievementsPage />} />
+          <Route path="/classes" element={<ClassSelectionPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <Toaster position="top-center" richColors />
+        <AchievementPopup />
+      </ClassProvider>
     </AuthProvider>
   );
 }

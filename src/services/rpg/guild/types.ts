@@ -1,71 +1,16 @@
 
-/**
- * Response type for guild member data
- */
-export interface GuildMemberResponse {
-  id: string;
+export type GuildRole = 'member' | 'moderator' | 'guild_master';
+
+export interface CreateGuildParams {
   name: string;
-  avatarUrl: string | null;
-  level: number;
-  role: string;
-  joinedAt: string;
-  xp: number;
-  workoutsCount: number;
-  streak: number;
+  description?: string;
+  avatarUrl?: string;
 }
 
-/**
- * Guild data response
- */
-export interface GuildResponse {
-  id: string;
+export interface CreateRaidParams {
   name: string;
-  description: string | null;
-  avatarUrl: string | null;
-  createdAt: string;
-  creatorId: string | null;
-  memberCount?: number;
-  role?: string;
-}
-
-/**
- * Guild raid response
- */
-export interface GuildRaidResponse {
-  id: string;
-  name: string;
-  startDate: string;
-  endDate: string;
+  description?: string;
+  startDate?: Date;
+  endDate: Date;
   daysRequired: number;
-  createdBy: string;
-  createdAt: string;
-  guildId: string;
-  isActive: boolean;
-  isCompleted: boolean;
-  currentProgress?: number;
-  totalParticipants?: number;
-}
-
-/**
- * Guild raid participant response
- */
-export interface GuildRaidParticipantResponse {
-  id: string;
-  userId: string;
-  daysCompleted: number;
-  completed: boolean;
-  userInfo?: {
-    name: string;
-    avatarUrl: string | null;
-    level: number;
-  };
-}
-
-/**
- * Guild creation request
- */
-export interface GuildCreationRequest {
-  name: string;
-  description: string;
-  avatarUrl: string | null;
 }

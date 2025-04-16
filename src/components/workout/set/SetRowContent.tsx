@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { SetData, PreviousSetData } from '@/types/workoutTypes';
+import { SetData } from '@/types/workoutTypes';
 import PreviousValues from './PreviousValues';
 import InputField from './InputField';
 import CompleteButton from './CompleteButton';
@@ -27,21 +27,12 @@ const SetRowContent: React.FC<SetRowContentProps> = ({
   const rowClass = isCompleted 
     ? "bg-arcane-15/50 border-arcane-30" 
     : "bg-midnight-elevated border-divider/20";
-    
-  // Ensure we have a properly formatted previous value object
-  const previousValue: PreviousSetData = set.previous || {
-    id: set.id,
-    exercise_id: set.exercise_id,
-    weight: set.weight,
-    reps: set.reps,
-    set_order: set.set_order
-  };
 
   return (
     <div className={`grid grid-cols-12 gap-2 items-center py-4 ${rowClass} border-b rounded-md mb-2`}>
       <div className="col-span-1 font-bold text-text-primary font-space">{index + 1}</div>
       
-      <PreviousValues previous={previousValue} />
+      <PreviousValues previous={set.previous} />
       
       <div className="col-span-3">
         <InputField

@@ -18,6 +18,7 @@ const SelectedExerciseDisplay: React.FC<SelectedExerciseDisplayProps> = ({
       <ExerciseCard
         name={exercise.name}
         category={exercise.muscle_group || 'Não especificado'}
+        level={exercise.level as any}
         type={(exercise.type || 'Força') as ExerciseType}
         image={exercise.image_url || '/placeholder.svg'}
         description={exercise.description || ''}

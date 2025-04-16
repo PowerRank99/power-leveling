@@ -1,5 +1,6 @@
+
 import { useState } from 'react';
-import { SetData } from '@/types/workoutTypes';
+import { WorkoutExercise, SetData } from '@/types/workoutTypes';
 import { SetService } from '@/services/SetService';
 import { toast } from 'sonner';
 

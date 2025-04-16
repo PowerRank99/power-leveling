@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -47,13 +48,9 @@ const AuthPage = () => {
   
   useEffect(() => {
     const checkSession = async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (data.session) {
-          navigate('/workout');
-        }
-      } catch (error) {
-        console.error('Error checking session:', error);
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        navigate('/treino');
       }
     };
     
@@ -75,9 +72,8 @@ const AuthPage = () => {
         description: "Bem-vindo de volta!",
       });
       
-      navigate('/workout');
+      navigate('/treino');
     } catch (error: any) {
-      console.error('Login error:', error);
       toast({
         title: "Erro no login",
         description: error.message || "Não foi possível fazer login. Tente novamente.",
@@ -94,13 +90,12 @@ const AuthPage = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin + '/workout',
+          redirectTo: window.location.origin + '/treino',
         },
       });
       
       if (error) throw error;
     } catch (error: any) {
-      console.error('Google login error:', error);
       toast({
         title: "Erro no login com Google",
         description: error.message || "Não foi possível fazer login com Google. Tente novamente.",
@@ -132,9 +127,8 @@ const AuthPage = () => {
         description: "Sua conta foi criada. Seja bem-vindo!",
       });
       
-      navigate('/workout');
+      navigate('/treino');
     } catch (error: any) {
-      console.error('Registration error:', error);
       toast({
         title: "Erro no cadastro",
         description: error.message || "Não foi possível fazer o cadastro. Tente novamente.",

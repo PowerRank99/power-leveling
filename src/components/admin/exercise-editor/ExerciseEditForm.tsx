@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ExerciseType } from '@/components/workout/types/Exercise';
+import { ExerciseType, DifficultyLevel } from '@/components/workout/types/Exercise';
 import {
   Select,
   SelectContent,
@@ -11,12 +11,16 @@ import {
 
 interface ExerciseEditFormProps {
   selectedType: ExerciseType;
+  selectedLevel: DifficultyLevel;
   onTypeChange: (type: ExerciseType) => void;
+  onLevelChange: (level: DifficultyLevel) => void;
 }
 
 const ExerciseEditForm: React.FC<ExerciseEditFormProps> = ({
   selectedType,
-  onTypeChange
+  selectedLevel,
+  onTypeChange,
+  onLevelChange
 }) => {
   const exerciseTypes: ExerciseType[] = [
     'Musculação',
@@ -24,6 +28,12 @@ const ExerciseEditForm: React.FC<ExerciseEditFormProps> = ({
     'Cardio',
     'Esportes',
     'Flexibilidade & Mobilidade'
+  ];
+
+  const difficultyLevels: DifficultyLevel[] = [
+    'Iniciante',
+    'Intermediário',
+    'Avançado'
   ];
 
   return (
@@ -41,6 +51,24 @@ const ExerciseEditForm: React.FC<ExerciseEditFormProps> = ({
               {exerciseTypes.map((type) => (
                 <SelectItem key={type} value={type}>
                   {type}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div>
+          <label htmlFor="level" className="block text-sm font-medium text-text-secondary mb-1">
+            Nível de Dificuldade
+          </label>
+          <Select value={selectedLevel} onValueChange={(value) => onLevelChange(value as DifficultyLevel)}>
+            <SelectTrigger className="w-full bg-midnight-elevated">
+              <SelectValue placeholder="Selecione o nível" />
+            </SelectTrigger>
+            <SelectContent>
+              {difficultyLevels.map((level) => (
+                <SelectItem key={level} value={level}>
+                  {level}
                 </SelectItem>
               ))}
             </SelectContent>

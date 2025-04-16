@@ -4,9 +4,8 @@ export const ClassFlavorMap: Record<string, string> = {
   'guerreiro': 'Domina a força bruta. Guerreiros ganham mais XP com pesos pesados.',
   'monge': 'Mestre do próprio corpo. Monges prosperam com exercícios corporais e consistência.',
   'ninja': 'Veloz como o vento. Ninjas se destacam em treinos intensos e rápidos.',
-  'bruxo': 'Mestre das conquistas. Bruxos preservam sua sequência e potencializam recompensas.',
-  'paladino': 'Atleta versátil. Paladinos ganham bônus em esportes e ajudam suas guildas.',
-  'druida': 'Guardião da flexibilidade. Druidas se beneficiam do equilíbrio entre treino e descanso.',
+  'bruxo': 'Flexível e resiliente. Bruxos dominam a mobilidade e recuperação.',
+  'paladino': 'Atleta versátil. Paladinos ganham bônus em esportes e treinos longos.',
   'sem classe': 'Escolha uma classe para desbloquear bônus de experiência.',
 };
 
@@ -18,8 +17,7 @@ export const getClassAvatarImage = (className: string): string => {
     'monge': '/lovable-uploads/38b244e2-15ad-44b7-8d2d-48eb9e4227a8.png',
     'ninja': '/lovable-uploads/f018410c-9031-4726-b654-ec51c1bbd72b.png',
     'bruxo': '/lovable-uploads/174ea5f4-db2b-4392-a948-5ec67969f043.png',
-    'paladino': '/lovable-uploads/7164b50e-55bc-43ae-9127-1c693ab31e70.png',
-    'druida': '/lovable-uploads/4c10aa78-e770-43d4-96a3-69b43638d90e.png' // Using available image from uploads
+    'paladino': '/lovable-uploads/7164b50e-55bc-43ae-9127-1c693ab31e70.png'
   };
   
   return avatarMap[className.toLowerCase()] || '/lovable-uploads/d84a92f5-828a-4ff9-a21b-3233e15d4276.png';
@@ -81,15 +79,6 @@ export const getClassColors = (className: string): {
         shadow: 'shadow-[0_0_15px_rgba(59,130,246,0.4)]',
         textAccent: 'text-blue-500',
         gradientBg: 'bg-gradient-to-br from-blue-500/20 to-blue-600/10'
-      };
-    case 'druida':
-      return {
-        border: 'border-green-500/30',
-        accent: 'bg-green-500/15',
-        iconBg: 'text-green-500',
-        shadow: 'shadow-[0_0_15px_rgba(34,197,94,0.4)]',
-        textAccent: 'text-green-500',
-        gradientBg: 'bg-gradient-to-br from-green-500/20 to-green-600/10'
       };
     default:
       return {

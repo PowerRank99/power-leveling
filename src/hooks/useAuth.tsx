@@ -1,152 +1,88 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { User } from '@supabase/supabase-js';
-import { Database } from '@/integrations/supabase/types';
+import { Session, User } from '@supabase/supabase-js';
 
-// Define Profile type based on the database schema
-export type Profile = Database['public']['Tables']['profiles']['Row'];
-
-interface AuthContextType {
+type AuthContextType = {
+  session: Session | null;
   user: User | null;
-  profile: Profile | null;
+  profile: any | null;
   loading: boolean;
-  error: Error | null;
-  signIn: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
-}
+};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    let authSubscription: { subscription: { unsubscribe: () => void } } | null = null;
-    
-    // Function to fetch profile data
-    const fetchProfile = async (userId: string) => {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .single();
-          
-        if (data) {
-          setProfile(data);
-        } else if (error) {
-          console.error('Error fetching profile:', error);
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, newSession) => {
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+        
+        // Defer profile fetching to avoid recursion
+        if (newSession?.user) {
+          setTimeout(() => {
+            fetchProfile(newSession.user.id);
+          }, 0);
+        } else {
+          setProfile(null);
         }
-      } catch (err) {
-        console.error('Error in fetchProfile:', err);
       }
-    };
+    );
 
-    // Set up auth state listener first
-    const setupAuthListener = async () => {
+    // THEN check for existing session
+    const initializeAuth = async () => {
+      setLoading(true);
       try {
-        // Clear any previous state
-        setError(null);
-        
-        const { data: authListenerData } = supabase.auth.onAuthStateChange(
-          async (event, session) => {
-            console.log('Auth state changed:', event, session?.user?.id);
-            
-            if (session && session.user) {
-              setUser(session.user);
-              
-              // Fetch profile data on auth state change
-              // Use setTimeout to prevent blocking the auth callback
-              setTimeout(() => {
-                fetchProfile(session.user.id);
-              }, 0);
-            } else {
-              setUser(null);
-              setProfile(null);
-            }
-            setLoading(false);
-          }
-        );
-        
-        authSubscription = authListenerData;
-        
-        // Then check for existing session
-        const { data, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          throw sessionError;
-        }
+        const { data } = await supabase.auth.getSession();
+        setSession(data.session);
+        setUser(data.session?.user ?? null);
         
         if (data.session?.user) {
-          setUser(data.session.user);
-          
-          // Fetch profile data
           await fetchProfile(data.session.user.id);
         }
-        
-        // If we get here without errors, we can safely set loading to false
-        setLoading(false);
-      } catch (err) {
-        console.error('Error in setupAuthListener:', err);
-        setError(err instanceof Error ? err : new Error('Unknown authentication error'));
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+      } finally {
         setLoading(false);
       }
     };
 
-    setupAuthListener();
-
-    // Cleanup function
-    return () => {
-      if (authSubscription?.subscription) {
-        authSubscription.subscription.unsubscribe();
-      }
-    };
+    initializeAuth();
+    return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const fetchProfile = async (userId: string) => {
     try {
-      setLoading(true);
-      setError(null);
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      // Using a type assertion to work around the TypeScript limitation
+      const { data, error } = await (supabase as any)
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
       if (error) throw error;
-      
-      return data;
-    } catch (err) {
-      console.error('Error signing in:', err);
-      setError(err instanceof Error ? err : new Error('Unknown sign in error'));
-      throw err;
-    } finally {
-      setLoading(false);
+      setProfile(data);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      setProfile(null);
     }
   };
 
   const signOut = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      await supabase.auth.signOut();
-      setUser(null);
-      setProfile(null);
-    } catch (err) {
-      console.error('Error signing out:', err);
-      setError(err instanceof Error ? err : new Error('Unknown sign out error'));
-    } finally {
-      setLoading(false);
-    }
+    await supabase.auth.signOut();
+    setProfile(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, error, signIn, signOut }}>
+    <AuthContext.Provider value={{ session, user, profile, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

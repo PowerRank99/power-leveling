@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { WorkoutExercise } from '@/types/workout';
+import { WorkoutExercise } from '@/types/workoutTypes';
 import { toast } from 'sonner';
 import { PreviousWorkoutService } from '@/services/workout/PreviousWorkoutService';
 import { WorkoutDataFormatter } from '@/services/workout/WorkoutDataFormatter';

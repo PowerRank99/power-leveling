@@ -1,10 +1,9 @@
 
 import { useState, useEffect } from 'react';
-import { WorkoutExercise, SetData, WorkoutSet } from '@/types/workout';
-import { useSetAdder } from './useSetAdder';
+import { WorkoutExercise } from '@/types/workout';
+import { useAddSet } from './useAddSet';
 import { useRemoveSet } from './useRemoveSet';
 import { useUpdateSet } from './useUpdateSet';
-import { mapWorkoutSetToSetData } from '@/utils/typeMappers';
 
 export const useWorkoutSetsManagement = (
   workoutId: string | null,
@@ -19,7 +18,7 @@ export const useWorkoutSetsManagement = (
   }, [initialExercises]);
   
   const { updateSet: updateSetInDb } = useUpdateSet(workoutId);
-  const { addSet: addSetInDb } = useSetAdder(workoutId);
+  const { addSet: addSetInDb } = useAddSet(workoutId);
   const { removeSet: removeSetInDb } = useRemoveSet(workoutId);
   
   const updateSet = async (
@@ -29,47 +28,11 @@ export const useWorkoutSetsManagement = (
   ) => {
     try {
       console.log(`Updating set ${setIndex} for exercise index ${exerciseIndex} with data:`, data);
-      
-      // Extract just the sets from the exercise 
-      const currentExercise = exercises[exerciseIndex];
-      if (!currentExercise) {
-        console.error(`Exercise not found at index ${exerciseIndex}`);
-        return null;
-      }
-      
-      // Map the WorkoutSet to SetData
-      const exerciseSets: SetData[] = currentExercise.sets.map(set => 
-        mapWorkoutSetToSetData(set)
-      );
-      
-      // Now pass the correct types to updateSetInDb
-      const updatedSets = await updateSetInDb(exerciseIndex, exerciseSets, setIndex, data);
-      
-      if (updatedSets) {
-        // Create a copy of exercises array
-        const updatedExercises = [...exercises];
-        
-        // Get the exercise to update
-        const exerciseToUpdate = {...updatedExercises[exerciseIndex]};
-        
-        // Update the sets of the exercise
-        exerciseToUpdate.sets = updatedSets.map(setData => ({
-          id: setData.id,
-          exercise_id: setData.exercise_id,
-          weight: setData.weight,
-          reps: setData.reps,
-          completed: setData.completed,
-          set_order: setData.set_order,
-          previous: setData.previous
-        })) as WorkoutSet[];
-        
-        // Replace the old exercise with the updated one
-        updatedExercises[exerciseIndex] = exerciseToUpdate;
-        
-        // Update exercises state
-        setExercises(updatedExercises);
+      const result = await updateSetInDb(exerciseIndex, exercises, setIndex, data);
+      if (result) {
+        setExercises(result);
         console.log("Local state updated after set update");
-        return updatedExercises;
+        return result;
       }
       return null;
     } catch (error) {
@@ -81,53 +44,15 @@ export const useWorkoutSetsManagement = (
   const addSet = async (exerciseIndex: number, routineId: string) => {
     try {
       console.log(`Adding set for exercise index ${exerciseIndex}`);
-      
-      // Extract the current exercise
-      const currentExercise = exercises[exerciseIndex];
-      if (!currentExercise) {
-        console.error(`Exercise not found at index ${exerciseIndex}`);
-        return null;
-      }
-      
-      // Map the WorkoutSet to SetData
-      const exerciseSets: SetData[] = currentExercise.sets.map(set => 
-        mapWorkoutSetToSetData(set)
-      );
-      
-      // Now pass the correct types to addSetInDb
-      const updatedSets = await addSetInDb(exerciseIndex, exerciseSets, routineId);
-      
-      if (updatedSets) {
-        // Create a copy of exercises array
-        const updatedExercises = [...exercises];
-        
-        // Get the exercise to update
-        const exerciseToUpdate = {...updatedExercises[exerciseIndex]};
-        
-        // Update the sets of the exercise
-        exerciseToUpdate.sets = updatedSets.map(setData => ({
-          id: setData.id,
-          exercise_id: setData.exercise_id,
-          weight: setData.weight,
-          reps: setData.reps,
-          completed: setData.completed,
-          set_order: setData.set_order,
-          previous: setData.previous
-        })) as WorkoutSet[];
-        
-        // Replace the old exercise with the updated one
-        updatedExercises[exerciseIndex] = exerciseToUpdate;
-        
-        // Update exercises state
-        setExercises(updatedExercises);
+      const result = await addSetInDb(exerciseIndex, exercises, routineId);
+      if (result) {
+        setExercises(result);
         console.log("Local state updated after set add");
-        
         // Verify the sets in the updated state
-        const verifiedSets = exerciseToUpdate.sets;
-        console.log(`Updated exercise now has ${verifiedSets.length} sets with IDs:`, 
-                    verifiedSets.map(s => s.id));
-                    
-        return updatedExercises;
+        const exerciseSets = result[exerciseIndex].sets;
+        console.log(`Updated exercise now has ${exerciseSets.length} sets with IDs:`, 
+                    exerciseSets.map(s => s.id));
+        return result;
       }
       return null;
     } catch (error) {
@@ -143,47 +68,11 @@ export const useWorkoutSetsManagement = (
   ) => {
     try {
       console.log(`Removing set ${setIndex} for exercise index ${exerciseIndex}`);
-      
-      // Extract the current exercise
-      const currentExercise = exercises[exerciseIndex];
-      if (!currentExercise) {
-        console.error(`Exercise not found at index ${exerciseIndex}`);
-        return null;
-      }
-      
-      // Map the WorkoutSet to SetData
-      const exerciseSets: SetData[] = currentExercise.sets.map(set => 
-        mapWorkoutSetToSetData(set)
-      );
-      
-      // Now pass the correct types to removeSetInDb
-      const updatedSets = await removeSetInDb(exerciseIndex, exerciseSets, setIndex, routineId);
-      
-      if (updatedSets) {
-        // Create a copy of exercises array
-        const updatedExercises = [...exercises];
-        
-        // Get the exercise to update
-        const exerciseToUpdate = {...updatedExercises[exerciseIndex]};
-        
-        // Update the sets of the exercise
-        exerciseToUpdate.sets = updatedSets.map(setData => ({
-          id: setData.id,
-          exercise_id: setData.exercise_id,
-          weight: setData.weight,
-          reps: setData.reps,
-          completed: setData.completed,
-          set_order: setData.set_order,
-          previous: setData.previous
-        })) as WorkoutSet[];
-        
-        // Replace the old exercise with the updated one
-        updatedExercises[exerciseIndex] = exerciseToUpdate;
-        
-        // Update exercises state
-        setExercises(updatedExercises);
+      const result = await removeSetInDb(exerciseIndex, exercises, setIndex, routineId);
+      if (result) {
+        setExercises(result);
         console.log("Local state updated after set remove");
-        return updatedExercises;
+        return result;
       }
       return null;
     } catch (error) {

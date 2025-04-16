@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { NavigateFunction } from 'react-router-dom';
-import { useWorkoutCompletion } from '../workout/useWorkoutCompletion';
+import { WorkoutCompletionService } from '@/services/workout/WorkoutCompletionService';
 
 /**
  * Hook for managing workout actions (finish/discard)
@@ -12,48 +12,57 @@ export const useWorkoutActions = (
   navigate: NavigateFunction
 ) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { finishWorkout: finishWorkoutAction, discardWorkout: discardWorkoutAction } = useWorkoutCompletion(workoutId, elapsedTime);
-  
+
+  /**
+   * Finish the current workout
+   */
   const finishWorkout = async () => {
-    if (isSubmitting) return false;
+    if (!workoutId) {
+      return false;
+    }
     
     try {
       setIsSubmitting(true);
-      console.log("Finishing workout with ID:", workoutId);
       
-      const success = await finishWorkoutAction();
+      const result = await WorkoutCompletionService.finishWorkout(workoutId, elapsedTime);
       
-      if (success) {
-        // Redirect to workout summary page
+      if (result) {
+        // Redirect to workout page after a delay
         setTimeout(() => {
           navigate('/treino');
         }, 1500);
-        
-        return true;
-      } else {
-        throw new Error("Não foi possível finalizar o treino.");
       }
-    } catch (error: any) {
-      console.error("Error finishing workout:", error);
-      return false;
+      
+      return result;
     } finally {
       setIsSubmitting(false);
     }
   };
   
+  /**
+   * Discard the current workout
+   */
   const discardWorkout = async () => {
-    try {
-      console.log("Discarding workout with ID:", workoutId);
-      
-      await discardWorkoutAction();
-      navigate('/treino');
-      return true;
-    } catch (error) {
-      console.error("Error discarding workout:", error);
+    if (!workoutId) {
       return false;
     }
+    
+    try {
+      setIsSubmitting(true);
+      
+      const result = await WorkoutCompletionService.discardWorkout(workoutId);
+      
+      if (result) {
+        // Redirect to workout page immediately
+        navigate('/treino');
+      }
+      
+      return result;
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-  
+
   return {
     finishWorkout,
     discardWorkout,

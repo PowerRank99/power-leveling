@@ -1,169 +1,100 @@
-import { supabase } from '@/integrations/supabase/client';
-import { XPToastService } from './bonus/XPToastService';
-import { ServiceResponse } from '../common/ErrorHandlingService';
+
+import { WorkoutExercise } from '@/types/workoutTypes';
+import { XPCalculationService } from './XPCalculationService';
+import { PersonalRecordService, PersonalRecord } from './PersonalRecordService';
+import { XPBonusService } from './XPBonusService';
 import { PowerDayService } from './bonus/PowerDayService';
 
 /**
- * XP Service for handling experience points operations
+ * Main XP Service that coordinates XP calculations and awards
  */
 export class XPService {
-  // Constants
-  static readonly DAILY_XP_CAP = 300;
-  static readonly POWER_DAY_XP_CAP = 500;
-  static readonly PR_BONUS_XP = 50;
-  static readonly BASE_EXERCISE_XP = 5;
-  static readonly BASE_SET_XP = 2;
-  static readonly MANUAL_WORKOUT_BASE_XP = 100;
+  // Re-export constants for backward compatibility
+  static readonly DAILY_XP_CAP = XPCalculationService.DAILY_XP_CAP;
+  static readonly PR_BONUS_XP = XPCalculationService.PR_BONUS_XP;
+  static readonly BASE_EXERCISE_XP = XPCalculationService.BASE_EXERCISE_XP;
+  static readonly BASE_SET_XP = XPCalculationService.BASE_SET_XP;
+  static readonly DIFFICULTY_MULTIPLIERS = XPCalculationService.DIFFICULTY_MULTIPLIERS;
+  static readonly TIME_XP_TIERS = XPCalculationService.TIME_XP_TIERS;
+  
+  // Power Day constants (2x/week can exceed 300 XP cap up to 500 XP)
+  static readonly POWER_DAY_CAP = PowerDayService.POWER_DAY_CAP;
+  static readonly MANUAL_WORKOUT_BASE_XP = 100; // Updated to 100
   
   /**
-   * Award XP to a user
-   * 
-   * @param userId - The ID of the user to award XP to
-   * @param amount - The amount of XP to award
-   * @param source - The source of the XP (e.g., 'workout', 'achievement')
-   * @param metadata - Optional metadata about the XP award
+   * Calculate XP for a completed workout
+   * Returns a number instead of an object
+   */
+  static calculateWorkoutXP(
+    workout: {
+      id: string;
+      exercises: WorkoutExercise[];
+      durationSeconds: number;
+      difficulty?: 'iniciante' | 'intermediario' | 'avancado'
+    },
+    userClass?: string | null,
+    streak: number = 0,
+    difficulty: 'iniciante' | 'intermediario' | 'avancado' = 'intermediario'
+  ): number {
+    const result = XPCalculationService.calculateWorkoutXP(workout, userClass, streak, difficulty);
+    return result.totalXP; // Return just the totalXP number instead of the full object
+  }
+  
+  /**
+   * Calculate time-based XP with diminishing returns
+   */
+  static calculateTimeXP(durationMinutes: number): number {
+    return XPCalculationService.calculateTimeXP(durationMinutes);
+  }
+  
+  /**
+   * Check for personal records
+   */
+  static async checkForPersonalRecords(
+    userId: string, 
+    workout: {
+      id: string;
+      exercises: WorkoutExercise[];
+      durationSeconds: number;
+      difficulty?: 'iniciante' | 'intermediario' | 'avancado'
+    }
+  ): Promise<PersonalRecord[]> {
+    return PersonalRecordService.checkForPersonalRecords(userId, workout);
+  }
+  
+  /**
+   * Awards XP to a user and updates their level if necessary
    */
   static async awardXP(
     userId: string, 
-    amount: number, 
-    source: string = 'workout',
-    metadata?: any
+    baseXP: number, 
+    personalRecords: PersonalRecord[] = []
   ): Promise<boolean> {
-    try {
-      console.log(`[XPService] Awarding ${amount} XP to user ${userId} from ${source}`, metadata);
-      
-      // Call the increment_xp RPC function
-      const { data, error } = await supabase.rpc('increment_xp', {
-        user_id: userId,
-        amount: amount
-      });
-      
-      if (error) {
-        console.error('[XPService] Error awarding XP:', error);
-        return false;
-      }
-      
-      // Show toast notification with class bonuses if available
-      if (metadata?.classBonus) {
-        // Create an XPBreakdown object with the class bonus
-        const breakdown = {
-          base: amount - (metadata.classBonus.amount || 0),
-          classBonus: metadata.classBonus.amount || 0,
-          streakBonus: 0,
-          recordBonus: 0,
-          weeklyBonus: 0,
-          monthlyBonus: 0,
-          bonusDetails: [{
-            skill: metadata.classBonus.class,
-            amount: metadata.classBonus.amount,
-            description: metadata.classBonus.description
-          }]
-        };
-        
-        XPToastService.showXPToast(amount, breakdown, false);
-      } else {
-        // Standard XP toast without breakdown
-        XPToastService.showXPToast(amount);
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('[XPService] Exception in awardXP:', error);
-      return false;
-    }
+    return XPBonusService.awardXP(userId, baseXP, personalRecords);
   }
   
   /**
-   * Award XP specifically for workout completion
+   * Helper method for getting streak multiplier
    */
-  static async awardWorkoutXP(
-    userId: string,
-    durationSeconds: number,
-    metadata?: any
-  ): Promise<boolean> {
-    // Calculate XP amount based on duration (simplified)
-    const amount = Math.min(durationSeconds / 60 * 10, this.DAILY_XP_CAP);
-    return this.awardXP(userId, Math.round(amount), 'workout', metadata);
+  static getStreakMultiplier(streak: number): number {
+    return XPCalculationService.getStreakMultiplier(streak);
   }
   
   /**
-   * Check for personal records and award XP if found
+   * Check if a user has Power Day availability
+   * Returns information about power day usage for the current week
    */
-  static async checkForPersonalRecords(
-    userId: string,
-    workoutId: string
-  ): Promise<boolean> {
-    try {
-      // Call the check_personal_records RPC function
-      const { data, error } = await supabase.rpc('check_personal_records', {
-        p_user_id: userId,
-        p_workout_id: workoutId
-      });
-      
-      if (error) {
-        console.error('[XPService] Error checking for personal records:', error);
-        return false;
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('[XPService] Exception in checkForPersonalRecords:', error);
-      return false;
-    }
-  }
-  
-  /**
-   * Check if a power day is available for the user
-   */
-  static async checkPowerDayAvailability(
-    userId: string
-  ): Promise<{
+  static async checkPowerDayAvailability(userId: string): Promise<{
     available: boolean;
     used: number;
     max: number;
     week: number;
     year: number;
   }> {
-    if (!userId) {
-      return { available: false, used: 0, max: 2, week: 0, year: 0 };
-    }
-
     try {
-      const now = new Date();
-      const currentWeek = this.getWeekNumber(now);
-      const currentYear = now.getFullYear();
-
-      // Use the RPC function get_power_day_usage
-      const { data, error } = await supabase
-        .rpc('get_power_day_usage', {
-          p_user_id: userId,
-          p_week_number: currentWeek,
-          p_year: currentYear
-        });
-
-      if (error) {
-        console.error('[XPService] Error checking power day availability:', error);
-        return {
-          available: false,
-          used: 0,
-          max: 2,
-          week: currentWeek,
-          year: currentYear
-        };
-      }
-
-      const usedCount = data?.[0]?.count || 0;
-      const maxUses = 2;
-
-      return {
-        available: usedCount < maxUses,
-        used: usedCount,
-        max: maxUses,
-        week: currentWeek,
-        year: currentYear
-      };
+      return await PowerDayService.checkPowerDayAvailability(userId);
     } catch (error) {
-      console.error('[XPService] Exception in checkPowerDayAvailability:', error);
+      console.error('Error in checkPowerDayAvailability:', error);
       return {
         available: false,
         used: 0,
@@ -175,43 +106,9 @@ export class XPService {
   }
   
   /**
-   * Record power day usage for a user
+   * Record a power day usage
    */
-  static async recordPowerDayUsage(
-    userId: string,
-    week: number,
-    year: number
-  ): Promise<boolean> {
-    try {
-      const { data, error } = await supabase
-        .from('power_day_usage')
-        .insert({
-          user_id: userId,
-          week_number: week,
-          year: year,
-          created_at: new Date().toISOString()
-        });
-      
-      if (error) {
-        console.error('[XPService] Error recording power day usage:', error);
-        return false;
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('[XPService] Exception in recordPowerDayUsage:', error);
-      return false;
-    }
-  }
-  
-  /**
-   * Helper function to get the week number for a date
-   */
-  private static getWeekNumber(date: Date): number {
-    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    const dayNum = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  static async recordPowerDayUsage(userId: string, week: number, year: number): Promise<boolean> {
+    return PowerDayService.recordPowerDayUsage(userId, week, year);
   }
 }

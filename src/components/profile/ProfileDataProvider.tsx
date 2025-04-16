@@ -1,101 +1,79 @@
+import React, { ReactNode } from 'react';
+import { User } from '@supabase/supabase-js';
+import { ClassService } from '@/services/rpg/ClassService';
+import { Profile } from './UserDataFormatter';
+import { XPBonusService } from '@/services/rpg/XPBonusService';
 
-import React, { useState, useEffect } from 'react';
-import { OptimizedProfileService } from '@/services/profile/OptimizedProfileService';
-import { ProfileData } from '@/types/profile';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-
-interface ProfileDataProviderProps {
-  userId: string;
-  children: (data: ProfileData) => React.ReactNode;
+export interface ProfileData {
+  level: number;
+  currentXP: number;
+  nextLevelXP: number;
+  dailyXP: number;
+  dailyXPCap: number;
+  streak: number;
+  weeklyBonus: number;
+  monthlyBonus: number;
+  achievements: {
+    unlocked: number;
+    total: number;
+  };
+  className: string;
+  classDescription: string;
+  lastActivity: string;
+  xpGain: string;
+  rank: string;
+  achievementPoints: number;
 }
 
-const ProfileDataProvider: React.FC<ProfileDataProviderProps> = ({ userId, children }) => {
-  const [profileData, setProfileData] = useState<ProfileData>({
-    level: 1,
-    currentXP: 0,
-    nextLevelXP: 100,
-    className: 'Aventureiro',
-    classDescription: 'Sem especialização',
-    dailyXP: 0,
+interface ProfileDataProviderProps {
+  profile: Profile | null;
+  userClass: string | null;
+  children: (data: ProfileData) => ReactNode;
+}
+
+const ProfileDataProvider: React.FC<ProfileDataProviderProps> = ({ 
+  profile, 
+  userClass, 
+  children 
+}) => {
+  // Prepare RPG data for profile display
+  const profileData: ProfileData = {
+    level: profile?.level || 1,
+    currentXP: profile?.xp || 0,
+    nextLevelXP: (profile?.level || 1) * 100,
+    dailyXP: 150, // Mock data - could be calculated based on today's workouts
     dailyXPCap: 300,
-    lastActivity: 'Nenhuma atividade recente',
-    xpGain: 0,
-    streak: 0,
-    achievementPoints: 0,
-    rank: 'Unranked',
-    ranking: 42,
-  });
-
-  useEffect(() => {
-    const fetchProfileData = async () => {
-      if (!userId) return;
-      
-      try {
-        const result = await OptimizedProfileService.getUserProfileData(userId);
-        
-        if (!result.success || !result.data) {
-          toast.error('Erro ao carregar dados do perfil');
-          return;
-        }
-
-        const data = result.data;
-        
-        setProfileData({
-          level: data.level,
-          currentXP: data.xp,
-          nextLevelXP: data.next_level_xp,
-          className: data.class,
-          classDescription: data.class_data?.description || 'Sem especialização',
-          dailyXP: data.daily_xp,
-          dailyXPCap: data.daily_xp_cap,
-          lastActivity: data.last_workout_at ? 
-            new Date(data.last_workout_at).toLocaleDateString() : 
-            'Nenhuma atividade recente',
-          xpGain: 0, // This will be updated through real-time updates
-          streak: data.streak,
-          achievementPoints: data.achievement_points,
-          rank: data.rank,
-          ranking: 42, // This will be implemented in a future update
-        });
-      } catch (error) {
-        console.error('Error in ProfileDataProvider:', error);
-        toast.error('Erro ao carregar dados do perfil');
-      }
-    };
-    
-    fetchProfileData();
-
-    // Subscribe to real-time updates for XP changes
-    const channel = supabase
-      .channel('profile-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'profiles',
-          filter: `id=eq.${userId}`
-        },
-        (payload) => {
-          const newData = payload.new as any;
-          setProfileData(prev => ({
-            ...prev,
-            currentXP: newData.xp || prev.currentXP,
-            dailyXP: newData.daily_xp || prev.dailyXP,
-            level: newData.level || prev.level,
-          }));
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-      OptimizedProfileService.clearCache();
-    };
-  }, [userId]);
+    streak: profile?.streak || 0,
+    weeklyBonus: 0, // Will be populated from actual database in a real implementation
+    monthlyBonus: 0, // Will be populated from actual database in a real implementation
+    achievements: {
+      unlocked: profile?.achievements_count || 0,
+      total: 50 // Mock total achievements
+    },
+    className: userClass || 'Sem Classe',
+    classDescription: ClassService.getClassDescription(userClass),
+    lastActivity: profile?.last_workout_at ? '8h 45min' : 'Nunca',
+    xpGain: '+25 EXP',
+    rank: profile?.achievement_points 
+      ? calculateRank(profile.level, profile.achievement_points)
+      : 'Unranked',
+    achievementPoints: profile?.achievement_points || 0,
+  };
 
   return <>{children(profileData)}</>;
 };
+
+// Helper function to calculate rank (client-side version of the DB function)
+function calculateRank(level: number, achievementPoints: number): string {
+  const rankScore = (1.5 * level) + (2 * achievementPoints);
+  
+  if (rankScore < 20) return 'Unranked';
+  if (rankScore >= 20 && rankScore < 50) return 'E';
+  if (rankScore >= 50 && rankScore < 80) return 'D';
+  if (rankScore >= 80 && rankScore < 120) return 'C';
+  if (rankScore >= 120 && rankScore < 160) return 'B';
+  if (rankScore >= 160 && rankScore < 198) return 'A';
+  return 'S';
+}
 
 export default ProfileDataProvider;

@@ -9,95 +9,32 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      achievement_progress: {
-        Row: {
-          achievement_id: string | null
-          current_value: number | null
-          id: string
-          is_complete: boolean | null
-          target_value: number
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          achievement_id?: string | null
-          current_value?: number | null
-          id?: string
-          is_complete?: boolean | null
-          target_value: number
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          achievement_id?: string | null
-          current_value?: number | null
-          id?: string
-          is_complete?: boolean | null
-          target_value?: number
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "achievement_progress_achievement_id_fkey"
-            columns: ["achievement_id"]
-            isOneToOne: false
-            referencedRelation: "achievements"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "achievement_progress_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       achievements: {
         Row: {
           category: string
-          category_type: string | null
           description: string
           icon_name: string
           id: string
           name: string
-          points: number
-          rank: string
-          rank_requirements: Json | null
-          requirement_type: string | null
           requirements: Json
-          string_id: string
           xp_reward: number
         }
         Insert: {
           category: string
-          category_type?: string | null
           description: string
           icon_name: string
           id?: string
           name: string
-          points?: number
-          rank?: string
-          rank_requirements?: Json | null
-          requirement_type?: string | null
           requirements: Json
-          string_id: string
           xp_reward: number
         }
         Update: {
           category?: string
-          category_type?: string | null
           description?: string
           icon_name?: string
           id?: string
           name?: string
-          points?: number
-          rank?: string
-          rank_requirements?: Json | null
-          requirement_type?: string | null
           requirements?: Json
-          string_id?: string
           xp_reward?: number
         }
         Relationships: []
@@ -609,22 +546,18 @@ export type Database = {
       }
       profiles: {
         Row: {
-          achievement_points: number | null
           achievements_count: number | null
           avatar_url: string | null
           bio: string | null
           class: string | null
           class_selected_at: string | null
           created_at: string | null
-          daily_xp: number | null
-          daily_xp_cap: number | null
           default_rest_timer_seconds: number
           equipped_items: Json | null
           id: string
           last_workout_at: string | null
           level: number | null
           name: string | null
-          rank: string | null
           records_count: number | null
           streak: number | null
           timer_notification_enabled: boolean
@@ -636,22 +569,18 @@ export type Database = {
           xp: number | null
         }
         Insert: {
-          achievement_points?: number | null
           achievements_count?: number | null
           avatar_url?: string | null
           bio?: string | null
           class?: string | null
           class_selected_at?: string | null
           created_at?: string | null
-          daily_xp?: number | null
-          daily_xp_cap?: number | null
           default_rest_timer_seconds?: number
           equipped_items?: Json | null
           id: string
           last_workout_at?: string | null
           level?: number | null
           name?: string | null
-          rank?: string | null
           records_count?: number | null
           streak?: number | null
           timer_notification_enabled?: boolean
@@ -663,22 +592,18 @@ export type Database = {
           xp?: number | null
         }
         Update: {
-          achievement_points?: number | null
           achievements_count?: number | null
           avatar_url?: string | null
           bio?: string | null
           class?: string | null
           class_selected_at?: string | null
           created_at?: string | null
-          daily_xp?: number | null
-          daily_xp_cap?: number | null
           default_rest_timer_seconds?: number
           equipped_items?: Json | null
           id?: string
           last_workout_at?: string | null
           level?: number | null
           name?: string | null
-          rank?: string | null
           records_count?: number | null
           streak?: number | null
           timer_notification_enabled?: boolean
@@ -887,29 +812,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      batch_update_achievement_progress: {
-        Args: { p_user_id: string; p_achievements: Json }
-        Returns: {
-          achievement_id: string | null
-          current_value: number | null
-          id: string
-          is_complete: boolean | null
-          target_value: number
-          updated_at: string | null
-          user_id: string | null
-        }[]
-      }
-      begin_transaction: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      check_achievement_batch: {
-        Args: { p_user_id: string; p_achievement_ids: string[] }
-        Returns: {
-          achievement_id: string
-          awarded: boolean
-        }[]
-      }
       check_personal_record_cooldown: {
         Args: { p_user_id: string; p_exercise_id: string; p_days?: number }
         Returns: boolean
@@ -919,14 +821,6 @@ export type Database = {
         Returns: {
           count: number
         }[]
-      }
-      commit_transaction: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      complete_achievement_id_migration: {
-        Args: Record<PropertyKey, never>
-        Returns: number
       }
       create_manual_workout: {
         Args: {
@@ -945,14 +839,6 @@ export type Database = {
         Args: { p_user_id: string; p_week_number: number; p_year: number }
         Returns: boolean
       }
-      get_achievement_stats: {
-        Args: { p_user_id: string }
-        Returns: Json
-      }
-      get_all_achievement_progress: {
-        Args: { p_user_id: string }
-        Returns: Json
-      }
       get_class_bonuses: {
         Args: { p_class_name: string }
         Returns: Json
@@ -960,26 +846,6 @@ export type Database = {
       get_class_cooldown: {
         Args: { p_user_id: string }
         Returns: Json
-      }
-      get_paginated_workouts: {
-        Args: { p_user_id: string; p_limit: number; p_cursor?: string }
-        Returns: {
-          id: string
-          started_at: string
-          completed_at: string
-          duration_seconds: number
-          routine_id: string
-          exercise_count: number
-          next_cursor: string
-        }[]
-      }
-      get_personal_records_for_workout: {
-        Args: { p_workout_id: string; p_user_id: string }
-        Returns: {
-          exercise_id: string
-          current_record: number
-          previous_record: number
-        }[]
       }
       get_power_day_usage: {
         Args: { p_user_id: string; p_week_number: number; p_year: number }
@@ -1001,28 +867,6 @@ export type Database = {
           is_power_day: boolean
         }[]
       }
-      get_user_profile_dashboard: {
-        Args: { p_user_id: string }
-        Returns: Json
-      }
-      get_workout_with_sets: {
-        Args: { p_workout_id: string }
-        Returns: {
-          workout_id: string
-          workout_started_at: string
-          workout_completed_at: string
-          workout_duration_seconds: number
-          routine_id: string
-          user_id: string
-          set_id: string
-          exercise_id: string
-          set_order: number
-          weight: number
-          reps: number
-          completed: boolean
-          completed_at: string
-        }[]
-      }
       increment_profile_counter: {
         Args: {
           user_id_param: string
@@ -1040,15 +884,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      match_achievement_by_name: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          string_id: string
-          uuid: string
-          name: string
-          similarity: number
-        }[]
-      }
       migrate_exercise_columns: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -1057,17 +892,9 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
-      rollback_transaction: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       select_class: {
         Args: { p_user_id: string; p_class_name: string }
         Returns: Json
-      }
-      standardize_achievement_id: {
-        Args: { input_text: string }
-        Returns: string
       }
     }
     Enums: {
