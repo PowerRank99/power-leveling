@@ -8,6 +8,7 @@ export class AchievementIdMappingService {
   private static stringIdToUuidMap: Map<string, string> = new Map();
   private static uuidToStringIdMap: Map<string, string> = new Map();
   private static initialized = false;
+  private static allAchievementIds: string[] = [];
   
   /**
    * Initialize the mapping service by loading all mappings
@@ -29,8 +30,14 @@ export class AchievementIdMappingService {
         });
       }
       
-      // If we need to dynamically generate mappings, we could add that here
-      // For example, for any achievements that don't have mappings yet
+      // Load all achievement IDs for validation
+      const { data: achievements, error: achievementsError } = await supabase
+        .from('achievements')
+        .select('id');
+        
+      if (!achievementsError && achievements) {
+        this.allAchievementIds = achievements.map(a => a.id);
+      }
       
       this.initialized = true;
     } catch (error) {
@@ -88,11 +95,43 @@ export class AchievementIdMappingService {
   }
   
   /**
+   * Validate mappings to find unmapped achievements
+   */
+  static validateMappings(): { 
+    mapped: string[]; 
+    unmapped: string[]; 
+    orphaned: string[] 
+  } {
+    const mapped: string[] = [];
+    const unmapped: string[] = [];
+    const orphaned: string[] = [];
+    
+    // Find unmapped achievements
+    for (const uuid of this.allAchievementIds) {
+      if (this.isUuidMapped(uuid)) {
+        mapped.push(uuid);
+      } else {
+        unmapped.push(uuid);
+      }
+    }
+    
+    // Find orphaned mappings (mappings that don't point to existing achievements)
+    this.uuidToStringIdMap.forEach((stringId, uuid) => {
+      if (!this.allAchievementIds.includes(uuid)) {
+        orphaned.push(uuid);
+      }
+    });
+    
+    return { mapped, unmapped, orphaned };
+  }
+  
+  /**
    * Reset mappings
    */
   static reset(): void {
     this.stringIdToUuidMap.clear();
     this.uuidToStringIdMap.clear();
+    this.allAchievementIds = [];
     this.initialized = false;
   }
 }

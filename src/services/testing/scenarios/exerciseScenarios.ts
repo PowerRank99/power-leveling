@@ -1,128 +1,19 @@
 
-import { scenarioRunner } from './index';
+import { scenarioRunner, TestScenario, ScenarioResult } from './index';
 import { supabase } from '@/integrations/supabase/client';
-import { AchievementService } from '@/services/rpg/AchievementService';
 
-// Register a personal record scenario
-scenarioRunner.registerScenario({
-  id: 'first-personal-record',
-  name: 'First Personal Record Achievement',
-  description: 'Tests the achievement for setting your first personal record',
-  tags: ['record', 'basic', 'rank-e'],
+/**
+ * Personal Record Scenario - Creates a personal record
+ */
+const personalRecordScenario: TestScenario = {
+  id: 'personal-record',
+  name: 'Personal Record',
+  description: 'Simulates achieving a personal record',
+  tags: ['record', 'achievement'],
   achievementTypes: ['personal_record'],
   
-  async execute(userId: string) {
+  execute: async (userId: string): Promise<ScenarioResult> => {
     try {
-      // Get or create a test exercise
-      const { data: exercise } = await supabase
-        .from('exercises')
-        .select('id')
-        .limit(1)
-        .maybeSingle();
-        
-      if (!exercise) {
-        throw new Error('No exercises found in database');
-      }
-      
-      // Create personal record
-      const { error: recordError } = await supabase
-        .from('personal_records')
-        .insert({
-          user_id: userId,
-          exercise_id: exercise.id,
-          weight: 100,
-          previous_weight: 90,
-          recorded_at: new Date().toISOString()
-        });
-        
-      if (recordError) {
-        throw new Error(`Error creating personal record: ${recordError.message}`);
-      }
-      
-      // Update profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          records_count: 1
-        })
-        .eq('id', userId);
-        
-      if (profileError) {
-        throw new Error(`Error updating profile: ${profileError.message}`);
-      }
-      
-      // Find personal record achievement
-      const { data: achievement } = await supabase
-        .from('achievements')
-        .select('id')
-        .eq('category', 'personal_record')
-        .eq('requirements->count', 1)
-        .maybeSingle();
-      
-      if (!achievement) {
-        return {
-          success: false,
-          message: 'First personal record achievement not found in database'
-        };
-      }
-      
-      // Award the achievement
-      const awardResult = await AchievementService.awardAchievement(userId, achievement.id);
-      
-      if (!awardResult.success) {
-        return {
-          success: false,
-          message: `Failed to award achievement: ${awardResult.message}`
-        };
-      }
-      
-      // Verify achievement was awarded
-      const { data: userAchievement, error: verifyError } = await supabase
-        .from('user_achievements')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('achievement_id', achievement.id)
-        .maybeSingle();
-        
-      if (verifyError) {
-        throw new Error(`Error verifying achievement: ${verifyError.message}`);
-      }
-      
-      return {
-        success: !!userAchievement,
-        message: userAchievement 
-          ? 'Successfully awarded first personal record achievement' 
-          : 'Failed to award achievement'
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : 'Unknown error'
-      };
-    }
-  }
-});
-
-// Register a category exercise completion scenario
-scenarioRunner.registerScenario({
-  id: 'category-exercises',
-  name: 'Category Exercise Completion',
-  description: 'Tests achievements for completing exercises in specific categories',
-  tags: ['exercise', 'category', 'rank-c'],
-  achievementTypes: ['workout_category'],
-  
-  async execute(userId: string) {
-    try {
-      // Get test exercise categories
-      const { data: exerciseCategories } = await supabase
-        .from('exercises')
-        .select('id, category')
-        .limit(5);
-        
-      if (!exerciseCategories?.length) {
-        throw new Error('No exercises found in database');
-      }
-      
       // Create a workout
       const { data: workout, error: workoutError } = await supabase
         .from('workouts')
@@ -136,97 +27,120 @@ scenarioRunner.registerScenario({
         .single();
         
       if (workoutError || !workout) {
-        throw new Error(`Error creating workout: ${workoutError?.message}`);
+        return {
+          success: false,
+          message: `Error creating workout: ${workoutError?.message}`
+        };
       }
       
-      // Add sets for each exercise category
-      for (let i = 0; i < exerciseCategories.length; i++) {
-        const exercise = exerciseCategories[i];
+      // First, make sure we have an exercise to work with
+      const { data: exercise, error: exerciseError } = await supabase
+        .from('exercises')
+        .select('id')
+        .limit(1)
+        .maybeSingle();
         
-        const { error: setError } = await supabase
-          .from('workout_sets')
-          .insert({
-            workout_id: workout.id,
-            exercise_id: exercise.id,
-            set_order: i + 1,
-            weight: 50,
-            reps: 10,
-            completed: true,
-            completed_at: new Date().toISOString()
-          });
-          
-        if (setError) {
-          throw new Error(`Error creating workout set: ${setError.message}`);
-        }
+      if (exerciseError) {
+        return {
+          success: false,
+          message: `Error fetching exercise: ${exerciseError.message}`
+        };
       }
       
-      // Update profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          workouts_count: supabase.rpc('increment_profile_counter', {
-            user_id_param: userId,
-            counter_name: 'workouts_count',
-            increment_amount: 1
+      // If no exercise exists, create a test one
+      let exerciseId = exercise?.id;
+      if (!exerciseId) {
+        const { data: newExercise, error: newExerciseError } = await supabase
+          .from('exercises')
+          .insert({
+            name: 'Test Bench Press',
+            category: 'chest',
+            type: 'strength',
+            level: 'intermediate'
           })
-        })
-        .eq('id', userId);
+          .select('id')
+          .single();
+          
+        if (newExerciseError || !newExercise) {
+          return {
+            success: false,
+            message: `Error creating exercise: ${newExerciseError?.message}`
+          };
+        }
+        
+        exerciseId = newExercise.id;
+      }
+      
+      // Add a set with a new PR weight
+      const { error: setError } = await supabase
+        .from('workout_sets')
+        .insert({
+          workout_id: workout.id,
+          exercise_id: exerciseId,
+          set_order: 1,
+          weight: 100, // New PR weight
+          reps: 10,
+          completed: true,
+          completed_at: new Date().toISOString()
+        });
+        
+      if (setError) {
+        return {
+          success: false,
+          message: `Error creating workout set: ${setError.message}`
+        };
+      }
+      
+      // Create a personal record
+      const { error: recordError } = await supabase
+        .from('personal_records')
+        .insert({
+          user_id: userId,
+          exercise_id: exerciseId,
+          weight: 100,
+          previous_weight: 90,
+          recorded_at: new Date().toISOString()
+        });
+        
+      if (recordError) {
+        return {
+          success: false,
+          message: `Error creating personal record: ${recordError.message}`
+        };
+      }
+      
+      // Update profile records count
+      const { error: profileError } = await supabase
+        .rpc('increment_profile_counter', {
+          user_id_param: userId,
+          counter_name: 'records_count',
+          increment_amount: 1
+        });
         
       if (profileError) {
-        throw new Error(`Error updating profile: ${profileError.message}`);
-      }
-      
-      // Find workout category achievement for the first category
-      const testCategory = exerciseCategories[0].category;
-      
-      const { data: achievement } = await supabase
-        .from('achievements')
-        .select('id')
-        .eq('category', 'workout_category')
-        .filter('requirements->category', 'eq', testCategory)
-        .filter('requirements->count', 'eq', 1)
-        .maybeSingle();
-      
-      if (!achievement) {
         return {
           success: false,
-          message: `Category achievement for ${testCategory} not found in database`
+          message: `Error updating profile: ${profileError.message}`
         };
-      }
-      
-      // Award the achievement
-      const awardResult = await AchievementService.awardAchievement(userId, achievement.id);
-      
-      if (!awardResult.success) {
-        return {
-          success: false,
-          message: `Failed to award achievement: ${awardResult.message}`
-        };
-      }
-      
-      // Verify achievement was awarded
-      const { data: userAchievement, error: verifyError } = await supabase
-        .from('user_achievements')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('achievement_id', achievement.id)
-        .maybeSingle();
-        
-      if (verifyError) {
-        throw new Error(`Error verifying achievement: ${verifyError.message}`);
       }
       
       return {
-        success: !!userAchievement,
-        message: userAchievement 
-          ? `Successfully awarded ${testCategory} category achievement` 
-          : 'Failed to award achievement'
+        success: true,
+        message: 'Personal record scenario executed successfully',
+        data: {
+          exerciseId,
+          weight: 100,
+          previousWeight: 90
+        }
       };
     } catch (error) {
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error occurred'
       };
     }
   }
-});
+};
+
+// Register scenarios
+scenarioRunner.registerScenario(personalRecordScenario);

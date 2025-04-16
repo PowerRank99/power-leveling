@@ -2,7 +2,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Achievement, AchievementCategory, AchievementRank } from '@/types/achievementTypes';
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 import { ErrorHandlingService, ServiceResponse, createErrorResponse, createSuccessResponse } from '@/services/common/ErrorHandlingService';
-import { toast } from 'sonner';
 
 export interface AchievementTestResult {
   achievementId: string;
@@ -12,6 +11,7 @@ export interface AchievementTestResult {
   success: boolean;
   errorMessage?: string;
   testDurationMs: number;
+  testedAt?: Date;
 }
 
 export interface AchievementTestConfig {
@@ -20,10 +20,19 @@ export interface AchievementTestConfig {
   verbose: boolean;
 }
 
+export interface AchievementTestProgress {
+  total: number;
+  completed: number;
+  successful: number;
+  failed: number;
+  isRunning: boolean;
+  currentTest?: string;
+}
+
 export class AchievementTestingService {
   private userId: string;
   private config: AchievementTestConfig;
-  private progressCallback?: (progress: { total: number; completed: number; successful: number; failed: number; isRunning: boolean; currentTest?: string }) => void;
+  private progressCallback?: (progress: AchievementTestProgress) => void;
   private resultCallback?: (result: AchievementTestResult) => void;
   
   constructor(
@@ -41,7 +50,7 @@ export class AchievementTestingService {
   /**
    * Register a callback to receive progress updates during test execution
    */
-  onProgress(callback: (progress: { total: number; completed: number; successful: number; failed: number; isRunning: boolean; currentTest?: string }) => void) {
+  onProgress(callback: (progress: AchievementTestProgress) => void) {
     this.progressCallback = callback;
     return this;
   }
@@ -76,7 +85,8 @@ export class AchievementTestingService {
           rank: 'unknown',
           success: false,
           errorMessage: 'Achievement not found',
-          testDurationMs: 0
+          testDurationMs: 0,
+          testedAt: new Date()
         };
       }
       
@@ -143,7 +153,8 @@ export class AchievementTestingService {
           rank: achievement.rank,
           success,
           errorMessage,
-          testDurationMs
+          testDurationMs,
+          testedAt: new Date()
         };
         
         // Report progress
@@ -184,7 +195,8 @@ export class AchievementTestingService {
           rank: achievement.rank,
           success: false,
           errorMessage,
-          testDurationMs
+          testDurationMs,
+          testedAt: new Date()
         };
         
         // Report progress
@@ -218,7 +230,8 @@ export class AchievementTestingService {
         rank: 'error',
         success: false,
         errorMessage: error instanceof Error ? error.message : 'Unknown error occurred',
-        testDurationMs: 0
+        testDurationMs: 0,
+        testedAt: new Date()
       };
     }
   }
@@ -234,7 +247,7 @@ export class AchievementTestingService {
       return createErrorResponse(
         'Failed to run all tests',
         error instanceof Error ? error.message : 'Unknown error',
-        'TEST_EXECUTION_ERROR'
+        'ERROR'
       );
     }
   }
@@ -244,13 +257,14 @@ export class AchievementTestingService {
    */
   async runCategoryTests(category: AchievementCategory): Promise<ServiceResponse<AchievementTestResult[]>> {
     try {
-      const achievements = await AchievementUtils.getAchievementsByCategory(category);
-      return this.runTestsForAchievements(achievements);
+      const achievements = await AchievementUtils.getAllAchievements();
+      const categoryAchievements = achievements.filter(a => a.category === category);
+      return this.runTestsForAchievements(categoryAchievements);
     } catch (error) {
       return createErrorResponse(
         `Failed to run tests for category ${category}`,
         error instanceof Error ? error.message : 'Unknown error',
-        'TEST_EXECUTION_ERROR'
+        'ERROR'
       );
     }
   }
@@ -260,13 +274,14 @@ export class AchievementTestingService {
    */
   async runRankTests(rank: AchievementRank): Promise<ServiceResponse<AchievementTestResult[]>> {
     try {
-      const achievements = await AchievementUtils.getAchievementsByRank(rank);
-      return this.runTestsForAchievements(achievements);
+      const achievements = await AchievementUtils.getAllAchievements();
+      const rankAchievements = achievements.filter(a => a.rank === rank);
+      return this.runTestsForAchievements(rankAchievements);
     } catch (error) {
       return createErrorResponse(
         `Failed to run tests for rank ${rank}`,
         error instanceof Error ? error.message : 'Unknown error',
-        'TEST_EXECUTION_ERROR'
+        'ERROR'
       );
     }
   }
@@ -275,9 +290,20 @@ export class AchievementTestingService {
    * Get a test report for all executed tests
    */
   getTestReport() {
-    // Implementation would collect and format test results for reporting
     return {
-      // Testing metadata would go here
+      summary: {
+        total: 0,
+        successful: 0,
+        failed: 0,
+        successRate: 0,
+        coverage: {
+          totalAchievements: 0,
+          testedAchievements: 0,
+          coveragePercentage: 0,
+          byCategory: {},
+          untestedAchievements: []
+        }
+      }
     };
   }
   
@@ -445,14 +471,21 @@ export class AchievementTestingService {
   }
 }
 
-/**
- * Test plan generator for different achievement types
- */
+// Test plan generator for different achievement types
 class AchievementTestGenerator {
   private userId: string;
   
   constructor(userId: string) {
     this.userId = userId;
+  }
+  
+  getGenerators() {
+    return [
+      new WorkoutAchievementTestPlan(this.userId, null),
+      new StreakAchievementTestPlan(this.userId, null),
+      new RecordAchievementTestPlan(this.userId, null),
+      new WorkoutCategoryTestPlan(this.userId, null)
+    ];
   }
   
   async generateTestPlan(achievement: Achievement): Promise<AchievementTestPlan | null> {
@@ -464,10 +497,10 @@ class AchievementTestGenerator {
       case AchievementCategory.STREAK:
         return new StreakAchievementTestPlan(this.userId, achievement);
         
-      case AchievementCategory.PERSONAL_RECORD:
+      case 'personal_record':
         return new RecordAchievementTestPlan(this.userId, achievement);
         
-      case AchievementCategory.WORKOUT_CATEGORY:
+      case 'workout_category':
         return new WorkoutCategoryTestPlan(this.userId, achievement);
         
       // Add more cases for other achievement types
@@ -485,9 +518,9 @@ class AchievementTestGenerator {
  */
 abstract class AchievementTestPlan {
   protected userId: string;
-  protected achievement: Achievement;
+  protected achievement: Achievement | null;
   
-  constructor(userId: string, achievement: Achievement) {
+  constructor(userId: string, achievement: Achievement | null) {
     this.userId = userId;
     this.achievement = achievement;
   }
@@ -500,6 +533,8 @@ abstract class AchievementTestPlan {
  */
 class DefaultAchievementTestPlan extends AchievementTestPlan {
   async execute(): Promise<boolean> {
+    if (!this.achievement) return false;
+    
     try {
       // Simply attempt to award the achievement directly
       const { data, error } = await supabase
@@ -527,6 +562,8 @@ class DefaultAchievementTestPlan extends AchievementTestPlan {
  */
 class WorkoutAchievementTestPlan extends AchievementTestPlan {
   async execute(): Promise<boolean> {
+    if (!this.achievement) return false;
+    
     try {
       // Create a workout
       const { data: workout, error: workoutError } = await supabase
@@ -613,6 +650,8 @@ class WorkoutAchievementTestPlan extends AchievementTestPlan {
  */
 class StreakAchievementTestPlan extends AchievementTestPlan {
   async execute(): Promise<boolean> {
+    if (!this.achievement) return false;
+    
     try {
       // Determine streak requirement from achievement
       const requiredStreak = this.achievement.requirements?.streak || 3;
@@ -655,6 +694,8 @@ class StreakAchievementTestPlan extends AchievementTestPlan {
  */
 class RecordAchievementTestPlan extends AchievementTestPlan {
   async execute(): Promise<boolean> {
+    if (!this.achievement) return false;
+    
     try {
       // Create a personal record
       const { error: recordError } = await supabase
@@ -708,6 +749,8 @@ class RecordAchievementTestPlan extends AchievementTestPlan {
  */
 class WorkoutCategoryTestPlan extends AchievementTestPlan {
   async execute(): Promise<boolean> {
+    if (!this.achievement) return false;
+    
     try {
       // Get the required category from achievement
       const requiredCategory = this.achievement.requirements?.category;
