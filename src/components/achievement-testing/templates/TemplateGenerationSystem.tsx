@@ -11,10 +11,10 @@ const TemplateGenerationSystem = () => {
     >
       <AlertTitle className="text-amber-500 font-medium">
         <InfoIcon className="h-4 w-4 inline-block mr-2" /> 
-        Template Generation Information
+        Achievement System Removed
       </AlertTitle>
       <AlertDescription className="text-amber-400/90 text-sm">
-        Template generation is an experimental feature. Generated templates will need review.
+        The achievement system has been removed and will be rebuilt from scratch.
       </AlertDescription>
     </Alert>
   );

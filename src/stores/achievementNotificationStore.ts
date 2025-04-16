@@ -1,9 +1,10 @@
+/**
+ * This is a placeholder file for the removed achievement notification system.
+ */
+
 import { create } from 'zustand';
 
-/**
- * Standardized achievement notification interface
- */
-export interface AchievementNotification {
+interface AchievementNotification {
   id: string;
   title: string;
   description: string;
@@ -23,53 +24,11 @@ interface AchievementNotificationState {
   queueNotification: (achievement: AchievementNotification) => void;
 }
 
-export const useAchievementNotificationStore = create<AchievementNotificationState>((set, get) => ({
+export const useAchievementNotificationStore = create<AchievementNotificationState>(() => ({
   isVisible: false,
   currentAchievement: null,
   queue: [],
-  
-  showNotification: (achievement) => {
-    set({ 
-      isVisible: true, 
-      currentAchievement: achievement 
-    });
-  },
-  
-  hideNotification: () => {
-    const { queue } = get();
-    
-    // Process queue
-    if (queue.length > 0) {
-      const nextAchievement = queue[0];
-      const remainingQueue = queue.slice(1);
-      
-      set({ 
-        currentAchievement: nextAchievement, 
-        queue: remainingQueue,
-        isVisible: true 
-      });
-    } else {
-      set({ 
-        isVisible: false, 
-        currentAchievement: null 
-      });
-    }
-  },
-  
-  queueNotification: (achievement) => {
-    const { isVisible, queue } = get();
-    
-    if (!isVisible && queue.length === 0) {
-      // If no active notification, show immediately
-      set({ 
-        isVisible: true, 
-        currentAchievement: achievement 
-      });
-    } else {
-      // Otherwise add to queue
-      set(state => ({ 
-        queue: [...state.queue, achievement] 
-      }));
-    }
-  }
+  showNotification: () => {},
+  hideNotification: () => {},
+  queueNotification: () => {}
 }));
