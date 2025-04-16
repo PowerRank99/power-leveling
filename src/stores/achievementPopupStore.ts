@@ -6,7 +6,6 @@ interface Achievement {
   description: string;
   xpReward: number;
   bonusText?: string;
-  points?: number;
 }
 
 interface AchievementPopupState {

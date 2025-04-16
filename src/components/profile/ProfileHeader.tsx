@@ -16,8 +16,6 @@ interface ProfileHeaderProps {
   ranking: number;
   currentXP: number;
   nextLevelXP: number;
-  rank?: string;
-  achievementPoints?: number;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -29,23 +27,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   workoutsCount,
   ranking,
   currentXP,
-  nextLevelXP,
-  rank = 'Unranked',
-  achievementPoints = 0
+  nextLevelXP
 }) => {
-  // Helper function to get rank color
-  const getRankColor = (rank: string) => {
-    switch(rank) {
-      case 'S': return 'text-achievement shadow-glow-gold';
-      case 'A': return 'text-valor shadow-glow-subtle';
-      case 'B': return 'text-arcane-60';
-      case 'C': return 'text-arcane';
-      case 'D': return 'text-text-secondary';
-      case 'E': return 'text-text-tertiary';
-      default: return 'text-text-tertiary';
-    }
-  };
-
   return (
     <div className="bg-gradient-to-b from-midnight-deep to-midnight-base text-text-primary p-6 relative rounded-b-xl shadow-elevated">
       <div className="flex items-center">
@@ -77,22 +60,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               <h2 className="text-xl profile-name">{name}</h2>
               <p className="text-text-tertiary text-sm">@{username}</p>
             </div>
-            
-            {/* Rank Badge */}
-            {rank !== 'Unranked' && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className={`px-2 py-1 rounded-md font-space font-bold ${getRankColor(rank)}`}>
-                      Rank {rank}
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="left">
-                    <p className="text-xs font-sora">{achievementPoints} Pontos de Conquista</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
           </div>
           
           {/* Class Button */}
@@ -135,14 +102,14 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 <div className="flex flex-col items-center">
                   <span className="text-xs font-sora text-text-tertiary mb-1">Conquistas</span>
                   <div className="text-lg font-bold font-space text-achievement shadow-glow-gold">
-                    {achievementPoints} pts
+                    0/50
                   </div>
-                  <span className="text-xs text-text-tertiary mt-1 font-sora">Pontos de Conquista</span>
+                  <span className="text-xs text-text-tertiary mt-1 font-sora">Progresso total</span>
                 </div>
               </div>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              <p className="text-xs font-sora">Acumule pontos para aumentar seu rank!</p>
+              <p className="text-xs font-sora">Conquistas desbloqueadas de um total de 50</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
