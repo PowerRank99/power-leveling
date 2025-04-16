@@ -1,4 +1,3 @@
-
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { supabase } from '@/integrations/supabase/client';
 import { AchievementService } from '@/services/rpg/AchievementService';
