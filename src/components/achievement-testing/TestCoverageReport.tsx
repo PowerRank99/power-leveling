@@ -4,22 +4,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { TestCoverageReport as TestCoverageReportType } from '@/services/testing/TestCoverageService';
+import { TestCoverageService } from '@/services/testing/TestCoverageService';
 import { AchievementCategory } from '@/types/achievementTypes';
 import { ShieldCheck, AlertTriangle } from 'lucide-react';
 
+interface CoverageCategoryStats {
+  total: number;
+  tested: number;
+  coverage: number;
+}
+
+interface TestCoverageReportData {
+  totalAchievements: number;
+  testedAchievements: number;
+  coveragePercentage: number;
+  byCategory: Record<string, CoverageCategoryStats>;
+  untestedAchievements: Array<any>;
+}
+
 interface TestCoverageReportProps {
-  coverage: {
-    totalAchievements: number;
-    testedAchievements: number;
-    coveragePercentage: number;
-    byCategory: Record<string, {
-      total: number;
-      tested: number;
-      coverage: number;
-    }>;
-    untestedAchievements: Array<any>;
-  };
+  coverage: TestCoverageReportData;
 }
 
 const TestCoverageReport: React.FC<TestCoverageReportProps> = ({ coverage }) => {

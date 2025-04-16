@@ -1,10 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -33,7 +33,8 @@ import {
 
 import { 
   scenarioRunner, 
-  ScenarioOptions, 
+  ScenarioOptions,
+  SpeedOption,
   ScenarioProgress, 
   ScenarioResult,
   ScenarioAction,
@@ -70,8 +71,8 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
   const [isConfigOpen, setIsConfigOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('execution');
   const [executionLog, setExecutionLog] = useState<ScenarioAction[]>([]);
-  const [activeOptions, setActiveOptions] = useState<ScenarioOptions>({
-    speed: 0.5,
+  const [activeOptions, setActiveOptions] = useState<Partial<ScenarioOptions>>({
+    speed: 'normal' as SpeedOption,
     silent: false,
     autoCleanup: true
   });
@@ -143,7 +144,8 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
           type: 'PROGRESS_UPDATE', 
           description: newProgress.currentAction || 'Running scenario', 
           timestamp: new Date(),
-          success: true
+          success: true,
+          status: 'completed'
         }
       ]);
     }
@@ -251,7 +253,7 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
         description: 'This may take a moment'
       });
       
-      const success = await scenario.cleanup(targetUserId, { silent: false });
+      const success = await scenario.cleanup();
       
       if (success) {
         toast.success('Test data cleaned up successfully');
@@ -322,20 +324,24 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
                   <Label htmlFor="speed-slider">Execution Speed</Label>
                   <div className="flex items-center space-x-2">
                     <Timer className="h-4 w-4 text-text-secondary" />
-                    <Slider
-                      id="speed-slider"
-                      max={1}
-                      min={0}
-                      step={0.1}
-                      value={[activeOptions.speed || 0.5]}
-                      onValueChange={([value]) => handleOptionChange('speed', value)}
-                      className="flex-1"
-                    />
+                    <Select
+                      value={String(activeOptions.speed || 'normal')}
+                      onValueChange={(value) => handleOptionChange('speed', value)}
+                    >
+                      <SelectTrigger id="speed-select">
+                        <SelectValue placeholder="Speed" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="slow">Slow (Realistic)</SelectItem>
+                        <SelectItem value="normal">Normal</SelectItem>
+                        <SelectItem value="fast">Fast (Quick)</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <RotateCw className="h-4 w-4 text-text-secondary" />
                   </div>
                   <p className="text-xs text-text-tertiary">
-                    {activeOptions.speed < 0.3 ? 'Slow (realistic timing)' :
-                     activeOptions.speed < 0.7 ? 'Medium' : 'Fast (minimal delays)'}
+                    {activeOptions.speed === 'slow' ? 'Slow (realistic timing)' :
+                     activeOptions.speed === 'fast' ? 'Fast (minimal delays)' : 'Medium'}
                   </p>
                 </div>
                 
@@ -635,7 +641,7 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
               <div className="p-2 rounded-md border border-red-400 bg-red-400/10 text-sm">
                 <div className="flex items-center space-x-2">
                   <AlertTriangle className="h-4 w-4 text-red-500" />
-                  <span>{result.error}</span>
+                  <span>{String(result.error)}</span>
                 </div>
               </div>
             )}
@@ -653,8 +659,12 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
                       
                       useEffect(() => {
                         const loadAchievement = async () => {
-                          const achievementData = await AchievementScenarioAdapter.getAchievementById(id);
-                          setAchievement(achievementData);
+                          try {
+                            const achievementData = await AchievementScenarioAdapter.getAchievementById(id);
+                            setAchievement(achievementData);
+                          } catch (error) {
+                            console.error(`Error loading achievement ${id}:`, error);
+                          }
                         };
                         loadAchievement();
                       }, [id]);
@@ -722,7 +732,7 @@ const ScenarioRunnerComponent: React.FC<ScenarioRunnerProps> = ({ userId }) => {
           {resultTabs.map(tab => (
             <TabsTrigger key={tab.id} value={tab.id} className="flex items-center">
               {tab.icon}
-              <span className="ml-1">{tab.name}</span>
+              <span className="ml-2">{tab.name}</span>
             </TabsTrigger>
           ))}
         </TabsList>

@@ -21,6 +21,14 @@ export interface CleanupOptions {
 }
 
 /**
+ * Base interface for test data generators
+ */
+export interface TestDataGenerator {
+  cleanup(userId: string, options?: CleanupOptions): Promise<boolean>;
+  getGenerators?(): any[];
+}
+
+/**
  * Central interface for all generators
  */
 export interface TestDataGenerators {

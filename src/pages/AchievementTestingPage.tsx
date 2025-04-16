@@ -154,7 +154,19 @@ const AchievementTestingPage: React.FC = () => {
               </Alert>
             )}
             
-            <TestConfigurationPanel onClose={() => setConfigPanelOpen(false)} />
+            {configPanelOpen && (
+              <TestConfigurationPanel 
+                useCleanup={true} 
+                useTransaction={true}
+                verbose={true}
+                onCleanupChange={() => {}}
+                onTransactionChange={() => {}}
+                onVerboseChange={() => {}}
+                onUpdateConfig={() => {}}
+                isLoading={false}
+                onClose={() => setConfigPanelOpen(false)}
+              />
+            )}
             
             <TestNotificationSimulator />
             

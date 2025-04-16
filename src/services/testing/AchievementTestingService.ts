@@ -3,6 +3,8 @@ import { Achievement, AchievementCategory, AchievementRank } from '@/types/achie
 import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
 import { ErrorHandlingService, ServiceResponse, createErrorResponse, createSuccessResponse } from '@/services/common/ErrorHandlingService';
 
+type ErrorCategory = 'AUTH_ERROR' | 'DATA_ERROR' | 'API_ERROR' | 'VALIDATION_ERROR' | 'UNKNOWN_ERROR';
+
 export interface AchievementTestResult {
   achievementId: string;
   name: string;
@@ -11,7 +13,7 @@ export interface AchievementTestResult {
   success: boolean;
   errorMessage?: string;
   testDurationMs: number;
-  testedAt?: Date;
+  testedAt: Date;
 }
 
 export interface AchievementTestConfig {
@@ -247,7 +249,7 @@ export class AchievementTestingService {
       return createErrorResponse(
         'Failed to run all tests',
         error instanceof Error ? error.message : 'Unknown error',
-        'API_ERROR'
+        'API_ERROR' as ErrorCategory
       );
     }
   }
@@ -264,7 +266,7 @@ export class AchievementTestingService {
       return createErrorResponse(
         `Failed to run tests for category ${category}`,
         error instanceof Error ? error.message : 'Unknown error',
-        'API_ERROR'
+        'API_ERROR' as ErrorCategory
       );
     }
   }
@@ -281,7 +283,7 @@ export class AchievementTestingService {
       return createErrorResponse(
         `Failed to run tests for rank ${rank}`,
         error instanceof Error ? error.message : 'Unknown error',
-        'API_ERROR'
+        'API_ERROR' as ErrorCategory
       );
     }
   }
@@ -572,9 +574,9 @@ class WorkoutAchievementTestPlan extends AchievementTestPlan {
         .from('workouts')
         .insert({
           user_id: this.userId,
-          started_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // Started 30 minutes ago
+          started_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
           completed_at: new Date().toISOString(),
-          duration_seconds: 1800 // 30 minutes
+          duration_seconds: 1800
         })
         .select('id')
         .single();
@@ -588,7 +590,7 @@ class WorkoutAchievementTestPlan extends AchievementTestPlan {
         .from('workout_sets')
         .insert({
           workout_id: workout.id,
-          exercise_id: '550e8400-e29b-41d4-a716-446655440000', // Sample exercise ID
+          exercise_id: '550e8400-e29b-41d4-a716-446655440000',
           set_order: 1,
           weight: 50,
           reps: 10,
@@ -737,6 +739,15 @@ class WorkoutCategoryTestPlan extends AchievementTestPlan {
     try {
       const requirements = this.achievement.requirements || { type: 'workout_category', category: 'strength', count: 1 };
       
+      // Check if we're dealing with the legacy format or the new format
+      const category = 'category' in requirements 
+        ? requirements.category 
+        : 'strength';
+        
+      const count = 'count' in requirements 
+        ? requirements.count 
+        : 1;
+      
       // Create a workout with the required category
       const { data: workout, error: workoutError } = await supabase
         .from('workouts')
@@ -745,7 +756,7 @@ class WorkoutCategoryTestPlan extends AchievementTestPlan {
           started_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
           completed_at: new Date().toISOString(),
           duration_seconds: 1800,
-          type: requirements.category || 'strength'
+          type: category || 'strength'
         })
         .select('id')
         .single();

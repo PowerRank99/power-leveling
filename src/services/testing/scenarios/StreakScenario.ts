@@ -1,296 +1,383 @@
-/**
- * Streak Scenario
- * 
- * This scenario focuses on testing streak-based achievements
- * by simulating consistent daily workouts and streak breaks.
- */
-import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
-import { StandardizedAchievementService } from '@/services/rpg/achievements/StandardizedAchievementService';
-import { WorkoutType } from '../generators/WorkoutGenerator';
-import { CharacterClass } from '../generators/ClassGenerator';
-import { BaseScenario, ScenarioOptions, ScenarioResult, scenarioRunner } from './index';
+import { BaseScenario, ScenarioOptions, ScenarioResult } from './index';
+import { supabase } from '@/integrations/supabase/client';
+import { createTestDataGenerators } from '../generators';
+import { toast } from 'sonner';
 
-/**
- * Streak Scenario configuration options
- */
 export interface StreakScenarioOptions extends ScenarioOptions {
-  /** Maximum streak length to test (default: 7) */
-  maxStreakDays?: number;
-  /** Whether to simulate streak breaks (default: true) */
-  includeStreakBreaks?: boolean;
-  /** Pattern of streak days (1=workout, 0=no workout) */
-  streakPattern?: number[] | string;
-  /** Whether to test class passives (default: true) */
-  testClassPassives?: boolean;
-  /** Character class to test passives (default: Bruxo) */
-  characterClass?: CharacterClass.BRUXO | CharacterClass.MONGE;
+  streakDays: number;
+  withGaps: boolean;
+  streakType: 'workout' | 'login' | 'mixed';
 }
 
-/**
- * Simulates streak-based scenarios to test achievement triggers
- * and streak mechanics
- */
 export class StreakScenario extends BaseScenario {
-  private totalActions: number = 0;
-  private static readonly TEST_DATA_TAG = 'streak-scenario';
-
+  private generators = createTestDataGenerators();
+  
   constructor() {
     super(
       'streak-scenario',
-      'Streak Journey',
-      'Simulates streak building, breaking, and recovery to test streak-based achievements'
+      'Streak Achievement Tester',
+      'Tests achievements related to workout streaks and consistency',
+      ['streak', 'consistency', 'achievements']
     );
   }
-
-  /**
-   * Get all achievements that should be unlocked by this scenario
-   */
-  public getRequiredAchievements(): string[] {
-    return [
-      'trinca-poderosa',    // 3 consecutive days
-      'streak-7-days'       // 7-day streak
-      // Other streak achievements based on configuration
-    ];
-  }
-
-  /**
-   * Get estimated execution time in milliseconds
-   */
-  public getEstimatedDuration(): number {
-    return 20000; // 20 seconds
-  }
-
-  /**
-   * Get the total number of actions for progress tracking
-   */
-  protected getTotalActions(): number {
-    return this.totalActions;
-  }
-
-  /**
-   * Configure streak length options
-   */
-  public configureStreakLength(days: number): StreakScenarioOptions {
+  
+  getConfigurationOptions(): Record<string, any> {
+    const baseOptions = super.getConfigurationOptions();
+    
     return {
-      maxStreakDays: days
-    };
-  }
-
-  /**
-   * Configure streak break pattern
-   * 1 = workout day, 0 = rest day (streak break)
-   */
-  public simulateStreakBreaks(pattern: number[]): StreakScenarioOptions {
-    return {
-      streakPattern: pattern
-    };
-  }
-
-  /**
-   * Configure class passive testing
-   */
-  public testClassPassives(className: CharacterClass.BRUXO | CharacterClass.MONGE): StreakScenarioOptions {
-    return {
-      testClassPassives: true,
-      characterClass: className
-    };
-  }
-
-  /**
-   * Get configuration options specific to this scenario
-   */
-  public getConfigurationOptions(): Record<string, any> {
-    return {
-      maxStreakDays: {
+      ...baseOptions,
+      streakDays: {
         type: 'number',
+        label: 'Streak Length',
         default: 7,
-        min: 3,
+        min: 1,
         max: 30,
-        label: 'Max Streak Days',
-        description: 'Maximum streak length to test'
+        description: 'Number of consecutive days to simulate'
       },
-      includeStreakBreaks: {
+      withGaps: {
         type: 'boolean',
-        default: true,
-        label: 'Include Streak Breaks',
-        description: 'Whether to test streak breaking and recovery'
+        label: 'Include Gaps',
+        default: false,
+        description: 'Whether to include gaps in the streak to test streak reset'
       },
-      streakPattern: {
-        type: 'string',
-        default: '1111011111',
-        label: 'Streak Pattern',
-        description: 'Pattern of streak days (1=workout, 0=no workout)'
-      },
-      testClassPassives: {
-        type: 'boolean',
-        default: true,
-        label: 'Test Class Passives',
-        description: 'Whether to test class passive abilities related to streaks'
-      },
-      characterClass: {
+      streakType: {
         type: 'select',
-        default: CharacterClass.BRUXO,
-        options: [CharacterClass.BRUXO, CharacterClass.MONGE],
-        label: 'Character Class',
-        description: 'Which class passive to test (Bruxo or Monge)'
+        label: 'Streak Type',
+        options: [
+          { value: 'workout', label: 'Workout Streak' },
+          { value: 'login', label: 'Login Streak' },
+          { value: 'mixed', label: 'Mixed Activity' }
+        ],
+        default: 'workout',
+        description: 'Type of streak to simulate'
       }
     };
   }
-
-  /**
-   * Run the scenario
-   */
-  public async run(userId: string, options?: StreakScenarioOptions): Promise<ScenarioResult> {
-    if (!userId) {
-      return this.createResult(false, 'User ID is required');
-    }
-
-    this.startTime = Date.now();
+  
+  async execute(userId: string, options?: ScenarioOptions): Promise<ScenarioResult> {
+    this.startTime = performance.now();
     this.actions = [];
     this.achievementsUnlocked = [];
-
-    // Configure options
-    const config: Required<StreakScenarioOptions> = {
-      maxStreakDays: options?.maxStreakDays || 7,
-      includeStreakBreaks: options?.includeStreakBreaks !== false,
-      streakPattern: options?.streakPattern || [],
-      testClassPassives: options?.testClassPassives !== false,
-      characterClass: options?.characterClass || CharacterClass.BRUXO,
-      silent: options?.silent || false,
-      speed: options?.speed || 0.5,
-      autoCleanup: options?.autoCleanup || false,
-      testDataTag: options?.testDataTag || StreakScenario.TEST_DATA_TAG
-    };
-
-    // Parse streak pattern from string if provided
-    let pattern: number[] = [];
-    if (typeof options?.streakPattern === 'string') {
-      pattern = options.streakPattern.split('').map(c => c === '1' ? 1 : 0);
-    } else if (Array.isArray(config.streakPattern) && config.streakPattern.length > 0) {
-      pattern = config.streakPattern as number[];
-    } else if (config.includeStreakBreaks) {
-      // Default pattern with a break in the middle
-      pattern = Array(config.maxStreakDays + 3).fill(1);
-      pattern[Math.floor(pattern.length / 2)] = 0; // Add a streak break in the middle
-    } else {
-      // Simple continuous streak
-      pattern = Array(config.maxStreakDays).fill(1);
-    }
-
-    // Calculate total actions for progress tracking
-    this.totalActions = 4 + // Setup actions
-      (config.testClassPassives ? 1 : 0) + // Class selection
-      1 + // Pattern generation
-      1 + // Achievement checking
-      1; // Finalization
-
+    
     try {
-      // Set character class if testing passives
-      if (config.testClassPassives) {
-        this.logAction('SET_CLASS', `Setting character class to ${config.characterClass}`);
-        await this.dataGenerator.getGenerators().class.simulateClassSelection(
-          userId, 
-          config.characterClass, 
-          { bypassCooldown: true, silent: config.silent }
-        );
-        await this.delayBySpeed(1000, options);
+      const mergedOptions: Required<StreakScenarioOptions> = {
+        speed: options?.speed || 'normal',
+        silent: options?.silent || false,
+        autoCleanup: options?.autoCleanup !== false,
+        streakDays: options?.streakDays || 7,
+        withGaps: options?.withGaps || false,
+        streakType: options?.streakType || 'workout',
+        testDataTag: options?.testDataTag || 'test-data'
+      };
+      
+      // Log start of scenario
+      this.logAction('START_SCENARIO', `Starting streak scenario with ${mergedOptions.streakDays} days streak`);
+      
+      if (!mergedOptions.silent) {
+        toast.info('Starting streak simulation', {
+          description: `Simulating a ${mergedOptions.streakDays}-day streak`
+        });
       }
       
-      // Generate streak pattern
-      this.logAction('GENERATE_STREAK', `Generating streak pattern with ${pattern.length} days`);
+      // Reset user streak to ensure clean state
+      await this.resetUserStreak(userId);
       
-      // Convert pattern to string for logging
-      const patternString = pattern.map(d => d === 1 ? '🏋️' : '❌').join(' ');
-      this.logAction('STREAK_PATTERN', `Pattern: ${patternString}`, { pattern });
-      
-      await this.dataGenerator.getGenerators().streak.generateStreakPattern(userId, {
-        pattern,
-        startDate: new Date(new Date().setDate(new Date().getDate() - pattern.length)),
-        workoutType: WorkoutType.MIXED,
-        updateProfileStreak: true,
-        isTestData: true,
-        testDataTag: config.testDataTag,
-        silent: config.silent
-      });
-      await this.delayBySpeed(2000, options);
-      
-      // Check streak achievements
-      this.logAction('CHECK_ACHIEVEMENTS', 'Checking for streak achievements');
-      
-      // Use the StandardizedAchievementService to check for achievements
-      const streakAchievements = await StandardizedAchievementService.checkStreakAchievements(userId);
-      
-      if (streakAchievements.success && streakAchievements.data) {
-        this.achievementsUnlocked.push(...streakAchievements.data);
+      // Generate streak data
+      if (mergedOptions.streakType === 'workout') {
+        await this.generateWorkoutStreak(userId, mergedOptions);
+      } else if (mergedOptions.streakType === 'login') {
+        await this.generateLoginStreak(userId, mergedOptions);
+      } else {
+        await this.generateMixedStreak(userId, mergedOptions);
       }
       
-      // If testing class passives, check for their effects
-      if (config.testClassPassives) {
-        if (config.characterClass === CharacterClass.BRUXO) {
-          this.logAction('TEST_PASSIVE', 'Testing Bruxo passive: Pijama Arcano (streak preservation)');
-          
-          // Simulate a streak break and check if passive works
-          await this.dataGenerator.getGenerators().streak.simulateStreakBreak(userId, {
-            daysAgo: 1,
-            // Bruxo passive should preserve most of the streak
-            newStreakValue: Math.max(0, pattern.filter(p => p === 1).length - 1),
-            silent: config.silent
-          });
-          
-          await this.delayBySpeed(1000, options);
-        } else if (config.characterClass === CharacterClass.MONGE) {
-          this.logAction('TEST_PASSIVE', 'Testing Monge passive: Discípulo do Algoritmo (bonus streak XP)');
-          // Add a check here for the Monge passive effect on XP
-        }
+      // Check for streak achievements
+      const streakAchievements = await this.checkStreakAchievements(userId, mergedOptions.streakDays);
+      
+      // Log completion
+      this.logAction('COMPLETE', `Streak scenario completed with ${streakAchievements.length} achievements unlocked`);
+      
+      if (!mergedOptions.silent) {
+        toast.success('Streak simulation completed', {
+          description: `Unlocked ${streakAchievements.length} achievements`
+        });
       }
       
-      // Get achievement names for better logging
-      const achievementNames: string[] = [];
-      for (const id of this.achievementsUnlocked) {
-        try {
-          // Access the asyncGetAchievementName method that's patched onto this object
-          const name = await (this as any).asyncGetAchievementName(id);
-          achievementNames.push(name);
-        } catch (error) {
-          console.error('Error getting achievement name:', error);
-          achievementNames.push(id); // Fallback to ID if name can't be retrieved
-        }
-      }
-      
-      this.logAction('ACHIEVEMENTS_UNLOCKED', `Unlocked ${achievementNames.length} achievements`, { achievements: achievementNames });
-      
-      return this.createResult(true);
+      // Return successful result with achievements
+      return {
+        success: true,
+        executionTimeMs: performance.now() - this.startTime,
+        actions: this.actions,
+        achievementsUnlocked: this.achievementsUnlocked,
+        completionPercentage: 100,
+        unlockedCount: streakAchievements.length,
+        targetCount: streakAchievements.length
+      };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      this.logAction('ERROR', errorMessage, {}, false, errorMessage);
+      // Log error and return failure
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logAction('ERROR', errorMessage, false, errorMessage);
+      
+      if (!options?.silent) {
+        toast.error('Streak simulation failed', {
+          description: errorMessage
+        });
+      }
+      
       return this.createResult(false, errorMessage);
     }
   }
-
-  /**
-   * Clean up all test data generated by this scenario
-   */
-  public async cleanup(userId: string, options?: { silent?: boolean }): Promise<boolean> {
+  
+  private async resetUserStreak(userId: string): Promise<void> {
     try {
-      // Clean up streak-related data
-      await this.dataGenerator.getGenerators().streak.cleanupStreakData(userId, {
-        silent: options?.silent,
-        testDataTag: StreakScenario.TEST_DATA_TAG,
-        resetStreak: true
-      });
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          streak: 0,
+          last_workout_at: null
+        })
+        .eq('id', userId);
+        
+      if (error) throw error;
       
-      // Clean up class data if class passives were tested
-      await this.dataGenerator.getGenerators().class.cleanupClassData(userId, {
-        silent: options?.silent,
-        resetToDefault: true
-      });
+      this.logAction('RESET_STREAK', 'Reset user streak to 0');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logAction('RESET_ERROR', message, false, message);
+      throw error;
+    }
+  }
+  
+  private async generateWorkoutStreak(userId: string, options: Required<StreakScenarioOptions>): Promise<void> {
+    try {
+      const { streakDays, withGaps, speed } = options;
       
+      // Calculate dates for the streak
+      const dates = this.calculateStreakDates(streakDays, withGaps);
+      
+      // Generate workouts for each date
+      for (let i = 0; i < dates.length; i++) {
+        const date = dates[i];
+        
+        this.logAction('GENERATE_WORKOUT', `Generating workout for day ${i + 1} (${date.toISOString().split('T')[0]})`);
+        
+        // Use workout generator to create a workout for this date
+        const result = await this.generators.workout.createWorkout(userId, {
+          workoutDate: date,
+          isTestData: true,
+          testDataTag: options.testDataTag
+        });
+        
+        if (!result.success) {
+          throw new Error(result.error);
+        }
+        
+        // Update profile streak directly
+        await this.updateProfileStreak(userId, i + 1, date);
+        
+        // Check for streak achievements after each day
+        await this.checkStreakAchievements(userId, i + 1);
+        
+        // Add delay based on speed
+        await this.delayBySpeed(speed);
+      }
+      
+      this.logAction('STREAK_COMPLETE', `Completed ${dates.length}-day streak`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logAction('GENERATE_STREAK_ERROR', message, false, message);
+      throw error;
+    }
+  }
+  
+  private async generateLoginStreak(userId: string, options: Required<StreakScenarioOptions>): Promise<void> {
+    try {
+      const { streakDays, withGaps, speed } = options;
+      
+      // Calculate dates for the streak
+      const dates = this.calculateStreakDates(streakDays, withGaps);
+      
+      // Generate login entries for each date
+      for (let i = 0; i < dates.length; i++) {
+        const date = dates[i];
+        
+        this.logAction('GENERATE_LOGIN', `Simulating login for day ${i + 1} (${date.toISOString().split('T')[0]})`);
+        
+        // Update last login date
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            last_login_at: date.toISOString()
+          })
+          .eq('id', userId);
+          
+        if (error) throw error;
+        
+        // Update profile streak directly
+        await this.updateProfileStreak(userId, i + 1, date);
+        
+        // Check for streak achievements after each day
+        await this.checkStreakAchievements(userId, i + 1);
+        
+        // Add delay based on speed
+        await this.delayBySpeed(speed);
+      }
+      
+      this.logAction('STREAK_COMPLETE', `Completed ${dates.length}-day login streak`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logAction('GENERATE_LOGIN_STREAK_ERROR', message, false, message);
+      throw error;
+    }
+  }
+  
+  private async generateMixedStreak(userId: string, options: Required<StreakScenarioOptions>): Promise<void> {
+    try {
+      const { streakDays, withGaps, speed } = options;
+      
+      // Calculate dates for the streak
+      const dates = this.calculateStreakDates(streakDays, withGaps);
+      
+      // Generate mixed activity for each date
+      for (let i = 0; i < dates.length; i++) {
+        const date = dates[i];
+        const isEven = i % 2 === 0;
+        
+        if (isEven) {
+          // Generate workout on even days
+          this.logAction('GENERATE_WORKOUT', `Generating workout for day ${i + 1} (${date.toISOString().split('T')[0]})`);
+          
+          const result = await this.generators.workout.createWorkout(userId, {
+            workoutDate: date,
+            isTestData: true,
+            testDataTag: options.testDataTag
+          });
+          
+          if (!result.success) {
+            throw new Error(result.error);
+          }
+        } else {
+          // Generate manual workout on odd days
+          this.logAction('GENERATE_MANUAL', `Generating manual workout for day ${i + 1} (${date.toISOString().split('T')[0]})`);
+          
+          const result = await this.generators.activity.createManualWorkout(userId, {
+            activityDate: date,
+            activityType: 'running',
+            durationMinutes: 30,
+            isTestData: true,
+            testDataTag: options.testDataTag
+          });
+          
+          if (!result.success) {
+            throw new Error(result.error);
+          }
+        }
+        
+        // Update profile streak directly
+        await this.updateProfileStreak(userId, i + 1, date);
+        
+        // Check for streak achievements after each day
+        await this.checkStreakAchievements(userId, i + 1);
+        
+        // Add delay based on speed
+        await this.delayBySpeed(speed);
+      }
+      
+      this.logAction('STREAK_COMPLETE', `Completed ${dates.length}-day mixed activity streak`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logAction('GENERATE_MIXED_STREAK_ERROR', message, false, message);
+      throw error;
+    }
+  }
+  
+  private calculateStreakDates(days: number, withGaps: boolean): Date[] {
+    const dates: Date[] = [];
+    const today = new Date();
+    
+    // Start from 'days' ago and work forward to today
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(today.getDate() - i);
+      
+      // If we want gaps, skip some days
+      if (withGaps && i > 0 && i % 3 === 0) {
+        continue;
+      }
+      
+      dates.push(date);
+    }
+    
+    return dates;
+  }
+  
+  private async updateProfileStreak(userId: string, streak: number, date: Date): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          streak: streak,
+          last_workout_at: date.toISOString()
+        })
+        .eq('id', userId);
+        
+      if (error) throw error;
+      
+      this.logAction('UPDATE_STREAK', `Updated user streak to ${streak}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logAction('UPDATE_STREAK_ERROR', message, false, message);
+      throw error;
+    }
+  }
+  
+  private async checkStreakAchievements(userId: string, currentStreak: number): Promise<string[]> {
+    const streakAchievements = [
+      { id: 'trinca-poderosa', requiredStreak: 3 },
+      { id: 'embalo-fitness', requiredStreak: 5 },
+      { id: 'semana-impecavel', requiredStreak: 7 },
+      { id: 'mestre-da-consistencia', requiredStreak: 14 },
+      { id: 'lendario', requiredStreak: 30 }
+    ];
+    
+    const unlockedAchievements: string[] = [];
+    
+    for (const achievement of streakAchievements) {
+      if (currentStreak >= achievement.requiredStreak) {
+        const unlocked = await this.checkAchievementUnlock(userId, achievement.id);
+        
+        if (unlocked) {
+          this.logAction('ACHIEVEMENT_UNLOCKED', `Unlocked streak achievement: ${achievement.id} (${achievement.requiredStreak} days)`);
+          unlockedAchievements.push(achievement.id);
+        }
+      }
+    }
+    
+    return unlockedAchievements;
+  }
+  
+  async cleanup(userId: string): Promise<boolean> {
+    try {
+      this.logAction('CLEANUP', 'Cleaning up streak test data');
+      
+      // Reset streak
+      await this.resetUserStreak(userId);
+      
+      // Clean up workouts
+      await this.generators.workout.cleanup(userId, { silent: true });
+      
+      // Clean up manual workouts
+      await this.generators.activity.cleanup(userId, { silent: true });
+      
+      this.logAction('CLEANUP_COMPLETE', 'Successfully cleaned up streak test data');
       return true;
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logAction('CLEANUP_ERROR', message, false, message);
       return false;
     }
   }
 }
 
-// Register the scenario with the scenario runner
-scenarioRunner.registerScenario(new StreakScenario());
+// Register scenario with the runner
+export const streakScenario = new StreakScenario();

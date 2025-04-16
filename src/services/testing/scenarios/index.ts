@@ -1,40 +1,27 @@
 
-import { Achievement } from '@/types/achievementTypes';
 import { supabase } from '@/integrations/supabase/client';
+import { Achievement } from '@/types/achievementTypes';
+import { toast } from 'sonner';
 
-// Define test scenario types
-export interface TestScenario {
-  id: string;
-  name: string;
-  description: string;
-  tags: string[];
-  achievementTypes?: string[];
-  execute: (userId: string, options?: ScenarioOptions) => Promise<ScenarioResult>;
-  cleanup?: () => Promise<void>;
-  getConfigurationOptions?: () => Record<string, any>;
-}
+// Type definitions for scenario system
+export type SpeedOption = 'slow' | 'normal' | 'fast';
 
 export interface ScenarioOptions {
-  verbose?: boolean;
-  skipCleanup?: boolean;
-  maxSteps?: number;
-  speed?: 'slow' | 'normal' | 'fast';
-  autoCleanup?: boolean;
-  silent?: boolean;
+  speed: SpeedOption;
+  silent: boolean;
+  autoCleanup: boolean;
+  testDataTag?: string;
+  [key: string]: any;
 }
 
-export interface ScenarioResult {
+export interface ScenarioAction {
+  type: string;
+  name?: string;
+  description: string;
+  timestamp: Date;
   success: boolean;
-  message?: string;
-  achievementsAwarded?: Achievement[];
-  data?: any;
-  error?: Error;
-  actions?: ScenarioAction[];
-  achievementsUnlocked?: Achievement[];
-  executionTimeMs?: number;
-  completionPercentage?: number;
-  unlockedCount?: number;
-  targetCount?: number;
+  status?: 'completed' | 'failed' | 'pending';
+  error?: string;
 }
 
 export interface ScenarioProgress {
@@ -46,232 +33,279 @@ export interface ScenarioProgress {
   currentAction?: string;
 }
 
-export interface ScenarioAction {
+export interface ScenarioResult {
+  success: boolean;
+  error?: string | null;
+  executionTimeMs: number;
+  actions: ScenarioAction[];
+  achievementsUnlocked: string[];
+  completionPercentage?: number;
+  unlockedCount?: number;
+  targetCount?: number;
+}
+
+// Base scenario interface
+export interface TestScenario {
+  id: string;
   name: string;
-  type: string;
-  status: 'pending' | 'running' | 'completed' | 'failed';
-  timestamp?: Date;
-  details?: string;
-  description?: string;
-  success?: boolean;
-  error?: string;
+  description: string;
+  tags: string[];
+  getConfigurationOptions(): Record<string, any>;
+  execute(userId: string, options?: ScenarioOptions): Promise<ScenarioResult>;
+  cleanup(): Promise<boolean>;
 }
 
-export class BaseScenario {
-  protected userId: string;
-  protected startTime: number = 0;
-  protected actions: ScenarioAction[] = [];
-  protected achievementsUnlocked: Achievement[] = [];
-
-  constructor(userId: string) {
-    this.userId = userId;
-  }
-
-  protected createResult(success: boolean, message: string): ScenarioResult {
-    return {
-      success,
-      message,
-      executionTimeMs: Date.now() - this.startTime,
-      actions: this.actions,
-      achievementsUnlocked: this.achievementsUnlocked
-    };
-  }
-
-  protected async logAction(name: string, type: string, details?: string): Promise<void> {
-    this.actions.push({
-      name,
-      type,
-      status: 'running',
-      timestamp: new Date(),
-      details
-    });
-  }
-
-  protected async delayBySpeed(speed: 'slow' | 'normal' | 'fast'): Promise<void> {
-    const delays = {
-      slow: 1000,
-      normal: 500,
-      fast: 0
-    };
-    await new Promise(resolve => setTimeout(resolve, delays[speed]));
-  }
-
-  protected async checkAchievementUnlock(achievementId: string): Promise<boolean> {
-    try {
-      const { data, error } = await supabase
-        .from('user_achievements')
-        .select('*')
-        .eq('user_id', this.userId)
-        .eq('achievement_id', achievementId)
-        .maybeSingle();
-      
-      return !!data;
-    } catch (error) {
-      console.error('Error checking achievement unlock:', error);
-      return false;
-    }
-  }
-}
-
-class ScenarioRunner {
+// Scenario runner
+export class ScenarioRunner {
   private scenarios: Map<string, TestScenario> = new Map();
-  private progressCallback?: (progress: ScenarioProgress) => void;
-  private isRunning: boolean = false;
-  private isPaused: boolean = false;
-  private currentScenario?: string;
-
-  /**
-   * Register a testing scenario
-   */
+  private progressCallback: ((progress: ScenarioProgress) => void) | null = null;
+  
+  constructor() {
+    // Initialize with empty scenario map
+  }
+  
+  // Register a scenario with the runner
   registerScenario(scenario: TestScenario): void {
     this.scenarios.set(scenario.id, scenario);
   }
-
-  /**
-   * Get list of available scenarios
-   */
-  getAvailableScenarios(): TestScenario[] {
-    return Array.from(this.scenarios.values());
-  }
-
-  /**
-   * Get scenario by ID
-   */
+  
+  // Get a specific scenario by ID
   getScenario(scenarioId: string): TestScenario | undefined {
     return this.scenarios.get(scenarioId);
   }
-
-  /**
-   * Set progress callback for monitoring scenario execution
-   */
+  
+  // Get all registered scenarios
+  getScenarios(): TestScenario[] {
+    return Array.from(this.scenarios.values());
+  }
+  
+  // Set a callback to receive progress updates
   setProgressCallback(callback: (progress: ScenarioProgress) => void): void {
     this.progressCallback = callback;
   }
-
-  /**
-   * Pause currently running scenario
-   */
-  pauseCurrentScenario(): void {
-    if (this.isRunning && !this.isPaused) {
-      this.isPaused = true;
-      
-      if (this.progressCallback) {
-        this.progressCallback({
-          percentage: 0,
-          totalActions: 0,
-          completedActions: 0,
-          isRunning: this.isRunning,
-          isPaused: this.isPaused
-        });
-      }
-    }
-  }
-
-  /**
-   * Resume paused scenario
-   */
-  resumeCurrentScenario(): void {
-    if (this.isRunning && this.isPaused) {
-      this.isPaused = false;
-      
-      if (this.progressCallback) {
-        this.progressCallback({
-          percentage: 0,
-          totalActions: 0,
-          completedActions: 0,
-          isRunning: this.isRunning,
-          isPaused: this.isPaused
-        });
-      }
-    }
-  }
-
-  /**
-   * Get all scenarios (alias for getAvailableScenarios)
-   */
-  getScenarios(): TestScenario[] {
-    return this.getAvailableScenarios();
-  }
-
-  /**
-   * Run a specific scenario
-   */
-  async runScenario(userId: string, scenarioId: string, options?: ScenarioOptions): Promise<ScenarioResult> {
+  
+  // Run a specific scenario
+  async runScenario(
+    scenarioId: string,
+    userId: string,
+    options?: Partial<ScenarioOptions>
+  ): Promise<ScenarioResult> {
     const scenario = this.scenarios.get(scenarioId);
     
     if (!scenario) {
       return {
         success: false,
-        message: `Scenario '${scenarioId}' not found`
+        error: `Scenario with ID ${scenarioId} not found`,
+        executionTimeMs: 0,
+        actions: [],
+        achievementsUnlocked: []
       };
     }
     
-    this.isRunning = true;
-    this.isPaused = false;
-    this.currentScenario = scenarioId;
+    // Default options
+    const defaultOptions: ScenarioOptions = {
+      speed: 'normal',
+      silent: false,
+      autoCleanup: true
+    };
+    
+    // Merge with provided options
+    const mergedOptions: ScenarioOptions = {
+      ...defaultOptions,
+      ...options
+    };
     
     try {
-      // Begin transaction if available
-      try {
-        await supabase.rpc('begin_transaction');
-      } catch (error) {
-        console.warn('Transaction not available, running scenario without transaction');
-      }
-      
-      const startTime = performance.now();
-      
-      const result = await scenario.execute(userId, options);
-      
-      const endTime = performance.now();
-      result.executionTimeMs = Math.round(endTime - startTime);
-      
-      // Roll back transaction to keep database clean
-      if (!options?.skipCleanup) {
-        try {
-          await supabase.rpc('rollback_transaction');
-        } catch (error) {
-          console.warn('Failed to rollback transaction', error);
-        }
-      }
-      
-      this.isRunning = false;
-      this.isPaused = false;
-      this.currentScenario = undefined;
-      
-      return result;
+      return await scenario.execute(userId, mergedOptions);
     } catch (error) {
-      // Ensure transaction is rolled back on error
-      try {
-        await supabase.rpc('rollback_transaction');
-      } catch (rollbackError) {
-        console.warn('Failed to rollback transaction', rollbackError);
-      }
-      
-      this.isRunning = false;
-      this.isPaused = false;
-      this.currentScenario = undefined;
+      const errorMessage = error instanceof Error ? error.message : String(error);
       
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Unknown error occurred',
-        error: error instanceof Error ? error : new Error('Unknown error')
+        error: errorMessage,
+        executionTimeMs: 0,
+        actions: [{
+          type: 'ERROR',
+          name: 'Execution Error',
+          description: errorMessage,
+          timestamp: new Date(),
+          success: false,
+          status: 'failed',
+          error: errorMessage
+        }],
+        achievementsUnlocked: []
       };
     }
   }
-
-  /**
-   * Run multiple scenarios in sequence
-   */
-  async runMultipleScenarios(userId: string, scenarioIds: string[], options?: ScenarioOptions): Promise<Record<string, ScenarioResult>> {
-    const results: Record<string, ScenarioResult> = {};
-    
-    for (const scenarioId of scenarioIds) {
-      results[scenarioId] = await this.runScenario(userId, scenarioId, options);
+  
+  // Pause the currently running scenario
+  pauseCurrentScenario(): void {
+    // Implement pause functionality
+    if (this.progressCallback) {
+      this.progressCallback({
+        percentage: 0,
+        totalActions: 0,
+        completedActions: 0,
+        isRunning: true,
+        isPaused: true
+      });
     }
-    
-    return results;
+  }
+  
+  // Resume the currently paused scenario
+  resumeCurrentScenario(): void {
+    // Implement resume functionality
+    if (this.progressCallback) {
+      this.progressCallback({
+        percentage: 0,
+        totalActions: 0,
+        completedActions: 0,
+        isRunning: true,
+        isPaused: false
+      });
+    }
   }
 }
 
-// Create singleton instance
+// Create a singleton instance of the scenario runner
 export const scenarioRunner = new ScenarioRunner();
+
+// Base class for scenarios to extend
+export abstract class BaseScenario implements TestScenario {
+  public id: string;
+  public name: string;
+  public description: string;
+  public tags: string[];
+  protected startTime: number = 0;
+  protected actions: ScenarioAction[] = [];
+  protected achievementsUnlocked: string[] = [];
+  
+  constructor(id: string, name: string, description: string, tags: string[] = []) {
+    this.id = id;
+    this.name = name;
+    this.description = description;
+    this.tags = tags;
+  }
+  
+  // Common scenario configuration options
+  getConfigurationOptions(): Record<string, any> {
+    return {
+      speed: {
+        type: 'select',
+        label: 'Execution Speed',
+        options: [
+          { value: 'slow', label: 'Slow (Realistic)' },
+          { value: 'normal', label: 'Normal' },
+          { value: 'fast', label: 'Fast (Quick Testing)' }
+        ],
+        default: 'normal',
+        description: 'How quickly the scenario should execute'
+      },
+      silent: {
+        type: 'boolean',
+        label: 'Silent Mode',
+        default: false,
+        description: 'Hide toast notifications during execution'
+      },
+      autoCleanup: {
+        type: 'boolean',
+        label: 'Auto Cleanup',
+        default: true,
+        description: 'Automatically clean up test data after execution'
+      }
+    };
+  }
+  
+  // Each scenario must implement its own execute method
+  abstract execute(userId: string, options?: ScenarioOptions): Promise<ScenarioResult>;
+  
+  // Base cleanup method
+  async cleanup(): Promise<boolean> {
+    return true;
+  }
+  
+  // Helper method to convert speed option to milliseconds
+  protected getDelayFromSpeed(speed: SpeedOption): number {
+    switch (speed) {
+      case 'slow': return 1000;
+      case 'fast': return 100;
+      case 'normal':
+      default: return 500;
+    }
+  }
+  
+  // Helper to delay execution based on speed setting
+  protected async delayBySpeed(speed: SpeedOption): Promise<void> {
+    const delay = this.getDelayFromSpeed(speed);
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }
+  
+  // Log an action during scenario execution
+  protected logAction(type: string, description: string, success: boolean = true, error?: string): void {
+    const action: ScenarioAction = {
+      type,
+      description,
+      timestamp: new Date(),
+      success,
+      status: success ? 'completed' : 'failed',
+      error
+    };
+    
+    this.actions.push(action);
+  }
+  
+  // Check if an achievement has been unlocked
+  protected async checkAchievementUnlock(userId: string, achievementId: string): Promise<boolean> {
+    const { data, error } = await supabase
+      .from('user_achievements')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('achievement_id', achievementId)
+      .maybeSingle();
+      
+    if (error) {
+      this.logAction('CHECK_ACHIEVEMENT', `Error checking achievement ${achievementId}: ${error.message}`, false, error.message);
+      return false;
+    }
+    
+    if (data) {
+      this.achievementsUnlocked.push(achievementId);
+      return true;
+    }
+    
+    return false;
+  }
+  
+  // Create a result object from the scenario execution
+  protected createResult(success: boolean, error?: string | null): ScenarioResult {
+    const endTime = performance.now();
+    return {
+      success,
+      error: error || null,
+      executionTimeMs: endTime - this.startTime,
+      actions: this.actions,
+      achievementsUnlocked: this.achievementsUnlocked
+    };
+  }
+  
+  // Helper to show a toast notification if not in silent mode
+  protected showToast(message: string, description: string, type: 'success' | 'error' | 'info' = 'info', silent: boolean = false): void {
+    if (silent) return;
+    
+    switch (type) {
+      case 'success':
+        toast.success(message, { description });
+        break;
+      case 'error':
+        toast.error(message, { description });
+        break;
+      default:
+        toast.info(message, { description });
+        break;
+    }
+  }
+}
+
+// Export central reference
+export * from './WorkoutScenario';
+export * from './StreakScenario';

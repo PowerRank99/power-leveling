@@ -1,249 +1,201 @@
-/**
- * Class Progression Scenario
- * 
- * This scenario simulates progress with different character classes,
- * focusing on class-specific achievements and passive bonuses.
- */
-import { supabase } from '@/integrations/supabase/client';
-import { AchievementUtils } from '@/constants/achievements/AchievementUtils';
-import { StandardizedAchievementService } from '@/services/rpg/achievements/StandardizedAchievementService';
-import { WorkoutType } from '../generators/WorkoutGenerator';
-import { CharacterClass } from '../generators/ClassGenerator';
-import { ActivityType } from '../generators/ActivityGenerator';
-import { BaseScenario, ScenarioOptions, ScenarioResult, scenarioRunner } from './index';
-import { AchievementScenarioAdapter } from '../adapters/AchievementScenarioAdapter';
 
-/**
- * Class Progression Scenario configuration options
- */
+import { BaseScenario, ScenarioOptions, ScenarioResult } from './index';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { createTestDataGenerators } from '../generators';
+
 export interface ClassProgressionScenarioOptions extends ScenarioOptions {
-  /** Which class to test (default: Guerreiro) */
-  characterClass?: CharacterClass;
-  /** Number of workouts to generate (default: 10) */
-  workoutCount?: number;
-  /** Whether to test passive abilities (default: true) */
-  testPassives?: boolean;
-  /** Whether to test class-specific achievements (default: true) */
-  testAchievements?: boolean;
+  className: string;
+  workoutsToGenerate: number;
 }
 
-/**
- * Simulates progress with different character classes,
- * focusing on class-specific achievements and passive bonuses
- */
 export class ClassProgressionScenario extends BaseScenario {
-  private totalActions: number = 0;
-  private static readonly TEST_DATA_TAG = 'class-progression-scenario';
-
+  private generators = createTestDataGenerators();
+  
   constructor() {
     super(
-      'class-progression-scenario',
-      'Class Progression Journey',
-      'Simulates progress with different character classes, focusing on class-specific achievements and passive bonuses'
+      'class-progression',
+      'Class Progression Scenario',
+      'Tests achievements related to class selection and progression',
+      ['class', 'progression', 'rpg']
     );
   }
-
-  /**
-   * Get all achievements that should be unlocked by this scenario
-   */
-  public getRequiredAchievements(): string[] {
-    return [
-      'primeiro-treino',    // First workout
-      'heroi-em-ascensao',  // Reach level 5
-      // Class-specific achievements may vary
-    ];
-  }
-
-  /**
-   * Get estimated execution time in milliseconds
-   */
-  public getEstimatedDuration(): number {
-    return 25000; // 25 seconds
-  }
-
-  /**
-   * Get the total number of actions for progress tracking
-   */
-  protected getTotalActions(): number {
-    return this.totalActions;
-  }
-
-  /**
-   * Configure class-specific options
-   */
-  public configureClass(className: CharacterClass): ClassProgressionScenarioOptions {
+  
+  getConfigurationOptions(): Record<string, any> {
+    const baseOptions = super.getConfigurationOptions();
+    
     return {
-      characterClass: className
-    };
-  }
-
-  /**
-   * Get configuration options specific to this scenario
-   */
-  public getConfigurationOptions(): Record<string, any> {
-    return {
-      characterClass: {
+      ...baseOptions,
+      className: {
         type: 'select',
-        default: CharacterClass.GUERREIRO,
-        options: Object.values(CharacterClass),
         label: 'Character Class',
-        description: 'Which class to use for testing'
+        options: [
+          { value: 'guerreiro', label: 'Guerreiro' },
+          { value: 'monge', label: 'Monge' },
+          { value: 'ninja', label: 'Ninja' },
+          { value: 'druida', label: 'Druida' },
+          { value: 'bruxo', label: 'Bruxo' },
+          { value: 'paladino', label: 'Paladino' }
+        ],
+        default: 'guerreiro',
+        description: 'Character class to simulate progression for'
       },
-      workoutCount: {
+      workoutsToGenerate: {
         type: 'number',
-        default: 10,
-        min: 5,
-        max: 50,
-        label: 'Number of Workouts',
-        description: 'How many workouts to generate'
-      },
-      testPassives: {
-        type: 'boolean',
-        default: true,
-        label: 'Test Class Passives',
-        description: 'Whether to test class passive abilities'
-      },
-      testAchievements: {
-        type: 'boolean',
-        default: true,
-        label: 'Test Class Achievements',
-        description: 'Whether to test class-specific achievements'
+        label: 'Workouts to Generate',
+        default: 5,
+        min: 1,
+        max: 30,
+        description: 'Number of workouts to generate for the class'
       }
     };
   }
-
-  /**
-   * Run the scenario
-   */
-  public async run(userId: string, options?: ClassProgressionScenarioOptions): Promise<ScenarioResult> {
-    if (!userId) {
-      return this.createResult(false, 'User ID is required');
-    }
-
-    this.startTime = Date.now();
+  
+  async execute(userId: string, options?: ScenarioOptions): Promise<ScenarioResult> {
+    this.startTime = performance.now();
     this.actions = [];
     this.achievementsUnlocked = [];
-
-    // Configure options
-    const config: Required<ClassProgressionScenarioOptions> = {
-      characterClass: options?.characterClass || CharacterClass.GUERREIRO,
-      workoutCount: options?.workoutCount || 10,
-      testPassives: options?.testPassives !== false,
-      testAchievements: options?.testAchievements !== false,
-      silent: options?.silent || false,
-      speed: options?.speed || 0.5,
-      autoCleanup: options?.autoCleanup || false,
-      testDataTag: options?.testDataTag || ClassProgressionScenario.TEST_DATA_TAG
-    };
-
-    // Calculate total actions for progress tracking
-    this.totalActions = 5 + // Setup actions
-      1 + // Class selection
-      1 + // Workout series generation
-      1 + // XP checking
-      1 + // Achievement checking
-      1; // Finalization
-
+    
     try {
-      // Set character class
-      this.logAction('SET_CLASS', `Setting character class to ${config.characterClass}`);
-      await this.dataGenerator.getGenerators().class.simulateClassSelection(
-        userId, 
-        config.characterClass, 
-        { bypassCooldown: true, silent: config.silent }
-      );
-      await this.delayBySpeed(1000, options);
+      const mergedOptions: Required<ClassProgressionScenarioOptions> = {
+        speed: options?.speed || 'normal',
+        silent: options?.silent || false,
+        autoCleanup: options?.autoCleanup !== false,
+        className: options?.className || 'guerreiro',
+        workoutsToGenerate: options?.workoutsToGenerate || 5,
+        testDataTag: 'test-data'
+      };
       
-      // Generate workout series
-      this.logAction('GENERATE_WORKOUTS', `Generating ${config.workoutCount} workouts`);
-      await this.dataGenerator.getGenerators().workout.generateWorkoutSeries(userId, {
-        count: config.workoutCount,
-        startDate: new Date(new Date().setDate(new Date().getDate() - 30)),
-        consecutive: false,
-        randomizeWorkouts: true,
-        workoutType: WorkoutType.MIXED,
-        testDataTag: config.testDataTag,
-        silent: config.silent
-      });
-      await this.delayBySpeed(3000, options);
+      // Log start of scenario
+      this.logAction('START_SCENARIO', `Starting class progression scenario for ${mergedOptions.className}`);
       
-      // Add some manual workouts for variety
-      this.logAction('GENERATE_MANUAL_WORKOUTS', 'Adding manual workouts for variety');
-      await this.dataGenerator.getGenerators().activity.generateActivityMix(userId, {
-        count: 3,
-        includePowerDays: true,
-        testDataTag: config.testDataTag,
-        silent: config.silent
-      });
-      await this.delayBySpeed(1500, options);
+      // Set user's class
+      await this.setUserClass(userId, mergedOptions.className);
       
-      // Check achievements
-      this.logAction('CHECK_ACHIEVEMENTS', 'Checking for unlocked achievements');
+      // Generate workouts appropriate for the class
+      await this.generateClassWorkouts(userId, mergedOptions);
       
-      // Use the StandardizedAchievementService to check for achievements
-      const workoutAchievements = await StandardizedAchievementService.checkWorkoutAchievements(userId);
-      const recordAchievements = await StandardizedAchievementService.checkStreakAchievements(userId);
+      // Check for class-specific achievements
+      const achievements = await this.checkClassAchievements(userId, mergedOptions.className);
       
-      if (workoutAchievements.success && workoutAchievements.data) {
-        this.achievementsUnlocked.push(...workoutAchievements.data);
-      }
-      
-      if (recordAchievements.success && recordAchievements.data) {
-        this.achievementsUnlocked.push(...recordAchievements.data);
-      }
-      
-      // Get achievement names for better logging
-      const achievementNames: string[] = [];
-      for (const id of this.achievementsUnlocked) {
-        try {
-          // Access the asyncGetAchievementName method that's patched onto this object
-          const name = await (this as any).asyncGetAchievementName(id);
-          achievementNames.push(name);
-        } catch (error) {
-          console.error('Error getting achievement name:', error);
-          achievementNames.push(id); // Fallback to ID if name can't be retrieved
-        }
-      }
-      
-      this.logAction('ACHIEVEMENTS_UNLOCKED', `Unlocked ${achievementNames.length} achievements`, { achievements: achievementNames });
-      
+      // Return successful result
       return this.createResult(true);
+      
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      this.logAction('ERROR', errorMessage, {}, false, errorMessage);
+      // Log error and return failure
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logAction('ERROR', errorMessage, false, errorMessage);
       return this.createResult(false, errorMessage);
     }
   }
-
-  /**
-   * Clean up all test data generated by this scenario
-   */
-  public async cleanup(userId: string, options?: { silent?: boolean }): Promise<boolean> {
+  
+  private async setUserClass(userId: string, className: string): Promise<void> {
     try {
-      await this.dataGenerator.cleanupAllTestData(userId, {
-        silent: options?.silent,
-        testDataTag: ClassProgressionScenario.TEST_DATA_TAG
-      });
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          class: className,
+          class_selected_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+        
+      if (error) throw error;
       
-      return true;
+      this.logAction('SET_CLASS', `Set user class to ${className}`);
+      
     } catch (error) {
-      return false;
+      const message = error instanceof Error ? error.message : String(error);
+      this.logAction('SET_CLASS_ERROR', message, false, message);
+      throw error;
     }
   }
-
-  async checkAchievementUnlock(achievementId: string): Promise<boolean> {
-    // Use the adapter to get achievement and check unlocking
-    const achievement = await AchievementScenarioAdapter.getAchievementById(achievementId);
-    if (!achievement) {
-      this.logAction('ERROR', `Achievement not found: ${achievementId}`, {}, false);
-      return false;
+  
+  private async generateClassWorkouts(userId: string, options: Required<ClassProgressionScenarioOptions>): Promise<void> {
+    try {
+      const { workoutsToGenerate, className } = options;
+      
+      // Different workout types based on class
+      let workoutType = 'strength';
+      switch (className) {
+        case 'guerreiro':
+          workoutType = 'strength';
+          break;
+        case 'monge':
+          workoutType = 'calisthenics';
+          break;
+        case 'ninja':
+          workoutType = 'cardio';
+          break;
+        case 'druida':
+          workoutType = 'mobility';
+          break;
+        case 'bruxo':
+          workoutType = 'flexibility';
+          break;
+        case 'paladino':
+          workoutType = 'sport';
+          break;
+      }
+      
+      // Generate the workouts
+      this.logAction('GENERATE_WORKOUTS', `Generating ${workoutsToGenerate} ${workoutType} workouts`);
+      
+      // Use workout generator
+      const result = await this.generators.workout.createRandomWorkouts(userId, {
+        workoutCount: workoutsToGenerate,
+        workoutType: workoutType,
+        isTestData: true
+      });
+      
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      
+      this.logAction('WORKOUTS_GENERATED', `Successfully generated ${workoutsToGenerate} workouts`);
+      
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logAction('GENERATE_WORKOUTS_ERROR', message, false, message);
+      throw error;
+    }
+  }
+  
+  private async checkClassAchievements(userId: string, className: string): Promise<string[]> {
+    const unlockedAchievements: string[] = [];
+    
+    // Check for class-specific achievements
+    const classAchievements = this.getClassAchievements(className);
+    
+    for (const achievementId of classAchievements) {
+      const unlocked = await this.checkAchievementUnlock(userId, achievementId);
+      if (unlocked) {
+        unlockedAchievements.push(achievementId);
+      }
     }
     
-    this.logAction('CHECK_ACHIEVEMENT', `Checking if achievement "${achievement.name}" is unlocked`);
-    
-    return true;
+    return unlockedAchievements;
+  }
+  
+  private getClassAchievements(className: string): string[] {
+    // Return achievement IDs related to the specified class
+    switch (className) {
+      case 'guerreiro':
+        return ['guerreiro_iniciado', 'forca_bruta'];
+      case 'monge':
+        return ['monge_iniciado', 'forca_interior'];
+      case 'ninja':
+        return ['ninja_iniciado', 'hiit_and_run'];
+      case 'druida':
+        return ['druida_iniciado', 'ritmo_da_natureza'];
+      case 'bruxo':
+        return ['bruxo_iniciado', 'pijama_arcano'];
+      case 'paladino':
+        return ['paladino_iniciado', 'caminho_do_heroi'];
+      default:
+        return [];
+    }
   }
 }
 
-// Register the scenario with the scenario runner
-scenarioRunner.registerScenario(new ClassProgressionScenario());
+// Create the scenario instance
+export const classProgressionScenario = new ClassProgressionScenario();
