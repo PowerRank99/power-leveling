@@ -4,6 +4,8 @@ import { XP_CONSTANTS } from './constants/xpConstants';
 import { EXERCISE_TYPES, CLASS_PASSIVE_SKILLS } from './constants/exerciseTypes';
 import { BaseXPCalculator } from './calculations/BaseXPCalculator';
 import { ClassBonusCalculator } from './calculations/ClassBonusCalculator';
+import { getClassRegistry } from './registry/ClassRegistry';
+import { PassiveSkillContext } from './types/PassiveSkillTypes';
 
 /**
  * Service responsible for XP calculations and constants
@@ -74,22 +76,68 @@ export class XPCalculationService {
       // Sum base XP
       let baseXP = timeXP + exerciseXP + setsXP;
       
-      // Apply class-specific bonuses with breakdown
-      const { totalXP, bonusBreakdown } = ClassBonusCalculator.applyClassBonuses(
-        baseXP, 
-        workout, 
-        userClass, 
-        streak
-      );
+      // Create map of exercise types for passive skill calculation
+      const exerciseTypes: Record<string, number> = {};
+      for (const exercise of workout.exercises) {
+        if (exercise.type) {
+          exerciseTypes[exercise.type] = (exerciseTypes[exercise.type] || 0) + 1;
+        }
+      }
       
-      // Cap at daily maximum
-      const cappedXP = Math.min(totalXP, this.DAILY_XP_CAP);
-      
-      return {
-        totalXP: cappedXP,
-        baseXP,
-        bonusBreakdown
+      // Create context for passive skill calculation
+      const context: PassiveSkillContext = {
+        userId: '', // Not needed for XP calculation
+        userClass: userClass || null,
+        streak: streak,
+        durationMinutes: timeMinutes,
+        exerciseTypes: exerciseTypes,
+        totalExercises: workout.exercises.length,
+        hasPR: workout.hasPR || false,
+        baseXP: baseXP,
+        streakMultiplier: this.getStreakMultiplier(streak)
       };
+      
+      // Get class registry
+      const registry = getClassRegistry();
+      
+      // Try to use new class registry for calculation
+      if (registry && userClass) {
+        // Calculate bonuses using registry
+        const { totalBonus, results } = registry.calculatePassiveSkillBonuses(context);
+        
+        // Format results for compatibility
+        const bonusBreakdown = results.map(result => ({
+          skill: result.skillName,
+          amount: result.bonusXP,
+          description: result.description
+        }));
+        
+        // Cap at daily maximum
+        const totalXP = Math.min(baseXP + totalBonus, this.DAILY_XP_CAP);
+        
+        return {
+          totalXP,
+          baseXP,
+          bonusBreakdown
+        };
+      } else {
+        // Fall back to legacy class bonus calculator
+        const { totalXP, bonusBreakdown } = ClassBonusCalculator.applyClassBonuses(
+          baseXP, 
+          workout, 
+          userClass, 
+          streak
+        );
+        
+        // Cap at daily maximum
+        const cappedXP = Math.min(totalXP, this.DAILY_XP_CAP);
+        
+        return {
+          totalXP: cappedXP,
+          baseXP,
+          bonusBreakdown
+        };
+      }
     } catch (error) {
       console.error('Error calculating workout XP:', error);
       return {

@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { XP_CONSTANTS } from './constants/xpConstants';
 import { XPCalculationService } from './XPCalculationService';
@@ -7,6 +8,9 @@ import { CompletionBonusService } from './bonus/CompletionBonusService';
 import { PassiveSkillService } from './bonus/PassiveSkillService';
 import { ProfileXPService } from './bonus/ProfileXPService';
 import { XPToastService, XPBreakdown } from './bonus/XPToastService';
+import { ClassBonusCalculator } from './calculations/ClassBonusCalculator';
+import { getClassRegistry } from './registry/ClassRegistry';
+import { PassiveSkillContext } from './types/PassiveSkillTypes';
 
 /**
  * Main service for handling XP bonuses and updates
@@ -168,7 +172,8 @@ export class XPBonusService {
   }
 
   /**
-   * Check if Bruxo's Folga Mística passive should preserve streak - delegated to PassiveSkillService
+   * Check if class passive should preserve streak
+   * Enhanced to use the new class architecture
    */
   static async checkStreakPreservation(userId: string, userClass: string | null): Promise<boolean> {
     return PassiveSkillService.checkStreakPreservation(userId, userClass);
@@ -192,5 +197,77 @@ export class XPBonusService {
    */
   static async recordPowerDayUsage(userId: string, week: number, year: number): Promise<boolean> {
     return PowerDayService.recordPowerDayUsage(userId, week, year);
+  }
+  
+  /**
+   * Calculate class bonuses using the new class registry
+   * This method provides a transition path from the old class system to the new one
+   */
+  static calculateClassBonuses(
+    userId: string,
+    userClass: string | null,
+    workout: {
+      id: string;
+      exercises: any[];
+      durationSeconds: number;
+      hasPR?: boolean;
+    }
+  ): {
+    totalBonus: number;
+    bonusDetails: { skill: string, amount: number, description: string }[];
+  } {
+    // Default to empty result
+    const defaultResult = {
+      totalBonus: 0,
+      bonusDetails: []
+    };
+    
+    try {
+      // If no class, return no bonuses
+      if (!userClass) return defaultResult;
+      
+      // Get class registry
+      const registry = getClassRegistry();
+      if (!registry) return defaultResult;
+      
+      // Prepare context for skill calculation
+      const exerciseTypes: Record<string, number> = {};
+      
+      // Count exercises by type
+      for (const exercise of workout.exercises) {
+        if (exercise.type) {
+          exerciseTypes[exercise.type] = (exerciseTypes[exercise.type] || 0) + 1;
+        }
+      }
+      
+      // Create passive skill context
+      const context: PassiveSkillContext = {
+        userId,
+        userClass,
+        streak: 0, // Will be filled in later if needed
+        durationMinutes: Math.floor(workout.durationSeconds / 60),
+        exerciseTypes,
+        totalExercises: workout.exercises.length,
+        hasPR: workout.hasPR || false,
+        baseXP: 0, // Will be filled in later
+        streakMultiplier: 0 // Will be filled in later
+      };
+      
+      // Calculate bonuses using registry
+      const bonusResult = registry.calculatePassiveSkillBonuses(context);
+      
+      // Convert to expected format
+      return {
+        totalBonus: bonusResult.totalBonus,
+        bonusDetails: bonusResult.results.map(result => ({
+          skill: result.skillName,
+          amount: result.bonusXP,
+          description: result.description
+        }))
+      };
+    } catch (error) {
+      console.error('Error calculating class bonuses:', error);
+      return defaultResult;
+    }
   }
 }
