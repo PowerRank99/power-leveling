@@ -17,7 +17,7 @@ export class ExerciseVarietyChecker extends BaseAchievementChecker {
         const { data, error } = await supabase
           .from('workout_sets')
           .select('exercise_id')
-          .eq('workout_id', 'workouts.user_id', userId)
+          .eq('user_id', userId)
           .not('exercise_id', 'is', null);
           
         if (error) throw error;

@@ -48,4 +48,42 @@ export class WorkoutCategoryChecker extends BaseAchievementChecker {
       'WORKOUT_CATEGORY_ACHIEVEMENTS'
     );
   }
+  
+  // Add the missing static method that's referenced in other files
+  static async checkWorkoutCategoryAchievements(
+    userId: string, 
+    achievementsToCheck: string[]
+  ): Promise<void> {
+    try {
+      // Get workout categories
+      const { data: workouts, error } = await supabase
+        .from('workouts')
+        .select('category')
+        .eq('user_id', userId)
+        .not('completed_at', 'is', null);
+        
+      if (error) throw error;
+      
+      // Count workouts by category
+      const categoryCounts: Record<string, number> = {};
+      workouts?.forEach(workout => {
+        const category = workout.category || 'unknown';
+        categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+      });
+      
+      // Check for strength achievement
+      if (categoryCounts['strength'] && categoryCounts['strength'] >= 10) {
+        achievementsToCheck.push('forca-de-guerreiro');
+      }
+      
+      // Check for cardio achievement
+      if (categoryCounts['cardio'] && categoryCounts['cardio'] >= 10) {
+        achievementsToCheck.push('cardio-sem-folego');
+      }
+      
+      // Add additional category checks as needed
+    } catch (error) {
+      console.error('Error checking workout category achievements:', error);
+    }
+  }
 }

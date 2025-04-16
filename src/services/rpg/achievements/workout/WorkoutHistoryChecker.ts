@@ -11,7 +11,7 @@ export class WorkoutHistoryChecker extends BaseAchievementChecker {
       async () => {
         // Get achievements with workout history requirements
         const { data: achievements } = await this.fetchAchievementsByCategory(
-          AchievementCategory.WORKOUT_HISTORY,
+          'workout_history', // Using string directly since the enum doesn't have this value
           'requirements->count'
         );
         

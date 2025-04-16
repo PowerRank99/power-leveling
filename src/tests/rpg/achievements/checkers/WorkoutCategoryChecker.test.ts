@@ -16,9 +16,11 @@ describe('WorkoutCategoryChecker', () => {
     it('should award strength achievement for 10 strength workouts', async () => {
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({
-            data: Array(10).fill({ category: 'strength' }),
-            error: null
+          eq: vi.fn().mockReturnValue({
+            not: vi.fn().mockResolvedValue({
+              data: Array(10).fill({ category: 'strength' }),
+              error: null
+            })
           })
         })
       } as any);
@@ -31,9 +33,11 @@ describe('WorkoutCategoryChecker', () => {
     it('should award cardio achievement for 10 cardio workouts', async () => {
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({
-            data: Array(10).fill({ category: 'cardio' }),
-            error: null
+          eq: vi.fn().mockReturnValue({
+            not: vi.fn().mockResolvedValue({
+              data: Array(10).fill({ category: 'cardio' }),
+              error: null
+            })
           })
         })
       } as any);
@@ -46,9 +50,11 @@ describe('WorkoutCategoryChecker', () => {
     it('should handle database errors gracefully', async () => {
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({
-            data: null,
-            error: new Error('Database error')
+          eq: vi.fn().mockReturnValue({
+            not: vi.fn().mockResolvedValue({
+              data: null,
+              error: new Error('Database error')
+            })
           })
         })
       } as any);
