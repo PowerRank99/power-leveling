@@ -151,6 +151,8 @@ export class PassiveSkillService {
                 durationMinutes: 0,
                 exerciseTypes: {},
                 totalExercises: 0,
+                exerciseCount: 0,  // Added missing property
+                setCount: 0,       // Added missing property
                 hasPR: false,
                 streakMultiplier: 0
               });

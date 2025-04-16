@@ -240,6 +240,11 @@ export class XPBonusService {
         }
       }
       
+      // Count total completed sets
+      const completedSets = workout.exercises.reduce((sum, ex) => {
+        return sum + (ex.sets?.filter(set => set.completed)?.length || 0);
+      }, 0);
+      
       // Create passive skill context
       const context: PassiveSkillContext = {
         userId,
@@ -248,6 +253,8 @@ export class XPBonusService {
         durationMinutes: Math.floor(workout.durationSeconds / 60),
         exerciseTypes,
         totalExercises: workout.exercises.length,
+        exerciseCount: workout.exercises.length, // Added the missing exerciseCount property
+        setCount: completedSets, // Added the missing setCount property
         hasPR: workout.hasPR || false,
         baseXP: 0, // Will be filled in later
         streakMultiplier: 0 // Will be filled in later
