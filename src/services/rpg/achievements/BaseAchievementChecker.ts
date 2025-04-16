@@ -4,14 +4,8 @@ import { AchievementService } from '@/services/rpg/AchievementService';
 import { AchievementCategory } from '@/types/achievementTypes';
 
 export abstract class BaseAchievementChecker {
-  /**
-   * Abstract method that must be implemented by all checker classes
-   */
   abstract checkAchievements(userId: string, data?: any): Promise<ServiceResponse<string[]>>;
   
-  /**
-   * Helper method to fetch achievements by category with optional sorting and filters
-   */
   protected async fetchAchievementsByCategory(
     category: AchievementCategory,
     orderBy?: string,
@@ -35,9 +29,6 @@ export abstract class BaseAchievementChecker {
     return query;
   }
   
-  /**
-   * Execute checker with standard error handling
-   */
   protected async executeWithErrorHandling(
     operation: () => Promise<string[]>,
     operationName: string
@@ -49,9 +40,6 @@ export abstract class BaseAchievementChecker {
     );
   }
   
-  /**
-   * Utility method to award achievements in batch
-   */
   protected async awardAchievementsBatch(
     userId: string,
     achievementIds: string[]
@@ -60,5 +48,45 @@ export abstract class BaseAchievementChecker {
     
     const result = await AchievementService.checkAndAwardAchievements(userId, achievementIds);
     return result.success && Array.isArray(result.data) ? result.data : [];
+  }
+  
+  protected async getWorkoutStats(userId: string): Promise<{
+    totalCount: number;
+    categoryStats: Map<string, number>;
+    streakDays: number;
+  }> {
+    const { data: stats } = await supabase
+      .from('profiles')
+      .select('workouts_count, streak')
+      .eq('id', userId)
+      .single();
+      
+    const { data: categoryData } = await supabase
+      .from('workouts')
+      .select(`
+        workout_sets (
+          exercises (
+            category,
+            type
+          )
+        )
+      `)
+      .eq('user_id', userId);
+      
+    const categoryStats = new Map<string, number>();
+    categoryData?.forEach(workout => {
+      workout.workout_sets?.forEach(set => {
+        if (set.exercises?.category) {
+          const count = categoryStats.get(set.exercises.category) || 0;
+          categoryStats.set(set.exercises.category, count + 1);
+        }
+      });
+    });
+    
+    return {
+      totalCount: stats?.workouts_count || 0,
+      categoryStats,
+      streakDays: stats?.streak || 0
+    };
   }
 }
