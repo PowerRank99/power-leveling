@@ -45,6 +45,17 @@ export const getClassColors = (className: string): ClassColorScheme => {
         indicator: 'bg-gradient-to-r from-emerald-500 to-emerald-600',
         particleColor: '#10b981'
       };
+    case 'Druida':
+      return {
+        gradient: 'bg-gradient-to-br from-green-600 via-green-500 to-green-700',
+        text: 'text-green-500',
+        shadow: 'shadow-[0_0_25px_rgba(34,197,94,0.6)]',
+        border: 'border-green-500/40',
+        hoverBorder: 'hover:border-green-500',
+        accent: 'bg-green-600/20',
+        indicator: 'bg-gradient-to-r from-green-500 to-green-600',
+        particleColor: '#22c55e'
+      };
     case 'Bruxo':
       return {
         gradient: 'bg-gradient-to-br from-violet-600 via-violet-500 to-violet-700',

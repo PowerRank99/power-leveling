@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Sword, Wind, Sparkles, Shield, Dumbbell } from 'lucide-react';
+import { Sword, Wind, Sparkles, Shield, Dumbbell, Leaf, Fist } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface ClassIconSelectorProps {
@@ -34,6 +34,7 @@ const ClassIconSelector: React.FC<ClassIconSelectorProps> = ({
       case 'ninja': return 'text-white';
       case 'bruxo': return 'text-white';
       case 'paladino': return 'text-white';
+      case 'druida': return 'text-white';
       default: return 'text-gray-400';
     }
   };
@@ -61,10 +62,11 @@ const ClassIconSelector: React.FC<ClassIconSelectorProps> = ({
     const IconComponent = () => {
       switch (className.toLowerCase()) {
         case 'guerreiro': return <Sword className={`${sizeClass} ${colorClass}`} />;
-        case 'monge': return <Dumbbell className={`${sizeClass} ${colorClass}`} />;
+        case 'monge': return <Fist className={`${sizeClass} ${colorClass}`} />;
         case 'ninja': return <Wind className={`${sizeClass} ${colorClass}`} />;
         case 'bruxo': return <Sparkles className={`${sizeClass} ${colorClass}`} />;
         case 'paladino': return <Shield className={`${sizeClass} ${colorClass}`} />;
+        case 'druida': return <Leaf className={`${sizeClass} ${colorClass}`} />;
         default: return <Shield className={`${sizeClass} ${colorClass}`} />;
       }
     };

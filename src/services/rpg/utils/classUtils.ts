@@ -18,7 +18,7 @@ export class ClassUtils {
     },
     'Monge': {
       class_name: 'Monge',
-      icon: 'Dumbbell',
+      icon: 'Fist',  // Changed from Dumbbell to Fist
       description: 'Especialista em Calistenia',
       color: 'from-amber-600 to-amber-800'
     },
@@ -31,7 +31,7 @@ export class ClassUtils {
     'Bruxo': {
       class_name: 'Bruxo',
       icon: 'Sparkles',
-      description: 'Especialista em Flexibilidade',
+      description: 'Especialista em Magia Arcana',
       color: 'from-purple-600 to-purple-800'
     },
     'Paladino': {
@@ -39,6 +39,12 @@ export class ClassUtils {
       icon: 'Shield',
       description: 'Especialista em Esportes',
       color: 'from-blue-600 to-blue-800'
+    },
+    'Druida': {
+      class_name: 'Druida',
+      icon: 'Leaf',
+      description: 'Especialista em Flexibilidade',
+      color: 'from-green-600 to-green-800'
     }
   };
   
