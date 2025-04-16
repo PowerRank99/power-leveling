@@ -10,7 +10,11 @@ export enum ErrorCategory {
   DATABASE = 'DATABASE',
   NETWORK = 'NETWORK',
   BUSINESS_LOGIC = 'BUSINESS_LOGIC',
-  NOT_FOUND = 'NOT_FOUND'
+  NOT_FOUND = 'NOT_FOUND',
+  // Add missing error categories
+  VALIDATION = 'VALIDATION',
+  EXCEPTION = 'EXCEPTION',
+  PROCESSING_ERROR = 'PROCESSING_ERROR'
 }
 
 export interface ServiceError {
@@ -73,6 +77,7 @@ export class ErrorHandlingService {
       showToast?: boolean;
       errorMessage?: string;
       successMessage?: string;
+      userMessage?: string; // Add the missing userMessage option
     } = {}
   ): Promise<ServiceResponse<T>> {
     return new Promise<ServiceResponse<T>>(async (resolve) => {

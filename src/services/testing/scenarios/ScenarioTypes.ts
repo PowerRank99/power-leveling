@@ -13,7 +13,7 @@ export interface ScenarioOptions {
   autoCleanup?: boolean;
 }
 
-export type SpeedOption = 'slow' | 'normal' | 'fast' | 1 | 2 | 3;
+export type SpeedOption = 'slow' | 'normal' | 'fast' | 0.5 | 1 | 2 | 3;
 
 export interface ScenarioActionResult {
   success: boolean;

@@ -6,6 +6,7 @@ export interface TestScenario {
   name: string;
   description: string;
   supportedAchievementCategories?: string[];
+  tags?: string[];
   execute(userId: string, options?: ScenarioOptions): Promise<ScenarioResult>;
   cleanup(): Promise<boolean>;
   getEstimatedDuration(): number;
@@ -16,6 +17,7 @@ export abstract class BaseScenario implements TestScenario {
   name: string;
   description: string;
   supportedAchievementCategories?: string[];
+  tags?: string[] = [];
   
   constructor(id: string, name: string, description: string, supportedCategories?: string[]) {
     this.id = id;

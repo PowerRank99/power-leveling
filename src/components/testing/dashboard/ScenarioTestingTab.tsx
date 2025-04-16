@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -134,7 +135,7 @@ const ScenarioTestingTab: React.FC<ScenarioTestingTabProps> = ({ userId }) => {
                   </div>
                   
                   <div className="flex flex-wrap gap-2 mt-3">
-                    {scenario.tags.map((tag: string) => (
+                    {scenario.tags && scenario.tags.map((tag: string) => (
                       <Badge key={tag} variant="outline" className="text-xs">
                         {tag}
                       </Badge>
@@ -142,9 +143,9 @@ const ScenarioTestingTab: React.FC<ScenarioTestingTabProps> = ({ userId }) => {
                     
                     {scenario.supportedAchievementCategories && (
                       <div className="mt-1 flex flex-wrap gap-1">
-                        {scenario.supportedAchievementCategories.map((type) => (
-                          <Badge key={type} variant="outline" className="text-xs">
-                            {type}
+                        {scenario.supportedAchievementCategories.map((category) => (
+                          <Badge key={category} variant="outline" className="text-xs">
+                            {category}
                           </Badge>
                         ))}
                       </div>

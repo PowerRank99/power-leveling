@@ -38,12 +38,15 @@ const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
       case ErrorCategory.AUTHENTICATION:
       case ErrorCategory.AUTHORIZATION:
         return 'bg-valor-15 border-valor-30 text-valor';
+      case ErrorCategory.VALIDATION_ERROR:
       case ErrorCategory.VALIDATION:
         return 'bg-amber-50/15 border-amber-300/30 text-amber-500';
       case ErrorCategory.DATABASE:
       case ErrorCategory.NETWORK:
         return 'bg-valor-15 border-valor-30 text-valor';
       case ErrorCategory.BUSINESS_LOGIC:
+      case ErrorCategory.PROCESSING_ERROR:
+      case ErrorCategory.EXCEPTION:
         return 'bg-arcane-15 border-arcane-30 text-arcane';
       default:
         return 'bg-valor-15 border-valor-30 text-valor';
