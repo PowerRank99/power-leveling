@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,10 +38,15 @@ const TestDashboardTab: React.FC<TestDashboardTabProps> = ({ userId }) => {
   const testedPercentage = totalAchievements > 0 ? (testedAchievements / totalAchievements) * 100 : 0;
   const successRate = testedAchievements > 0 ? (successfulTests / testedAchievements) * 100 : 0;
   
-  // Get recent test results
-  const recentResults = [...testResults].sort((a, b) => 
-    new Date(b.testedAt).getTime() - new Date(a.testedAt).getTime()
-  ).slice(0, 5);
+  // Get recent test results - ensuring we handle testedAt property
+  const recentResults = [...testResults]
+    .sort((a, b) => {
+      // Handle case where testedAt might not exist
+      const dateA = a.testedAt ? new Date(a.testedAt).getTime() : 0;
+      const dateB = b.testedAt ? new Date(b.testedAt).getTime() : 0;
+      return dateB - dateA;
+    })
+    .slice(0, 5);
   
   // Function to run all tests by rank
   const runTestsByRank = (rank: string) => {

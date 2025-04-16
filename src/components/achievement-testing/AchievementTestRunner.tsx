@@ -320,7 +320,15 @@ const AchievementTestRunner: React.FC<AchievementTestRunnerProps> = ({ userId, a
             </div>
             
             {results.length > 0 && testService?.getTestReport() && (
-              <TestCoverageReport coverage={testService.getTestReport().summary.coverage} />
+              <TestCoverageReport 
+                coverage={{
+                  totalAchievements: testService.getTestReport().summary.coverage.total,
+                  testedAchievements: testService.getTestReport().summary.coverage.tested,
+                  coveragePercentage: testService.getTestReport().summary.coverage.percentage,
+                  byCategory: testService.getTestReport().summary.coverage.byCategory || {},
+                  untestedAchievements: testService.getTestReport().summary.coverage.untestedAchievements || []
+                }}
+              />
             )}
           </div>
         </div>

@@ -34,9 +34,9 @@ const RecentTestResults: React.FC<RecentTestResultsProps> = ({ results }) => {
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          {results.map((result) => (
+          {results.map((result, index) => (
             <div 
-              key={`${result.achievementId}-${result.testedAt.toString()}`} 
+              key={`${result.achievementId}-${index}`} 
               className="border-b border-divider/10 last:border-0 pb-2 last:pb-0"
             >
               <div className="flex items-start justify-between">
@@ -69,7 +69,7 @@ const RecentTestResults: React.FC<RecentTestResultsProps> = ({ results }) => {
                 </div>
                 
                 <span className="text-xs text-text-tertiary whitespace-nowrap">
-                  {formatDistanceToNow(new Date(result.testedAt), { addSuffix: true })}
+                  {result.testedAt ? formatDistanceToNow(new Date(result.testedAt), { addSuffix: true }) : 'Just now'}
                 </span>
               </div>
             </div>

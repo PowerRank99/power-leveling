@@ -11,6 +11,7 @@ export interface AchievementTestResult {
   success: boolean;
   errorMessage?: string;
   testDurationMs: number;
+  testedAt: Date; // Added missing property
 }
 
 export interface AchievementTestProgress {
@@ -94,7 +95,8 @@ export class AchievementTestingService {
       category: achievement.category,
       rank: achievement.rank,
       success: true,
-      testDurationMs: 100
+      testDurationMs: 100,
+      testedAt: new Date() // Add the missing testedAt property
     }));
     
     return {
@@ -112,7 +114,8 @@ export class AchievementTestingService {
       category: "Test",
       rank: "E",
       success: true,
-      testDurationMs: 100
+      testDurationMs: 100,
+      testedAt: new Date() // Add the missing testedAt property
     };
   }
 
@@ -141,6 +144,8 @@ export class AchievementTestingService {
         total: number;
         tested: number;
         percentage: number;
+        byCategory: Record<string, { total: number; tested: number; coverage: number }>;
+        untestedAchievements: any[];
       }
     }
   } {
@@ -157,7 +162,9 @@ export class AchievementTestingService {
         coverage: {
           total: 100, // Placeholder values
           tested: total,
-          percentage: total
+          percentage: total,
+          byCategory: {}, // Empty placeholder for byCategory
+          untestedAchievements: [] // Empty placeholder for untestedAchievements
         }
       }
     };

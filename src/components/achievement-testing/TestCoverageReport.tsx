@@ -6,17 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ShieldCheck, AlertTriangle } from 'lucide-react';
 
-interface CoverageCategoryStats {
-  total: number;
-  tested: number;
-  coverage: number;
-}
-
 export interface TestCoverageReportData {
   totalAchievements: number;
   testedAchievements: number;
   coveragePercentage: number;
-  byCategory: Record<string, CoverageCategoryStats>;
+  byCategory: Record<string, { total: number; tested: number; coverage: number }>;
   untestedAchievements: Array<any>;
 }
 

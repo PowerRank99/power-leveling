@@ -35,7 +35,7 @@ export const TestResultCard: React.FC<TestResultCardProps> = ({ result }) => {
               {result.testDurationMs}ms
             </span>
             <span className="text-text-tertiary">
-              {new Date(result.testedAt).toLocaleString()}
+              {result.testedAt ? new Date(result.testedAt).toLocaleString() : 'No date'}
             </span>
           </div>
           

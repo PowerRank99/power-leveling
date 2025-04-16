@@ -11,6 +11,8 @@ export interface ScenarioOptions {
   silent?: boolean;
   speed?: SpeedOption;
   autoCleanup?: boolean;
+  streakDays?: number;  // Added missing property
+  recordCount?: number; // Added missing property
 }
 
 export type SpeedOption = 'slow' | 'normal' | 'fast' | 0.5 | 1 | 2 | 3;
