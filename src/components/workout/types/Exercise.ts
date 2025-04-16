@@ -1,5 +1,5 @@
 
-export type ExerciseType = 'Musculação' | 'Calistenia' | 'Cardio' | 'Esportes' | 'Flexibilidade & Mobilidade';
+export type ExerciseType = 'Musculação' | 'Calistenia' | 'Cardio' | 'Esportes' | 'Mobilidade & Flexibilidade';
 export type DifficultyLevel = 'Iniciante' | 'Intermediário' | 'Avançado';
 
 export interface Exercise {

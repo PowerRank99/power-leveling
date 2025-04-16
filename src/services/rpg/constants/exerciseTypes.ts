@@ -11,6 +11,15 @@ export const EXERCISE_TYPES = {
   SPORTS: ['soccer', 'basketball', 'volleyball', 'tennis', 'futebol', 'basquete', 'vôlei', 'tênis', 'esporte']
 };
 
+// Mapping database exercise.type to internal categories for bonus calculations
+export const EXERCISE_TYPE_CATEGORIES = {
+  'Musculação': 'COMPOUND_LIFTS',
+  'Calistenia': 'BODYWEIGHT',
+  'Cardio': 'CARDIO_HIIT',
+  'Esportes': 'SPORTS',
+  'Mobilidade & Flexibilidade': 'FLEXIBILITY'
+};
+
 // Class passive skill names
 export const CLASS_PASSIVE_SKILLS = {
   GUERREIRO: {

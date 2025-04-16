@@ -1,15 +1,19 @@
 
-import { EXERCISE_TYPES, CLASS_PASSIVE_SKILLS } from '../../constants/exerciseTypes';
 import { WorkoutExercise } from '@/types/workoutTypes';
+import { ClassBonusCalculator } from '../ClassBonusCalculator';
 import { ClassBonusBreakdown } from '../../types/classTypes';
 
 /**
- * Calculates Paladino class-specific bonuses
+ * Paladino class bonus calculator
+ * - Caminho do Herói: +40% XP from sport activities
+ * - Camisa 10: +10% bonus to guild XP contribution (stackable with multiple Paladinos)
  */
 export class PaladinoBonus {
-  /**
-   * Apply Paladino-specific bonuses to XP
-   */
+  // Bonus percentages
+  private static readonly SPORTS_BONUS = 0.4; // 40%
+  private static readonly GUILD_CONTRIBUTION_BONUS = 0.1; // 10%
+  private static readonly MAX_GUILD_BONUS = 0.3; // 30% (3 Paladinos)
+  
   static applyBonuses(
     baseXP: number,
     workout: {
@@ -17,45 +21,41 @@ export class PaladinoBonus {
       exercises: WorkoutExercise[];
       durationSeconds: number;
     }
-  ): { bonusXP: number; bonusBreakdown: ClassBonusBreakdown[] } {
-    const bonusBreakdown: ClassBonusBreakdown[] = [];
+  ): { 
+    bonusXP: number;
+    bonusBreakdown: ClassBonusBreakdown[];
+  } {
     let bonusXP = 0;
+    const bonusBreakdown: ClassBonusBreakdown[] = [];
     
-    const exerciseNames = workout.exercises.map(ex => ex.name.toLowerCase());
-    
-    // Check for sports activities - Caminho do Herói
-    const hasSports = exerciseNames.some(name => 
-      EXERCISE_TYPES.SPORTS.some(sport => name.includes(sport))
+    // Caminho do Herói: +40% XP from sport activities
+    const sportsExercises = workout.exercises.filter(
+      ex => ex.type === 'Esportes'
     );
     
-    if (hasSports) {
-      const sportsBonus = Math.round(baseXP * 0.40);
-      bonusBreakdown.push({
-        skill: CLASS_PASSIVE_SKILLS.PALADINO.PRIMARY,
-        amount: sportsBonus,
-        description: '+40% XP de atividades esportivas'
-      });
-      bonusXP += sportsBonus;
+    if (sportsExercises.length > 0) {
+      // Calculate percentage of sports exercises
+      const sportsRatio = sportsExercises.length / workout.exercises.length;
+      const sportsBonus = Math.round(baseXP * this.SPORTS_BONUS * sportsRatio);
+      
+      if (sportsBonus > 0) {
+        bonusXP += sportsBonus;
+        bonusBreakdown.push({
+          skill: 'Caminho do Herói',
+          amount: sportsBonus,
+          description: `+${Math.round(this.SPORTS_BONUS * 100)}% XP de exercícios de esportes`
+        });
+      }
     }
-    
-    // Guild XP contribution bonus - Camisa 10
-    // This is handled separately but we add to breakdown for display
-    bonusBreakdown.push({
-      skill: CLASS_PASSIVE_SKILLS.PALADINO.SECONDARY,
-      amount: 0,
-      description: '+10% para contribuição de XP de guild (até 30%)'
-    });
     
     return { bonusXP, bonusBreakdown };
   }
   
   /**
-   * Calculate Paladino guild XP bonus
-   * @returns Bonus multiplier (1.1 to 1.3)
+   * Calculate guild contribution bonus for Paladinos
+   * Each Paladino adds 10% to guild contributions, up to 30% (3 Paladinos)
    */
-  static getGuildBonus(currentContribution: number): number {
-    // Base bonus is 10%, can stack up to 3 times based on contribution level
-    const stackLevel = Math.min(Math.floor(currentContribution / 1000), 3);
-    return 1.0 + (stackLevel * 0.1);
+  static getGuildBonus(contribution: number): number {
+    return 1.0 + this.GUILD_CONTRIBUTION_BONUS;
   }
 }

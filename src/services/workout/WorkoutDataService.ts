@@ -13,7 +13,7 @@ export class WorkoutDataService {
     try {
       const { data: exerciseSets, error: setsError } = await supabase
         .from('workout_sets')
-        .select('id, exercise_id, weight, reps, completed, set_order, exercises(id, name)')
+        .select('id, exercise_id, weight, reps, completed, set_order, exercises(id, name, type)')
         .eq('workout_id', workoutId)
         .order('set_order', { ascending: true });
       
@@ -29,6 +29,7 @@ export class WorkoutDataService {
           exerciseMap[exerciseId] = {
             id: exerciseId,
             name: set.exercises?.name || 'Unknown Exercise',
+            type: set.exercises?.type || 'Musculação',
             sets: []
           };
         }
@@ -65,42 +66,6 @@ export class WorkoutDataService {
     } catch (profileError) {
       console.error("Error fetching user profile:", profileError);
       return null;
-    }
-  }
-  
-  /**
-   * Get workout difficulty level from routine
-   */
-  static async getWorkoutDifficultyLevel(routineId: string | null): Promise<'iniciante' | 'intermediario' | 'avancado'> {
-    if (!routineId) return 'intermediario';
-    
-    try {
-      const { data: routineData, error } = await supabase
-        .from('routines')
-        .select('*')
-        .eq('id', routineId)
-        .single();
-        
-      if (error || !routineData) {
-        return 'intermediario';
-      }
-      
-      // Map the routine level to our difficulty levels
-      // Since 'level' might not exist on routines, use a type safe approach
-      const level = (routineData as any).level;
-      if (!level) return 'intermediario';
-      
-      const levelLower = level.toLowerCase();
-      if (levelLower === 'beginner' || levelLower === 'iniciante') {
-        return 'iniciante';
-      } else if (levelLower === 'advanced' || levelLower === 'avancado') {
-        return 'avancado';
-      } else {
-        return 'intermediario';
-      }
-    } catch (error) {
-      console.error("Error fetching routine data:", error);
-      return 'intermediario';
     }
   }
 }

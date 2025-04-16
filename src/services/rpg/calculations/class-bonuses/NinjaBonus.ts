@@ -1,16 +1,19 @@
 
-import { EXERCISE_TYPES, CLASS_PASSIVE_SKILLS } from '../../constants/exerciseTypes';
 import { WorkoutExercise } from '@/types/workoutTypes';
+import { ClassBonusCalculator } from '../ClassBonusCalculator';
 import { ClassBonusBreakdown } from '../../types/classTypes';
-import { XP_CONSTANTS } from '../../constants/xpConstants';
 
 /**
- * Calculates Ninja class-specific bonuses
+ * Ninja class bonus calculator
+ * - Forrest Gump: +20% XP from cardio exercises
+ * - HIIT & Run: +40% XP bonus from time in workouts under 45 minutes
  */
 export class NinjaBonus {
-  /**
-   * Apply Ninja-specific bonuses to XP
-   */
+  // Bonus percentages
+  private static readonly CARDIO_BONUS = 0.2; // 20%
+  private static readonly SHORT_WORKOUT_BONUS = 0.4; // 40%
+  private static readonly SHORT_WORKOUT_THRESHOLD = 45; // 45 minutes
+  
   static applyBonuses(
     baseXP: number,
     workout: {
@@ -18,63 +21,46 @@ export class NinjaBonus {
       exercises: WorkoutExercise[];
       durationSeconds: number;
     }
-  ): { bonusXP: number; bonusBreakdown: ClassBonusBreakdown[] } {
-    const bonusBreakdown: ClassBonusBreakdown[] = [];
+  ): { 
+    bonusXP: number;
+    bonusBreakdown: ClassBonusBreakdown[];
+  } {
     let bonusXP = 0;
+    const bonusBreakdown: ClassBonusBreakdown[] = [];
     
-    const workoutTimeMinutes = Math.floor((workout.durationSeconds || 0) / 60);
-    const exerciseNames = workout.exercises.map(ex => ex.name.toLowerCase());
-    
-    // Check for cardio/HIIT - Forrest Gump
-    const hasCardioHiit = exerciseNames.some(name => 
-      EXERCISE_TYPES.CARDIO_HIIT.some(cardio => name.includes(cardio))
+    // Forrest Gump: +20% XP from cardio exercises
+    const cardioExercises = workout.exercises.filter(
+      ex => ex.type === 'Cardio'
     );
     
-    if (hasCardioHiit) {
-      const cardioBonus = Math.round(baseXP * 0.20);
-      bonusBreakdown.push({
-        skill: CLASS_PASSIVE_SKILLS.NINJA.PRIMARY,
-        amount: cardioBonus,
-        description: '+20% XP de cardio'
-      });
-      bonusXP += cardioBonus;
+    if (cardioExercises.length > 0) {
+      // Calculate percentage of cardio exercises
+      const cardioRatio = cardioExercises.length / workout.exercises.length;
+      const cardioBonus = Math.round(baseXP * this.CARDIO_BONUS * cardioRatio);
+      
+      if (cardioBonus > 0) {
+        bonusXP += cardioBonus;
+        bonusBreakdown.push({
+          skill: 'Forrest Gump',
+          amount: cardioBonus,
+          description: `+${Math.round(this.CARDIO_BONUS * 100)}% XP de exercícios de cardio`
+        });
+      }
     }
     
-    // Short workout bonus - HIIT & Run
-    if (workoutTimeMinutes < 45) {
-      // Calculate time-based portion of XP
-      const timeXP = this.estimateTimeBasedXP(workoutTimeMinutes);
-      const timeBonus = Math.round(timeXP * 0.40);
-      
-      if (timeBonus > 0) {
-        bonusBreakdown.push({
-          skill: CLASS_PASSIVE_SKILLS.NINJA.SECONDARY,
-          amount: timeBonus,
-          description: '+40% XP por tempo em treinos < 45 min'
-        });
-        bonusXP += timeBonus;
-      }
+    // HIIT & Run: +40% XP bonus from time in workouts under 45 minutes
+    const durationMinutes = workout.durationSeconds / 60;
+    if (durationMinutes < this.SHORT_WORKOUT_THRESHOLD) {
+      // For every minute under the threshold, gain a percentage of the maximum bonus
+      const timeBonus = Math.round(baseXP * this.SHORT_WORKOUT_BONUS);
+      bonusXP += timeBonus;
+      bonusBreakdown.push({
+        skill: 'HIIT & Run',
+        amount: timeBonus,
+        description: `+${Math.round(this.SHORT_WORKOUT_BONUS * 100)}% XP por treino rápido (<45min)`
+      });
     }
     
     return { bonusXP, bonusBreakdown };
-  }
-  
-  /**
-   * Helper method to estimate time-based XP for Ninja class bonus
-   */
-  private static estimateTimeBasedXP(durationMinutes: number): number {
-    let timeXP = 0;
-    
-    // Use similar logic to BaseXPCalculator but simplified
-    for (const tier of XP_CONSTANTS.TIME_XP_TIERS) {
-      if (durationMinutes <= 0) break;
-      
-      if (durationMinutes <= tier.minutes) {
-        timeXP += tier.xp;
-        break;
-      }
-    }
-    
-    return timeXP;
   }
 }

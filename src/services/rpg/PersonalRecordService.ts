@@ -2,7 +2,11 @@
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workoutTypes';
 
+/**
+ * Represents a personal record
+ */
 export interface PersonalRecord {
+  userId: string;
   exerciseId: string;
   weight: number;
   previousWeight: number;
@@ -13,90 +17,7 @@ export interface PersonalRecord {
  */
 export class PersonalRecordService {
   /**
-   * Records a personal record for an exercise
-   */
-  static async recordPersonalRecord(
-    userId: string, 
-    exerciseId: string, 
-    weight: number,
-    previousWeight: number
-  ): Promise<void> {
-    try {
-      // Insert the personal record using the RPC function with a type assertion
-      // to work around the TypeScript type limitation
-      const { error } = await supabase.rpc(
-        'insert_personal_record' as any, 
-        {
-          p_user_id: userId,
-          p_exercise_id: exerciseId,
-          p_weight: weight,
-          p_previous_weight: previousWeight
-        }
-      );
-        
-      if (error) {
-        console.error('Error recording personal record:', error);
-        return;
-      }
-      
-      // Update the records count in profile using the RPC function
-      const { error: rpcError } = await supabase.rpc('increment_profile_counter', {
-        user_id_param: userId,
-        counter_name: 'records_count',
-        increment_amount: 1
-      });
-      
-      if (rpcError) {
-        console.error('Error incrementing profile counter:', rpcError);
-      }
-        
-    } catch (error) {
-      console.error('Error recording personal record:', error);
-    }
-  }
-  
-  /**
-   * Check if an exercise is on cooldown for PR bonuses
-   * (1 PR bonus per exercise per calendar week)
-   */
-  static async checkPersonalRecordCooldown(
-    userId: string, 
-    exerciseId: string
-  ): Promise<boolean> {
-    try {
-      // Get current calendar week start (Monday of current week)
-      const now = new Date();
-      const dayOfWeek = now.getDay() || 7; // Convert Sunday (0) to 7
-      const weekStart = new Date(now);
-      weekStart.setDate(now.getDate() - (dayOfWeek - 1)); // Set to Monday
-      weekStart.setHours(0, 0, 0, 0);
-      
-      // Check if a PR was recorded for this exercise in the current calendar week
-      const { data, error } = await supabase
-        .from('personal_records')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('exercise_id', exerciseId)
-        .gte('recorded_at', weekStart.toISOString())
-        .limit(1);
-        
-      if (error) {
-        console.error('Error checking PR cooldown:', error);
-        return false;
-      }
-      
-      // If no records found for this exercise this week, then it's not on cooldown
-      // (true means the user CAN earn a PR bonus)
-      return data.length === 0;
-    } catch (error) {
-      console.error('Error checking personal record cooldown:', error);
-      return false; // Default to not allowing PR bonus on error
-    }
-  }
-  
-  /**
-   * Check if the user has earned a personal record for any exercise
-   * in this workout by checking their exercise history
+   * Check for personal records in a workout
    */
   static async checkForPersonalRecords(
     userId: string, 
@@ -104,59 +25,122 @@ export class PersonalRecordService {
       id: string;
       exercises: WorkoutExercise[];
       durationSeconds: number;
-      difficulty?: 'iniciante' | 'intermediario' | 'avancado'
     }
   ): Promise<PersonalRecord[]> {
+    if (!userId || !workout.exercises.length) return [];
+    
     try {
       const personalRecords: PersonalRecord[] = [];
       
-      // Get the user's exercise history
-      const { data: exerciseHistory } = await supabase
-        .from('exercise_history')
-        .select('exercise_id, weight')
-        .eq('user_id', userId);
-        
-      if (!exerciseHistory || exerciseHistory.length === 0) {
-        return personalRecords;
-      }
+      // Get all exercises that might have PR potential (strength exercises)
+      const potentialPRExercises = workout.exercises.filter(ex => {
+        // Only count PRs for strength training exercises
+        return ex.type === 'Musculação' || ex.type === 'Calistenia';
+      });
       
-      // Create a lookup map for easier access
-      const historyMap = exerciseHistory.reduce((map, record) => {
-        map[record.exercise_id] = record.weight;
-        return map;
-      }, {} as Record<string, number>);
-      
-      // Check each exercise in the workout for a PR
-      for (const exercise of workout.exercises) {
-        const exerciseId = exercise.id;
-        const previousBest = historyMap[exerciseId] || 0;
+      // For each potential PR exercise
+      for (const exercise of potentialPRExercises) {
+        // Find max weight used for this exercise in the current workout
+        const maxWeightSet = exercise.sets
+          .filter(set => set.completed)
+          .reduce((max, set) => {
+            const weight = parseFloat(set.weight);
+            return !isNaN(weight) && weight > max ? weight : max;
+          }, 0);
         
-        // Find the highest weight used for this exercise in the workout
-        const highestWeight = exercise.sets.reduce((max, set) => {
-          if (set.completed && parseFloat(set.weight) > max) {
-            return parseFloat(set.weight);
-          }
-          return max;
-        }, 0);
+        // Skip if no weight was used
+        if (maxWeightSet <= 0) continue;
         
-        // If a new PR was set, add it to the list
-        if (highestWeight > previousBest && highestWeight > 0) {
-          // Check for cooldown period (1 PR per exercise per calendar week)
-          const canEarnPR = await this.checkPersonalRecordCooldown(userId, exerciseId);
+        // Check for cooldown - only one PR per exercise per time period
+        const { data: cooldownData } = await supabase.rpc(
+          'check_personal_record_cooldown',
+          { p_user_id: userId, p_exercise_id: exercise.id }
+        );
+        
+        const isOffCooldown = cooldownData === true;
+        if (!isOffCooldown) {
+          console.log(`Exercise ${exercise.id} is on PR cooldown, skipping PR check`);
+          continue;
+        }
+        
+        // Get previous max weight for this exercise
+        const { data: exerciseHistoryData, error: exerciseHistoryError } = await supabase
+          .from('exercise_history')
+          .select('weight')
+          .eq('user_id', userId)
+          .eq('exercise_id', exercise.id)
+          .single();
           
-          if (canEarnPR) {
-            personalRecords.push({
-              exerciseId,
-              weight: highestWeight,
-              previousWeight: previousBest
+        // Only consider it a PR if we found a previous record
+        if (exerciseHistoryError && exerciseHistoryError.code !== 'PGRST116') {
+          console.error("Error fetching exercise history:", exerciseHistoryError);
+          continue;
+        }
+        
+        let previousMaxWeight = 0;
+        
+        if (exerciseHistoryData) {
+          previousMaxWeight = exerciseHistoryData.weight || 0;
+        }
+        
+        // Check if this is a new personal record
+        if (maxWeightSet > previousMaxWeight && previousMaxWeight > 0) {
+          console.log(`New PR for exercise ${exercise.id}: ${maxWeightSet} > ${previousMaxWeight}`);
+          
+          // Record the PR
+          await supabase.rpc(
+            'insert_personal_record',
+            {
+              p_user_id: userId,
+              p_exercise_id: exercise.id,
+              p_weight: maxWeightSet,
+              p_previous_weight: previousMaxWeight
+            }
+          );
+          
+          // Update exercise history with new max
+          await supabase
+            .from('exercise_history')
+            .upsert({
+              user_id: userId,
+              exercise_id: exercise.id,
+              weight: maxWeightSet,
+              last_used_at: new Date().toISOString()
             });
-          }
+            
+          // Add to result list
+          personalRecords.push({
+            userId,
+            exerciseId: exercise.id,
+            weight: maxWeightSet,
+            previousWeight: previousMaxWeight
+          });
+          
+          // Update profile records count
+          await supabase.rpc(
+            'increment_profile_counter',
+            {
+              user_id_param: userId,
+              counter_name: 'records_count',
+              increment_amount: 1
+            }
+          );
+        } else if (previousMaxWeight === 0 && maxWeightSet > 0) {
+          // First record for this exercise, not a PR but record it
+          await supabase
+            .from('exercise_history')
+            .upsert({
+              user_id: userId,
+              exercise_id: exercise.id,
+              weight: maxWeightSet,
+              last_used_at: new Date().toISOString()
+            });
         }
       }
       
       return personalRecords;
     } catch (error) {
-      console.error('Error checking for personal records:', error);
+      console.error("Error checking for personal records:", error);
       return [];
     }
   }

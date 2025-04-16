@@ -9,6 +9,7 @@ export const XP_CONSTANTS = {
   BASE_EXERCISE_XP: 5, // XP per exercise
   BASE_SET_XP: 2, // XP per set
   MAX_XP_CONTRIBUTING_SETS: 10, // Maximum number of sets that contribute to XP
+  MAX_XP_CONTRIBUTING_EXERCISES: 8, // Maximum number of exercises that contribute to XP
   
   // Time-based XP with diminishing returns
   TIME_XP_TIERS: [
@@ -17,13 +18,6 @@ export const XP_CONSTANTS = {
     { minutes: 90, xp: 20 },  // 61-90 minutes: +20 XP
     { minutes: Infinity, xp: 0 } // Beyond 90 minutes: +0 XP (no additional XP)
   ],
-  
-  // Difficulty multipliers
-  DIFFICULTY_MULTIPLIERS: {
-    iniciante: 0.8,
-    intermediario: 1.0,
-    avancado: 1.2,
-  },
   
   // Streak and bonus constants
   STREAK_BONUS_PER_DAY: 0.05,

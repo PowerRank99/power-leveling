@@ -1,75 +1,71 @@
 
-import { EXERCISE_TYPES, CLASS_PASSIVE_SKILLS } from '../../constants/exerciseTypes';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { ClassBonusBreakdown } from '../../types/classTypes';
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Calculates Bruxo class-specific bonuses
+ * Bruxo class bonus calculator
+ * - Fluxo Arcano: +40% XP from mobility & flexibility exercises
+ * - Folga Mística: When Bruxo doesn't train, streak bonus reduced by only 5% (instead of resetting)
  */
 export class BruxoBonus {
-  // One week in milliseconds for cooldown checks
-  private static readonly ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-
-  /**
-   * Apply Bruxo-specific bonuses to XP
-   */
+  // Bonus percentages
+  private static readonly FLEXIBILITY_BONUS = 0.4; // 40%
+  private static readonly STREAK_REDUCTION = 0.05; // 5%
+  
   static applyBonuses(
     baseXP: number,
     workout: {
       id: string;
       exercises: WorkoutExercise[];
+      durationSeconds: number;
     }
-  ): { bonusXP: number; bonusBreakdown: ClassBonusBreakdown[] } {
-    const bonusBreakdown: ClassBonusBreakdown[] = [];
+  ): { 
+    bonusXP: number;
+    bonusBreakdown: ClassBonusBreakdown[];
+  } {
     let bonusXP = 0;
+    const bonusBreakdown: ClassBonusBreakdown[] = [];
     
-    const exerciseNames = workout.exercises.map(ex => ex.name.toLowerCase());
-    
-    // Check for flexibility exercises - Fluxo Arcano
-    const hasFlexibility = exerciseNames.some(name => 
-      EXERCISE_TYPES.FLEXIBILITY.some(flex => name.includes(flex))
+    // Fluxo Arcano: +40% XP from mobility & flexibility exercises
+    const flexibilityExercises = workout.exercises.filter(
+      ex => ex.type === 'Mobilidade & Flexibilidade'
     );
     
-    if (hasFlexibility) {
-      const flexibilityBonus = Math.round(baseXP * 0.40);
-      bonusBreakdown.push({
-        skill: CLASS_PASSIVE_SKILLS.BRUXO.PRIMARY,
-        amount: flexibilityBonus,
-        description: '+40% XP de yoga e alongamentos'
-      });
-      bonusXP += flexibilityBonus;
+    if (flexibilityExercises.length > 0) {
+      // Calculate percentage of flexibility exercises
+      const flexibilityRatio = flexibilityExercises.length / workout.exercises.length;
+      const flexibilityBonus = Math.round(baseXP * this.FLEXIBILITY_BONUS * flexibilityRatio);
+      
+      if (flexibilityBonus > 0) {
+        bonusXP += flexibilityBonus;
+        bonusBreakdown.push({
+          skill: 'Fluxo Arcano',
+          amount: flexibilityBonus,
+          description: `+${Math.round(this.FLEXIBILITY_BONUS * 100)}% XP de exercícios de mobilidade e flexibilidade`
+        });
+      }
     }
-    
-    // Streak preservation bonus is handled separately
-    // But we add it to the breakdown for display purposes
-    bonusBreakdown.push({
-      skill: CLASS_PASSIVE_SKILLS.BRUXO.SECONDARY,
-      amount: 0,
-      description: 'Preserva sequência se faltar um dia (semanal)'
-    });
     
     return { bonusXP, bonusBreakdown };
   }
   
   /**
-   * Check if Bruxo should preserve streak using the database
+   * Check if Bruxo should preserve streak
+   * This is an async method that checks the database
    */
   static async shouldPreserveStreak(userId: string): Promise<boolean> {
-    if (!userId) return false;
-    
     try {
-      // Use regular query to check passive skill usage
+      // Check if user is Bruxo
       const { data, error } = await supabase
-        .from('passive_skill_usage')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('skill_name', 'Folga Mística')
-        .gte('used_at', new Date(Date.now() - this.ONE_WEEK_MS).toISOString())
-        .maybeSingle();
+        .from('profiles')
+        .select('class')
+        .eq('id', userId)
+        .single();
+        
+      if (error || !data) return false;
       
-      // If no data and no error, the skill hasn't been used recently
-      return !data && !error;
+      return data.class === 'Bruxo';
     } catch (error) {
       console.error('Error checking Bruxo streak preservation:', error);
       return false;

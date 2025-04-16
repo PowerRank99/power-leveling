@@ -90,15 +90,11 @@ export class WorkoutCompletionService {
       // Step 1: Update user streak
       await StreakService.updateStreak(userId);
       
-      // Step 2: Get workout difficulty level
-      const difficultyLevel = await WorkoutDataService.getWorkoutDifficultyLevel(routineId);
-      
-      // Step 3: Check for personal records
+      // Step 2: Check for personal records
       const personalRecords = await XPService.checkForPersonalRecords(userId, {
         id: workoutId,
         exercises,
-        durationSeconds: elapsedTime,
-        difficulty: difficultyLevel
+        durationSeconds: elapsedTime
       });
       
       // Log personal records if any
@@ -109,17 +105,16 @@ export class WorkoutCompletionService {
         });
       }
       
-      // Step 4: Calculate and award XP
+      // Step 3: Calculate and award XP
       const baseXP = XPService.calculateWorkoutXP(
-        { id: workoutId, exercises, durationSeconds: elapsedTime, difficulty: difficultyLevel },
+        { id: workoutId, exercises, durationSeconds: elapsedTime },
         userProfile?.class,
-        userProfile?.streak || 0,
-        difficultyLevel
+        userProfile?.streak || 0
       );
       
       await XPService.awardXP(userId, baseXP, personalRecords);
       
-      // Step 5: Check for achievements
+      // Step 4: Check for achievements
       await AchievementService.checkAchievements(userId);
       
     } catch (rpgError) {

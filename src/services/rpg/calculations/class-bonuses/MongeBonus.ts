@@ -1,59 +1,62 @@
 
-import { EXERCISE_TYPES, CLASS_PASSIVE_SKILLS } from '../../constants/exerciseTypes';
 import { WorkoutExercise } from '@/types/workoutTypes';
+import { ClassBonusCalculator } from '../ClassBonusCalculator';
 import { ClassBonusBreakdown } from '../../types/classTypes';
-import { XP_CONSTANTS } from '../../constants/xpConstants';
 
 /**
- * Calculates Monge class-specific bonuses
+ * Monge class bonus calculator
+ * - Força Interior: +20% XP from bodyweight exercises
+ * - Discípulo do Algoritmo: +10% additional streak bonus
  */
 export class MongeBonus {
-  /**
-   * Apply Monge-specific bonuses to XP
-   */
+  // Bonus percentages
+  private static readonly BODYWEIGHT_BONUS = 0.2; // 20%
+  private static readonly EXTRA_STREAK_BONUS = 0.1; // 10%
+  
   static applyBonuses(
     baseXP: number,
     workout: {
       id: string;
       exercises: WorkoutExercise[];
+      durationSeconds: number;
     },
-    streak: number = 0
-  ): { bonusXP: number; bonusBreakdown: ClassBonusBreakdown[] } {
-    const bonusBreakdown: ClassBonusBreakdown[] = [];
+    streak: number
+  ): { 
+    bonusXP: number;
+    bonusBreakdown: ClassBonusBreakdown[];
+  } {
     let bonusXP = 0;
+    const bonusBreakdown: ClassBonusBreakdown[] = [];
     
-    const exerciseNames = workout.exercises.map(ex => ex.name.toLowerCase());
-    
-    // Check for bodyweight exercises - Força Interior
-    const hasBodyweight = exerciseNames.some(name => 
-      EXERCISE_TYPES.BODYWEIGHT.some(bw => name.includes(bw))
+    // Força Interior: +20% XP from calisthenics/bodyweight exercises
+    const bodyweightExercises = workout.exercises.filter(
+      ex => ex.type === 'Calistenia'
     );
     
-    if (hasBodyweight) {
-      const bodyweightBonus = Math.round(baseXP * 0.20);
-      bonusBreakdown.push({
-        skill: CLASS_PASSIVE_SKILLS.MONGE.PRIMARY,
-        amount: bodyweightBonus,
-        description: '+20% XP de exercícios com peso corporal'
-      });
-      bonusXP += bodyweightBonus;
+    if (bodyweightExercises.length > 0) {
+      // Calculate percentage of bodyweight exercises
+      const bodyweightRatio = bodyweightExercises.length / workout.exercises.length;
+      const bodyweightBonus = Math.round(baseXP * this.BODYWEIGHT_BONUS * bodyweightRatio);
+      
+      if (bodyweightBonus > 0) {
+        bonusXP += bodyweightBonus;
+        bonusBreakdown.push({
+          skill: 'Força Interior',
+          amount: bodyweightBonus,
+          description: `+${Math.round(this.BODYWEIGHT_BONUS * 100)}% XP de exercícios de calistenia`
+        });
+      }
     }
     
-    // Additional streak bonus - Discípulo do Algoritmo
-    if (streak > 0) {
-      // Regular streak bonus is 5% per day (capped at 35% for 7 days)
-      // Monge gets additional 10% of that bonus (capped at 3.5% extra)
-      const regularStreakMultiplier = Math.min(streak, XP_CONSTANTS.MAX_STREAK_DAYS) * XP_CONSTANTS.STREAK_BONUS_PER_DAY;
-      const additionalStreakBonus = Math.round(baseXP * regularStreakMultiplier * 0.10);
-      
-      if (additionalStreakBonus > 0) {
-        bonusBreakdown.push({
-          skill: CLASS_PASSIVE_SKILLS.MONGE.SECONDARY,
-          amount: additionalStreakBonus,
-          description: '+10% no bônus de sequência'
-        });
-        bonusXP += additionalStreakBonus;
-      }
+    // Discípulo do Algoritmo: +10% additional streak bonus 
+    if (streak > 1) {
+      const extraStreakBonus = Math.round(baseXP * this.EXTRA_STREAK_BONUS);
+      bonusXP += extraStreakBonus;
+      bonusBreakdown.push({
+        skill: 'Discípulo do Algoritmo',
+        amount: extraStreakBonus,
+        description: `+${Math.round(this.EXTRA_STREAK_BONUS * 100)}% XP por manter sequência de treinos`
+      });
     }
     
     return { bonusXP, bonusBreakdown };

@@ -1,5 +1,5 @@
 
-import { EXERCISE_TYPES, CLASS_PASSIVE_SKILLS } from '../constants/exerciseTypes';
+import { EXERCISE_TYPES, CLASS_PASSIVE_SKILLS, EXERCISE_TYPE_CATEGORIES } from '../constants/exerciseTypes';
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { ClassBonusBreakdown } from '../types/classTypes';
 import { GuerreiroBonus } from './class-bonuses/GuerreiroBonus';
@@ -13,6 +13,27 @@ import { PaladinoBonus } from './class-bonuses/PaladinoBonus';
  * Coordinates the individual class bonus calculators
  */
 export class ClassBonusCalculator {
+  /**
+   * Check if an exercise matches a specific category
+   */
+  static exerciseMatchesCategory(exercise: WorkoutExercise, categoryKey: keyof typeof EXERCISE_TYPES): boolean {
+    // If there's no type, we default to "Musculação"
+    const exerciseType = exercise.type || 'Musculação';
+    
+    // If we have a direct mapping from the exercise.type to our categories, use that
+    if (exerciseType in EXERCISE_TYPE_CATEGORIES) {
+      const mappedCategory = EXERCISE_TYPE_CATEGORIES[exerciseType as keyof typeof EXERCISE_TYPE_CATEGORIES];
+      return mappedCategory === categoryKey;
+    }
+    
+    // Fallback: check exercise name against keywords
+    const keywords = EXERCISE_TYPES[categoryKey];
+    if (!keywords || !exercise.name) return false;
+    
+    const lowerName = exercise.name.toLowerCase();
+    return keywords.some(keyword => lowerName.includes(keyword.toLowerCase()));
+  }
+  
   /**
    * Apply class-specific bonuses to XP
    */

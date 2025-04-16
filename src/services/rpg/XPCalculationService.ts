@@ -14,11 +14,11 @@ export class XPCalculationService {
   static readonly PR_BONUS_XP = XP_CONSTANTS.PR_BONUS_XP;
   static readonly BASE_EXERCISE_XP = XP_CONSTANTS.BASE_EXERCISE_XP;
   static readonly BASE_SET_XP = XP_CONSTANTS.BASE_SET_XP;
-  static readonly DIFFICULTY_MULTIPLIERS = XP_CONSTANTS.DIFFICULTY_MULTIPLIERS;
   static readonly TIME_XP_TIERS = XP_CONSTANTS.TIME_XP_TIERS;
   static readonly EXERCISE_TYPES = EXERCISE_TYPES;
   static readonly CLASS_PASSIVE_SKILLS = CLASS_PASSIVE_SKILLS;
   static readonly MAX_XP_CONTRIBUTING_SETS = XP_CONSTANTS.MAX_XP_CONTRIBUTING_SETS;
+  static readonly MAX_XP_CONTRIBUTING_EXERCISES = XP_CONSTANTS.MAX_XP_CONTRIBUTING_EXERCISES;
   
   /**
    * Calculate the streak multiplier (5% per day up to 35% at 7 days)
@@ -42,12 +42,10 @@ export class XPCalculationService {
       id: string;
       exercises: WorkoutExercise[];
       durationSeconds: number;
-      difficulty?: 'iniciante' | 'intermediario' | 'avancado';
       hasPR?: boolean;
     },
     userClass?: string | null,
-    streak: number = 0,
-    difficulty: 'iniciante' | 'intermediario' | 'avancado' = 'intermediario'
+    streak: number = 0
   ): {
     totalXP: number;
     baseXP: number;
@@ -58,8 +56,11 @@ export class XPCalculationService {
       const timeMinutes = Math.floor((workout.durationSeconds || 0) / 60);
       const timeXP = this.calculateTimeXP(timeMinutes);
       
-      // Exercise completion XP
-      const exerciseXP = workout.exercises.length * this.BASE_EXERCISE_XP; // 5 XP per exercise
+      // Cap the number of exercises that contribute to XP
+      const cappedExercisesCount = Math.min(workout.exercises.length, this.MAX_XP_CONTRIBUTING_EXERCISES);
+      
+      // Exercise completion XP (capped at MAX_XP_CONTRIBUTING_EXERCISES exercises)
+      const exerciseXP = cappedExercisesCount * this.BASE_EXERCISE_XP; // 5 XP per exercise
       
       // Set completion XP - capped at MAX_XP_CONTRIBUTING_SETS sets (10 by default)
       const completedSets = workout.exercises.reduce((sum, ex) => {
@@ -72,12 +73,6 @@ export class XPCalculationService {
       
       // Sum base XP
       let baseXP = timeXP + exerciseXP + setsXP;
-      
-      // Apply difficulty modifier if available
-      const workoutDifficulty = workout.difficulty || difficulty;
-      if (workoutDifficulty in this.DIFFICULTY_MULTIPLIERS) {
-        baseXP = Math.round(baseXP * this.DIFFICULTY_MULTIPLIERS[workoutDifficulty as keyof typeof this.DIFFICULTY_MULTIPLIERS]);
-      }
       
       // Apply class-specific bonuses with breakdown
       const { totalXP, bonusBreakdown } = ClassBonusCalculator.applyClassBonuses(
