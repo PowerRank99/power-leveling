@@ -1,4 +1,3 @@
-
 import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
 import { supabase } from '@/integrations/supabase/client';
 import { AchievementService } from '@/services/rpg/AchievementService';
@@ -14,7 +13,7 @@ export abstract class BaseAchievementChecker {
   ): Promise<{ data: any[] | null; error: any }> {
     let query = supabase
       .from('achievements')
-      .select('*')
+      .select('*, rank_requirements')
       .eq('category', category);
     
     if (orderBy) {
@@ -68,7 +67,8 @@ export abstract class BaseAchievementChecker {
         workout_sets (
           exercises (
             category,
-            type
+            type,
+            category_type
           )
         )
       `)
@@ -80,14 +80,23 @@ export abstract class BaseAchievementChecker {
       categoryData.forEach(workout => {
         if (workout.workout_sets) {
           workout.workout_sets.forEach((set: any) => {
-            if (set.exercises && set.exercises.category) {
-              const count = categoryStats.get(set.exercises.category) || 0;
-              categoryStats.set(set.exercises.category, count + 1);
-            }
-            
-            if (set.exercises && set.exercises.type) {
-              const count = categoryStats.get(set.exercises.type) || 0;
-              categoryStats.set(set.exercises.type, count + 1);
+            if (set.exercises) {
+              const { category, type, category_type } = set.exercises;
+              
+              if (category) {
+                const count = categoryStats.get(category) || 0;
+                categoryStats.set(category, count + 1);
+              }
+              
+              if (type) {
+                const count = categoryStats.get(type) || 0;
+                categoryStats.set(type, count + 1);
+              }
+              
+              if (category_type) {
+                const count = categoryStats.get(category_type) || 0;
+                categoryStats.set(category_type, count + 1);
+              }
             }
           });
         }

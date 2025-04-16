@@ -64,6 +64,7 @@ export type Database = {
           name: string
           points: number
           rank: string
+          rank_requirements: Json | null
           requirement_type: string | null
           requirements: Json
           string_id: string
@@ -78,6 +79,7 @@ export type Database = {
           name: string
           points?: number
           rank?: string
+          rank_requirements?: Json | null
           requirement_type?: string | null
           requirements: Json
           string_id: string
@@ -92,6 +94,7 @@ export type Database = {
           name?: string
           points?: number
           rank?: string
+          rank_requirements?: Json | null
           requirement_type?: string | null
           requirements?: Json
           string_id?: string

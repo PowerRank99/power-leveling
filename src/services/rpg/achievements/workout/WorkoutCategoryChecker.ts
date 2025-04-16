@@ -1,9 +1,7 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
-import { AchievementService } from '@/services/rpg/AchievementService';
-import { AchievementCategory } from '@/types/achievementTypes';
+import { ServiceResponse } from '@/services/common/ErrorHandlingService';
 import { BaseAchievementChecker } from '../BaseAchievementChecker';
+import { AchievementCategory } from '@/types/achievementTypes';
 
 export class WorkoutCategoryChecker extends BaseAchievementChecker {
   async checkAchievements(userId: string): Promise<ServiceResponse<string[]>> {
@@ -17,52 +15,27 @@ export class WorkoutCategoryChecker extends BaseAchievementChecker {
         
         if (!achievements?.length) return [];
         
-        // Get user's workout categories count
-        const { data: workouts, error } = await supabase
-          .from('workouts')
-          .select(`
-            id,
-            workout_sets (
-              exercise_id,
-              exercises (
-                type,
-                category
-              )
-            )
-          `)
-          .eq('user_id', userId);
-          
-        if (error) throw error;
-        
-        // Count unique categories
-        const categoryStats = new Map<string, number>();
-        
-        if (workouts) {
-          workouts.forEach(workout => {
-            if (workout.workout_sets) {
-              workout.workout_sets.forEach((set: any) => {
-                if (set.exercises && set.exercises.category) {
-                  const count = categoryStats.get(set.exercises.category) || 0;
-                  categoryStats.set(set.exercises.category, count + 1);
-                }
-                
-                if (set.exercises && set.exercises.type) {
-                  const count = categoryStats.get(set.exercises.type) || 0;
-                  categoryStats.set(set.exercises.type, count + 1);
-                }
-              });
-            }
-          });
-        }
+        const { categoryStats } = await this.getWorkoutStats(userId);
         
         // Check achievements
         const achievementsToCheck: string[] = [];
         
         achievements.forEach(achievement => {
           const requiredCategory = achievement.requirements?.category;
+          const requiredType = achievement.requirements?.type;
+          const requiredCategoryType = achievement.requirements?.category_type;
           const requiredCount = achievement.requirements?.count || 0;
           
-          if (requiredCategory && categoryStats.get(requiredCategory) >= requiredCount) {
+          // Check based on category type first
+          if (requiredCategoryType && categoryStats.get(requiredCategoryType) >= requiredCount) {
+            achievementsToCheck.push(achievement.id);
+          }
+          // Then check traditional category
+          else if (requiredCategory && categoryStats.get(requiredCategory) >= requiredCount) {
+            achievementsToCheck.push(achievement.id);
+          }
+          // Finally check type
+          else if (requiredType && categoryStats.get(requiredType) >= requiredCount) {
             achievementsToCheck.push(achievement.id);
           }
         });
@@ -73,7 +46,6 @@ export class WorkoutCategoryChecker extends BaseAchievementChecker {
     );
   }
   
-  // Add a static method to be compatible with current calls
   static async checkWorkoutCategoryAchievements(userId: string, achievementsToCheck: string[]): Promise<void> {
     const checker = new WorkoutCategoryChecker();
     const result = await checker.checkAchievements(userId);
