@@ -9,20 +9,21 @@ export class ExerciseVarietyChecker extends BaseAchievementChecker {
     return this.executeWithErrorHandling(
       async () => {
         const { data: achievements } = await this.fetchAchievementsByCategory(
-          AchievementCategory.EXERCISE_VARIETY, 
+          AchievementCategory.EXERCISE_VARIETY,
           'requirements->count'
         );
         
+        // Get distinct exercise counts from workout sets
         const { data, error } = await supabase
           .from('workout_sets')
-          .select('exercise_id, workouts!inner(user_id)')
-          .eq('workouts.user_id', userId)
-          .eq('completed', true);
+          .select('exercise_id')
+          .eq('workout_id', 'workouts.user_id', userId)
+          .not('exercise_id', 'is', null);
           
         if (error) throw error;
         
-        const uniqueExerciseIds = new Set(data?.map(item => item.exercise_id));
-        const distinctCount = uniqueExerciseIds.size;
+        const distinctExercises = new Set(data?.map(item => item.exercise_id));
+        const distinctCount = distinctExercises.size;
         
         const achievementsToCheck: string[] = [];
         

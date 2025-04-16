@@ -1,102 +1,61 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceResponse, ErrorHandlingService } from '@/services/common/ErrorHandlingService';
+import { ServiceResponse } from '@/services/common/ErrorHandlingService';
 import { TransactionService } from '@/services/common/TransactionService';
-import { AchievementService } from '@/services/rpg/AchievementService';
+import { BaseAchievementChecker } from '../BaseAchievementChecker';
+import { AchievementCategory } from '@/types/achievementTypes';
 
-/**
- * Checker specifically for workout history achievements
- */
-export class WorkoutHistoryChecker {
-  /**
-   * Check workout history achievements
-   */
-  static async checkAchievements(userId: string): Promise<ServiceResponse<void>> {
-    return ErrorHandlingService.executeWithErrorHandling(
+export class WorkoutHistoryChecker extends BaseAchievementChecker {
+  async checkAchievements(userId: string): Promise<ServiceResponse<string[]>> {
+    return this.executeWithErrorHandling(
       async () => {
-        // Get total workout count 
-        const { count: workoutCount, error: workoutError } = await supabase
-          .from('workouts')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', userId)
-          .not('completed_at', 'is', null);
-          
-        if (workoutError) throw workoutError;
-        
-        // Get total manual workout count
-        const { count: manualWorkoutCount, error: manualError } = await supabase
-          .from('manual_workouts')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', userId);
-          
-        if (manualError) throw manualError;
-        
-        // Combined count
-        const totalWorkouts = (workoutCount || 0) + (manualWorkoutCount || 0);
-        
-        // Fetch workout history achievements from database
-        const { data: historyAchievements, error: achievementsError } = await supabase
-          .from('achievements')
-          .select('id, requirements, category')
-          .eq('category', 'workout_history');
-          
-        if (achievementsError) throw achievementsError;
+        // Get achievements with workout history requirements
+        const { data: achievements } = await this.fetchAchievementsByCategory(
+          AchievementCategory.WORKOUT_HISTORY,
+          'requirements->count'
+        );
         
         // Use transaction service for consistency
+        const achievementsToCheck: string[] = [];
+        
         await TransactionService.executeWithRetry(
           async () => {
-            // Check for workout count achievements
-            const achievementChecks = [];
-            
-            if (historyAchievements) {
-              historyAchievements.forEach(achievement => {
-                if (achievement.requirements?.total_count && totalWorkouts >= achievement.requirements.total_count) {
-                  achievementChecks.push(achievement.id);
-                }
-              });
-            }
-            
-            // Get workouts per week
-            const { data: weekData, error: weekError } = await supabase
+            // Get total workout count
+            const { count: workoutCount, error: workoutError } = await supabase
               .from('workouts')
-              .select('started_at')
+              .select('id', { count: 'exact', head: true })
               .eq('user_id', userId)
-              .not('completed_at', 'is', null)
-              .gte('started_at', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString());
+              .not('completed_at', 'is', null);
               
-            if (weekError) throw weekError;
+            if (workoutError) throw workoutError;
             
-            // Check for weekly workout achievements
-            if (weekData) {
-              const weeklyWorkouts = weekData.length;
+            // Get total manual workout count
+            const { count: manualCount, error: manualError } = await supabase
+              .from('manual_workouts')
+              .select('id', { count: 'exact', head: true })
+              .eq('user_id', userId);
               
-              // Fetch weekly achievements
-              const { data: weeklyAchievements } = await supabase
-                .from('achievements')
-                .select('id, requirements')
-                .eq('category', 'weekly_workout');
-                
-              if (weeklyAchievements) {
-                weeklyAchievements.forEach(achievement => {
-                  if (achievement.requirements?.weekly_count && weeklyWorkouts >= achievement.requirements.weekly_count) {
-                    achievementChecks.push(achievement.id);
-                  }
-                });
+            if (manualError) throw manualError;
+            
+            const totalWorkouts = (workoutCount || 0) + (manualCount || 0);
+            
+            // Check each achievement's requirements
+            achievements?.forEach(achievement => {
+              const requiredCount = achievement.requirements?.count || 0;
+              const frequency = achievement.requirements?.frequency || 'daily';
+              
+              if (totalWorkouts >= requiredCount) {
+                achievementsToCheck.push(achievement.id);
               }
-            }
-            
-            // Check all achievements in batch
-            if (achievementChecks.length > 0) {
-              await AchievementService.checkAndAwardAchievements(userId, achievementChecks);
-            }
-          }, 
-          'workout_history_achievements', 
-          3, 
-          'Failed to check workout history achievements'
+            });
+          },
+          'workout_history_achievements',
+          3
         );
+        
+        return await this.awardAchievementsBatch(userId, achievementsToCheck);
       },
-      'CHECK_WORKOUT_HISTORY_ACHIEVEMENTS',
-      { showToast: false }
+      'WORKOUT_HISTORY_ACHIEVEMENTS'
     );
   }
 }
