@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { achievementPopupStore } from '@/stores/achievementPopupStore';
@@ -61,34 +62,66 @@ export class AchievementService {
         records_count: profile.records_count
       });
       
+      // First, let's explicitly check the "Primeiro Treino" achievement
+      const { data: primeiroTreino, error: primeiroTreinoError } = await supabase
+        .from('achievements')
+        .select('*')
+        .eq('string_id', 'primeiro-treino')
+        .single();
+        
+      if (primeiroTreinoError) {
+        console.error('Error fetching Primeiro Treino achievement:', primeiroTreinoError);
+      } else if (primeiroTreino) {
+        console.log('Found Primeiro Treino achievement:', primeiroTreino);
+        
+        // Check if user already has this achievement
+        const { data: hasAchievement } = await supabase
+          .from('user_achievements')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('achievement_id', primeiroTreino.id)
+          .maybeSingle();
+          
+        console.log('Has Primeiro Treino achievement?', hasAchievement);
+        
+        // If user doesn't have the achievement and has at least one workout
+        if (!hasAchievement && profile.workouts_count > 0) {
+          console.log('Awarding Primeiro Treino achievement');
+          await this.awardAchievement(
+            userId,
+            primeiroTreino.id,
+            primeiroTreino.name,
+            primeiroTreino.description,
+            primeiroTreino.xp_reward,
+            primeiroTreino.points
+          );
+        }
+      }
+      
       // Get all achievements user doesn't have yet
       const { data: unlockedAchievements } = await supabase
         .from('user_achievements')
         .select('achievement_id')
         .eq('user_id', userId);
         
-      // Create empty array if no achievements unlocked yet
       const unlockedIds = unlockedAchievements?.map(a => a.achievement_id) || [];
+      console.log('Already unlocked achievement IDs:', unlockedIds);
       
       // Get all eligible achievements
       const { data: achievements, error: achievementsError } = await supabase
         .from('achievements')
-        .select('*');
+        .select('*')
+        .not('id', 'in', `(${unlockedIds.length > 0 ? unlockedIds.join(',') : 'NULL'})`);
 
       if (achievementsError || !achievements) {
         console.error('Error fetching achievements:', achievementsError);
         return;
       }
 
-      // Filter out already unlocked achievements
-      const eligibleAchievements = achievements.filter(
-        ach => !unlockedIds.includes(ach.id)
-      );
-      
-      console.log('Checking eligible achievements:', eligibleAchievements.length);
+      console.log('Checking eligible achievements:', achievements.length);
       
       // Check each achievement
-      for (const achievement of eligibleAchievements) {
+      for (const achievement of achievements) {
         try {
           // Parse the requirements JSON
           const requirements = typeof achievement.requirements === 'string' 
@@ -164,7 +197,7 @@ export class AchievementService {
           }
         } catch (error) {
           console.error('Error checking achievement:', achievement.id, error);
-          continue; // Continue checking other achievements even if one fails
+          continue;
         }
       }
     } catch (error) {
