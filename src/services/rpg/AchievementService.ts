@@ -46,7 +46,7 @@ export class AchievementService {
         console.log('🔧 Testing mode: Achievement check starting');
       }
       
-      // Get user profile data
+      // Get user profile data including manual_workouts count
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('workouts_count, streak, records_count')
@@ -58,15 +58,21 @@ export class AchievementService {
         return;
       }
 
-      console.log('Checking achievements with profile data:', profile);
-      
-      // Specifically debug the first workout achievement
-      await AchievementDebug.debugFirstWorkoutAchievement(userId);
-      
-      // Try to directly award the first workout achievement if conditions are met
-      if (profile.workouts_count > 0) {
-        await this.tryAwardFirstWorkoutAchievement(userId);
+      // Get count of manual workouts
+      const { count: manualWorkoutsCount, error: manualCountError } = await supabase
+        .from('manual_workouts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+        
+      if (manualCountError) {
+        console.error('Error fetching manual workouts count:', manualCountError);
+        return;
       }
+
+      console.log('User stats for achievement check:', {
+        ...profile,
+        manualWorkoutsCount
+      });
       
       // Get all achievements user doesn't have yet
       const { data: unlockedAchievements, error: unlockedError } = await supabase
@@ -80,10 +86,6 @@ export class AchievementService {
       }
 
       const unlockedIds = unlockedAchievements?.map(a => a.achievement_id) || [];
-      
-      if (isTestingMode()) {
-        console.log('🔧 Testing mode: Already unlocked achievements:', unlockedIds);
-      }
       
       // Get all eligible achievements
       const { data: remainingAchievements, error: remainingError } = await supabase
@@ -101,7 +103,6 @@ export class AchievementService {
       // Check each achievement
       for (const achievement of remainingAchievements) {
         try {
-          // Parse the requirements JSON
           const requirements = typeof achievement.requirements === 'string' 
             ? JSON.parse(achievement.requirements) 
             : achievement.requirements;
@@ -116,6 +117,27 @@ export class AchievementService {
               name: achievement.name,
               required: requirements.workouts_count,
               current: profile.workouts_count
+            });
+            await this.awardAchievementUsingRPC(
+              userId, 
+              achievement.id, 
+              achievement.name, 
+              achievement.description, 
+              achievement.xp_reward,
+              achievement.points
+            );
+            achievementUnlocked = true;
+          }
+          
+          // Check manual workout achievements
+          if (!achievementUnlocked && 
+              requirements && 
+              'manual_workouts_count' in requirements && 
+              manualWorkoutsCount >= requirements.manual_workouts_count) {
+            console.log('Unlocking manual workout achievement:', {
+              name: achievement.name,
+              required: requirements.manual_workouts_count,
+              current: manualWorkoutsCount
             });
             await this.awardAchievementUsingRPC(
               userId, 
