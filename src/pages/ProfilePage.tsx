@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -18,6 +17,7 @@ import { XPBonusService } from '@/services/rpg/XPBonusService';
 import { useAchievementStore } from '@/stores/achievementStore';
 import { Shield } from 'lucide-react';
 import { RankService } from '@/services/rpg/RankService';
+import { AchievementService } from '@/services/rpg/AchievementService';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -49,30 +49,26 @@ const ProfilePage = () => {
       }
     };
     
-    // Calculate weekly/monthly bonuses
     const calculateBonuses = async () => {
       if (user?.id && profile?.last_workout_at) {
-        // In a real implementation, this would fetch actual completion data
         setWeeklyBonus(XPBonusService.WEEKLY_COMPLETION_BONUS);
-        setMonthlyBonus(0); // Example: User hasn't earned monthly bonus yet
+        setMonthlyBonus(0);
       }
     };
     
-    // Fetch rank data
     if (user?.id) {
       fetchRankData(user.id);
+      AchievementService.checkAchievements(user.id).catch(console.error);
     }
     
     fetchClassBonuses();
     calculateBonuses();
   }, [userClass, user?.id, profile?.last_workout_at, fetchRankData]);
   
-  // Handle navigation to achievements page
   const handleViewAllAchievements = () => {
     navigate('/conquistas');
   };
   
-  // Handle navigation to class selection page
   const handleClassSelection = () => {
     navigate('/selecao-de-classe');
   };

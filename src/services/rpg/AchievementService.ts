@@ -214,49 +214,6 @@ export class AchievementService {
     }
   }
   
-  // Original method that uses direct insert - keeping for reference
-  private static async awardAchievement(
-    userId: string, 
-    achievementId: string, 
-    achievementName: string,
-    achievementDescription: string,
-    xpReward: number,
-    points: number
-  ): Promise<void> {
-    try {
-      // Record the achievement
-      const { error } = await supabase
-        .from('user_achievements')
-        .insert({
-          user_id: userId,
-          achievement_id: achievementId
-        });
-        
-      if (error) {
-        // If there's a unique constraint violation, the user already has this achievement
-        if (error.code !== '23505') { // PostgreSQL unique violation code
-          console.error('Error awarding achievement:', error);
-        }
-        return;
-      }
-      
-      // Update the achievements count and XP
-      await supabase.rpc(
-        'increment_achievement_and_xp' as any, 
-        {
-          user_id: userId,
-          xp_amount: xpReward,
-          points_amount: points
-        }
-      );
-      
-      this.showAchievementNotification(achievementName, achievementDescription, xpReward);
-    } catch (error) {
-      console.error('Error awarding achievement:', error);
-    }
-  }
-  
-  // New method that uses RPC function to bypass RLS issues
   private static async awardAchievementUsingRPC(
     userId: string, 
     achievementId: string, 
@@ -296,7 +253,6 @@ export class AchievementService {
     }
   }
   
-  // Extracted notification logic to a separate method
   private static showAchievementNotification(
     achievementName: string,
     achievementDescription: string,
