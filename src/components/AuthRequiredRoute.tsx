@@ -19,7 +19,7 @@ const AuthRequiredRoute: React.FC<AuthRequiredRouteProps> = ({ children }) => {
   }
   
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/login" replace />;
   }
   
   return <>{children}</>;

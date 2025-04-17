@@ -25,6 +25,7 @@ import PrivacyPolicyPage from './pages/NotFound';
 import TermsOfServicePage from './pages/NotFound';
 import PasswordResetPage from './pages/AuthPage';
 import PasswordUpdatePage from './pages/AuthPage';
+import GuildsListPage from './pages/GuildsListPage';
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -54,6 +55,7 @@ function App() {
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
+                <Route path="/auth" element={<LoginPage />} />
                 <Route path="/perfil" element={<ProfilePage />} />
                 <Route path="/treino" element={<WorkoutPage />} />
                 <Route path="/exercicios" element={<ExerciseSearchPage />} />
@@ -67,6 +69,7 @@ function App() {
                 <Route path="/termos-de-servico" element={<TermsOfServicePage />} />
                 <Route path="/redefinir-senha" element={<PasswordResetPage />} />
                 <Route path="/atualizar-senha" element={<PasswordUpdatePage />} />
+                <Route path="/guilds" element={<GuildsListPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
               
