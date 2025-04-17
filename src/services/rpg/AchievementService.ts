@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { achievementPopupStore } from '@/stores/achievementPopupStore';
@@ -45,16 +44,22 @@ export class AchievementService {
       }
       
       // Get user profile data
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('workouts_count, streak, records_count')
         .eq('id', userId)
         .single();
         
-      if (!profile) {
-        console.error('No profile found for user', userId);
+      if (profileError || !profile) {
+        console.error('Error fetching profile:', profileError);
         return;
       }
+
+      console.log('Checking achievements with profile data:', {
+        workouts_count: profile.workouts_count,
+        streak: profile.streak,
+        records_count: profile.records_count
+      });
       
       // Get all achievements user doesn't have yet
       const { data: unlockedAchievements } = await supabase
@@ -62,54 +67,105 @@ export class AchievementService {
         .select('achievement_id')
         .eq('user_id', userId);
         
+      // Create empty array if no achievements unlocked yet
       const unlockedIds = unlockedAchievements?.map(a => a.achievement_id) || [];
       
       // Get all eligible achievements
-      const { data: achievements } = await supabase
+      const { data: achievements, error: achievementsError } = await supabase
         .from('achievements')
-        .select('*')
-        .not('id', 'in', `(${unlockedIds.length > 0 ? unlockedIds.join(',') : 'null'})`);
-        
-      if (!achievements || achievements.length === 0) {
+        .select('*');
+
+      if (achievementsError || !achievements) {
+        console.error('Error fetching achievements:', achievementsError);
         return;
       }
+
+      // Filter out already unlocked achievements
+      const eligibleAchievements = achievements.filter(
+        ach => !unlockedIds.includes(ach.id)
+      );
+      
+      console.log('Checking eligible achievements:', eligibleAchievements.length);
       
       // Check each achievement
-      for (const achievement of achievements) {
-        // Parse the requirements JSON to access its properties safely
-        const requirements = typeof achievement.requirements === 'string' 
-          ? JSON.parse(achievement.requirements) 
-          : achievement.requirements;
-        
-        let achievementUnlocked = false;
-        
-        // Check workout count achievements
-        if (requirements && 
-            'workouts_count' in requirements && 
-            profile.workouts_count >= requirements.workouts_count) {
-          await this.awardAchievement(userId, achievement.id, achievement.name, achievement.description, achievement.xp_reward, achievement.points);
-          achievementUnlocked = true;
+      for (const achievement of eligibleAchievements) {
+        try {
+          // Parse the requirements JSON
+          const requirements = typeof achievement.requirements === 'string' 
+            ? JSON.parse(achievement.requirements) 
+            : achievement.requirements;
+          
+          let achievementUnlocked = false;
+          
+          // Check workout count achievements
+          if (requirements && 
+              'workouts_count' in requirements && 
+              profile.workouts_count >= requirements.workouts_count) {
+            console.log('Unlocking workout achievement:', {
+              name: achievement.name,
+              required: requirements.workouts_count,
+              current: profile.workouts_count
+            });
+            await this.awardAchievement(
+              userId, 
+              achievement.id, 
+              achievement.name, 
+              achievement.description, 
+              achievement.xp_reward,
+              achievement.points
+            );
+            achievementUnlocked = true;
+          }
+          
+          // Check streak achievements
+          if (!achievementUnlocked && 
+              requirements && 
+              'streak_days' in requirements && 
+              profile.streak >= requirements.streak_days) {
+            console.log('Unlocking streak achievement:', {
+              name: achievement.name,
+              required: requirements.streak_days,
+              current: profile.streak
+            });
+            await this.awardAchievement(
+              userId, 
+              achievement.id, 
+              achievement.name, 
+              achievement.description, 
+              achievement.xp_reward,
+              achievement.points
+            );
+            achievementUnlocked = true;
+          }
+          
+          // Check personal records achievements
+          if (!achievementUnlocked && 
+              requirements && 
+              'records_count' in requirements && 
+              profile.records_count >= requirements.records_count) {
+            console.log('Unlocking records achievement:', {
+              name: achievement.name,
+              required: requirements.records_count,
+              current: profile.records_count
+            });
+            await this.awardAchievement(
+              userId, 
+              achievement.id, 
+              achievement.name, 
+              achievement.description, 
+              achievement.xp_reward,
+              achievement.points
+            );
+            achievementUnlocked = true;
+          }
+          
+          if (achievementUnlocked) {
+            console.log('Achievement unlocked:', achievement.name);
+          }
+        } catch (error) {
+          console.error('Error checking achievement:', achievement.id, error);
+          continue; // Continue checking other achievements even if one fails
         }
-        
-        // Check streak achievements
-        if (!achievementUnlocked && 
-            requirements && 
-            'streak_days' in requirements && 
-            profile.streak >= requirements.streak_days) {
-          await this.awardAchievement(userId, achievement.id, achievement.name, achievement.description, achievement.xp_reward, achievement.points);
-          achievementUnlocked = true;
-        }
-        
-        // Check personal records achievements
-        if (!achievementUnlocked && 
-            requirements && 
-            'records_count' in requirements && 
-            profile.records_count >= requirements.records_count) {
-          await this.awardAchievement(userId, achievement.id, achievement.name, achievement.description, achievement.xp_reward, achievement.points);
-          achievementUnlocked = true;
-        }
-        
-        // Additional achievement types can be added here
       }
     } catch (error) {
       console.error('Error in checkAchievements:', error);
