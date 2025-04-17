@@ -12,7 +12,6 @@ import ProfileActions from '@/components/profile/ProfileActions';
 import ClassIconSelector from '@/components/profile/ClassIconSelector';
 import ProfileDataProvider from '@/components/profile/ProfileDataProvider';
 import UserDataFormatter from '@/components/profile/UserDataFormatter';
-import { getMockAchievements } from '@/components/profile/MockAchievements';
 import { supabase } from '@/integrations/supabase/client';
 import { XPBonusService } from '@/services/rpg/XPBonusService';
 import { useAchievementStore } from '@/stores/achievementStore';
@@ -66,9 +65,6 @@ const ProfilePage = () => {
     calculateBonuses();
   }, [userClass, user?.id, profile?.last_workout_at, fetchRankData]);
   
-  // Mock data for achievements
-  const recentAchievements = getMockAchievements();
-  
   return (
     <div className="pb-20 min-h-screen bg-midnight-base">
       <PageHeader 
@@ -115,7 +111,7 @@ const ProfilePage = () => {
                   />
                   
                   <div className="mb-5">
-                    <RecentAchievementsList achievements={recentAchievements} />
+                    <RecentAchievementsList />
                   </div>
                 </>
               )}
