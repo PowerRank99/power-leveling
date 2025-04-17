@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { ManualWorkout } from '@/types/manualWorkoutTypes';
 import { ManualWorkoutValidationService } from './ManualWorkoutValidationService';
@@ -20,7 +21,7 @@ export class ManualWorkoutService {
       // Get user's class for bonuses
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('class')
+        .select('class, workouts_count')
         .eq('id', userId)
         .single();
         
@@ -43,7 +44,7 @@ export class ManualWorkoutService {
       // Check if this is a power day (user has completed a workout today)
       const isPowerDay = await ManualWorkoutValidationService.checkPowerDay(userId);
       
-      // Calculate base XP (100 XP base, power day bonus: +50 XP)
+      // Calculate base XP
       let xpAwarded = isPowerDay 
         ? XPService.MANUAL_WORKOUT_BASE_XP + XPService.POWER_DAY_BONUS_XP 
         : XPService.MANUAL_WORKOUT_BASE_XP;
@@ -61,7 +62,7 @@ export class ManualWorkoutService {
       
       try {
         // Create the manual workout record
-        const { data, error } = await supabase
+        const { data: workoutData, error: workoutError } = await supabase
           .from('manual_workouts')
           .insert({
             user_id: userId,
@@ -75,7 +76,7 @@ export class ManualWorkoutService {
           .select()
           .single();
         
-        if (error) throw error;
+        if (workoutError) throw workoutError;
         
         // Update profile with workout completion
         const { error: completionError } = await supabase
@@ -89,13 +90,26 @@ export class ManualWorkoutService {
         // Add XP to user
         await XPService.addXP(userId, xpAwarded, `manual_workout:${exerciseType}`);
         
+        // Get updated profile data to ensure we have the latest workouts_count
+        const { data: updatedProfile, error: updateError } = await supabase
+          .from('profiles')
+          .select('workouts_count')
+          .eq('id', userId)
+          .single();
+          
+        if (updateError) throw updateError;
+        
+        // Log the current state for debugging
+        console.log('Current workout count:', updatedProfile.workouts_count);
+        
         // Check for achievements after workout completion
+        // Pass the updated workouts count to ensure accurate achievement checks
         await AchievementService.checkAchievements(userId);
         
         // Commit transaction
         await supabase.rpc('commit_transaction');
         
-        return { success: true, data };
+        return { success: true, data: workoutData };
         
       } catch (error) {
         // Rollback transaction on error
