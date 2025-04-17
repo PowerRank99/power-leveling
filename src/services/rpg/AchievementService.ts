@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { achievementPopupStore } from '@/stores/achievementPopupStore';
@@ -88,7 +87,9 @@ export class AchievementService {
         
         // Award achievement if conditions are met
         if (!hasAchievement && profile.workouts_count > 0) {
-          await this.awardAchievement(
+          // Use the check_achievement_batch RPC function instead of direct insert
+          // This function handles RLS permissions properly
+          await this.awardAchievementUsingRPC(
             userId,
             firstWorkoutAchievement.id,
             firstWorkoutAchievement.name,
@@ -147,7 +148,7 @@ export class AchievementService {
               required: requirements.workouts_count,
               current: profile.workouts_count
             });
-            await this.awardAchievement(
+            await this.awardAchievementUsingRPC(
               userId, 
               achievement.id, 
               achievement.name, 
@@ -168,7 +169,7 @@ export class AchievementService {
               required: requirements.streak_days,
               current: profile.streak
             });
-            await this.awardAchievement(
+            await this.awardAchievementUsingRPC(
               userId, 
               achievement.id, 
               achievement.name, 
@@ -189,7 +190,7 @@ export class AchievementService {
               required: requirements.records_count,
               current: profile.records_count
             });
-            await this.awardAchievement(
+            await this.awardAchievementUsingRPC(
               userId, 
               achievement.id, 
               achievement.name, 
@@ -213,6 +214,7 @@ export class AchievementService {
     }
   }
   
+  // Original method that uses direct insert - keeping for reference
   private static async awardAchievement(
     userId: string, 
     achievementId: string, 
@@ -239,8 +241,6 @@ export class AchievementService {
       }
       
       // Update the achievements count and XP
-      // Using a transaction to ensure both updates succeed or fail together
-      // Use type assertion to make TypeScript happy with our custom RPC function
       await supabase.rpc(
         'increment_achievement_and_xp' as any, 
         {
@@ -250,22 +250,71 @@ export class AchievementService {
         }
       );
       
-      // Show achievement popup - fixed to properly use the Zustand store
-      const { showAchievement } = achievementPopupStore.getState();
-      showAchievement({
-        title: achievementName,
-        description: achievementDescription,
-        xpReward: xpReward,
-        bonusText: "Excede o limite diário"
-      });
-        
-      // Also show toast notification
-      toast.success(`🏆 Conquista Desbloqueada!`, {
-        description: `${achievementName} (+${xpReward} XP, +${points} pontos)`
-      });
+      this.showAchievementNotification(achievementName, achievementDescription, xpReward);
     } catch (error) {
       console.error('Error awarding achievement:', error);
     }
+  }
+  
+  // New method that uses RPC function to bypass RLS issues
+  private static async awardAchievementUsingRPC(
+    userId: string, 
+    achievementId: string, 
+    achievementName: string,
+    achievementDescription: string,
+    xpReward: number,
+    points: number
+  ): Promise<void> {
+    try {
+      console.log('Awarding achievement using RPC:', {
+        userId,
+        achievementId,
+        achievementName
+      });
+      
+      // Use the check_achievement_batch RPC function to award the achievement
+      // This function handles both the achievement insert and profile update
+      const { data, error } = await supabase.rpc(
+        'check_achievement_batch',
+        {
+          p_user_id: userId,
+          p_achievement_ids: [achievementId]
+        }
+      );
+      
+      if (error) {
+        console.error('RPC Error awarding achievement:', error);
+        return;
+      }
+      
+      console.log('Achievement award RPC result:', data);
+      
+      // Show achievement notification
+      this.showAchievementNotification(achievementName, achievementDescription, xpReward);
+    } catch (error) {
+      console.error('Error in awardAchievementUsingRPC:', error);
+    }
+  }
+  
+  // Extracted notification logic to a separate method
+  private static showAchievementNotification(
+    achievementName: string,
+    achievementDescription: string,
+    xpReward: number
+  ): void {
+    // Show achievement popup using the store
+    const { showAchievement } = achievementPopupStore.getState();
+    showAchievement({
+      title: achievementName,
+      description: achievementDescription,
+      xpReward: xpReward,
+      bonusText: "Excede o limite diário"
+    });
+      
+    // Also show toast notification
+    toast.success(`🏆 Conquista Desbloqueada!`, {
+      description: `${achievementName} (+${xpReward} XP)`
+    });
   }
   
   static async getAllAchievements(userId: string): Promise<Achievement[]> {
