@@ -1,55 +1,141 @@
 
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { useClass } from '@/contexts/ClassContext';
+import PageHeader from '@/components/ui/PageHeader';
+import BottomNavBar from '@/components/navigation/BottomNavBar';
+import ProfileHeader from '@/components/profile/ProfileHeader';
+import ProfileProgressSection from '@/components/profile/ProfileProgressSection';
+import ClassSection from '@/components/profile/ClassSection';
+import RecentAchievementsList from '@/components/profile/RecentAchievementsList';
+import ProfileActions from '@/components/profile/ProfileActions';
+import ClassIconSelector from '@/components/profile/ClassIconSelector';
+import ProfileDataProvider from '@/components/profile/ProfileDataProvider';
+import UserDataFormatter from '@/components/profile/UserDataFormatter';
 import { supabase } from '@/integrations/supabase/client';
+import { XPBonusService } from '@/services/rpg/XPBonusService';
+import { useAchievementStore } from '@/stores/achievementStore';
+import { Shield } from 'lucide-react';
+import { RankService } from '@/services/rpg/RankService';
 
-const UserXPDetails = () => {
-  const [userXP, setUserXP] = useState<{
-    currentXP: number;
-    level: number;
-    nextLevelXP: number;
-  } | null>(null);
-
+const ProfilePage = () => {
+  const navigate = useNavigate();
+  const { user, profile, signOut } = useAuth();
+  const { userClass } = useClass();
+  const { rankData, fetchRankData } = useAchievementStore();
+  const [classBonuses, setClassBonuses] = useState<{description: string; value: string}[]>([]);
+  const [weeklyBonus, setWeeklyBonus] = useState(0);
+  const [monthlyBonus, setMonthlyBonus] = useState(0);
+  
   useEffect(() => {
-    const fetchUserXP = async () => {
-      // Fetch user by name (assuming unique name)
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('xp, level')
-        .eq('name', 'Bruno Pierri')
-        .single();
-
-      if (error) {
-        console.error('Error fetching user XP:', error);
-        return;
-      }
-
-      if (profiles) {
-        // Calculate XP needed for next level (100 * current level)
-        const nextLevelXP = profiles.level < 99 
-          ? profiles.level * 100 
-          : Infinity;
-
-        setUserXP({
-          currentXP: profiles.xp || 0,
-          level: profiles.level || 1,
-          nextLevelXP
-        });
+    const fetchClassBonuses = async () => {
+      if (userClass) {
+        try {
+          const { data } = await supabase
+            .from('class_bonuses')
+            .select('description, bonus_value')
+            .eq('class_name', userClass);
+            
+          if (data) {
+            setClassBonuses(data.map(bonus => ({
+              description: bonus.description,
+              value: `+${Math.round(bonus.bonus_value * 100)}%`
+            })));
+          }
+        } catch (error) {
+          console.error('Error fetching class bonuses:', error);
+        }
       }
     };
-
-    fetchUserXP();
-  }, []);
-
-  if (!userXP) return <div>Loading XP information...</div>;
-
+    
+    // Calculate weekly/monthly bonuses
+    const calculateBonuses = async () => {
+      if (user?.id && profile?.last_workout_at) {
+        // In a real implementation, this would fetch actual completion data
+        setWeeklyBonus(XPBonusService.WEEKLY_COMPLETION_BONUS);
+        setMonthlyBonus(0); // Example: User hasn't earned monthly bonus yet
+      }
+    };
+    
+    // Fetch rank data
+    if (user?.id) {
+      fetchRankData(user.id);
+    }
+    
+    fetchClassBonuses();
+    calculateBonuses();
+  }, [userClass, user?.id, profile?.last_workout_at, fetchRankData]);
+  
+  // Handle navigation to achievements page
+  const handleViewAllAchievements = () => {
+    navigate('/conquistas');
+  };
+  
+  // Handle navigation to class selection page
+  const handleClassSelection = () => {
+    navigate('/selecao-de-classe');
+  };
+  
   return (
-    <div>
-      <p>Current XP: {userXP.currentXP}</p>
-      <p>Current Level: {userXP.level}</p>
-      <p>XP Needed for Next Level: {userXP.nextLevelXP === Infinity ? 'Max Level' : userXP.nextLevelXP}</p>
-      <p>XP Remaining: {userXP.nextLevelXP === Infinity ? '0' : userXP.nextLevelXP - userXP.currentXP}</p>
+    <div className="pb-20 min-h-screen bg-midnight-base">
+      <PageHeader 
+        title="Perfil" 
+        rightContent={<ProfileActions onSignOut={signOut} />}
+      />
+      
+      <div className="px-4">
+        <UserDataFormatter user={user} profile={profile}>
+          {({ avatar, name, username, workoutsCount }) => (
+            <ProfileDataProvider profile={profile} userClass={userClass}>
+              {(profileData) => (
+                <>
+                  <ProfileHeader 
+                    avatar={avatar}
+                    name={name}
+                    username={username}
+                    level={profileData.level}
+                    className={profileData.className}
+                    workoutsCount={workoutsCount}
+                    ranking={42}
+                    currentXP={profileData.currentXP}
+                    nextLevelXP={profileData.nextLevelXP}
+                    rank={profileData.rank}
+                    rankScore={profileData.rankScore}
+                    achievementPoints={profileData.achievements.points}
+                  />
+                  
+                  <ProfileProgressSection 
+                    dailyXP={profileData.dailyXP}
+                    dailyXPCap={profileData.dailyXPCap}
+                    lastActivity={profileData.lastActivity}
+                    xpGain={profileData.xpGain}
+                    streak={profileData.streak}
+                    weeklyBonus={weeklyBonus}
+                    monthlyBonus={monthlyBonus}
+                  />
+                  
+                  <ClassSection 
+                    className={profileData.className}
+                    classDescription={profileData.classDescription}
+                    icon={<ClassIconSelector className={profileData.className} />}
+                    bonuses={classBonuses}
+                    onClassSelect={handleClassSelection}
+                  />
+                  
+                  <div className="mb-5">
+                    <RecentAchievementsList onViewAll={handleViewAllAchievements} />
+                  </div>
+                </>
+              )}
+            </ProfileDataProvider>
+          )}
+        </UserDataFormatter>
+      </div>
+      
+      <BottomNavBar />
     </div>
   );
 };
 
-export default UserXPDetails;
+export default ProfilePage;
