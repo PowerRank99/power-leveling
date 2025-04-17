@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { achievementPopupStore } from '@/stores/achievementPopupStore';
@@ -64,15 +63,15 @@ export class AchievementService {
         .from('achievements')
         .select('*')
         .eq('string_id', 'primeiro-treino')
-        .single();
-        
+        .maybeSingle();
+      
       if (primeiroTreinoError) {
         console.error('Error fetching Primeiro Treino achievement:', primeiroTreinoError);
       } else if (primeiroTreino) {
         console.log('Found Primeiro Treino achievement:', primeiroTreino);
         
         // Check if user already has this achievement
-        const { data: hasAchievement } = await supabase
+        const { data: hasAchievement, error: hasAchievementError } = await supabase
           .from('user_achievements')
           .select('id')
           .eq('user_id', userId)
@@ -80,6 +79,11 @@ export class AchievementService {
           .maybeSingle();
           
         console.log('Has Primeiro Treino achievement?', hasAchievement);
+        console.log('Check result:', {
+          hasAchievement,
+          workoutsCount: profile.workouts_count,
+          meetsCondition: profile.workouts_count > 0 && !hasAchievement
+        });
         
         // If user doesn't have the achievement and has at least one workout
         if (!hasAchievement && profile.workouts_count > 0) {
@@ -92,15 +96,22 @@ export class AchievementService {
             primeiroTreino.xp_reward,
             primeiroTreino.points
           );
+          // Return early as we've awarded the achievement
+          return;
         }
       }
-      
+
       // Get all achievements user doesn't have yet
-      const { data: unlockedAchievements } = await supabase
+      const { data: unlockedAchievements, error: unlockedError } = await supabase
         .from('user_achievements')
         .select('achievement_id')
         .eq('user_id', userId);
         
+      if (unlockedError) {
+        console.error('Error fetching unlocked achievements:', unlockedError);
+        return;
+      }
+
       const unlockedIds = unlockedAchievements?.map(a => a.achievement_id) || [];
       console.log('Already unlocked achievement IDs:', unlockedIds);
       
