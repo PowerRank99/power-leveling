@@ -1,7 +1,9 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { achievementPopupStore } from '@/stores/achievementPopupStore';
 import { RankService } from './RankService';
+import { AchievementDebug } from './AchievementDebug';
 
 export interface Achievement {
   id: string;
@@ -40,6 +42,8 @@ export class AchievementService {
         return;
       }
       
+      console.log('Starting achievement check for user:', userId);
+      
       // Get user profile data
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -54,54 +58,14 @@ export class AchievementService {
 
       console.log('Checking achievements with profile data:', profile);
       
-      // Check for primeiro-treino achievement, handling both possible string IDs
-      const { data: firstWorkoutAchievements, error: firstWorkoutError } = await supabase
-        .from('achievements')
-        .select('*')
-        .or('string_id.eq.primeiro-treino,string_id.eq.first-workout')
-        .limit(1);
+      // Specifically debug the first workout achievement
+      await AchievementDebug.debugFirstWorkoutAchievement(userId);
       
-      if (firstWorkoutError) {
-        console.error('Error fetching first workout achievement:', firstWorkoutError);
-      } else if (firstWorkoutAchievements && firstWorkoutAchievements.length > 0) {
-        const firstWorkoutAchievement = firstWorkoutAchievements[0];
-        console.log('Found first workout achievement:', firstWorkoutAchievement);
-        
-        // Check if user already has this achievement
-        const { data: hasAchievement, error: hasAchievementError } = await supabase
-          .from('user_achievements')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('achievement_id', firstWorkoutAchievement.id)
-          .maybeSingle();
-          
-        if (hasAchievementError) {
-          console.error('Error checking user achievement:', hasAchievementError);
-        }
-        
-        console.log('Achievement check status:', {
-          hasAchievement,
-          workoutsCount: profile.workouts_count,
-          shouldAward: profile.workouts_count > 0 && !hasAchievement
-        });
-        
-        // Award achievement if conditions are met
-        if (!hasAchievement && profile.workouts_count > 0) {
-          // Use the check_achievement_batch RPC function instead of direct insert
-          // This function handles RLS permissions properly
-          await this.awardAchievementUsingRPC(
-            userId,
-            firstWorkoutAchievement.id,
-            firstWorkoutAchievement.name,
-            firstWorkoutAchievement.description,
-            firstWorkoutAchievement.xp_reward,
-            firstWorkoutAchievement.points
-          );
-          // Return early as we've awarded an achievement
-          return;
-        }
+      // Try to directly award the first workout achievement if conditions are met
+      if (profile.workouts_count > 0) {
+        await this.tryAwardFirstWorkoutAchievement(userId);
       }
-
+      
       // Get all achievements user doesn't have yet
       const { data: unlockedAchievements, error: unlockedError } = await supabase
         .from('user_achievements')
@@ -213,6 +177,90 @@ export class AchievementService {
       console.error('Error in checkAchievements:', error);
     }
   }
+
+  private static async tryAwardFirstWorkoutAchievement(userId: string): Promise<void> {
+    try {
+      console.log('Attempting to award first workout achievement directly');
+      
+      // Try to find the achievement using multiple possible string IDs
+      const { data: firstWorkoutAchievements, error: firstWorkoutError } = await supabase
+        .from('achievements')
+        .select('*')
+        .or('string_id.eq.primeiro-treino,string_id.eq.first-workout,name.ilike.%primeiro%,name.ilike.%first%workout%')
+        .limit(5);
+      
+      if (firstWorkoutError) {
+        console.error('Error fetching first workout achievement:', firstWorkoutError);
+        return;
+      }
+      
+      console.log('Found potential first workout achievements:', firstWorkoutAchievements);
+      
+      if (!firstWorkoutAchievements || firstWorkoutAchievements.length === 0) {
+        console.error('No first workout achievement found in the database');
+        return;
+      }
+      
+      // Try each potential achievement
+      for (const achievement of firstWorkoutAchievements) {
+        // Check if user already has this achievement
+        const { data: hasAchievement, error: hasAchievementError } = await supabase
+          .from('user_achievements')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('achievement_id', achievement.id)
+          .maybeSingle();
+          
+        if (hasAchievementError) {
+          console.error('Error checking if user has achievement:', hasAchievementError);
+          continue;
+        }
+        
+        console.log('Achievement check status for', achievement.name, ':', {
+          hasAchievement,
+          shouldAward: !hasAchievement
+        });
+        
+        // If user doesn't have this achievement yet, award it
+        if (!hasAchievement) {
+          console.log('Attempting to award achievement:', achievement.name);
+          
+          try {
+            // Try using the RPC method
+            const result = await this.awardAchievementUsingRPC(
+              userId,
+              achievement.id,
+              achievement.name,
+              achievement.description,
+              achievement.xp_reward,
+              achievement.points
+            );
+            
+            console.log('RPC award result:', result);
+            
+            // If RPC fails, try direct method as fallback
+            if (!result) {
+              console.log('Trying direct insert as fallback');
+              await this.awardAchievementDirect(
+                userId,
+                achievement.id,
+                achievement.name,
+                achievement.description,
+                achievement.xp_reward,
+                achievement.points
+              );
+            }
+            
+            break; // Stop after awarding one achievement
+          } catch (error) {
+            console.error('Error awarding achievement:', error);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error in tryAwardFirstWorkoutAchievement:', error);
+    }
+  }
   
   private static async awardAchievementUsingRPC(
     userId: string, 
@@ -221,7 +269,7 @@ export class AchievementService {
     achievementDescription: string,
     xpReward: number,
     points: number
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
       console.log('Awarding achievement using RPC:', {
         userId,
@@ -241,15 +289,71 @@ export class AchievementService {
       
       if (error) {
         console.error('RPC Error awarding achievement:', error);
-        return;
+        return false;
       }
       
       console.log('Achievement award RPC result:', data);
       
       // Show achievement notification
       this.showAchievementNotification(achievementName, achievementDescription, xpReward);
+      return true;
     } catch (error) {
       console.error('Error in awardAchievementUsingRPC:', error);
+      return false;
+    }
+  }
+
+  // Direct method as a fallback if RPC fails
+  private static async awardAchievementDirect(
+    userId: string,
+    achievementId: string,
+    achievementName: string,
+    achievementDescription: string,
+    xpReward: number,
+    points: number
+  ): Promise<boolean> {
+    try {
+      console.log('Trying direct achievement insert as fallback');
+      
+      // Insert the achievement directly
+      const { error: insertError } = await supabase
+        .from('user_achievements')
+        .insert({
+          user_id: userId,
+          achievement_id: achievementId
+        });
+        
+      if (insertError) {
+        // If it's not a duplicate key error, log it
+        if (insertError.code !== '23505') { // PostgreSQL duplicate key error
+          console.error('Error in direct achievement insert:', insertError);
+        } else {
+          console.log('Achievement already exists (duplicate key)');
+        }
+        return false;
+      }
+      
+      // Update profile counters directly
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          achievements_count: supabase.rpc('increment', { row_id: userId, table_name: 'profiles', column_name: 'achievements_count', increment_amount: 1 }),
+          achievement_points: supabase.rpc('increment', { row_id: userId, table_name: 'profiles', column_name: 'achievement_points', increment_amount: points }),
+          xp: supabase.rpc('increment', { row_id: userId, table_name: 'profiles', column_name: 'xp', increment_amount: xpReward })
+        })
+        .eq('id', userId);
+        
+      if (updateError) {
+        console.error('Error updating profile stats:', updateError);
+        return false;
+      }
+      
+      // Show notification
+      this.showAchievementNotification(achievementName, achievementDescription, xpReward);
+      return true;
+    } catch (error) {
+      console.error('Error in direct achievement award:', error);
+      return false;
     }
   }
   

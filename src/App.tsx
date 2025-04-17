@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -6,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from './hooks/useAuth';
 import { ClassProvider } from './contexts/ClassContext';
 import { initializeClassSystem, isClassSystemInitialized } from './services/rpg/ClassSystemInitializer';
+import AchievementPopup from './components/profile/AchievementPopup';
 
 // Import all pages with correct extensions
 import LandingPage from './pages/Index';
@@ -75,6 +75,9 @@ function App() {
               
               {/* Global toast notifications */}
               <Toaster />
+              
+              {/* Achievement popup */}
+              <AchievementPopup />
             </ClassProvider>
           </AuthProvider>
         </BrowserRouter>
