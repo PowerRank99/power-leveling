@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { achievementPopupStore } from '@/stores/achievementPopupStore';
@@ -118,7 +119,7 @@ export class AchievementService {
               required: requirements.workouts_count,
               current: profile.workouts_count
             });
-            await this.awardAchievementUsingRPC(
+            await this.awardAchievement(
               userId, 
               achievement.id, 
               achievement.name, 
@@ -139,7 +140,7 @@ export class AchievementService {
               required: requirements.manual_workouts_count,
               current: manualWorkoutsCount
             });
-            await this.awardAchievementUsingRPC(
+            await this.awardAchievement(
               userId, 
               achievement.id, 
               achievement.name, 
@@ -160,7 +161,7 @@ export class AchievementService {
               required: requirements.streak_days,
               current: profile.streak
             });
-            await this.awardAchievementUsingRPC(
+            await this.awardAchievement(
               userId, 
               achievement.id, 
               achievement.name, 
@@ -181,7 +182,7 @@ export class AchievementService {
               required: requirements.records_count,
               current: profile.records_count
             });
-            await this.awardAchievementUsingRPC(
+            await this.awardAchievement(
               userId, 
               achievement.id, 
               achievement.name, 
@@ -253,8 +254,7 @@ export class AchievementService {
           console.log('Attempting to award achievement:', achievement.name);
           
           try {
-            // Try using the RPC method
-            const result = await this.awardAchievementUsingRPC(
+            const result = await this.awardAchievement(
               userId,
               achievement.id,
               achievement.name,
@@ -263,20 +263,7 @@ export class AchievementService {
               achievement.points
             );
             
-            console.log('RPC award result:', result);
-            
-            // If RPC fails, try direct method as fallback
-            if (!result) {
-              console.log('Trying direct insert as fallback');
-              await this.awardAchievementDirect(
-                userId,
-                achievement.id,
-                achievement.name,
-                achievement.description,
-                achievement.xp_reward,
-                achievement.points
-              );
-            }
+            console.log('Achievement award result:', result);
             
             break; // Stop after awarding one achievement
           } catch (error) {
@@ -286,6 +273,45 @@ export class AchievementService {
       }
     } catch (error) {
       console.error('Error in tryAwardFirstWorkoutAchievement:', error);
+    }
+  }
+  
+  // Main award achievement method that tries first direct insertion then RPC as fallback
+  private static async awardAchievement(
+    userId: string, 
+    achievementId: string, 
+    achievementName: string,
+    achievementDescription: string,
+    xpReward: number,
+    points: number
+  ): Promise<boolean> {
+    try {
+      // First try direct method as it's more reliable
+      const directResult = await this.awardAchievementDirect(
+        userId,
+        achievementId,
+        achievementName,
+        achievementDescription,
+        xpReward,
+        points
+      );
+      
+      if (directResult) {
+        return true;
+      }
+      
+      // If direct method fails, try RPC as fallback
+      return await this.awardAchievementUsingRPC(
+        userId,
+        achievementId,
+        achievementName,
+        achievementDescription,
+        xpReward,
+        points
+      );
+    } catch (error) {
+      console.error('Error in awardAchievement:', error);
+      return false;
     }
   }
   
@@ -340,7 +366,7 @@ export class AchievementService {
     points: number
   ): Promise<boolean> {
     try {
-      console.log('Trying direct achievement insert as fallback');
+      console.log('Trying direct achievement insert');
       
       // Insert the achievement directly
       const { error: insertError } = await supabase
