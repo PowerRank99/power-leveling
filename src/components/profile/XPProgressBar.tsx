@@ -29,6 +29,14 @@ const XPProgressBar: React.FC<XPProgressBarProps> = ({
     return num >= 1000 ? `${(num / 1000).toFixed(1)}k` : num;
   };
   
+  // Display for max level or XP to next level
+  const getRemainingXPDisplay = () => {
+    if (total === Infinity) {
+      return 'Nível máximo';
+    }
+    return `${formatNumber(total - current)} XP para o ${nextLevel}`;
+  };
+  
   return (
     <div className={`w-full ${className}`}>
       <div className="flex justify-between items-center mb-1">
@@ -40,13 +48,13 @@ const XPProgressBar: React.FC<XPProgressBarProps> = ({
               <TooltipTrigger asChild>
                 <div className="flex items-center">
                   <span className="text-xs font-space text-text-tertiary">
-                    {total - current > 0 ? `${formatNumber(total - current)} XP para o ${nextLevel}` : 'Nível máximo'}
+                    {total - current > 0 ? getRemainingXPDisplay() : 'Nível máximo'}
                   </span>
                   <Info className="h-3 w-3 ml-1 text-text-tertiary" />
                 </div>
               </TooltipTrigger>
               <TooltipContent side="top" className="font-sora text-xs">
-                <p>{current} / {total} XP</p>
+                <p>{current} / {total !== Infinity ? total : 'MAX'} XP</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

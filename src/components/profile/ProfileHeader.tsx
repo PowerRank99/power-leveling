@@ -40,6 +40,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const rankColorClass = RankService.getRankColorClass(rank);
   const rankBackgroundClass = RankService.getRankBackgroundClass(rank);
   
+  // Determine display for next level (handle level 99 cap)
+  const isMaxLevel = level >= 99;
+  const displayNextLevel = isMaxLevel ? 99 : level + 1;
+  
   return (
     <div className="bg-gradient-to-b from-midnight-deep to-midnight-base text-text-primary p-6 relative rounded-b-xl shadow-elevated">
       <div className="flex items-center">
@@ -59,7 +63,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 </div>
               </TooltipTrigger>
               <TooltipContent side="right">
-                <p className="text-xs font-sora">Nível de Aventureiro</p>
+                <p className="text-xs font-sora">Nível de Aventureiro {isMaxLevel ? '(Máximo)' : ''}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -108,9 +112,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           <XPProgressBar
             current={currentXP}
             total={nextLevelXP}
-            label={`Nível ${level}`}
+            label={`Nível ${level}${isMaxLevel ? ' (Máximo)' : ''}`}
             showXpRemaining={true}
-            nextLevel={level + 1}
+            nextLevel={displayNextLevel}
           />
         </div>
       </div>
