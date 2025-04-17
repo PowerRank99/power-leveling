@@ -3,6 +3,7 @@ import { ManualWorkout } from '@/types/manualWorkoutTypes';
 import { ManualWorkoutValidationService } from './ManualWorkoutValidationService';
 import { XPService } from '@/services/xp/XPService';
 import { ActivityBonusService } from './ActivityBonusService';
+import { AchievementService } from '@/services/rpg/AchievementService';
 
 export class ManualWorkoutService {
   /**
@@ -55,30 +56,52 @@ export class ManualWorkoutService {
         console.log(`Applied class bonus: +${bonusXP} XP (${classBonus * 100}%)`);
       }
       
-      // Add XP to user
-      await XPService.addXP(userId, xpAwarded, `manual_workout:${exerciseType}`);
+      // Begin transaction
+      await supabase.rpc('begin_transaction');
       
-      // Create the manual workout record
-      const { data, error } = await supabase
-        .from('manual_workouts')
-        .insert({
-          user_id: userId,
-          description: description || null,
-          activity_type: exerciseType,
-          photo_url: photoUrl,
-          xp_awarded: xpAwarded,
-          workout_date: workoutDate.toISOString(),
-          is_power_day: isPowerDay
-        })
-        .select()
-        .single();
-      
-      if (error) {
-        console.error('Error creating manual workout:', error);
-        return { success: false, error: error.message };
+      try {
+        // Create the manual workout record
+        const { data, error } = await supabase
+          .from('manual_workouts')
+          .insert({
+            user_id: userId,
+            description: description || null,
+            activity_type: exerciseType,
+            photo_url: photoUrl,
+            xp_awarded: xpAwarded,
+            workout_date: workoutDate.toISOString(),
+            is_power_day: isPowerDay
+          })
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        // Update profile with workout completion
+        const { error: completionError } = await supabase
+          .rpc('handle_manual_workout_completion', {
+            p_user_id: userId,
+            p_workout_date: workoutDate.toISOString()
+          });
+          
+        if (completionError) throw completionError;
+        
+        // Add XP to user
+        await XPService.addXP(userId, xpAwarded, `manual_workout:${exerciseType}`);
+        
+        // Check for achievements after workout completion
+        await AchievementService.checkAchievements(userId);
+        
+        // Commit transaction
+        await supabase.rpc('commit_transaction');
+        
+        return { success: true, data };
+        
+      } catch (error) {
+        // Rollback transaction on error
+        await supabase.rpc('rollback_transaction');
+        throw error;
       }
-      
-      return { success: true, data };
       
     } catch (error: any) {
       console.error('Error in submitManualWorkout:', error);

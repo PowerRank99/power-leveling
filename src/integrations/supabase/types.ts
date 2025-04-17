@@ -1030,6 +1030,10 @@ export type Database = {
           completed_at: string
         }[]
       }
+      handle_manual_workout_completion: {
+        Args: { p_user_id: string; p_workout_date: string }
+        Returns: undefined
+      }
       increment_profile_counter: {
         Args: {
           user_id_param: string
