@@ -86,6 +86,7 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
     try {
       setIsSubmitting(true);
       
+      // Upload photo first
       const fileName = `manual-workout-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('workout-photos')
@@ -95,6 +96,7 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
         throw new Error(`Erro ao fazer upload da imagem: ${uploadError.message}`);
       }
       
+      // Get public URL for the uploaded photo
       const { data: publicUrlData } = supabase.storage
         .from('workout-photos')
         .getPublicUrl(fileName);
@@ -103,7 +105,9 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
         throw new Error('Erro ao obter URL pública da imagem');
       }
       
+      // Submit the workout with the photo URL
       const parsedDate = new Date(workoutDate);
+      parsedDate.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
       
       const result = await ManualWorkoutService.submitManualWorkout(
         user.id,

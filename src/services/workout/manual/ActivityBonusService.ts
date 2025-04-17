@@ -10,43 +10,26 @@ export class ActivityBonusService {
     // Default activity-to-class bonus mapping
     const classActivityBonuses: Record<string, Record<string, number>> = {
       Guerreiro: {
-        'strength': 0.2, // 20% bonus
-        'lifting': 0.2
+        'Musculação': 0.2 // 20% bonus for weight training
       },
       Monge: {
-        'bodyweight': 0.2,
-        'mobility': 0.15
+        'Calistenia': 0.2 // 20% bonus for calisthenics
       },
       Ninja: {
-        'running': 0.2,
-        'cardio': 0.2,
-        'hiit': 0.2,
-        'short': 0.15 // Short workouts
+        'Cardio': 0.2 // 20% bonus for cardio
       },
-      Bruxo: {
-        'yoga': 0.4,
-        'stretching': 0.4,
-        'flexibility': 0.4,
-        'meditation': 0.2
+      Druida: {
+        'Mobilidade & Flexibilidade': 0.4 // 40% bonus for mobility & flexibility
       },
       Paladino: {
-        'sports': 0.4,
-        'team': 0.3,
-        'outdoor': 0.2
+        'Esportes': 0.4 // 40% bonus for sports
       }
     };
     
-    // Normalize activity type to lowercase
-    const normalizedActivity = activityType.toLowerCase();
-    
     // Check if user's class has bonuses for this activity type
     if (userClass && classActivityBonuses[userClass]) {
-      // Find any matching bonus keys
-      for (const [key, bonus] of Object.entries(classActivityBonuses[userClass])) {
-        if (normalizedActivity.includes(key)) {
-          return bonus;
-        }
-      }
+      const bonus = classActivityBonuses[userClass][activityType];
+      return bonus || 0;
     }
     
     return 0; // No bonus

@@ -9,34 +9,33 @@ interface DateSelectorProps {
 }
 
 const DateSelector: React.FC<DateSelectorProps> = ({ value, onChange }) => {
-  // Get current date in YYYY-MM-DD format for max attribute
-  const today = new Date().toISOString().slice(0, 10);
+  // Get current date in user's timezone
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
   
   // Calculate the minimum date (24 hours ago)
-  const minDate = new Date();
-  minDate.setDate(minDate.getDate() - 1);
-  const minDateString = minDate.toISOString().slice(0, 10);
-  
+  const minDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const minDateString = minDate.toISOString().split('T')[0];
+
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedDate = e.target.value;
-    const selectedDateTime = new Date(selectedDate).getTime();
-    const nowTime = new Date().getTime();
+    const selectedDate = new Date(e.target.value);
+    const nowTime = now.getTime();
     
     // Prevent future dates
-    if (selectedDateTime > nowTime) {
+    if (selectedDate.getTime() > nowTime) {
       onChange(today);
       return;
     }
     
     // Check if date is more than 24 hours in the past
-    const hoursDiff = (nowTime - selectedDateTime) / (1000 * 3600);
+    const hoursDiff = (nowTime - selectedDate.getTime()) / (1000 * 3600);
     
     if (hoursDiff > 24) {
       onChange(minDateString);
       return;
     }
     
-    onChange(selectedDate);
+    onChange(e.target.value);
   };
 
   return (

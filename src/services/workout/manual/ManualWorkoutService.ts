@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ManualWorkout } from '@/types/manualWorkoutTypes';
 import { ManualWorkoutValidationService } from './ManualWorkoutValidationService';
 import { XPService } from '@/services/xp/XPService';
+import { ActivityBonusService } from './ActivityBonusService';
 
 export class ManualWorkoutService {
   /**
@@ -15,6 +16,18 @@ export class ManualWorkoutService {
     workoutDate: Date
   ): Promise<{ success: boolean; error?: string; data?: any }> {
     try {
+      // Get user's class for bonuses
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('class')
+        .eq('id', userId)
+        .single();
+        
+      if (profileError) {
+        console.error('Error fetching user class:', profileError);
+        return { success: false, error: 'Error fetching user profile' };
+      }
+
       // Validate the submission
       const isValid = await ManualWorkoutValidationService.validateWorkoutSubmission(
         userId,
@@ -29,10 +42,18 @@ export class ManualWorkoutService {
       // Check if this is a power day (user has completed a workout today)
       const isPowerDay = await ManualWorkoutValidationService.checkPowerDay(userId);
       
-      // Calculate XP (base: 100 XP, power day bonus: +50 XP)
-      const xpAwarded = isPowerDay 
+      // Calculate base XP (100 XP base, power day bonus: +50 XP)
+      let xpAwarded = isPowerDay 
         ? XPService.MANUAL_WORKOUT_BASE_XP + XPService.POWER_DAY_BONUS_XP 
         : XPService.MANUAL_WORKOUT_BASE_XP;
+      
+      // Apply class bonuses if applicable
+      const classBonus = ActivityBonusService.getClassBonus(profile?.class || '', exerciseType);
+      if (classBonus > 0) {
+        const bonusXP = Math.floor(xpAwarded * classBonus);
+        xpAwarded += bonusXP;
+        console.log(`Applied class bonus: +${bonusXP} XP (${classBonus * 100}%)`);
+      }
       
       // Add XP to user
       await XPService.addXP(userId, xpAwarded, `manual_workout:${exerciseType}`);
