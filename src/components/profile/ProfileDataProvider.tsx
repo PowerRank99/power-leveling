@@ -39,6 +39,13 @@ const ProfileDataProvider: React.FC<ProfileDataProviderProps> = ({
   userClass, 
   children 
 }) => {
+  // Calculate XP needed for next level (100 * current level)
+  const calculateNextLevelXP = (level: number) => {
+    // Cap at level 99
+    if (level >= 99) return Infinity;
+    return level * 100;
+  };
+
   // Prepare RPG data for profile display
   const rankProgress = profile?.rank_progress ? 
     (typeof profile.rank_progress === 'string' ? 
@@ -46,10 +53,13 @@ const ProfileDataProvider: React.FC<ProfileDataProviderProps> = ({
       profile.rank_progress as Record<string, any>)
     : { rank_score: 0 };
 
+  const level = profile?.level || 1;
+  const currentXP = profile?.xp || 0;
+
   const profileData: ProfileData = {
-    level: profile?.level || 1,
-    currentXP: profile?.xp || 0,
-    nextLevelXP: (profile?.level || 1) * 100,
+    level,
+    currentXP,
+    nextLevelXP: calculateNextLevelXP(level),
     dailyXP: profile?.daily_xp || 0,
     dailyXPCap: profile?.daily_xp_cap || 300,
     streak: profile?.streak || 0,

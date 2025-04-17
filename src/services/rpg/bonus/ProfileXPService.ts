@@ -23,7 +23,9 @@ export class ProfileXPService {
       // Check for level up (simple formula: each level needs level*100 XP)
       const xpForNextLevel = currentLevel * 100;
       const shouldLevelUp = currentXP < xpForNextLevel && newXP >= xpForNextLevel;
-      const newLevel = shouldLevelUp ? currentLevel + 1 : currentLevel;
+      
+      // Calculate new level (the level cap is 99)
+      const newLevel = shouldLevelUp ? Math.min(currentLevel + 1, 99) : currentLevel;
       
       // Update user profile
       const { error } = await supabase
