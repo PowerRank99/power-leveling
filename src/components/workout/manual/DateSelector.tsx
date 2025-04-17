@@ -27,11 +27,6 @@ const DateSelector: React.FC<DateSelectorProps> = ({ value, onChange }) => {
     const nowDate = new Date(`${today}T12:00:00`);
     const minDateTime = new Date(`${minDateString}T12:00:00`);
     
-    console.log("Date selected:", selectedDateStr);
-    console.log("Date selected (parsed):", selectedDate);
-    console.log("Current date:", nowDate);
-    console.log("Min date allowed:", minDateTime);
-    
     // Prevent future dates
     if (selectedDate > nowDate) {
       console.log("Future date detected, resetting to today");

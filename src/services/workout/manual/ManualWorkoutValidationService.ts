@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -34,68 +33,31 @@ export class ManualWorkoutValidationService {
       const timeDiff = now.getTime() - submissionDate.getTime();
       const hoursDiff = timeDiff / (1000 * 3600);
       
-      console.log("Date validation:", {
-        now: now.toISOString(),
-        submissionDate: submissionDate.toISOString(),
-        timeDiff,
-        hoursDiff
-      });
-      
       if (hoursDiff > 24) {
         throw new Error('Data do treino não pode ser mais de 24 horas no passado');
       }
       
       // Check if user has already submitted a manual workout in the last 24 hours
-      console.log("Checking for recent workouts for user:", userId);
+      const { data: recentCountResult, error } = await supabase.rpc(
+        'check_recent_manual_workouts',
+        { p_user_id: userId, p_hours: 24 }
+      );
       
-      try {
-        const { data: recentCountResult, error } = await supabase.rpc(
-          'check_recent_manual_workouts',
-          { p_user_id: userId, p_hours: 24 }
-        );
-        
-        if (error) {
-          console.error("Error checking recent workouts:", error);
-          throw new Error('Erro ao verificar treinos recentes');
-        }
-        
-        // The result is an array with a single object containing a count property
-        const recentCount = recentCountResult?.[0]?.count || 0;
-        console.log("Recent count result:", recentCountResult);
-        console.log("Extracted recent count:", recentCount);
-        
-        if (recentCount > 0) {
-          console.log("Found recent manual workouts:", recentCount);
-          throw new Error('Você já registrou um treino manual nas últimas 24 horas');
-        }
-        
-        console.log("No recent manual workouts found, validation passed");
-        return true;
-      } catch (dbError) {
-        console.error("Database error in validation:", dbError);
-        
-        // Fallback to direct query if RPC fails
-        const { data: recentWorkouts, error: recentError } = await supabase
-          .from('manual_workouts')
-          .select('id')
-          .eq('user_id', userId)
-          .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
-        
-        if (recentError) {
-          console.error('Error checking recent submissions:', recentError);
-          throw new Error('Erro ao verificar submissões recentes');
-        }
-        
-        const recentCount = recentWorkouts?.length || 0;
-        
-        if (recentCount > 0) {
-          throw new Error('Você já registrou um treino manual nas últimas 24 horas');
-        }
-        
-        return true;
+      if (error) {
+        console.error("Error checking recent workouts:", error);
+        throw new Error('Erro ao verificar treinos recentes');
       }
+      
+      // Extract count from the result array
+      const recentCount = recentCountResult?.[0]?.count || 0;
+      
+      if (recentCount > 0) {
+        throw new Error('Você já registrou um treino manual nas últimas 24 horas');
+      }
+      
+      return true;
     } catch (error: any) {
-      console.error("Validation error:", error.message);
+      console.error("Validation error:", error);
       toast.error('Erro de validação', {
         description: error.message || 'Erro ao validar treino manual'
       });

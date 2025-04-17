@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Textarea } from '@/components/ui/textarea';
@@ -64,21 +63,19 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
       return;
     }
     
-    // Use noon time to avoid timezone issues
-    const selectedDate = new Date(`${workoutDate}T12:00:00`);
-    console.log("Submitting with selected date:", selectedDate);
-    
     try {
       setIsSubmitting(true);
-      console.log("Attempting to submit manual workout");
       
       // Upload photo first
-      const fileName = `manual-workout-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+      const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2)}`;
       console.log("Uploading photo with filename:", fileName);
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('workout-photos')
-        .upload(fileName, imageFile);
+        .upload(fileName, imageFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
         
       if (uploadError) {
         console.error('Upload error:', uploadError);
@@ -92,14 +89,12 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
         .from('workout-photos')
         .getPublicUrl(fileName);
         
-      if (!publicUrlData || !publicUrlData.publicUrl) {
-        console.error('No public URL received');
+      if (!publicUrlData?.publicUrl) {
         throw new Error('Erro ao obter URL pública da imagem');
       }
       
-      console.log("Public URL retrieved:", publicUrlData.publicUrl);
-      
-      // Submit the workout with the photo URL
+      // Use the workoutDate with noon time to avoid timezone issues
+      const selectedDate = new Date(`${workoutDate}T12:00:00`);
       console.log("Submitting manual workout with date:", selectedDate);
       
       const result = await ManualWorkoutService.submitManualWorkout(
@@ -110,8 +105,6 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
         selectedDate
       );
       
-      console.log("Submission result:", result);
-      
       if (!result.success) {
         throw new Error(result.error || 'Erro ao registrar treino');
       }
@@ -120,6 +113,7 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
         description: `Você ganhou ${result.data?.xp_awarded || 100} XP por este treino!`
       });
       
+      // Reset form
       setDescription('');
       setSelectedType('');
       setImageFile(null);
