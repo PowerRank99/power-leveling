@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/ui/PageHeader';
@@ -11,7 +10,7 @@ import { useAchievementStore } from '@/stores/achievementStore';
 import AchievementsByRank from '@/components/achievements/AchievementsByRank';
 import RankDisplay from '@/components/achievements/RankDisplay';
 import { RankService } from '@/services/rpg/RankService';
-import { Award, Shield } from 'lucide-react';
+import { Award } from 'lucide-react';
 import EmptyState from '@/components/ui/EmptyState';
 
 const AchievementsPage = () => {
@@ -34,14 +33,11 @@ const AchievementsPage = () => {
     }
   }, [user?.id, fetchAll]);
   
-  // Group achievements by rank
   const achievementsByRank = achievements
     .filter(achievement => {
-      // Filter by status
       if (filter === 'unlocked' && !achievement.unlocked) return false;
       if (filter === 'locked' && achievement.unlocked) return false;
       
-      // Filter by search term
       if (searchTerm && !achievement.name.toLowerCase().includes(searchTerm.toLowerCase()) && 
           !achievement.description.toLowerCase().includes(searchTerm.toLowerCase())) {
         return false;
@@ -57,10 +53,8 @@ const AchievementsPage = () => {
       return acc;
     }, {});
   
-  // Get all ranks in order
   const ranks = RankService.RANK_THRESHOLDS.map(t => t.rank);
   
-  // Check if there are any achievements after filtering
   const hasFilteredAchievements = Object.values(achievementsByRank)
     .some(rankAchievements => (rankAchievements as any).length > 0);
   
@@ -86,26 +80,22 @@ const AchievementsPage = () => {
       />
       
       <div className="px-4 pt-2 pb-4">
-        {/* Rank Display */}
         <RankDisplay 
           rankData={rankData}
           loading={isLoading}
         />
         
-        {/* Achievement Stats */}
         <AchievementStats 
           totalCount={stats?.total || 0}
           unlockedCount={stats?.unlocked || 0}
           loading={isLoading}
         />
         
-        {/* Search */}
         <AchievementSearch 
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
         />
         
-        {/* Filter Tabs */}
         <div className="premium-card mb-4">
           <Tabs 
             defaultValue="all" 
@@ -135,16 +125,14 @@ const AchievementsPage = () => {
           </Tabs>
         </div>
         
-        {/* Empty state when no achievements match filters */}
         {!isLoading && !hasFilteredAchievements && (
           <EmptyState
-            icon={<Award className="h-12 w-12 text-text-tertiary" />}
+            icon="Trophy"
             title="Nenhuma conquista encontrada"
             description="Tente ajustar seus filtros ou termos de busca"
           />
         )}
         
-        {/* Achievement grids by rank */}
         {ranks.map(rank => (
           <AchievementsByRank
             key={rank}
