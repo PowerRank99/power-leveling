@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/ui/PageHeader';
@@ -10,7 +11,7 @@ import { useAchievementStore } from '@/stores/achievementStore';
 import AchievementsByRank from '@/components/achievements/AchievementsByRank';
 import RankDisplay from '@/components/achievements/RankDisplay';
 import { RankService } from '@/services/rpg/RankService';
-import { Award } from 'lucide-react';
+import { Award, Shield } from 'lucide-react';
 import EmptyState from '@/components/ui/EmptyState';
 
 const AchievementsPage = () => {
