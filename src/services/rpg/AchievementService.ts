@@ -1,42 +1,8 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { achievementPopupStore } from '@/stores/achievementPopupStore';
-import { RankService } from './RankService';
-
-export interface Achievement {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  rank: string;
-  points: number;
-  xp_reward: number;
-  icon_name: string;
-  requirements: any;
-  string_id: string;
-  unlocked?: boolean;
-  progress?: {
-    current: number;
-    total: number;
-    percentage: number;
-  };
-}
-
-export interface AchievementStats {
-  total: number;
-  unlocked: number;
-  points: number;
-  rank: string;
-  nextRank: string | null;
-  pointsToNextRank: number | null;
-  rankScore: number;
-}
 
 export class AchievementService {
-  /**
-   * Checks for and awards achievements based on user progress
-   */
   static async checkAchievements(userId: string): Promise<void> {
     try {
       if (!userId) {
@@ -205,9 +171,6 @@ export class AchievementService {
     }
   }
   
-  /**
-   * Award an achievement to a user
-   */
   private static async awardAchievement(
     userId: string, 
     achievementId: string, 
@@ -263,9 +226,6 @@ export class AchievementService {
     }
   }
   
-  /**
-   * Get all achievements, marking which ones the user has unlocked
-   */
   static async getAllAchievements(userId: string): Promise<Achievement[]> {
     try {
       if (!userId) {
@@ -320,9 +280,6 @@ export class AchievementService {
     }
   }
   
-  /**
-   * Get achievements by category
-   */
   static async getAchievementsByCategory(userId: string, category: string): Promise<Achievement[]> {
     try {
       if (!userId) {
@@ -361,9 +318,6 @@ export class AchievementService {
     }
   }
   
-  /**
-   * Get achievements by rank
-   */
   static async getAchievementsByRank(userId: string, rank: string): Promise<Achievement[]> {
     try {
       if (!userId) {
@@ -402,9 +356,6 @@ export class AchievementService {
     }
   }
   
-  /**
-   * Get achievement stats (counts, rank, etc.)
-   */
   static async getAchievementStats(userId: string): Promise<AchievementStats> {
     try {
       const { data, error } = await supabase
@@ -449,9 +400,6 @@ export class AchievementService {
     }
   }
   
-  /**
-   * Get achievement count by rank
-   */
   static async getAchievementCountByRank(userId: string): Promise<Record<string, { total: number, unlocked: number }>> {
     try {
       // Fetch all achievements grouped by rank
