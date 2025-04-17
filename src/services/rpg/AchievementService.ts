@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { achievementPopupStore } from '@/stores/achievementPopupStore';
@@ -333,13 +332,13 @@ export class AchievementService {
         return false;
       }
       
-      // Update profile counters directly
+      // Update profile counters directly - fixed implementation
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
-          achievements_count: supabase.rpc('increment', { row_id: userId, table_name: 'profiles', column_name: 'achievements_count', increment_amount: 1 }),
-          achievement_points: supabase.rpc('increment', { row_id: userId, table_name: 'profiles', column_name: 'achievement_points', increment_amount: points }),
-          xp: supabase.rpc('increment', { row_id: userId, table_name: 'profiles', column_name: 'xp', increment_amount: xpReward })
+          achievements_count: profile => `${profile.achievements_count} + 1`,
+          achievement_points: profile => `${profile.achievement_points} + ${points}`,
+          xp: profile => `${profile.xp} + ${xpReward}`
         })
         .eq('id', userId);
         
