@@ -52,51 +52,50 @@ export class AchievementService {
         return;
       }
 
-      console.log('Checking achievements with profile data:', {
-        workouts_count: profile.workouts_count,
-        streak: profile.streak,
-        records_count: profile.records_count
-      });
+      console.log('Checking achievements with profile data:', profile);
       
-      // First, let's explicitly check the "Primeiro Treino" achievement
-      const { data: primeiroTreino, error: primeiroTreinoError } = await supabase
+      // Check for primeiro-treino achievement, handling both possible string IDs
+      const { data: achievements, error: achievementsError } = await supabase
         .from('achievements')
         .select('*')
-        .eq('string_id', 'primeiro-treino')
-        .maybeSingle();
+        .or('string_id.eq.primeiro-treino,string_id.eq.first-workout')
+        .limit(1);
       
-      if (primeiroTreinoError) {
-        console.error('Error fetching Primeiro Treino achievement:', primeiroTreinoError);
-      } else if (primeiroTreino) {
-        console.log('Found Primeiro Treino achievement:', primeiroTreino);
+      if (achievementsError) {
+        console.error('Error fetching first workout achievement:', achievementsError);
+      } else if (achievements && achievements.length > 0) {
+        const firstWorkoutAchievement = achievements[0];
+        console.log('Found first workout achievement:', firstWorkoutAchievement);
         
         // Check if user already has this achievement
         const { data: hasAchievement, error: hasAchievementError } = await supabase
           .from('user_achievements')
           .select('id')
           .eq('user_id', userId)
-          .eq('achievement_id', primeiroTreino.id)
+          .eq('achievement_id', firstWorkoutAchievement.id)
           .maybeSingle();
           
-        console.log('Has Primeiro Treino achievement?', hasAchievement);
-        console.log('Check result:', {
+        if (hasAchievementError) {
+          console.error('Error checking user achievement:', hasAchievementError);
+        }
+        
+        console.log('Achievement check status:', {
           hasAchievement,
           workoutsCount: profile.workouts_count,
-          meetsCondition: profile.workouts_count > 0 && !hasAchievement
+          shouldAward: profile.workouts_count > 0 && !hasAchievement
         });
         
-        // If user doesn't have the achievement and has at least one workout
+        // Award achievement if conditions are met
         if (!hasAchievement && profile.workouts_count > 0) {
-          console.log('Awarding Primeiro Treino achievement');
           await this.awardAchievement(
             userId,
-            primeiroTreino.id,
-            primeiroTreino.name,
-            primeiroTreino.description,
-            primeiroTreino.xp_reward,
-            primeiroTreino.points
+            firstWorkoutAchievement.id,
+            firstWorkoutAchievement.name,
+            firstWorkoutAchievement.description,
+            firstWorkoutAchievement.xp_reward,
+            firstWorkoutAchievement.points
           );
-          // Return early as we've awarded the achievement
+          // Return early as we've awarded an achievement
           return;
         }
       }

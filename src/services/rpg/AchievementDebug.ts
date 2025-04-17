@@ -3,12 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 
 export class AchievementDebug {
   static async verifyPrimeiroTreino(): Promise<void> {
-    const { data: achievement, error } = await supabase
+    const { data: achievements, error } = await supabase
       .from('achievements')
       .select('*')
       .or('string_id.eq.primeiro-treino,string_id.eq.first-workout');
       
-    console.log('Found achievements matching primeiro-treino:', achievement);
+    console.log('Found first workout achievements:', achievements);
     if (error) console.error('Error:', error);
   }
   
@@ -34,5 +34,11 @@ export class AchievementDebug {
       
     console.log('User profile:', profile);
     if (error) console.error('Error:', error);
+  }
+  
+  static async debugFirstWorkoutAchievement(userId: string): Promise<void> {
+    await this.verifyPrimeiroTreino();
+    await this.checkUserProfile(userId);
+    await this.checkUserAchievements(userId);
   }
 }
