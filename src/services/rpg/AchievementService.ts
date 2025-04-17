@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { achievementPopupStore } from '@/stores/achievementPopupStore';
@@ -55,16 +56,16 @@ export class AchievementService {
       console.log('Checking achievements with profile data:', profile);
       
       // Check for primeiro-treino achievement, handling both possible string IDs
-      const { data: achievements, error: achievementsError } = await supabase
+      const { data: firstWorkoutAchievements, error: firstWorkoutError } = await supabase
         .from('achievements')
         .select('*')
         .or('string_id.eq.primeiro-treino,string_id.eq.first-workout')
         .limit(1);
       
-      if (achievementsError) {
-        console.error('Error fetching first workout achievement:', achievementsError);
-      } else if (achievements && achievements.length > 0) {
-        const firstWorkoutAchievement = achievements[0];
+      if (firstWorkoutError) {
+        console.error('Error fetching first workout achievement:', firstWorkoutError);
+      } else if (firstWorkoutAchievements && firstWorkoutAchievements.length > 0) {
+        const firstWorkoutAchievement = firstWorkoutAchievements[0];
         console.log('Found first workout achievement:', firstWorkoutAchievement);
         
         // Check if user already has this achievement
@@ -115,20 +116,20 @@ export class AchievementService {
       console.log('Already unlocked achievement IDs:', unlockedIds);
       
       // Get all eligible achievements
-      const { data: achievements, error: achievementsError } = await supabase
+      const { data: remainingAchievements, error: remainingError } = await supabase
         .from('achievements')
         .select('*')
         .not('id', 'in', `(${unlockedIds.length > 0 ? unlockedIds.join(',') : 'NULL'})`);
 
-      if (achievementsError || !achievements) {
-        console.error('Error fetching achievements:', achievementsError);
+      if (remainingError || !remainingAchievements) {
+        console.error('Error fetching achievements:', remainingError);
         return;
       }
 
-      console.log('Checking eligible achievements:', achievements.length);
+      console.log('Checking eligible achievements:', remainingAchievements.length);
       
       // Check each achievement
-      for (const achievement of achievements) {
+      for (const achievement of remainingAchievements) {
         try {
           // Parse the requirements JSON
           const requirements = typeof achievement.requirements === 'string' 
