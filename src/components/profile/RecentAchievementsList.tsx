@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, X, Flame, Dumbbell, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -10,6 +9,8 @@ import Trophy from '@/components/icons/Trophy';
 import { useAuth } from '@/hooks/useAuth';
 import { useAchievementStore } from '@/stores/achievementStore';
 import { RankService } from '@/services/rpg/RankService';
+import { Achievement as AchievementType } from '@/services/rpg/AchievementService';
+import { getIconComponent } from '@/components/achievements/AchievementIcon';
 
 interface Achievement {
   id: string;
@@ -25,20 +26,47 @@ interface Achievement {
   };
 }
 
-interface RecentAchievementsListProps {
-  achievements: Achievement[];
-}
-
-const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achievements }) => {
+const RecentAchievementsList: React.FC = () => {
   const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null);
   const { user } = useAuth();
-  const { rankData, fetchRankData } = useAchievementStore();
+  const { rankData, fetchRankData, achievements, fetchAchievements } = useAchievementStore();
+  const [recentAchievements, setRecentAchievements] = useState<Achievement[]>([]);
   
   useEffect(() => {
     if (user?.id) {
       fetchRankData(user.id);
+      fetchAchievements(user.id);
     }
-  }, [user?.id, fetchRankData]);
+  }, [user?.id, fetchRankData, fetchAchievements]);
+  
+  useEffect(() => {
+    if (achievements.length > 0) {
+      const unlocked = achievements.filter(a => a.unlocked).slice(0, 2);
+      const locked = achievements.filter(a => !a.unlocked).slice(0, 1);
+      
+      const formatted = [
+        ...unlocked.map(a => ({
+          id: a.id,
+          icon: getIconComponent(a.icon_name),
+          name: a.name,
+          isLocked: false,
+          description: a.description,
+          xpReward: a.xp_reward,
+          date: '10/04/2025'
+        })),
+        ...locked.map(a => ({
+          id: a.id,
+          icon: getIconComponent(a.icon_name),
+          name: a.name,
+          isLocked: true,
+          description: a.description,
+          progress: a.progress || { current: 0, total: 1 }
+        }))
+      ];
+      
+      setRecentAchievements(formatted);
+    }
+  }, [achievements]);
   
   const handleAchievementClick = (achievement: Achievement) => {
     setSelectedAchievement(achievement);
@@ -48,27 +76,9 @@ const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achieve
     setSelectedAchievement(null);
   };
   
-  // Get achievement description for locked achievements
-  const getLockedDescription = (id: string) => {
-    const descriptionMap: Record<string, string> = {
-      'streak': 'Complete 7 dias consecutivos de treino',
-      'workouts': 'Complete 100 treinos',
-      'locked': 'Complete objetivos para desbloquear'
-    };
-    
-    return descriptionMap[id] || 'Complete objetivos para desbloquear';
-  };
-  
-  // Get achievement progress data
-  const getAchievementProgress = (id: string) => {
-    const progressMap: Record<string, { current: number, total: number }> = {
-      'streak': { current: 2, total: 7 },
-      'workouts': { current: 50, total: 100 },
-      'locked': { current: 0, total: 1 }
-    };
-    
-    return progressMap[id] || { current: 0, total: 1 };
-  };
+  if (recentAchievements.length === 0) {
+    return null;
+  }
   
   return (
     <>
@@ -96,30 +106,22 @@ const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achieve
 
         <CardContent className="p-4 pt-2">
           <div className="flex justify-between gap-2">
-            {achievements.map((achievement) => (
+            {recentAchievements.map((achievement) => (
               <TooltipProvider key={achievement.id}>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div
-                      onClick={() => handleAchievementClick({
-                        ...achievement,
-                        progress: achievement.isLocked ? getAchievementProgress(achievement.id) : undefined
-                      })}
+                      onClick={() => handleAchievementClick(achievement)}
                       className={`flex flex-col items-center justify-center rounded-full w-20 h-20 achievement-circle relative
                         ${
                           achievement.isLocked 
                             ? 'bg-midnight-elevated text-inactive border border-divider/30 hover:border-text-tertiary' 
-                            : achievement.id === 'streak' 
-                              ? 'bg-gradient-to-br from-valor to-achievement text-text-primary border border-valor-30 hover:shadow-glow-gold' 
-                              : achievement.id === 'workouts' 
-                                ? 'bg-gradient-to-br from-arcane to-arcane-60 text-text-primary border border-arcane-30 hover:shadow-glow-purple' 
-                                : 'bg-gradient-to-br from-arcane to-valor text-text-primary border border-arcane-30 hover:shadow-glow-purple'
+                            : 'bg-gradient-to-br from-arcane to-arcane-60 text-text-primary border border-arcane-30 hover:shadow-glow-purple'
                         } shadow-subtle transform transition-all duration-300 hover:scale-105 hover:shadow-glow-purple cursor-pointer
                         ${achievement.isLocked ? '' : 'animate-pulse-subtle'}
                       `}
                     >
-                      {/* Progress circle for locked achievements */}
-                      {achievement.isLocked && (
+                      {achievement.isLocked && achievement.progress && (
                         <svg className="absolute inset-0 h-full w-full -rotate-90">
                           <circle
                             className="text-divider"
@@ -133,7 +135,7 @@ const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achieve
                           <circle
                             className="text-text-tertiary transition-all duration-700"
                             strokeWidth="4"
-                            strokeDasharray={`${(getAchievementProgress(achievement.id).current / getAchievementProgress(achievement.id).total) * 226} 226`}
+                            strokeDasharray={`${(achievement.progress.current / achievement.progress.total) * 226} 226`}
                             strokeLinecap="round"
                             stroke="currentColor"
                             fill="transparent"
@@ -151,16 +153,16 @@ const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achieve
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side="top">
-                    {achievement.isLocked 
+                    {achievement.isLocked && achievement.progress
                       ? (
                         <div>
-                          <p className="text-xs">{getLockedDescription(achievement.id)}</p>
+                          <p className="text-xs">{achievement.description}</p>
                           <p className="text-xs font-space mt-1">
-                            Progresso: {getAchievementProgress(achievement.id).current}/{getAchievementProgress(achievement.id).total}
+                            Progresso: {achievement.progress.current}/{achievement.progress.total}
                           </p>
                         </div>
                       )
-                      : <p className="text-xs">+25 EXP ganho em 10/04/2025</p>
+                      : <p className="text-xs">+{achievement.xpReward} EXP ganho em {achievement.date}</p>
                     }
                   </TooltipContent>
                 </Tooltip>
@@ -205,7 +207,6 @@ const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achieve
         </CardContent>
       </Card>
 
-      {/* Achievement Modal */}
       <Dialog open={selectedAchievement !== null} onOpenChange={closeModal}>
         <DialogContent className="sm:max-w-md bg-midnight-card border-arcane-30">
           <DialogHeader>
@@ -225,13 +226,10 @@ const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achieve
                 ${
                   selectedAchievement?.isLocked 
                     ? 'bg-midnight-elevated border border-divider/30' 
-                    : selectedAchievement?.id === 'streak' 
-                      ? 'bg-gradient-to-br from-valor to-achievement border border-valor-30 shadow-glow-gold' 
-                      : 'bg-gradient-to-br from-arcane to-arcane-60 border border-arcane-30 shadow-glow-purple'
+                    : 'bg-gradient-to-br from-arcane to-arcane-60 border border-arcane-30 shadow-glow-purple'
                 }
               `}
             >
-              {/* Progress circle for locked achievements */}
               {selectedAchievement?.isLocked && selectedAchievement?.progress && (
                 <svg className="absolute inset-0 h-full w-full -rotate-90">
                   <circle
@@ -263,18 +261,16 @@ const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achieve
             <h3 className="text-lg font-bold font-sora mb-2">{selectedAchievement?.name}</h3>
             
             <p className="text-text-secondary text-sm mb-4">
-              {selectedAchievement?.isLocked 
-                ? getLockedDescription(selectedAchievement?.id || '') 
-                : (selectedAchievement?.description || 'Você alcançou um marco importante em sua jornada!')}
+              {selectedAchievement?.description || 'Você alcançou um marco importante em sua jornada!'}
             </p>
             
             {!selectedAchievement?.isLocked && (
               <div className="bg-arcane-15 w-full py-2 px-3 rounded-lg mb-4 border border-arcane-30">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-sora text-text-secondary">Recompensa</span>
-                  <span className="text-lg font-bold font-space text-achievement">+25 EXP</span>
+                  <span className="text-lg font-bold font-space text-achievement">+{selectedAchievement?.xpReward} EXP</span>
                 </div>
-                <div className="text-right text-xs text-text-tertiary font-sora">Ganho em 10/04/2025</div>
+                <div className="text-right text-xs text-text-tertiary font-sora">{selectedAchievement?.date}</div>
               </div>
             )}
             
@@ -283,15 +279,10 @@ const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achieve
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-sora text-text-tertiary">Progresso</span>
                   <span className="text-sm font-space text-text-secondary">
-                    {selectedAchievement.id === 'workouts' 
-                      ? `${selectedAchievement.progress.current}/${selectedAchievement.progress.total} treinos` 
-                      : selectedAchievement.id === 'streak' 
-                        ? `${selectedAchievement.progress.current}/${selectedAchievement.progress.total} dias` 
-                        : `${Math.round((selectedAchievement.progress.current / selectedAchievement.progress.total) * 100)}%`}
+                    {`${selectedAchievement.progress.current}/${selectedAchievement.progress.total}`}
                   </span>
                 </div>
                 
-                {/* Progress bar */}
                 <div className="w-full h-2 bg-divider rounded-full mt-2 overflow-hidden">
                   <div 
                     className="h-full bg-text-tertiary rounded-full"
@@ -300,13 +291,6 @@ const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achieve
                     }}
                   ></div>
                 </div>
-                
-                {/* Next tier */}
-                {selectedAchievement.id === 'streak' && selectedAchievement.progress.current >= 3 && (
-                  <div className="mt-2 text-xs text-valor">
-                    Próximo marco: 7 dias (Streak Lendário)
-                  </div>
-                )}
               </div>
             )}
             

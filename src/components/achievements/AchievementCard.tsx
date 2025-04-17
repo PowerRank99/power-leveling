@@ -1,40 +1,17 @@
 
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Star, Dumbbell, Flame, Trophy, Medal, Clock, BookOpen, UserPlus, Zap, Award } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { Achievement } from '@/services/rpg/AchievementService';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { RankService } from '@/services/rpg/RankService';
+import AchievementIcon from './AchievementIcon';
 
 interface AchievementCardProps {
   achievement: Achievement;
 }
 
 const AchievementCard: React.FC<AchievementCardProps> = ({ achievement }) => {
-  // Map icon name to icon component
-  const getIconComponent = (iconName: string) => {
-    switch (iconName) {
-      case 'dumbbell':
-        return <Dumbbell className="h-6 w-6 text-arcane" />;
-      case 'flame':
-        return <Flame className="h-6 w-6 text-valor" />;
-      case 'trophy':
-        return <Trophy className="h-6 w-6 text-achievement" />;
-      case 'medal':
-        return <Medal className="h-6 w-6 text-achievement" />;
-      case 'clock':
-        return <Clock className="h-6 w-6 text-arcane" />;
-      case 'book':
-        return <BookOpen className="h-6 w-6 text-arcane" />;
-      case 'user':
-        return <UserPlus className="h-6 w-6 text-arcane" />;
-      case 'zap':
-        return <Zap className="h-6 w-6 text-achievement" />;
-      default:
-        return <Award className="h-6 w-6 text-arcane" />;
-    }
-  };
-  
   // Map achievement rank to styles
   const getRankStyles = (rank: string) => {
     const colorClass = RankService.getRankColorClass(rank);
@@ -122,7 +99,7 @@ const AchievementCard: React.FC<AchievementCardProps> = ({ achievement }) => {
       <div className={`${bgClass} w-16 h-16 rounded-full flex items-center justify-center mb-3 ${
         !isLocked && achievement.rank !== 'Unranked' ? 'shadow-glow-purple' : ''
       }`}>
-        {getIconComponent(achievement.icon_name)}
+        <AchievementIcon iconName={achievement.icon_name} />
       </div>
       
       <h3 className={`font-orbitron font-bold text-center mb-2 ${
