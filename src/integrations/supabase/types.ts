@@ -1064,6 +1064,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      recalculate_user_levels: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       rollback_transaction: {
         Args: Record<PropertyKey, never>
         Returns: undefined
