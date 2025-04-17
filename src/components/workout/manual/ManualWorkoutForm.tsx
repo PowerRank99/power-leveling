@@ -85,29 +85,40 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
     
     try {
       setIsSubmitting(true);
+      console.log("Attempting to submit manual workout");
       
       // Upload photo first
       const fileName = `manual-workout-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+      console.log("Uploading photo with filename:", fileName);
+      
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('workout-photos')
         .upload(fileName, imageFile);
         
       if (uploadError) {
+        console.error('Upload error:', uploadError);
         throw new Error(`Erro ao fazer upload da imagem: ${uploadError.message}`);
       }
+      
+      console.log("Photo uploaded successfully:", uploadData);
       
       // Get public URL for the uploaded photo
       const { data: publicUrlData } = supabase.storage
         .from('workout-photos')
         .getPublicUrl(fileName);
         
-      if (!publicUrlData.publicUrl) {
+      if (!publicUrlData || !publicUrlData.publicUrl) {
+        console.error('No public URL received');
         throw new Error('Erro ao obter URL pública da imagem');
       }
+      
+      console.log("Public URL retrieved:", publicUrlData.publicUrl);
       
       // Submit the workout with the photo URL
       const parsedDate = new Date(workoutDate);
       parsedDate.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
+      
+      console.log("Submitting manual workout with date:", parsedDate);
       
       const result = await ManualWorkoutService.submitManualWorkout(
         user.id,
@@ -117,12 +128,14 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
         parsedDate
       );
       
+      console.log("Submission result:", result);
+      
       if (!result.success) {
         throw new Error(result.error || 'Erro ao registrar treino');
       }
       
       toast.success('Treino registrado com sucesso!', {
-        description: 'Você ganhou XP por este treino!'
+        description: `Você ganhou ${result.data?.xp_awarded || 100} XP por este treino!`
       });
       
       setDescription('');

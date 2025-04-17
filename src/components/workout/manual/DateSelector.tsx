@@ -18,19 +18,27 @@ const DateSelector: React.FC<DateSelectorProps> = ({ value, onChange }) => {
   const minDateString = minDate.toISOString().split('T')[0];
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedDate = new Date(e.target.value);
+    const selectedDate = new Date(e.target.value + 'T12:00:00'); // Add time to avoid timezone issues
     const nowTime = now.getTime();
+    
+    console.log("Date selected:", e.target.value);
+    console.log("Date selected (parsed):", selectedDate);
+    console.log("Current date:", now);
+    console.log("Min date allowed:", minDate);
     
     // Prevent future dates
     if (selectedDate.getTime() > nowTime) {
+      console.log("Future date detected, resetting to today");
       onChange(today);
       return;
     }
     
     // Check if date is more than 24 hours in the past
     const hoursDiff = (nowTime - selectedDate.getTime()) / (1000 * 3600);
+    console.log("Hours difference:", hoursDiff);
     
     if (hoursDiff > 24) {
+      console.log("Date too far in past, resetting to 24h limit");
       onChange(minDateString);
       return;
     }
