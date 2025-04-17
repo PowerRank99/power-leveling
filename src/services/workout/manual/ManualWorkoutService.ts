@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ManualWorkout } from '@/types/manualWorkoutTypes';
 import { ManualWorkoutValidationService } from './ManualWorkoutValidationService';
@@ -12,9 +11,7 @@ export class ManualWorkoutService {
     userId: string,
     photoUrl: string,
     description: string,
-    exerciseId: string,
-    exerciseName: string,
-    exerciseCategory: string,
+    exerciseType: string,
     workoutDate: Date
   ): Promise<{ success: boolean; error?: string; data?: any }> {
     try {
@@ -37,21 +34,16 @@ export class ManualWorkoutService {
         ? XPService.MANUAL_WORKOUT_BASE_XP + XPService.POWER_DAY_BONUS_XP 
         : XPService.MANUAL_WORKOUT_BASE_XP;
       
-      // Add XP to user - fixing the argument count here (passing metadata as part of the source parameter)
-      await XPService.addXP(userId, xpAwarded, `manual_workout:${exerciseName}:${exerciseCategory}`);
+      // Add XP to user
+      await XPService.addXP(userId, xpAwarded, `manual_workout:${exerciseType}`);
       
-      console.log('Creating manual workout with exercise_id:', exerciseId);
-      
-      // Since we're getting a TypeScript error about the p_exercise_id parameter,
-      // let's check if the SQL migration was properly applied by using a more direct approach
-      // We'll execute a direct INSERT query instead of using the RPC function
+      // Create the manual workout record
       const { data, error } = await supabase
         .from('manual_workouts')
         .insert({
           user_id: userId,
           description: description || null,
-          activity_type: exerciseName || null,
-          exercise_id: exerciseId,
+          activity_type: exerciseType,
           photo_url: photoUrl,
           xp_awarded: xpAwarded,
           workout_date: workoutDate.toISOString(),
