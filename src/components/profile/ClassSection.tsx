@@ -22,13 +22,15 @@ interface ClassSectionProps {
   classDescription?: string;
   icon?: React.ReactNode;
   bonuses?: { description: string; value: string; skillName?: string }[];
+  onClassSelect?: () => void;
 }
 
 const ClassSection: React.FC<ClassSectionProps> = ({
   className,
   classDescription,
   icon,
-  bonuses = []
+  bonuses = [],
+  onClassSelect
 }) => {
   const navigate = useNavigate();
   const { userClass } = useClass();
@@ -117,6 +119,14 @@ const ClassSection: React.FC<ClassSectionProps> = ({
   const styling = getClassStyling();
   const classIcon = icon || <ClassIconSelector className={activeClass} size="md" />;
 
+  const handleClassButtonClick = () => {
+    if (onClassSelect) {
+      onClassSelect();
+    } else {
+      navigate('/selecao-de-classe');
+    }
+  };
+
   return (
     <Card className={`mt-3 shadow-sm hover:shadow transition-all duration-300 border ${styling.border} overflow-hidden`}>
       <CardHeader className={`px-4 py-3 flex flex-row justify-between items-center border-b ${styling.border} ${styling.gradient}`}>
@@ -127,7 +137,7 @@ const ClassSection: React.FC<ClassSectionProps> = ({
         </div>
         <Button
           variant="ghost"
-          onClick={() => navigate('/classes')}
+          onClick={handleClassButtonClick}
           className={`text-sm font-medium ${styling.text} hover:${styling.accent}`}
         >
           {activeClass ? 'Trocar Classe' : 'Escolher Classe'}

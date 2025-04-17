@@ -18,6 +18,7 @@ import ExerciseDetailsPage from './pages/ExerciseLibraryPage';
 import CreateRoutinePage from './pages/CreateRoutinePage';
 import EditRoutinePage from './pages/CreateRoutinePage';
 import ClassSelectionPage from './pages/class-selection/ClassSelectionPage';
+import AchievementsPage from './pages/AchievementsPage';
 import AdminPanelPage from './pages/AdminPage';
 import NotFoundPage from './pages/NotFound';
 import PrivacyPolicyPage from './pages/NotFound';
@@ -60,6 +61,7 @@ function App() {
                 <Route path="/rotinas/criar" element={<CreateRoutinePage />} />
                 <Route path="/rotinas/editar/:routineId" element={<EditRoutinePage />} />
                 <Route path="/selecao-de-classe" element={<ClassSelectionPage />} />
+                <Route path="/conquistas" element={<AchievementsPage />} />
                 <Route path="/admin-panel" element={<AdminPanelPage />} />
                 <Route path="/politica-de-privacidade" element={<PrivacyPolicyPage />} />
                 <Route path="/termos-de-servico" element={<TermsOfServicePage />} />

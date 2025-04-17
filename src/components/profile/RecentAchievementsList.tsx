@@ -27,7 +27,11 @@ interface Achievement {
   };
 }
 
-const RecentAchievementsList: React.FC = () => {
+interface RecentAchievementsListProps {
+  onViewAll?: () => void;
+}
+
+const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ onViewAll }) => {
   const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null);
   const { user } = useAuth();
   const { rankData, fetchRankData, achievements, fetchAchievements } = useAchievementStore();
@@ -77,6 +81,13 @@ const RecentAchievementsList: React.FC = () => {
     setSelectedAchievement(null);
   };
   
+  const handleViewAllClick = (e: React.MouseEvent) => {
+    if (onViewAll) {
+      e.preventDefault();
+      onViewAll();
+    }
+  };
+  
   if (recentAchievements.length === 0) {
     return null;
   }
@@ -100,9 +111,18 @@ const RecentAchievementsList: React.FC = () => {
             )}
           </div>
           
-          <Link to="/conquistas" className="text-arcane flex items-center text-sm font-sora hover:text-arcane-60 transition-colors">
-            Ver Todas <ChevronRight className="w-4 h-4 ml-1" />
-          </Link>
+          {onViewAll ? (
+            <button
+              onClick={handleViewAllClick}
+              className="text-arcane flex items-center text-sm font-sora hover:text-arcane-60 transition-colors"
+            >
+              Ver Todas <ChevronRight className="w-4 h-4 ml-1" />
+            </button>
+          ) : (
+            <Link to="/conquistas" className="text-arcane flex items-center text-sm font-sora hover:text-arcane-60 transition-colors">
+              Ver Todas <ChevronRight className="w-4 h-4 ml-1" />
+            </Link>
+          )}
         </CardHeader>
 
         <CardContent className="p-4 pt-2">

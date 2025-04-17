@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useClass } from '@/contexts/ClassContext';
 import PageHeader from '@/components/ui/PageHeader';
@@ -19,6 +20,7 @@ import { Shield } from 'lucide-react';
 import { RankService } from '@/services/rpg/RankService';
 
 const ProfilePage = () => {
+  const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
   const { userClass } = useClass();
   const { rankData, fetchRankData } = useAchievementStore();
@@ -65,6 +67,16 @@ const ProfilePage = () => {
     calculateBonuses();
   }, [userClass, user?.id, profile?.last_workout_at, fetchRankData]);
   
+  // Handle navigation to achievements page
+  const handleViewAllAchievements = () => {
+    navigate('/conquistas');
+  };
+  
+  // Handle navigation to class selection page
+  const handleClassSelection = () => {
+    navigate('/selecao-de-classe');
+  };
+  
   return (
     <div className="pb-20 min-h-screen bg-midnight-base">
       <PageHeader 
@@ -108,10 +120,11 @@ const ProfilePage = () => {
                     classDescription={profileData.classDescription}
                     icon={<ClassIconSelector className={profileData.className} />}
                     bonuses={classBonuses}
+                    onClassSelect={handleClassSelection}
                   />
                   
                   <div className="mb-5">
-                    <RecentAchievementsList />
+                    <RecentAchievementsList onViewAll={handleViewAllAchievements} />
                   </div>
                 </>
               )}
