@@ -12,7 +12,7 @@ import AchievementsByRank from '@/components/achievements/AchievementsByRank';
 import RankDisplay from '@/components/achievements/RankDisplay';
 import { RankService } from '@/services/rpg/RankService';
 import { Award, Shield } from 'lucide-react';
-import { EmptyState } from '@/components/ui/EmptyState';
+import EmptyState from '@/components/ui/EmptyState';
 
 const AchievementsPage = () => {
   const navigate = useNavigate();
@@ -96,7 +96,6 @@ const AchievementsPage = () => {
         <AchievementStats 
           totalCount={stats?.total || 0}
           unlockedCount={stats?.unlocked || 0}
-          points={stats?.points || 0}
           loading={isLoading}
         />
         

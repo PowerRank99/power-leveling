@@ -334,14 +334,17 @@ export class AchievementService {
         };
       }
       
+      // Parse data if it's a string
+      const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+      
       return {
-        total: data.total || 0,
-        unlocked: data.unlocked || 0,
-        points: data.points || 0,
-        rank: data.rank || 'Unranked',
-        nextRank: data.nextRank,
-        pointsToNextRank: data.pointsToNextRank,
-        rankScore: data.rankScore || 0
+        total: parsedData.total || 0,
+        unlocked: parsedData.unlocked || 0,
+        points: parsedData.points || 0,
+        rank: parsedData.rank || 'Unranked',
+        nextRank: parsedData.nextRank,
+        pointsToNextRank: parsedData.pointsToNextRank,
+        rankScore: parsedData.rankScore || 0
       };
     } catch (error) {
       console.error('Error in getAchievementStats:', error);

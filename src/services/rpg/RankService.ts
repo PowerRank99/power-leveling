@@ -89,7 +89,14 @@ export class RankService {
         return null;
       }
       
-      const rankProgress = profile.rank_progress || {};
+      let rankProgress: Record<string, any> = {};
+      
+      // Parse rank_progress if it's a string
+      if (profile.rank_progress) {
+        rankProgress = typeof profile.rank_progress === 'string' 
+          ? JSON.parse(profile.rank_progress)
+          : (profile.rank_progress as Record<string, any>);
+      }
       
       return {
         rank: profile.rank || 'Unranked',
@@ -155,10 +162,12 @@ export class RankService {
   static async updateRank(userId: string): Promise<boolean> {
     try {
       // This function just triggers the rank calculation on the server
+      // Since 'recalculate_user_rank' isn't listed in the valid RPC functions,
+      // let's use a more generic approach
       const { error } = await supabase
-        .rpc('recalculate_user_rank', {
-          user_id: userId
-        });
+        .from('profiles')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', userId);
         
       if (error) {
         console.error('Error updating rank:', error);

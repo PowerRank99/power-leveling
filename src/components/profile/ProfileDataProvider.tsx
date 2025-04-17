@@ -40,6 +40,12 @@ const ProfileDataProvider: React.FC<ProfileDataProviderProps> = ({
   children 
 }) => {
   // Prepare RPG data for profile display
+  const rankProgress = profile?.rank_progress ? 
+    (typeof profile.rank_progress === 'string' ? 
+      JSON.parse(profile.rank_progress) : 
+      profile.rank_progress as Record<string, any>)
+    : { rank_score: 0 };
+
   const profileData: ProfileData = {
     level: profile?.level || 1,
     currentXP: profile?.xp || 0,
@@ -59,7 +65,7 @@ const ProfileDataProvider: React.FC<ProfileDataProviderProps> = ({
     lastActivity: profile?.last_workout_at ? '8h 45min' : 'Nunca',
     xpGain: '+25 EXP',
     rank: profile?.rank || 'Unranked',
-    rankScore: profile?.rank_progress?.rank_score || 0
+    rankScore: typeof rankProgress.rank_score === 'number' ? rankProgress.rank_score : 0
   };
 
   return <>{children(profileData)}</>;

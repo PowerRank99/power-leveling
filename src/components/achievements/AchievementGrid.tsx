@@ -1,20 +1,10 @@
 
 import React from 'react';
 import AchievementCard from './AchievementCard';
-
-interface AchievementItem {
-  id: string;
-  title: string;
-  description: string;
-  xpReward: number;
-  icon: React.ReactNode;
-  iconBg: string;
-  status: 'locked' | 'unlocked';
-  rarity?: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
-}
+import { Achievement } from '@/services/rpg/AchievementService';
 
 interface AchievementGridProps {
-  achievements: AchievementItem[];
+  achievements: Achievement[];
   title: string;
 }
 
@@ -37,7 +27,7 @@ const AchievementGrid: React.FC<AchievementGridProps> = ({ achievements, title }
         {achievements.map(achievement => (
           <AchievementCard
             key={achievement.id}
-            {...achievement}
+            achievement={achievement}
           />
         ))}
       </div>

@@ -2,17 +2,43 @@
 import React from 'react';
 import { Progress } from '@/components/ui/progress';
 import Trophy from '@/components/icons/Trophy';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface AchievementStatsProps {
   totalCount: number;
   unlockedCount: number;
+  loading?: boolean;
 }
 
 const AchievementStats: React.FC<AchievementStatsProps> = ({ 
   totalCount,
-  unlockedCount
+  unlockedCount,
+  loading = false
 }) => {
   const percentage = totalCount > 0 ? Math.round((unlockedCount / totalCount) * 100) : 0;
+  
+  if (loading) {
+    return (
+      <div className="premium-card mb-4">
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center">
+              <Skeleton className="w-5 h-5 mr-2" />
+              <Skeleton className="h-5 w-40" />
+            </div>
+            <Skeleton className="h-5 w-16" />
+          </div>
+          
+          <Skeleton className="h-2.5 w-full my-2" />
+          
+          <div className="flex justify-between mt-1">
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-4 w-20" />
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="premium-card mb-4">
