@@ -42,7 +42,7 @@ export class ManualWorkoutValidationService {
       console.log("Checking for recent workouts for user:", userId);
       
       try {
-        const { data: recentCount, error } = await supabase.rpc(
+        const { data: recentCountResult, error } = await supabase.rpc(
           'check_recent_manual_workouts',
           { p_user_id: userId, p_hours: 24 }
         );
@@ -52,7 +52,12 @@ export class ManualWorkoutValidationService {
           throw new Error('Erro ao verificar treinos recentes');
         }
         
-        if (recentCount && recentCount > 0) {
+        // The result is an array with a single object containing a count property
+        const recentCount = recentCountResult?.[0]?.count || 0;
+        console.log("Recent count result:", recentCountResult);
+        console.log("Extracted recent count:", recentCount);
+        
+        if (recentCount > 0) {
           console.log("Found recent manual workouts:", recentCount);
           throw new Error('Você já registrou um treino manual nas últimas 24 horas');
         }
