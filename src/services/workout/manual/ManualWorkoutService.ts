@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ManualWorkout } from '@/types/manualWorkoutTypes';
 import { ManualWorkoutValidationService } from './ManualWorkoutValidationService';
@@ -41,7 +40,7 @@ export class ManualWorkoutService {
         return { success: false, error: 'Validação falhou' };
       }
       
-      // Check if this is a power day (user has completed a workout today)
+      // Check if this is a power day
       const isPowerDay = await ManualWorkoutValidationService.checkPowerDay(userId);
       
       // Calculate base XP
@@ -78,17 +77,18 @@ export class ManualWorkoutService {
         
         if (workoutError) throw workoutError;
         
-        // Update profile with workout completion
-        const { error: completionError } = await supabase
-          .rpc('handle_manual_workout_completion', {
+        // Use the new combined function to handle both workout completion and XP
+        const { error: completionError } = await supabase.rpc(
+          'handle_manual_workout_completion_with_xp',
+          {
             p_user_id: userId,
-            p_workout_date: workoutDate.toISOString()
-          });
+            p_workout_date: workoutDate.toISOString(),
+            p_xp_amount: xpAwarded,
+            p_xp_source: `manual_workout:${exerciseType}`
+          }
+        );
           
         if (completionError) throw completionError;
-        
-        // Add XP to user
-        await XPService.addXP(userId, xpAwarded, `manual_workout:${exerciseType}`);
         
         // Get updated profile data to ensure we have the latest workouts_count
         const { data: updatedProfile, error: updateError } = await supabase
@@ -103,7 +103,6 @@ export class ManualWorkoutService {
         console.log('Current workout count:', updatedProfile.workouts_count);
         
         // Check for achievements after workout completion
-        // Pass the updated workouts count to ensure accurate achievement checks
         await AchievementService.checkAchievements(userId);
         
         // Commit transaction

@@ -1034,6 +1034,15 @@ export type Database = {
         Args: { p_user_id: string; p_workout_date: string }
         Returns: undefined
       }
+      handle_manual_workout_completion_with_xp: {
+        Args: {
+          p_user_id: string
+          p_workout_date: string
+          p_xp_amount: number
+          p_xp_source: string
+        }
+        Returns: undefined
+      }
       increment_profile_counter: {
         Args: {
           user_id_param: string
