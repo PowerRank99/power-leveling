@@ -1,9 +1,9 @@
-
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { XPCalculationService } from './XPCalculationService';
 import { PersonalRecordService, PersonalRecord } from './PersonalRecordService';
 import { XPBonusService } from './XPBonusService';
 import { PowerDayService } from './bonus/PowerDayService';
+import { isTestingMode } from '@/config/testingMode';
 
 /**
  * Main XP Service that coordinates XP calculations and awards
@@ -35,7 +35,14 @@ export class XPService {
     streak: number = 0
   ): number {
     const result = XPCalculationService.calculateWorkoutXP(workout, userClass, streak);
-    return result.totalXP; // Return just the totalXP number instead of the full object
+    
+    if (isTestingMode()) {
+      console.log('🔧 Testing mode: No XP cap applied');
+      return result.totalXP;
+    }
+    
+    // Apply cap in non-testing mode
+    return Math.min(result.totalXP, PowerDayService.POWER_DAY_CAP);
   }
   
   /**
@@ -68,6 +75,9 @@ export class XPService {
     baseXP: number, 
     personalRecords: PersonalRecord[] = []
   ): Promise<boolean> {
+    if (isTestingMode()) {
+      console.log('🔧 Testing mode: Awarding uncapped XP:', baseXP);
+    }
     return XPBonusService.awardXP(userId, baseXP, personalRecords);
   }
   

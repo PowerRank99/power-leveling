@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { achievementPopupStore } from '@/stores/achievementPopupStore';
 import { RankService } from './RankService';
 import { AchievementDebug } from './AchievementDebug';
+import { isTestingMode } from '@/config/testingMode';
 
 export interface Achievement {
   id: string;
@@ -41,7 +42,9 @@ export class AchievementService {
         return;
       }
       
-      console.log('Starting achievement check for user:', userId);
+      if (isTestingMode()) {
+        console.log('🔧 Testing mode: Achievement check starting');
+      }
       
       // Get user profile data
       const { data: profile, error: profileError } = await supabase
@@ -77,7 +80,10 @@ export class AchievementService {
       }
 
       const unlockedIds = unlockedAchievements?.map(a => a.achievement_id) || [];
-      console.log('Already unlocked achievement IDs:', unlockedIds);
+      
+      if (isTestingMode()) {
+        console.log('🔧 Testing mode: Already unlocked achievements:', unlockedIds);
+      }
       
       // Get all eligible achievements
       const { data: remainingAchievements, error: remainingError } = await supabase
