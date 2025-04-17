@@ -15,10 +15,14 @@ import UserDataFormatter from '@/components/profile/UserDataFormatter';
 import { getMockAchievements } from '@/components/profile/MockAchievements';
 import { supabase } from '@/integrations/supabase/client';
 import { XPBonusService } from '@/services/rpg/XPBonusService';
+import { useAchievementStore } from '@/stores/achievementStore';
+import { Shield } from 'lucide-react';
+import { RankService } from '@/services/rpg/RankService';
 
 const ProfilePage = () => {
   const { user, profile, signOut } = useAuth();
   const { userClass } = useClass();
+  const { rankData, fetchRankData } = useAchievementStore();
   const [classBonuses, setClassBonuses] = useState<{description: string; value: string}[]>([]);
   const [weeklyBonus, setWeeklyBonus] = useState(0);
   const [monthlyBonus, setMonthlyBonus] = useState(0);
@@ -44,7 +48,7 @@ const ProfilePage = () => {
       }
     };
     
-    // Calculate weekly/monthly bonuses (simplified mock for demonstration)
+    // Calculate weekly/monthly bonuses
     const calculateBonuses = async () => {
       if (user?.id && profile?.last_workout_at) {
         // In a real implementation, this would fetch actual completion data
@@ -53,9 +57,14 @@ const ProfilePage = () => {
       }
     };
     
+    // Fetch rank data
+    if (user?.id) {
+      fetchRankData(user.id);
+    }
+    
     fetchClassBonuses();
     calculateBonuses();
-  }, [userClass, user?.id, profile?.last_workout_at]);
+  }, [userClass, user?.id, profile?.last_workout_at, fetchRankData]);
   
   // Mock data for achievements
   const recentAchievements = getMockAchievements();
@@ -83,6 +92,9 @@ const ProfilePage = () => {
                     ranking={42}
                     currentXP={profileData.currentXP}
                     nextLevelXP={profileData.nextLevelXP}
+                    rank={profileData.rank}
+                    rankScore={profileData.rankScore}
+                    achievementPoints={profileData.achievements.points}
                   />
                   
                   <ProfileProgressSection 

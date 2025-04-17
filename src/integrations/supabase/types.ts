@@ -625,6 +625,7 @@ export type Database = {
           level: number | null
           name: string | null
           rank: string | null
+          rank_progress: Json | null
           records_count: number | null
           streak: number | null
           timer_notification_enabled: boolean
@@ -652,6 +653,7 @@ export type Database = {
           level?: number | null
           name?: string | null
           rank?: string | null
+          rank_progress?: Json | null
           records_count?: number | null
           streak?: number | null
           timer_notification_enabled?: boolean
@@ -679,6 +681,7 @@ export type Database = {
           level?: number | null
           name?: string | null
           rank?: string | null
+          rank_progress?: Json | null
           records_count?: number | null
           streak?: number | null
           timer_notification_enabled?: boolean
@@ -902,6 +905,10 @@ export type Database = {
       begin_transaction: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      calculate_rank_score: {
+        Args: { p_level: number; p_achievement_points: number }
+        Returns: Json
       }
       check_achievement_batch: {
         Args: { p_user_id: string; p_achievement_ids: string[] }

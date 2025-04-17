@@ -4,6 +4,7 @@ import { User } from '@supabase/supabase-js';
 import { ClassService } from '@/services/rpg/ClassService';
 import { Profile } from './UserDataFormatter';
 import { XPBonusService } from '@/services/rpg/XPBonusService';
+import { RankService } from '@/services/rpg/RankService';
 
 export interface ProfileData {
   level: number;
@@ -17,11 +18,14 @@ export interface ProfileData {
   achievements: {
     unlocked: number;
     total: number;
+    points: number;
   };
   className: string;
   classDescription: string;
   lastActivity: string;
   xpGain: string;
+  rank: string;
+  rankScore: number;
 }
 
 interface ProfileDataProviderProps {
@@ -40,19 +44,22 @@ const ProfileDataProvider: React.FC<ProfileDataProviderProps> = ({
     level: profile?.level || 1,
     currentXP: profile?.xp || 0,
     nextLevelXP: (profile?.level || 1) * 100,
-    dailyXP: 150, // Mock data - could be calculated based on today's workouts
-    dailyXPCap: 300,
+    dailyXP: profile?.daily_xp || 0,
+    dailyXPCap: profile?.daily_xp_cap || 300,
     streak: profile?.streak || 0,
     weeklyBonus: 0, // Will be populated from actual database in a real implementation
     monthlyBonus: 0, // Will be populated from actual database in a real implementation
     achievements: {
       unlocked: profile?.achievements_count || 0,
-      total: 50 // Mock total achievements
+      total: 50, // Mock total achievements
+      points: profile?.achievement_points || 0
     },
     className: userClass || 'Sem Classe',
     classDescription: ClassService.getClassDescription(userClass),
     lastActivity: profile?.last_workout_at ? '8h 45min' : 'Nunca',
     xpGain: '+25 EXP',
+    rank: profile?.rank || 'Unranked',
+    rankScore: profile?.rank_progress?.rank_score || 0
   };
 
   return <>{children(profileData)}</>;

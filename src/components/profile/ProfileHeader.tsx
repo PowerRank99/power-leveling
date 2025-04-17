@@ -1,10 +1,11 @@
 
 import React from 'react';
-import { Award, Trophy, Calendar } from 'lucide-react';
+import { Award, Trophy, Calendar, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import XPProgressBar from '@/components/profile/XPProgressBar';
+import { RankService } from '@/services/rpg/RankService';
 
 interface ProfileHeaderProps {
   avatar: string;
@@ -16,6 +17,9 @@ interface ProfileHeaderProps {
   ranking: number;
   currentXP: number;
   nextLevelXP: number;
+  rank?: string;
+  rankScore?: number;
+  achievementPoints?: number;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -27,8 +31,15 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   workoutsCount,
   ranking,
   currentXP,
-  nextLevelXP
+  nextLevelXP,
+  rank = 'Unranked',
+  rankScore = 0,
+  achievementPoints = 0
 }) => {
+  // Get rank color
+  const rankColorClass = RankService.getRankColorClass(rank);
+  const rankBackgroundClass = RankService.getRankBackgroundClass(rank);
+  
   return (
     <div className="bg-gradient-to-b from-midnight-deep to-midnight-base text-text-primary p-6 relative rounded-b-xl shadow-elevated">
       <div className="flex items-center">
@@ -60,6 +71,28 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               <h2 className="text-xl profile-name">{name}</h2>
               <p className="text-text-tertiary text-sm">@{username}</p>
             </div>
+            
+            {/* Rank Display */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className={`flex items-center px-2 py-1 rounded-md ${rankBackgroundClass} shadow-subtle`}>
+                    <Shield className="w-4 h-4 mr-1 text-text-primary" />
+                    <span className={`font-orbitron font-bold text-sm ${
+                      rank === 'Unranked' ? 'text-text-secondary' : 'text-text-primary'
+                    }`}>
+                      {rank}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                  <div>
+                    <p className="text-xs font-sora">Pontuação de Rank: {Math.floor(rankScore)}</p>
+                    <p className="text-xs font-sora mt-1">Pontos de Conquista: {achievementPoints}</p>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           
           {/* Class Button */}
@@ -102,14 +135,14 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 <div className="flex flex-col items-center">
                   <span className="text-xs font-sora text-text-tertiary mb-1">Conquistas</span>
                   <div className="text-lg font-bold font-space text-achievement shadow-glow-gold">
-                    0/50
+                    {achievementPoints} pts
                   </div>
-                  <span className="text-xs text-text-tertiary mt-1 font-sora">Progresso total</span>
+                  <span className="text-xs text-text-tertiary mt-1 font-sora">Pontos de conquista</span>
                 </div>
               </div>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              <p className="text-xs font-sora">Conquistas desbloqueadas de um total de 50</p>
+              <p className="text-xs font-sora">Pontos de conquista acumulados</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

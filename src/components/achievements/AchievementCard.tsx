@@ -1,105 +1,170 @@
 
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Star } from 'lucide-react';
+import { Star, Dumbbell, Flame, Trophy, Medal, Clock, BookOpen, UserPlus, Zap, Award } from 'lucide-react';
+import { Achievement } from '@/services/rpg/AchievementService';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { RankService } from '@/services/rpg/RankService';
 
 interface AchievementCardProps {
-  id: string;
-  title: string;
-  description: string;
-  xpReward: number;
-  icon: React.ReactNode;
-  iconBg: string;
-  status: 'locked' | 'unlocked';
-  rarity?: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+  achievement: Achievement;
 }
 
-const AchievementCard: React.FC<AchievementCardProps> = ({
-  id,
-  title,
-  description,
-  xpReward,
-  icon,
-  iconBg,
-  status,
-  rarity = 'common'
-}) => {
-  // Map rarity to visual elements
-  const rarityMap = {
-    common: { color: 'text-text-secondary', bg: 'bg-midnight-card', border: 'border-divider/30' },
-    uncommon: { color: 'text-arcane', bg: 'bg-arcane-15', border: 'border-arcane-30' },
-    rare: { color: 'text-arcane-60', bg: 'bg-arcane-15', border: 'border-arcane-30' },
-    epic: { color: 'text-valor', bg: 'bg-valor-15', border: 'border-valor-30' },
-    legendary: { color: 'text-achievement', bg: 'bg-achievement-15', border: 'border-achievement-30' }
+const AchievementCard: React.FC<AchievementCardProps> = ({ achievement }) => {
+  // Map icon name to icon component
+  const getIconComponent = (iconName: string) => {
+    switch (iconName) {
+      case 'dumbbell':
+        return <Dumbbell className="h-6 w-6 text-arcane" />;
+      case 'flame':
+        return <Flame className="h-6 w-6 text-valor" />;
+      case 'trophy':
+        return <Trophy className="h-6 w-6 text-achievement" />;
+      case 'medal':
+        return <Medal className="h-6 w-6 text-achievement" />;
+      case 'clock':
+        return <Clock className="h-6 w-6 text-arcane" />;
+      case 'book':
+        return <BookOpen className="h-6 w-6 text-arcane" />;
+      case 'user':
+        return <UserPlus className="h-6 w-6 text-arcane" />;
+      case 'zap':
+        return <Zap className="h-6 w-6 text-achievement" />;
+      default:
+        return <Award className="h-6 w-6 text-arcane" />;
+    }
   };
-
-  const rarityStyles = rarityMap[rarity];
+  
+  // Map achievement rank to styles
+  const getRankStyles = (rank: string) => {
+    const colorClass = RankService.getRankColorClass(rank);
+    let bgClass = 'bg-arcane-15';
+    let borderClass = 'border-arcane-30';
+    
+    switch (rank) {
+      case 'S':
+        bgClass = 'bg-achievement-15';
+        borderClass = 'border-achievement-30';
+        break;
+      case 'A':
+        bgClass = 'bg-achievement-15';
+        borderClass = 'border-achievement-30';
+        break;
+      case 'B':
+        bgClass = 'bg-valor-15';
+        borderClass = 'border-valor-30';
+        break;
+      case 'C':
+        bgClass = 'bg-valor-15';
+        borderClass = 'border-valor-30';
+        break;
+      case 'D':
+        bgClass = 'bg-arcane-15';
+        borderClass = 'border-arcane-30';
+        break;
+      case 'E':
+        bgClass = 'bg-arcane-15';
+        borderClass = 'border-arcane-30';
+        break;
+      default:
+        bgClass = 'bg-midnight-elevated';
+        borderClass = 'border-divider/30';
+    }
+    
+    return { colorClass, bgClass, borderClass };
+  };
+  
+  // Get rank stars based on achievement rank
+  const getRankStars = (rank: string) => {
+    const starsMap = {
+      'S': 5,
+      'A': 4,
+      'B': 3,
+      'C': 2,
+      'D': 1,
+      'E': 0,
+      'Unranked': 0
+    };
+    
+    return starsMap[rank] || 0;
+  };
+  
+  const { colorClass, bgClass, borderClass } = getRankStyles(achievement.rank);
+  const rankStars = getRankStars(achievement.rank);
+  const isLocked = !achievement.unlocked;
   
   return (
     <div 
       className={`relative flex flex-col items-center p-4 rounded-lg transform transition-all duration-200 hover:shadow-glow-subtle hover:-translate-y-1 ${
-        status === 'locked' 
+        isLocked 
           ? 'bg-midnight-elevated text-inactive' 
           : 'bg-midnight-card'
-      } ${rarityStyles.border} border premium-card overflow-hidden`}
+      } ${borderClass} border premium-card overflow-hidden`}
     >
-      {/* Rarity indicator */}
-      {rarity !== 'common' && (
+      {/* Rank indicator */}
+      {rankStars > 0 && (
         <div className="absolute top-2 right-2">
           <div className="flex items-center">
-            {rarity === 'legendary' && Array(5).fill(0).map((_, i) => (
-              <Star key={i} className="h-3 w-3 text-achievement fill-achievement" />
-            ))}
-            {rarity === 'epic' && Array(4).fill(0).map((_, i) => (
-              <Star key={i} className="h-3 w-3 text-valor fill-valor" />
-            ))}
-            {rarity === 'rare' && Array(3).fill(0).map((_, i) => (
-              <Star key={i} className="h-3 w-3 text-arcane-60 fill-arcane-60" />
-            ))}
-            {rarity === 'uncommon' && Array(2).fill(0).map((_, i) => (
-              <Star key={i} className="h-3 w-3 text-arcane fill-arcane" />
+            {Array(rankStars).fill(0).map((_, i) => (
+              <Star 
+                key={i} 
+                className={`h-3 w-3 ${
+                  isLocked ? 'text-inactive' : colorClass
+                } ${
+                  isLocked ? '' : 'fill-current'
+                }`} 
+              />
             ))}
           </div>
         </div>
       )}
       
-      <div className={`${iconBg} w-16 h-16 rounded-full flex items-center justify-center mb-3 ${
-        status === 'unlocked' && rarity !== 'common' ? 'shadow-glow-purple' : ''
+      <div className={`${bgClass} w-16 h-16 rounded-full flex items-center justify-center mb-3 ${
+        !isLocked && achievement.rank !== 'Unranked' ? 'shadow-glow-purple' : ''
       }`}>
-        {icon}
+        {getIconComponent(achievement.icon_name)}
       </div>
       
       <h3 className={`font-orbitron font-bold text-center mb-2 ${
-        status === 'locked' ? 'text-inactive' : rarityStyles.color
+        isLocked ? 'text-inactive' : colorClass
       }`}>
-        {title}
+        {achievement.name}
       </h3>
       
       <p className={`text-center text-sm mb-3 font-sora ${
-        status === 'locked' ? 'text-inactive' : 'text-text-secondary'
+        isLocked ? 'text-inactive' : 'text-text-secondary'
       }`}>
-        {description}
+        {achievement.description}
       </p>
       
       <div className="mt-auto">
         <Badge 
           className={`${
-            status === 'unlocked' 
+            !isLocked 
               ? 'bg-arcane-15 text-arcane border border-arcane-30 hover:bg-arcane-30' 
               : 'bg-midnight-elevated border border-divider/30 text-inactive hover:bg-midnight-card'
           }`}
         >
-          {status === 'unlocked' ? 'Desbloqueada' : 'Bloqueada'}
+          {!isLocked ? 'Desbloqueada' : 'Bloqueada'}
         </Badge>
       </div>
       
-      <div className={`mt-2 font-medium text-sm font-space ${
-        status === 'unlocked' 
-          ? 'text-achievement shadow-glow-gold' 
-          : 'text-inactive'
-      }`}>
-        +{xpReward} XP
-      </div>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className={`mt-2 font-medium text-sm font-space ${
+              !isLocked 
+                ? 'text-achievement shadow-glow-gold' 
+                : 'text-inactive'
+            }`}>
+              +{achievement.xp_reward} XP
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="text-xs">+{achievement.points} pontos de conquista</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 };

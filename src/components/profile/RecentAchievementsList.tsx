@@ -1,11 +1,15 @@
 
-import React, { useState } from 'react';
-import { ChevronRight, X, Flame, Dumbbell } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronRight, X, Flame, Dumbbell, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/badge';
 import Trophy from '@/components/icons/Trophy';
+import { useAuth } from '@/hooks/useAuth';
+import { useAchievementStore } from '@/stores/achievementStore';
+import { RankService } from '@/services/rpg/RankService';
 
 interface Achievement {
   id: string;
@@ -27,6 +31,14 @@ interface RecentAchievementsListProps {
 
 const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achievements }) => {
   const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null);
+  const { user } = useAuth();
+  const { rankData, fetchRankData } = useAchievementStore();
+  
+  useEffect(() => {
+    if (user?.id) {
+      fetchRankData(user.id);
+    }
+  }, [user?.id, fetchRankData]);
   
   const handleAchievementClick = (achievement: Achievement) => {
     setSelectedAchievement(achievement);
@@ -62,11 +74,23 @@ const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achieve
     <>
       <Card className="mt-3 premium-card hover:premium-card-elevated transition-all duration-300">
         <CardHeader className="px-4 py-3 flex flex-row justify-between items-center bg-midnight-card bg-opacity-50 backdrop-blur-sm border-b border-divider/30">
-          <h3 className="section-header text-lg orbitron-text font-bold text-text-primary">
-            Conquistas
-          </h3>
+          <div className="flex items-center">
+            <h3 className="section-header text-lg orbitron-text font-bold text-text-primary mr-2">
+              Conquistas
+            </h3>
+            
+            {rankData && (
+              <Badge 
+                className={`${RankService.getRankBackgroundClass(rankData.rank)} text-text-primary shadow-subtle`}
+              >
+                <Shield className="w-3 h-3 mr-1" />
+                <span className="text-xs font-orbitron">Rank {rankData.rank}</span>
+              </Badge>
+            )}
+          </div>
+          
           <Link to="/conquistas" className="text-arcane flex items-center text-sm font-sora hover:text-arcane-60 transition-colors">
-            Ver Todas as Conquistas 🏅 <ChevronRight className="w-4 h-4 ml-1" />
+            Ver Todas <ChevronRight className="w-4 h-4 ml-1" />
           </Link>
         </CardHeader>
 
@@ -143,6 +167,41 @@ const RecentAchievementsList: React.FC<RecentAchievementsListProps> = ({ achieve
               </TooltipProvider>
             ))}
           </div>
+          
+          {rankData && rankData.nextRank && (
+            <div className="mt-4 bg-midnight-elevated rounded-md p-3 border border-divider/30">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-text-secondary font-sora">Próximo Rank</span>
+                <span className={`font-orbitron font-bold ${RankService.getRankColorClass(rankData.nextRank)}`}>
+                  {rankData.nextRank}
+                </span>
+              </div>
+              
+              <div className="mt-2">
+                <div className="h-2 w-full bg-divider rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full ${RankService.getRankBackgroundClass(rankData.nextRank)}`}
+                    style={{ 
+                      width: rankData.pointsToNextRank 
+                        ? `${100 - Math.min(100, (rankData.pointsToNextRank / (rankData.nextRank === 'E' ? 20 : 30)) * 100)}%` 
+                        : '0%' 
+                    }}
+                  ></div>
+                </div>
+                
+                <div className="flex justify-between mt-1 text-xs text-text-tertiary">
+                  <span>{rankData.rank}</span>
+                  <span>
+                    {rankData.pointsToNextRank 
+                      ? `Faltam ${rankData.pointsToNextRank} pontos` 
+                      : 'Rank máximo atingido'
+                    }
+                  </span>
+                  <span>{rankData.nextRank}</span>
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
