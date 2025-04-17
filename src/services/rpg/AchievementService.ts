@@ -4,6 +4,7 @@ import { AchievementCheckService } from './achievement/AchievementCheckService';
 import { AchievementQueryService } from './achievement/AchievementQueryService';
 import { FirstAchievementService } from './achievement/FirstAchievementService';
 import { RankService } from './RankService';
+import { supabase } from '@/integrations/supabase/client';
 
 export class AchievementService {
   static checkAchievements = AchievementCheckService.checkAchievements;
