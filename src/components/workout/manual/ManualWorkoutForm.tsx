@@ -64,24 +64,9 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
       return;
     }
     
-    const selectedDate = new Date(workoutDate);
-    const now = new Date();
-    if (selectedDate > now) {
-      toast.error('Data inválida', {
-        description: 'Não é possível registrar treinos futuros'
-      });
-      return;
-    }
-    
-    const timeDiff = now.getTime() - selectedDate.getTime();
-    const hoursDiff = timeDiff / (1000 * 3600);
-    
-    if (hoursDiff > 24) {
-      toast.error('Data inválida', {
-        description: 'Não é possível registrar treinos com mais de 24 horas'
-      });
-      return;
-    }
+    // Use noon time to avoid timezone issues
+    const selectedDate = new Date(`${workoutDate}T12:00:00`);
+    console.log("Submitting with selected date:", selectedDate);
     
     try {
       setIsSubmitting(true);
@@ -115,17 +100,14 @@ const ManualWorkoutForm: React.FC<ManualWorkoutFormProps> = ({ onSuccess, onCanc
       console.log("Public URL retrieved:", publicUrlData.publicUrl);
       
       // Submit the workout with the photo URL
-      const parsedDate = new Date(workoutDate);
-      parsedDate.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
-      
-      console.log("Submitting manual workout with date:", parsedDate);
+      console.log("Submitting manual workout with date:", selectedDate);
       
       const result = await ManualWorkoutService.submitManualWorkout(
         user.id,
         publicUrlData.publicUrl,
         description,
         selectedType,
-        parsedDate
+        selectedDate
       );
       
       console.log("Submission result:", result);

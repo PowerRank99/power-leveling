@@ -18,32 +18,35 @@ const DateSelector: React.FC<DateSelectorProps> = ({ value, onChange }) => {
   const minDateString = minDate.toISOString().split('T')[0];
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedDate = new Date(e.target.value + 'T12:00:00'); // Add time to avoid timezone issues
-    const nowTime = now.getTime();
+    // Use the input value directly (YYYY-MM-DD format)
+    const selectedDateStr = e.target.value;
     
-    console.log("Date selected:", e.target.value);
+    // Create date objects for comparison
+    // Setting to noon helps avoid timezone issues
+    const selectedDate = new Date(`${selectedDateStr}T12:00:00`);
+    const nowDate = new Date(`${today}T12:00:00`);
+    const minDateTime = new Date(`${minDateString}T12:00:00`);
+    
+    console.log("Date selected:", selectedDateStr);
     console.log("Date selected (parsed):", selectedDate);
-    console.log("Current date:", now);
-    console.log("Min date allowed:", minDate);
+    console.log("Current date:", nowDate);
+    console.log("Min date allowed:", minDateTime);
     
     // Prevent future dates
-    if (selectedDate.getTime() > nowTime) {
+    if (selectedDate > nowDate) {
       console.log("Future date detected, resetting to today");
       onChange(today);
       return;
     }
     
     // Check if date is more than 24 hours in the past
-    const hoursDiff = (nowTime - selectedDate.getTime()) / (1000 * 3600);
-    console.log("Hours difference:", hoursDiff);
-    
-    if (hoursDiff > 24) {
+    if (selectedDate < minDateTime) {
       console.log("Date too far in past, resetting to 24h limit");
       onChange(minDateString);
       return;
     }
     
-    onChange(e.target.value);
+    onChange(selectedDateStr);
   };
 
   return (

@@ -34,6 +34,13 @@ export class ManualWorkoutValidationService {
       const timeDiff = now.getTime() - submissionDate.getTime();
       const hoursDiff = timeDiff / (1000 * 3600);
       
+      console.log("Date validation:", {
+        now: now.toISOString(),
+        submissionDate: submissionDate.toISOString(),
+        timeDiff,
+        hoursDiff
+      });
+      
       if (hoursDiff > 24) {
         throw new Error('Data do treino não pode ser mais de 24 horas no passado');
       }
