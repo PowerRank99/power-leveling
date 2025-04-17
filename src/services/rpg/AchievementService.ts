@@ -332,13 +332,30 @@ export class AchievementService {
         return false;
       }
       
-      // Update profile counters directly - fixed implementation
+      // First, get current profile values
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('achievements_count, achievement_points, xp')
+        .eq('id', userId)
+        .single();
+        
+      if (profileError) {
+        console.error('Error fetching profile data:', profileError);
+        return false;
+      }
+      
+      // Calculate new values
+      const newAchievementCount = (profileData.achievements_count || 0) + 1;
+      const newAchievementPoints = (profileData.achievement_points || 0) + points;
+      const newXp = (profileData.xp || 0) + xpReward;
+      
+      // Update profile with numeric values
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
-          achievements_count: profile => `${profile.achievements_count} + 1`,
-          achievement_points: profile => `${profile.achievement_points} + ${points}`,
-          xp: profile => `${profile.xp} + ${xpReward}`
+          achievements_count: newAchievementCount,
+          achievement_points: newAchievementPoints,
+          xp: newXp
         })
         .eq('id', userId);
         
