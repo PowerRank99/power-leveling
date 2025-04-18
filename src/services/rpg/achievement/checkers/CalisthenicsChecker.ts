@@ -9,32 +9,70 @@ export class CalisthenicsChecker {
     achievements: any[]
   ) {
     try {
-      // Count calisthenics workouts from completed workouts with calisthenics exercises
-      const { data: calisthenicsWorkouts, error: calisthenicsError } = await supabase
-        .rpc('count_workouts_by_exercise_type', { 
-          p_user_id: userId,
-          p_type: 'Calistenia'
-        });
-      
-      // If RPC isn't available, this is a fallback method
+      // Count using standard queries instead of RPC
       let calisthenicsCount = 0;
-      if (calisthenicsError) {
-        console.error('Error using RPC for calisthenics count, using fallback method:', calisthenicsError);
+      
+      // First, count tracked workouts with calisthenics exercises
+      const { data: trackedWorkouts, error: trackedError } = await supabase
+        .from('workouts')
+        .select('id')
+        .eq('user_id', userId)
+        .not('completed_at', 'is', null);
+      
+      if (trackedError) {
+        console.error('Error fetching tracked workouts:', trackedError);
+      } else if (trackedWorkouts?.length) {
+        // Get unique workout IDs that have calisthenics exercises
+        const workoutIds = trackedWorkouts.map(w => w.id);
         
-        // Fallback: Check manual workouts for calisthenics
-        const { data: manualWorkouts, error: manualError } = await supabase
-          .from('manual_workouts')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('activity_type', 'Calistenia');
+        const { data: calisthenicsWorkouts, error: exerciseError } = await supabase
+          .from('workout_sets')
+          .select('workout_id, exercise_id')
+          .in('workout_id', workoutIds)
+          .not('exercise_id', 'is', null);
         
-        if (manualError) {
-          console.error('Error fetching calisthenics manual workouts:', manualError);
-        } else {
-          calisthenicsCount = manualWorkouts?.length || 0;
+        if (exerciseError) {
+          console.error('Error fetching workout sets:', exerciseError);
+        } else if (calisthenicsWorkouts?.length) {
+          // Get unique exercises IDs from these workouts
+          const exerciseIds = [...new Set(calisthenicsWorkouts.map(s => s.exercise_id))];
+          
+          // Find exercises that are calisthenics type
+          const { data: calisthenicsExercises, error: typeError } = await supabase
+            .from('exercises')
+            .select('id')
+            .in('id', exerciseIds)
+            .eq('type', 'Calistenia');
+            
+          if (typeError) {
+            console.error('Error fetching calisthenics exercises:', typeError);
+          } else {
+            // Count unique workouts that have calisthenics exercises
+            const calisthenicsExerciseIds = new Set(calisthenicsExercises?.map(e => e.id) || []);
+            
+            // Get unique workout IDs that contain calisthenics exercises
+            const calisthenicsWorkoutIds = new Set(
+              calisthenicsWorkouts
+                .filter(s => calisthenicsExerciseIds.has(s.exercise_id))
+                .map(s => s.workout_id)
+            );
+            
+            calisthenicsCount += calisthenicsWorkoutIds.size;
+          }
         }
+      }
+      
+      // Add manual workouts with calisthenics activity type
+      const { data: manualWorkouts, error: manualError } = await supabase
+        .from('manual_workouts')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('activity_type', 'Calistenia');
+      
+      if (manualError) {
+        console.error('Error fetching calisthenics manual workouts:', manualError);
       } else {
-        calisthenicsCount = calisthenicsWorkouts?.[0]?.count || 0;
+        calisthenicsCount += manualWorkouts?.length || 0;
       }
       
       // Debug logging
