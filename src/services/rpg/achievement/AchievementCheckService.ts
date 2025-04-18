@@ -39,9 +39,42 @@ export class AchievementCheckService {
         return;
       }
 
+      // Get count of workouts in the current week
+      const currentDate = new Date();
+      const startOfWeek = new Date(currentDate);
+      startOfWeek.setDate(currentDate.getDate() - currentDate.getDay()); // Start from Sunday
+      startOfWeek.setHours(0, 0, 0, 0);
+      
+      const { count: weeklyWorkoutsCount, error: weeklyCountError } = await supabase
+        .from('workouts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('completed_at', startOfWeek.toISOString())
+        .is('completed_at', 'not.null');
+        
+      if (weeklyCountError) {
+        console.error('Error fetching weekly workouts count:', weeklyCountError);
+        return;
+      }
+
+      // Add manual workouts from this week
+      const { count: weeklyManualCount, error: weeklyManualError } = await supabase
+        .from('manual_workouts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('workout_date', startOfWeek.toISOString());
+        
+      if (weeklyManualError) {
+        console.error('Error fetching weekly manual workouts count:', weeklyManualError);
+        return;
+      }
+
+      const totalWeeklyWorkouts = (weeklyWorkoutsCount || 0) + (weeklyManualCount || 0);
+
       console.log('User stats for achievement check:', {
         ...profile,
-        manualWorkoutsCount
+        manualWorkoutsCount,
+        weeklyWorkouts: totalWeeklyWorkouts
       });
       
       // Get all achievements user doesn't have yet
@@ -87,6 +120,27 @@ export class AchievementCheckService {
               name: achievement.name,
               required: requirements.workouts_count,
               current: profile.workouts_count
+            });
+            await AchievementAwardService.awardAchievement(
+              userId, 
+              achievement.id, 
+              achievement.name, 
+              achievement.description, 
+              achievement.xp_reward,
+              achievement.points
+            );
+            achievementUnlocked = true;
+          }
+          
+          // Check weekly workout achievements
+          if (!achievementUnlocked && 
+              requirements && 
+              'workouts_in_week' in requirements && 
+              totalWeeklyWorkouts >= requirements.workouts_in_week) {
+            console.log('Unlocking weekly workout achievement:', {
+              name: achievement.name,
+              required: requirements.workouts_in_week,
+              current: totalWeeklyWorkouts
             });
             await AchievementAwardService.awardAchievement(
               userId, 
