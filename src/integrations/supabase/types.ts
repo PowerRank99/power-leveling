@@ -301,6 +301,7 @@ export type Database = {
           level: string
           muscle_group: string | null
           name: string
+          training_type: string | null
           type: string
         }
         Insert: {
@@ -312,6 +313,7 @@ export type Database = {
           level: string
           muscle_group?: string | null
           name: string
+          training_type?: string | null
           type: string
         }
         Update: {
@@ -323,6 +325,7 @@ export type Database = {
           level?: string
           muscle_group?: string | null
           name?: string
+          training_type?: string | null
           type?: string
         }
         Relationships: []
@@ -843,6 +846,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      workout_varieties: {
+        Row: {
+          completed_at: string | null
+          exercise_types: string[] | null
+          id: string
+          user_id: string
+          workout_date: string
+        }
+        Insert: {
+          completed_at?: string | null
+          exercise_types?: string[] | null
+          id?: string
+          user_id: string
+          workout_date: string
+        }
+        Update: {
+          completed_at?: string | null
+          exercise_types?: string[] | null
+          id?: string
+          user_id?: string
+          workout_date?: string
+        }
+        Relationships: []
       }
       workouts: {
         Row: {
