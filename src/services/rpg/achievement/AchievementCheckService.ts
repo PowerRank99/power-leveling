@@ -45,12 +45,13 @@ export class AchievementCheckService {
       startOfWeek.setDate(currentDate.getDate() - currentDate.getDay()); // Start from Sunday
       startOfWeek.setHours(0, 0, 0, 0);
       
+      // Fixed query: using .not('completed_at', 'is', null) instead of .is('completed_at', 'not.null')
       const { count: weeklyWorkoutsCount, error: weeklyCountError } = await supabase
         .from('workouts')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId)
         .gte('completed_at', startOfWeek.toISOString())
-        .is('completed_at', 'not.null');
+        .not('completed_at', 'is', null);
         
       if (weeklyCountError) {
         console.error('Error fetching weekly workouts count:', weeklyCountError);
