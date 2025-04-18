@@ -4,6 +4,9 @@ import { isTestingMode } from '@/config/testingMode';
 import { WorkoutCountChecker } from './checkers/WorkoutCountChecker';
 import { WeeklyWorkoutChecker } from './checkers/WeeklyWorkoutChecker';
 import { VarietyChecker } from './checkers/VarietyChecker';
+import { PowerDayChecker } from './checkers/PowerDayChecker';
+import { CalisthenicsChecker } from './checkers/CalisthenicsChecker';
+import { ManualWorkoutChecker } from './checkers/ManualWorkoutChecker';
 
 export class AchievementCheckService {
   static async checkAchievements(userId: string): Promise<void> {
@@ -98,6 +101,24 @@ export class AchievementCheckService {
         ),
         
         VarietyChecker.checkVarietyAchievements(
+          userId,
+          unlockedIds,
+          remainingAchievements
+        ),
+        
+        PowerDayChecker.checkPowerDayAchievement(
+          userId,
+          unlockedIds,
+          remainingAchievements
+        ),
+        
+        CalisthenicsChecker.checkCalisthenicsAchievements(
+          userId,
+          unlockedIds,
+          remainingAchievements
+        ),
+        
+        ManualWorkoutChecker.checkManualWorkoutAchievements(
           userId,
           unlockedIds,
           remainingAchievements
