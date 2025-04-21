@@ -26,6 +26,8 @@ export class VarietyChecker {
         console.error('Error fetching workout varieties:', varietiesError);
       }
       
+      console.log('Week workout varieties:', weekVarieties);
+      
       // Get manual workouts to check for activity types
       const { data: manualWorkouts, error: manualError } = await supabase
         .from('manual_workouts')
@@ -37,6 +39,8 @@ export class VarietyChecker {
         console.error('Error fetching manual workouts:', manualError);
       }
       
+      console.log('Week manual workouts:', manualWorkouts);
+      
       // Combine all exercise types from both sources
       const uniqueTypes = new Set<string>();
       
@@ -44,6 +48,7 @@ export class VarietyChecker {
       weekVarieties?.forEach(v => {
         if (v.exercise_types) {
           v.exercise_types.forEach(t => uniqueTypes.add(t));
+          console.log('Added types from workout:', v.exercise_types);
         }
       });
       
@@ -51,6 +56,7 @@ export class VarietyChecker {
       manualWorkouts?.forEach(w => {
         if (w.activity_type) {
           uniqueTypes.add(w.activity_type);
+          console.log('Added type from manual workout:', w.activity_type);
         }
       });
       
@@ -67,6 +73,13 @@ export class VarietyChecker {
         const requirements = typeof achievement.requirements === 'string'
           ? JSON.parse(achievement.requirements)
           : achievement.requirements;
+        
+        console.log('Checking variety achievement:', {
+          name: achievement.name,
+          requirements,
+          uniqueTypes: Array.from(uniqueTypes),
+          uniqueTypesCount: uniqueTypes.size
+        });
         
         if (requirements?.unique_exercise_types && 
             uniqueTypes.size >= requirements.unique_exercise_types) {

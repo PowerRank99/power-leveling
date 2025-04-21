@@ -50,6 +50,13 @@ export class PowerDayChecker {
           ? JSON.parse(achievement.requirements)
           : achievement.requirements;
         
+        // Debug log achievement requirements
+        console.log('Checking Power Day achievement:', {
+          name: achievement.name,
+          requirements,
+          current: totalPowerDays
+        });
+        
         if (requirements?.power_days && totalPowerDays >= requirements.power_days) {
           console.log('Unlocking Power Day achievement:', {
             name: achievement.name,
