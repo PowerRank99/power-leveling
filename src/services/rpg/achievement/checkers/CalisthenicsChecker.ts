@@ -9,10 +9,9 @@ export class CalisthenicsChecker {
     achievements: any[]
   ) {
     try {
-      // Count using standard queries instead of RPC
       let calisthenicsCount = 0;
       
-      // First, count tracked workouts with calisthenics exercises
+      // First, get all completed workouts
       const { data: trackedWorkouts, error: trackedError } = await supabase
         .from('workouts')
         .select('id')
@@ -22,43 +21,64 @@ export class CalisthenicsChecker {
       if (trackedError) {
         console.error('Error fetching tracked workouts:', trackedError);
       } else if (trackedWorkouts?.length) {
-        // Get unique workout IDs that have calisthenics exercises
+        // Get all sets with their exercises for these workouts
         const workoutIds = trackedWorkouts.map(w => w.id);
         
-        const { data: calisthenicsWorkouts, error: exerciseError } = await supabase
+        // Get all workout sets and their exercises
+        const { data: workoutSets, error: setsError } = await supabase
           .from('workout_sets')
-          .select('workout_id, exercise_id')
+          .select(`
+            workout_id,
+            exercise:exercises (
+              id,
+              type
+            )
+          `)
           .in('workout_id', workoutIds)
           .not('exercise_id', 'is', null);
         
-        if (exerciseError) {
-          console.error('Error fetching workout sets:', exerciseError);
-        } else if (calisthenicsWorkouts?.length) {
-          // Get unique exercises IDs from these workouts
-          const exerciseIds = [...new Set(calisthenicsWorkouts.map(s => s.exercise_id))];
+        if (setsError) {
+          console.error('Error fetching workout sets:', setsError);
+        } else if (workoutSets?.length) {
+          // Group exercises by workout and count types
+          const workoutTypeCount = new Map();
           
-          // Find exercises that are calisthenics type
-          const { data: calisthenicsExercises, error: typeError } = await supabase
-            .from('exercises')
-            .select('id')
-            .in('id', exerciseIds)
-            .eq('type', 'Calistenia');
+          workoutSets.forEach(set => {
+            if (!set.exercise) return;
             
-          if (typeError) {
-            console.error('Error fetching calisthenics exercises:', typeError);
-          } else {
-            // Count unique workouts that have calisthenics exercises
-            const calisthenicsExerciseIds = new Set(calisthenicsExercises?.map(e => e.id) || []);
+            const workoutId = set.workout_id;
+            const exerciseType = set.exercise.type;
             
-            // Get unique workout IDs that contain calisthenics exercises
-            const calisthenicsWorkoutIds = new Set(
-              calisthenicsWorkouts
-                .filter(s => calisthenicsExerciseIds.has(s.exercise_id))
-                .map(s => s.workout_id)
-            );
+            if (!workoutTypeCount.has(workoutId)) {
+              workoutTypeCount.set(workoutId, new Map());
+            }
             
-            calisthenicsCount += calisthenicsWorkoutIds.size;
-          }
+            const typeCount = workoutTypeCount.get(workoutId);
+            typeCount.set(exerciseType, (typeCount.get(exerciseType) || 0) + 1);
+          });
+          
+          // Check each workout for majority/tie rule
+          workoutTypeCount.forEach((typeCount, workoutId) => {
+            const calisthenicCount = typeCount.get('Calistenia') || 0;
+            let isCalisthenic = false;
+            
+            // If there are any calisthenics exercises, check if they're the majority or tied
+            if (calisthenicCount > 0) {
+              isCalisthenic = true; // Assume true until proven false
+              
+              // Check against each other type
+              for (const [type, count] of typeCount.entries()) {
+                if (type !== 'Calistenia' && count > calisthenicCount) {
+                  isCalisthenic = false;
+                  break;
+                }
+              }
+            }
+            
+            if (isCalisthenic) {
+              calisthenicsCount++;
+            }
+          });
         }
       }
       
