@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { AchievementAwardService } from '../AchievementAwardService';
 import { ExerciseType } from '@/components/workout/types/Exercise';
-import { AchievementDebug } from '../AchievementDebug';
+import { AchievementDebug } from '@/services/rpg/AchievementDebug';
 
 export class ExerciseTypeChecker {
   static async checkExerciseTypeAchievements(
