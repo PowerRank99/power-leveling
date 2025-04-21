@@ -9,11 +9,15 @@ export class VarietyChecker {
     achievements: any[]
   ) {
     try {
+      console.log('Checking variety achievements for user:', userId);
+      
       // Check current week's variety
       const currentDate = new Date();
       const startOfWeek = new Date(currentDate);
       startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
       startOfWeek.setHours(0, 0, 0, 0);
+      
+      console.log('Start of week for variety check:', startOfWeek.toISOString());
       
       // Get workout varieties from the workout_varieties table
       const { data: weekVarieties, error: varietiesError } = await supabase
@@ -26,7 +30,7 @@ export class VarietyChecker {
         console.error('Error fetching workout varieties:', varietiesError);
       }
       
-      console.log('Week workout varieties:', weekVarieties);
+      console.log('Week workout varieties from table:', weekVarieties);
       
       // Get manual workouts to check for activity types
       const { data: manualWorkouts, error: manualError } = await supabase
@@ -46,15 +50,19 @@ export class VarietyChecker {
       
       // Add types from workout_varieties
       weekVarieties?.forEach(v => {
-        if (v.exercise_types) {
-          v.exercise_types.forEach(t => uniqueTypes.add(t));
-          console.log('Added types from workout:', v.exercise_types);
+        if (v.exercise_types && Array.isArray(v.exercise_types)) {
+          v.exercise_types.forEach(t => {
+            if (t && typeof t === 'string') {
+              uniqueTypes.add(t);
+              console.log('Added type from workout_varieties:', t);
+            }
+          });
         }
       });
       
       // Add types from manual workouts
       manualWorkouts?.forEach(w => {
-        if (w.activity_type) {
+        if (w.activity_type && typeof w.activity_type === 'string') {
           uniqueTypes.add(w.activity_type);
           console.log('Added type from manual workout:', w.activity_type);
         }
@@ -68,7 +76,10 @@ export class VarietyChecker {
       
       // Check for combo fitness achievement
       for (const achievement of achievements) {
-        if (unlockedIds.includes(achievement.id)) continue;
+        if (unlockedIds.includes(achievement.id)) {
+          console.log(`Achievement ${achievement.name} already unlocked, skipping`);
+          continue;
+        }
         
         const requirements = typeof achievement.requirements === 'string'
           ? JSON.parse(achievement.requirements)
@@ -81,11 +92,13 @@ export class VarietyChecker {
           uniqueTypesCount: uniqueTypes.size
         });
         
-        if (requirements?.unique_exercise_types && 
-            uniqueTypes.size >= requirements.unique_exercise_types) {
+        // Check both fields for requirements - unique_exercise_types and variety_count
+        const requiredTypes = requirements?.unique_exercise_types || requirements?.variety_count;
+        
+        if (requiredTypes && uniqueTypes.size >= requiredTypes) {
           console.log('Unlocking variety achievement:', {
             name: achievement.name,
-            required: requirements.unique_exercise_types,
+            required: requiredTypes,
             current: uniqueTypes.size,
             types: Array.from(uniqueTypes)
           });

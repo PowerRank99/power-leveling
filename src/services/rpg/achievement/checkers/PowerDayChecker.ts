@@ -9,6 +9,8 @@ export class PowerDayChecker {
     achievements: any[]
   ) {
     try {
+      console.log('Checking power day achievements for user:', userId);
+      
       // Get power day usage to check if user has activated power days
       const { data: powerDayData, error: powerDayError } = await supabase
         .from('power_day_usage')
@@ -23,7 +25,7 @@ export class PowerDayChecker {
       // Also check manual workouts that are marked as power day
       const { data: manualPowerDays, error: manualError } = await supabase
         .from('manual_workouts')
-        .select('id')
+        .select('id, workout_date')
         .eq('user_id', userId)
         .eq('is_power_day', true);
       
@@ -39,12 +41,16 @@ export class PowerDayChecker {
       console.log('Power Day Check:', {
         regularPowerDays: powerDayData?.length || 0,
         manualPowerDays: manualPowerDays?.length || 0,
-        totalPowerDays
+        totalPowerDays,
+        manualPowerDaysDetails: manualPowerDays
       });
       
       // Check for power day achievement
       for (const achievement of achievements) {
-        if (unlockedIds.includes(achievement.id)) continue;
+        if (unlockedIds.includes(achievement.id)) {
+          console.log(`Achievement ${achievement.name} already unlocked, skipping`);
+          continue;
+        }
         
         const requirements = typeof achievement.requirements === 'string'
           ? JSON.parse(achievement.requirements)
@@ -57,10 +63,13 @@ export class PowerDayChecker {
           current: totalPowerDays
         });
         
-        if (requirements?.power_days && totalPowerDays >= requirements.power_days) {
+        // Check both fields for requirements - power_days and power_day_count
+        const requiredPowerDays = requirements?.power_days || requirements?.power_day_count;
+        
+        if (requiredPowerDays && totalPowerDays >= requiredPowerDays) {
           console.log('Unlocking Power Day achievement:', {
             name: achievement.name,
-            required: requirements.power_days,
+            required: requiredPowerDays,
             current: totalPowerDays
           });
           

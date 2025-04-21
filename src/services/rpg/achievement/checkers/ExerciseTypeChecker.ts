@@ -2,7 +2,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { AchievementAwardService } from '../AchievementAwardService';
 import { ExerciseType } from '@/components/workout/types/Exercise';
-import { AchievementDebug } from '@/services/rpg/AchievementDebug';
 
 export class ExerciseTypeChecker {
   static async checkExerciseTypeAchievements(
@@ -12,6 +11,8 @@ export class ExerciseTypeChecker {
     exerciseType: ExerciseType
   ) {
     try {
+      console.log(`Checking ${exerciseType} achievements for user:`, userId);
+      
       let typeCount = 0;
       
       // First, get all completed workouts
@@ -98,7 +99,7 @@ export class ExerciseTypeChecker {
       // Add manual workouts with matching activity type
       const { data: manualWorkouts, error: manualError } = await supabase
         .from('manual_workouts')
-        .select('id')
+        .select('id, workout_date')
         .eq('user_id', userId)
         .eq('activity_type', exerciseType);
       
@@ -107,7 +108,7 @@ export class ExerciseTypeChecker {
       } else {
         const manualCount = manualWorkouts?.length || 0;
         typeCount += manualCount;
-        console.log(`Found ${manualCount} manual ${exerciseType} workouts`);
+        console.log(`Found ${manualCount} manual ${exerciseType} workouts:`, manualWorkouts);
       }
       
       // Debug logging
@@ -115,26 +116,49 @@ export class ExerciseTypeChecker {
       
       // Check for achievements specific to this exercise type
       for (const achievement of achievements) {
-        if (unlockedIds.includes(achievement.id)) continue;
+        if (unlockedIds.includes(achievement.id)) {
+          console.log(`Achievement ${achievement.name} already unlocked, skipping`);
+          continue;
+        }
         
         const requirements = typeof achievement.requirements === 'string'
           ? JSON.parse(achievement.requirements)
           : achievement.requirements;
         
-        // Convert type to snake case for requirements check
-        const reqKey = `${exerciseType.toLowerCase().replace(/ & /g, '_')}_workouts`;
+        // Convert type to snake case for requirements check (handle multiple formats)
+        const typeFormatted = exerciseType.toLowerCase();
+        const possibleReqKeys = [
+          `${typeFormatted.replace(/ & /g, '_')}_workouts`,
+          `${typeFormatted.replace(/ /g, '_')}_workouts`,
+          `${typeFormatted}_workouts`,
+          `${typeFormatted}_count`,
+          `${typeFormatted}`
+        ];
         
         // Debug log achievement check
         console.log(`Checking achievement: ${achievement.name}`, {
           requirements,
-          reqKey,
+          possibleReqKeys,
           currentCount: typeCount
         });
         
-        if (requirements?.[reqKey] && typeCount >= requirements[reqKey]) {
+        // Check all possible requirement key formats
+        let requirementValue = null;
+        let matchedKey = null;
+        
+        for (const key of possibleReqKeys) {
+          if (requirements && requirements[key] !== undefined) {
+            requirementValue = requirements[key];
+            matchedKey = key;
+            break;
+          }
+        }
+        
+        if (matchedKey && requirementValue !== null && typeCount >= requirementValue) {
           console.log(`Unlocking ${exerciseType} achievement:`, {
             name: achievement.name,
-            required: requirements[reqKey],
+            requiredKey: matchedKey,
+            required: requirementValue,
             current: typeCount
           });
           

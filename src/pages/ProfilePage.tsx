@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -90,7 +91,15 @@ const ProfilePage = () => {
   const forceCheckAchievements = () => {
     if (user?.id) {
       console.log('Manual achievement check triggered');
-      AchievementService.checkAchievements(user.id)
+      
+      // First check specific achievement progress to debug
+      AchievementDebug.checkUserAchievementProgress(user.id)
+        .then(() => {
+          console.log('Achievement progress check completed');
+          
+          // Then run the full achievement check
+          return AchievementService.checkAchievements(user.id);
+        })
         .then(() => console.log('Manual achievement check completed'))
         .catch(error => console.error('Error in manual achievement check:', error));
     }
