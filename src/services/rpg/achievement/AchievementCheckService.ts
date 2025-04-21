@@ -1,12 +1,12 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { isTestingMode } from '@/config/testingMode';
 import { WorkoutCountChecker } from './checkers/WorkoutCountChecker';
 import { WeeklyWorkoutChecker } from './checkers/WeeklyWorkoutChecker';
 import { VarietyChecker } from './checkers/VarietyChecker';
 import { PowerDayChecker } from './checkers/PowerDayChecker';
-import { CalisthenicsChecker } from './checkers/CalisthenicsChecker';
-import { ManualWorkoutChecker } from './checkers/ManualWorkoutChecker';
+import { ExerciseTypeChecker } from './checkers/ExerciseTypeChecker';
+import { EXERCISE_TYPES } from '@/components/workout/manual/ExerciseTypeSelector';
+import { ExerciseType } from '@/components/workout/types/Exercise';
 
 export class AchievementCheckService {
   static async checkAchievements(userId: string): Promise<void> {
@@ -112,16 +112,14 @@ export class AchievementCheckService {
           remainingAchievements
         ),
         
-        CalisthenicsChecker.checkCalisthenicsAchievements(
-          userId,
-          unlockedIds,
-          remainingAchievements
-        ),
-        
-        ManualWorkoutChecker.checkManualWorkoutAchievements(
-          userId,
-          unlockedIds,
-          remainingAchievements
+        // Check each exercise type achievement
+        ...EXERCISE_TYPES.map(type => 
+          ExerciseTypeChecker.checkExerciseTypeAchievements(
+            userId,
+            unlockedIds,
+            remainingAchievements,
+            type as ExerciseType
+          )
         )
       ]);
       

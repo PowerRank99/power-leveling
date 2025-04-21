@@ -1,15 +1,17 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { AchievementAwardService } from '../AchievementAwardService';
+import { ExerciseType } from '@/components/workout/types/Exercise';
 
-export class CalisthenicsChecker {
-  static async checkCalisthenicsAchievements(
+export class ExerciseTypeChecker {
+  static async checkExerciseTypeAchievements(
     userId: string,
     unlockedIds: string[],
-    achievements: any[]
+    achievements: any[],
+    exerciseType: ExerciseType
   ) {
     try {
-      let calisthenicsCount = 0;
+      let typeCount = 0;
       
       // First, get all completed workouts
       const { data: trackedWorkouts, error: trackedError } = await supabase
@@ -19,7 +21,7 @@ export class CalisthenicsChecker {
         .not('completed_at', 'is', null);
       
       if (trackedError) {
-        console.error('Error fetching tracked workouts:', trackedError);
+        console.error(`Error fetching tracked workouts:`, trackedError);
       } else if (trackedWorkouts?.length) {
         // Get all sets with their exercises for these workouts
         const workoutIds = trackedWorkouts.map(w => w.id);
@@ -47,58 +49,58 @@ export class CalisthenicsChecker {
             if (!set.exercise) return;
             
             const workoutId = set.workout_id;
-            const exerciseType = set.exercise.type;
+            const currentType = set.exercise.type;
             
             if (!workoutTypeCount.has(workoutId)) {
               workoutTypeCount.set(workoutId, new Map());
             }
             
             const typeCount = workoutTypeCount.get(workoutId);
-            typeCount.set(exerciseType, (typeCount.get(exerciseType) || 0) + 1);
+            typeCount.set(currentType, (typeCount.get(currentType) || 0) + 1);
           });
           
           // Check each workout for majority/tie rule
-          workoutTypeCount.forEach((typeCount, workoutId) => {
-            const calisthenicCount = typeCount.get('Calistenia') || 0;
-            let isCalisthenic = false;
+          workoutTypeCount.forEach((typeCounts, workoutId) => {
+            const targetTypeCount = typeCounts.get(exerciseType) || 0;
+            let isTargetType = false;
             
-            // If there are any calisthenics exercises, check if they're the majority or tied
-            if (calisthenicCount > 0) {
-              isCalisthenic = true; // Assume true until proven false
+            // If there are any exercises of target type, check if they're the majority or tied
+            if (targetTypeCount > 0) {
+              isTargetType = true; // Assume true until proven false
               
               // Check against each other type
-              for (const [type, count] of typeCount.entries()) {
-                if (type !== 'Calistenia' && count > calisthenicCount) {
-                  isCalisthenic = false;
+              for (const [type, count] of typeCounts.entries()) {
+                if (type !== exerciseType && count > targetTypeCount) {
+                  isTargetType = false;
                   break;
                 }
               }
             }
             
-            if (isCalisthenic) {
-              calisthenicsCount++;
+            if (isTargetType) {
+              typeCount++;
             }
           });
         }
       }
       
-      // Add manual workouts with calisthenics activity type
+      // Add manual workouts with matching activity type
       const { data: manualWorkouts, error: manualError } = await supabase
         .from('manual_workouts')
         .select('id')
         .eq('user_id', userId)
-        .eq('activity_type', 'Calistenia');
+        .eq('activity_type', exerciseType);
       
       if (manualError) {
-        console.error('Error fetching calisthenics manual workouts:', manualError);
+        console.error(`Error fetching ${exerciseType} manual workouts:`, manualError);
       } else {
-        calisthenicsCount += manualWorkouts?.length || 0;
+        typeCount += manualWorkouts?.length || 0;
       }
       
       // Debug logging
-      console.log('Calisthenics workouts count:', calisthenicsCount);
+      console.log(`${exerciseType} workouts count:`, typeCount);
       
-      // Check for monk/calisthenics achievement
+      // Check for achievements specific to this exercise type
       for (const achievement of achievements) {
         if (unlockedIds.includes(achievement.id)) continue;
         
@@ -106,12 +108,14 @@ export class CalisthenicsChecker {
           ? JSON.parse(achievement.requirements)
           : achievement.requirements;
         
-        if (requirements?.calisthenics_workouts && 
-            calisthenicsCount >= requirements.calisthenics_workouts) {
-          console.log('Unlocking calisthenics achievement:', {
+        // Convert type to snake case for requirements check
+        const reqKey = `${exerciseType.toLowerCase().replace(/ & /g, '_')}_workouts`;
+        
+        if (requirements?.[reqKey] && typeCount >= requirements[reqKey]) {
+          console.log(`Unlocking ${exerciseType} achievement:`, {
             name: achievement.name,
-            required: requirements.calisthenics_workouts,
-            current: calisthenicsCount
+            required: requirements[reqKey],
+            current: typeCount
           });
           
           await AchievementAwardService.awardAchievement(
@@ -125,7 +129,7 @@ export class CalisthenicsChecker {
         }
       }
     } catch (error) {
-      console.error('Error in checkCalisthenicsAchievements:', error);
+      console.error(`Error in check${exerciseType}Achievements:`, error);
     }
   }
 }
