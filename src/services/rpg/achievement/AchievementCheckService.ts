@@ -12,7 +12,7 @@ export class AchievementCheckService {
   static async checkAchievements(userId: string): Promise<void> {
     try {
       if (!userId) {
-        console.error('No userId provided to checkAchievements');
+        console.error('[AchievementCheckService] No userId provided to checkAchievements');
         return;
       }
       
@@ -82,8 +82,9 @@ export class AchievementCheckService {
         return;
       }
 
-      console.log('Checking eligible achievements:', remainingAchievements.length);
-      
+      console.log('[AchievementCheckService] Eligible achievements to check:', remainingAchievements.length);
+      console.log('[AchievementCheckService] EXERCISE_TYPES:', EXERCISE_TYPES);
+
       // Check different types of achievements using specialized checkers
       await Promise.all([
         WorkoutCountChecker.checkWorkoutAchievements(
@@ -92,39 +93,36 @@ export class AchievementCheckService {
           unlockedIds, 
           remainingAchievements
         ),
-        
         WeeklyWorkoutChecker.checkWeeklyAchievements(
           userId, 
           totalWeeklyWorkouts, 
           unlockedIds, 
           remainingAchievements
         ),
-        
         VarietyChecker.checkVarietyAchievements(
           userId,
           unlockedIds,
           remainingAchievements
         ),
-        
         PowerDayChecker.checkPowerDayAchievement(
           userId,
           unlockedIds,
           remainingAchievements
         ),
-        
-        // Check each exercise type achievement
-        ...EXERCISE_TYPES.map(type => 
-          ExerciseTypeChecker.checkExerciseTypeAchievements(
+        // Check each exercise type achievement and log type
+        ...EXERCISE_TYPES.map(type => {
+          console.log('[AchievementCheckService] Checking ExerciseType for type:', type);
+          return ExerciseTypeChecker.checkExerciseTypeAchievements(
             userId,
             unlockedIds,
             remainingAchievements,
             type as ExerciseType
-          )
-        )
+          );
+        })
       ]);
       
     } catch (error) {
-      console.error('Error in checkAchievements:', error);
+      console.error('[AchievementCheckService] Error in checkAchievements:', error);
     }
   }
 }

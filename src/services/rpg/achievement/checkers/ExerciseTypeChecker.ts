@@ -11,141 +11,142 @@ export class ExerciseTypeChecker {
     exerciseType: ExerciseType
   ) {
     try {
-      console.log(`Checking ${exerciseType} achievements for user:`, userId);
-      
+      console.log(`[ExerciseTypeChecker] Checking ${exerciseType} achievements for user:`, userId);
+
       let typeCount = 0;
-      
-      // First, get all completed workouts
+
+      // Get all completed tracked workouts
       const { data: trackedWorkouts, error: trackedError } = await supabase
         .from('workouts')
         .select('id')
         .eq('user_id', userId)
         .not('completed_at', 'is', null);
-      
+
       if (trackedError) {
-        console.error(`Error fetching tracked workouts:`, trackedError);
+        console.error(`[ExerciseTypeChecker] Error fetching tracked workouts:`, trackedError);
       } else if (trackedWorkouts?.length) {
-        // Debug log workouts found
-        console.log(`Found ${trackedWorkouts.length} completed workouts for type ${exerciseType}`);
-        
-        // Get all sets with their exercises for these workouts
+        console.log(`[ExerciseTypeChecker] Found ${trackedWorkouts.length} completed workouts for type ${exerciseType}`);
+
+        // Get all workout sets for these workouts, with their exercise details
         const workoutIds = trackedWorkouts.map(w => w.id);
-        
-        // Get all workout sets and their exercises
-        const { data: workoutSets, error: setsError } = await supabase
-          .from('workout_sets')
-          .select(`
-            workout_id,
-            exercise:exercises (
-              id,
-              type
-            )
-          `)
-          .in('workout_id', workoutIds)
-          .not('exercise_id', 'is', null);
-        
-        if (setsError) {
-          console.error('Error fetching workout sets:', setsError);
-        } else if (workoutSets?.length) {
-          // Group exercises by workout and count types
-          const workoutTypeCount = new Map();
-          
-          workoutSets.forEach(set => {
-            if (!set.exercise) return;
-            
-            const workoutId = set.workout_id;
-            const currentType = set.exercise.type;
-            
-            if (!workoutTypeCount.has(workoutId)) {
-              workoutTypeCount.set(workoutId, new Map());
-            }
-            
-            const typeCount = workoutTypeCount.get(workoutId);
-            typeCount.set(currentType, (typeCount.get(currentType) || 0) + 1);
-          });
-          
-          // Debug log exercise type counts per workout
-          workoutTypeCount.forEach((typeCounts, workoutId) => {
-            console.log(`Workout ${workoutId} exercise type counts:`, Object.fromEntries(typeCounts));
-          });
-          
-          // Check each workout for majority/tie rule
-          workoutTypeCount.forEach((typeCounts, workoutId) => {
-            const targetTypeCount = typeCounts.get(exerciseType) || 0;
-            let isTargetType = false;
-            
-            if (targetTypeCount > 0) {
-              isTargetType = true;
-              
-              // Check against each other type
-              for (const [type, count] of typeCounts.entries()) {
-                if (type !== exerciseType && count > targetTypeCount) {
-                  isTargetType = false;
-                  break;
-                }
+
+        // Only perform .in() query if there's something to query
+        let workoutSets = [];
+        if (workoutIds.length > 0) {
+          const { data: _workoutSets, error: setsError } = await supabase
+            .from('workout_sets')
+            .select(`
+              workout_id,
+              exercise:exercises (
+                id,
+                type
+              )
+            `)
+            .in('workout_id', workoutIds)
+            .not('exercise_id', 'is', null);
+
+          if (setsError) {
+            console.error('[ExerciseTypeChecker] Error fetching workout sets:', setsError);
+          } else {
+            workoutSets = _workoutSets || [];
+            console.log(`[ExerciseTypeChecker] Fetched workout sets for completed workouts:`, workoutSets.length);
+          }
+        }
+
+        // Group exercises by workout and count types
+        const workoutTypeCount = new Map();
+
+        workoutSets.forEach(set => {
+          if (!set.exercise) return;
+
+          const workoutId = set.workout_id;
+          const currentType = set.exercise.type;
+
+          if (!workoutTypeCount.has(workoutId)) {
+            workoutTypeCount.set(workoutId, new Map());
+          }
+
+          const mapForWorkout = workoutTypeCount.get(workoutId);
+          mapForWorkout.set(currentType, (mapForWorkout.get(currentType) || 0) + 1);
+        });
+
+        // See if each workout qualifies as "majority or tie" for this exercise type
+        workoutTypeCount.forEach((typeCounts, workoutId) => {
+          const targetTypeCount = typeCounts.get(exerciseType) || 0;
+          let isTargetType = false;
+
+          if (targetTypeCount > 0) {
+            isTargetType = true;
+            for (const [type, count] of typeCounts.entries()) {
+              if (type !== exerciseType && count > targetTypeCount) {
+                isTargetType = false;
+                break;
               }
             }
-            
-            if (isTargetType) {
-              typeCount++;
-              console.log(`Workout ${workoutId} counted as ${exerciseType} workout`);
-            }
-          });
-          
-          console.log(`Total tracked ${exerciseType} workouts: ${typeCount}`);
-        }
+          }
+
+          if (isTargetType) {
+            typeCount++;
+            console.log(`[ExerciseTypeChecker] Workout ${workoutId} counted as ${exerciseType} workout`);
+          }
+        });
+
+        console.log(`[ExerciseTypeChecker] Total tracked ${exerciseType} workouts: ${typeCount}`);
+      } else {
+        console.log(`[ExerciseTypeChecker] No completed tracked workouts for type ${exerciseType}`);
       }
-      
-      // Add manual workouts with matching activity type
+
+      // Count manual workouts matching activity_type
       const { data: manualWorkouts, error: manualError } = await supabase
         .from('manual_workouts')
         .select('id, workout_date')
         .eq('user_id', userId)
         .eq('activity_type', exerciseType);
-      
+
       if (manualError) {
-        console.error(`Error fetching ${exerciseType} manual workouts:`, manualError);
+        console.error(`[ExerciseTypeChecker] Error fetching ${exerciseType} manual workouts:`, manualError);
       } else {
         const manualCount = manualWorkouts?.length || 0;
         typeCount += manualCount;
-        console.log(`Found ${manualCount} manual ${exerciseType} workouts:`, manualWorkouts);
+        console.log(`[ExerciseTypeChecker] Found ${manualCount} manual ${exerciseType} workouts:`, manualWorkouts);
       }
-      
-      // Debug logging
-      console.log(`Final ${exerciseType} workouts count:`, typeCount);
-      
-      // Check for achievements specific to this exercise type
+
+      // Show the summed up awarded type count
+      console.log(`[ExerciseTypeChecker] Final ${exerciseType} workouts count:`, typeCount);
+
+      // Now, check for matching achievements
       for (const achievement of achievements) {
         if (unlockedIds.includes(achievement.id)) {
-          console.log(`Achievement ${achievement.name} already unlocked, skipping`);
+          console.log(`[ExerciseTypeChecker] Achievement ${achievement.name} already unlocked, skipping`);
           continue;
         }
-        
+
+        // Defensive parse/copy for requirements object
         const requirements = typeof achievement.requirements === 'string'
           ? JSON.parse(achievement.requirements)
           : achievement.requirements;
-        
-        // Convert type to snake case for requirements check (handle multiple formats)
+
+        // Log what keys are present
+        console.log(`[ExerciseTypeChecker] Achievement: ${achievement.name} - requirements:`, requirements);
+
+        // All possible keys for this requirement, be robust to naming/underscores
         const typeFormatted = exerciseType.toLowerCase();
+        // Also add plural and singular forms
         const possibleReqKeys = [
           `${typeFormatted.replace(/ & /g, '_')}_workouts`,
           `${typeFormatted.replace(/ /g, '_')}_workouts`,
           `${typeFormatted}_workouts`,
           `${typeFormatted}_count`,
-          `${typeFormatted}`
+          `${typeFormatted}`,
+          `${typeFormatted.replace(/ /g, '')}_workouts`,
+          `${typeFormatted.replace(/ /g, '')}`,
         ];
-        
-        // Debug log achievement check
-        console.log(`Checking achievement: ${achievement.name}`, {
-          requirements,
-          possibleReqKeys,
-          currentCount: typeCount
-        });
-        
-        // Check all possible requirement key formats
+        console.log(`[ExerciseTypeChecker] Requirement keys to check:`, possibleReqKeys);
+
+        // Check for which requirement key is present
         let requirementValue = null;
         let matchedKey = null;
-        
+
         for (const key of possibleReqKeys) {
           if (requirements && requirements[key] !== undefined) {
             requirementValue = requirements[key];
@@ -153,16 +154,17 @@ export class ExerciseTypeChecker {
             break;
           }
         }
-        
+
+        if (matchedKey && requirementValue !== null) {
+          console.log(`[ExerciseTypeChecker] Requirement key matched: ${matchedKey}, required: ${requirementValue}, current: ${typeCount}`);
+        } else {
+          console.warn(`[ExerciseTypeChecker] No requirement key matched for achievement: ${achievement.name}. Requirements object:`, requirements);
+        }
+
+        // Unlock if requirement is met
         if (matchedKey && requirementValue !== null && typeCount >= requirementValue) {
-          console.log(`Unlocking ${exerciseType} achievement:`, {
-            name: achievement.name,
-            requiredKey: matchedKey,
-            required: requirementValue,
-            current: typeCount
-          });
-          
-          await AchievementAwardService.awardAchievement(
+          console.log(`[ExerciseTypeChecker] Unlocking achievement "${achievement.name}" for user ${userId}. Required: ${requirementValue}, current: ${typeCount}`);
+          const result = await AchievementAwardService.awardAchievement(
             userId,
             achievement.id,
             achievement.name,
@@ -170,10 +172,15 @@ export class ExerciseTypeChecker {
             achievement.xp_reward,
             achievement.points
           );
+          if (!result) {
+            console.error(`[ExerciseTypeChecker] Award service did not return true for ${achievement.name}!`);
+          } else {
+            console.log(`[ExerciseTypeChecker] Achievement awarded: ${achievement.name}`);
+          }
         }
       }
     } catch (error) {
-      console.error(`Error in check${exerciseType}Achievements:`, error);
+      console.error(`[ExerciseTypeChecker] Error in check${exerciseType}Achievements:`, error);
     }
   }
 }
