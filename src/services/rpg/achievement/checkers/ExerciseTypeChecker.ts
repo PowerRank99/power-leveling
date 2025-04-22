@@ -33,6 +33,10 @@ export class ExerciseTypeChecker {
         // Only perform .in() query if there's something to query
         let workoutSets = [];
         if (workoutIds.length > 0) {
+          // Debug: Calistenia check for current user
+          if (userId === "32dcd73d-7f7e-4b86-ba88-857d935e7242") { // hardcoded Pierri Bruno's user id for more debug info
+            console.log("[DEBUG] Pierri Bruno is target for Calistenia check (Monge em ação)");
+          }
           const { data: _workoutSets, error: setsError } = await supabase
             .from('workout_sets')
             .select(`
@@ -50,6 +54,10 @@ export class ExerciseTypeChecker {
           } else {
             workoutSets = _workoutSets || [];
             console.log(`[ExerciseTypeChecker] Fetched workout sets for completed workouts:`, workoutSets.length);
+            // Show a few example exercise types and ids for DEBUG
+            workoutSets.slice(0, 4).forEach(set =>
+              console.log('[DEBUG][FirstSets]', set.exercise?.type, set.exercise?.id)
+            );
           }
         }
 
@@ -78,6 +86,7 @@ export class ExerciseTypeChecker {
           if (targetTypeCount > 0) {
             isTargetType = true;
             for (const [type, count] of typeCounts.entries()) {
+              // If another type present more than target, not the majority
               if (type !== exerciseType && count > targetTypeCount) {
                 isTargetType = false;
                 break;
@@ -99,7 +108,7 @@ export class ExerciseTypeChecker {
       // Count manual workouts matching activity_type
       const { data: manualWorkouts, error: manualError } = await supabase
         .from('manual_workouts')
-        .select('id, workout_date')
+        .select('id, workout_date, activity_type')
         .eq('user_id', userId)
         .eq('activity_type', exerciseType);
 
@@ -114,7 +123,7 @@ export class ExerciseTypeChecker {
       // Show the summed up awarded type count
       console.log(`[ExerciseTypeChecker] Final ${exerciseType} workouts count:`, typeCount);
 
-      // Now, check for matching achievements
+      // --- MAIN PATCH: LOG *ALL* achievement names + requirements for "Calistenia" counting ---
       for (const achievement of achievements) {
         if (unlockedIds.includes(achievement.id)) {
           console.log(`[ExerciseTypeChecker] Achievement ${achievement.name} already unlocked, skipping`);
@@ -126,12 +135,17 @@ export class ExerciseTypeChecker {
           ? JSON.parse(achievement.requirements)
           : achievement.requirements;
 
-        // Log what keys are present
-        console.log(`[ExerciseTypeChecker] Achievement: ${achievement.name} - requirements:`, requirements);
+        // Extra DEBUG for "Monge em ação"
+        if (
+            achievement.name?.toLowerCase().includes("monge") ||
+            achievement.description?.toLowerCase().includes("calistenia") ||
+            exerciseType === "Calistenia"
+        ) {
+          console.log(`[DEBUG][Monge em ação][${achievement.name}] Requirements:`, requirements, "Type:", exerciseType, "Current:", typeCount);
+        }
 
         // All possible keys for this requirement, be robust to naming/underscores
         const typeFormatted = exerciseType.toLowerCase();
-        // Also add plural and singular forms
         const possibleReqKeys = [
           `${typeFormatted.replace(/ & /g, '_')}_workouts`,
           `${typeFormatted.replace(/ /g, '_')}_workouts`,
@@ -141,7 +155,12 @@ export class ExerciseTypeChecker {
           `${typeFormatted.replace(/ /g, '')}_workouts`,
           `${typeFormatted.replace(/ /g, '')}`,
         ];
-        console.log(`[ExerciseTypeChecker] Requirement keys to check:`, possibleReqKeys);
+        console.log(`[ExerciseTypeChecker] Requirement keys to check for ${achievement.name}:`, possibleReqKeys);
+
+        // Show all keys actually present
+        if (requirements && typeof requirements === 'object') {
+          console.log(`[ExerciseTypeChecker] All keys present in requirements:`, Object.keys(requirements));
+        }
 
         // Check for which requirement key is present
         let requirementValue = null;
@@ -155,6 +174,7 @@ export class ExerciseTypeChecker {
           }
         }
 
+        // Log result of key matching
         if (matchedKey && requirementValue !== null) {
           console.log(`[ExerciseTypeChecker] Requirement key matched: ${matchedKey}, required: ${requirementValue}, current: ${typeCount}`);
         } else {
