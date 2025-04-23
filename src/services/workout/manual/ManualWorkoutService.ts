@@ -4,7 +4,6 @@ import { ManualWorkoutValidationService } from './ManualWorkoutValidationService
 import { XPService } from '@/services/xp/XPService';
 import { ActivityBonusService } from './ActivityBonusService';
 import { AchievementService } from '@/services/rpg/AchievementService';
-import { ManualWorkoutSubmissionService } from './ManualWorkoutSubmissionService';
 
 export class ManualWorkoutService {
   /**
@@ -91,13 +90,20 @@ export class ManualWorkoutService {
           
         if (completionError) throw completionError;
         
-        // Process the submission to trigger achievement checks, etc.
-        await ManualWorkoutSubmissionService.processSubmission(
-          userId,
-          workoutData.id,
-          exerciseType,
-          workoutDate
-        );
+        // Get updated profile data to ensure we have the latest workouts_count
+        const { data: updatedProfile, error: updateError } = await supabase
+          .from('profiles')
+          .select('workouts_count')
+          .eq('id', userId)
+          .single();
+          
+        if (updateError) throw updateError;
+        
+        // Log the current state for debugging
+        console.log('Current workout count:', updatedProfile.workouts_count);
+        
+        // Check for achievements after workout completion
+        await AchievementService.checkAchievements(userId);
         
         // Commit transaction
         await supabase.rpc('commit_transaction');

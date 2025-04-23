@@ -1,18 +1,15 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { isTestingMode } from '@/config/testingMode';
 import { WorkoutCountChecker } from './checkers/WorkoutCountChecker';
 import { WeeklyWorkoutChecker } from './checkers/WeeklyWorkoutChecker';
 import { VarietyChecker } from './checkers/VarietyChecker';
-import { PowerDayChecker } from './checkers/PowerDayChecker';
-import { ExerciseTypeChecker } from './checkers/ExerciseTypeChecker';
-import { EXERCISE_TYPES } from '@/components/workout/manual/ExerciseTypeSelector';
-import { ExerciseType } from '@/components/workout/types/Exercise';
 
 export class AchievementCheckService {
   static async checkAchievements(userId: string): Promise<void> {
     try {
       if (!userId) {
-        console.error('[AchievementCheckService] No userId provided to checkAchievements');
+        console.error('No userId provided to checkAchievements');
         return;
       }
       
@@ -82,9 +79,8 @@ export class AchievementCheckService {
         return;
       }
 
-      console.log('[AchievementCheckService] Eligible achievements to check:', remainingAchievements.length);
-      console.log('[AchievementCheckService] EXERCISE_TYPES:', EXERCISE_TYPES);
-
+      console.log('Checking eligible achievements:', remainingAchievements.length);
+      
       // Check different types of achievements using specialized checkers
       await Promise.all([
         WorkoutCountChecker.checkWorkoutAchievements(
@@ -93,36 +89,23 @@ export class AchievementCheckService {
           unlockedIds, 
           remainingAchievements
         ),
+        
         WeeklyWorkoutChecker.checkWeeklyAchievements(
           userId, 
           totalWeeklyWorkouts, 
           unlockedIds, 
           remainingAchievements
         ),
+        
         VarietyChecker.checkVarietyAchievements(
           userId,
           unlockedIds,
           remainingAchievements
-        ),
-        PowerDayChecker.checkPowerDayAchievement(
-          userId,
-          unlockedIds,
-          remainingAchievements
-        ),
-        // Check each exercise type achievement and log type
-        ...EXERCISE_TYPES.map(type => {
-          console.log('[AchievementCheckService] Checking ExerciseType for type:', type);
-          return ExerciseTypeChecker.checkExerciseTypeAchievements(
-            userId,
-            unlockedIds,
-            remainingAchievements,
-            type as ExerciseType
-          );
-        })
+        )
       ]);
       
     } catch (error) {
-      console.error('[AchievementCheckService] Error in checkAchievements:', error);
+      console.error('Error in checkAchievements:', error);
     }
   }
 }

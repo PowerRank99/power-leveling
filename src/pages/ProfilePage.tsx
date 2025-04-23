@@ -20,7 +20,6 @@ import { Shield } from 'lucide-react';
 import { RankService } from '@/services/rpg/RankService';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { AchievementDebug } from '@/services/rpg/AchievementDebug';
-import { Button } from '@/components/ui/button';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -63,7 +62,10 @@ const ProfilePage = () => {
       if (user?.id) {
         console.log('ProfilePage: Checking achievements for user', user.id);
         try {
+          // More thorough achievement debugging
           await AchievementDebug.checkAllAchievements();
+          
+          // Check for achievements that should be awarded
           await AchievementService.checkAchievements(user.id);
         } catch (error) {
           console.error('Error checking achievements:', error);
@@ -88,18 +90,11 @@ const ProfilePage = () => {
     navigate('/selecao-de-classe');
   };
   
+  // For debugging purposes
   const forceCheckAchievements = () => {
     if (user?.id) {
       console.log('Manual achievement check triggered');
-      
-      // First check specific achievement progress to debug
-      AchievementDebug.checkUserAchievementProgress(user.id)
-        .then(() => {
-          console.log('Achievement progress check completed');
-          
-          // Then run the full achievement check
-          return AchievementService.checkAchievements(user.id);
-        })
+      AchievementService.checkAchievements(user.id)
         .then(() => console.log('Manual achievement check completed'))
         .catch(error => console.error('Error in manual achievement check:', error));
     }
@@ -155,16 +150,14 @@ const ProfilePage = () => {
                     <RecentAchievementsList onViewAll={handleViewAllAchievements} />
                   </div>
                   
-                  {true && (
-                    <div className="fixed bottom-20 right-4 z-50">
-                      <Button 
-                        variant="destructive" 
-                        className="px-4 py-2 text-xs"
-                        onClick={forceCheckAchievements}
-                      >
-                        🐞 Force Check Achievements
-                      </Button>
-                    </div>
+                  {/* Hidden debug button - only in development */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <button 
+                      className="mt-4 p-2 bg-red-600 text-white rounded opacity-50 text-xs"
+                      onClick={forceCheckAchievements}
+                    >
+                      Debug: Force Check Achievements
+                    </button>
                   )}
                 </>
               )}
