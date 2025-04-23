@@ -8,32 +8,18 @@ export class ExerciseTypeChecker {
     unlockedIds: string[], 
     achievements: any[]
   ) {
-    // Define mapping for exercise type variations
-    const exerciseTypeMap = {
-      'Calistenia': ['Calistenia', 'Calisthenics'],
-      'Cardio': ['Cardio'],
-      'Musculação': ['Musculação', 'Weight Training', 'Strength Training'],
-      'Mobilidade & Flexibilidade': ['Mobilidade & Flexibilidade', 'Mobility', 'Flexibility'],
-      'Esportes': ['Esportes', 'Sports']
-    };
-
-    // Get workouts and manual workouts with exercise types
-    const { data: trackedWorkouts } = await supabase
-      .from('workouts')
-      .select('id')
+    // Get workout varieties
+    const { data: workoutVarieties } = await supabase
+      .from('workout_varieties')
+      .select('exercise_types')
       .eq('user_id', userId);
-
-    const { data: manualWorkouts } = await supabase
-      .from('manual_workouts')
-      .select('activity_type')
-      .eq('user_id', userId);
-
-    // Combine workout types
-    const allWorkoutTypes = [
-      ...trackedWorkouts.map(() => 'Calistenia'), // Assuming tracked workouts are Calistenia
-      ...manualWorkouts.map(w => w.activity_type)
-    ];
-
+      
+    // Get unique exercise types from all workout varieties
+    const uniqueTypes = new Set<string>();
+    workoutVarieties?.forEach(variety => {
+      variety.exercise_types?.forEach(type => uniqueTypes.add(type));
+    });
+    
     // Check achievements
     for (const achievement of achievements) {
       if (unlockedIds.includes(achievement.id)) continue;
@@ -42,17 +28,37 @@ export class ExerciseTypeChecker {
         ? JSON.parse(achievement.requirements)
         : achievement.requirements;
 
-      // Check for exercise type count achievements
-      if (requirements?.calistenia_count) {
-        const calisteniaCounts = allWorkoutTypes.filter(type => 
-          exerciseTypeMap['Calistenia'].includes(type)
-        ).length;
+      // Check for unique exercise types requirement
+      if (requirements?.unique_exercise_types && 
+          uniqueTypes.size >= requirements.unique_exercise_types) {
+        console.log('Unlocking exercise variety achievement:', {
+          name: achievement.name,
+          required: requirements.unique_exercise_types,
+          current: uniqueTypes.size,
+          types: Array.from(uniqueTypes)
+        });
 
-        if (calisteniaCounts >= requirements.calistenia_count) {
-          console.log('Unlocking exercise type achievement:', {
+        await AchievementAwardService.awardAchievement(
+          userId,
+          achievement.id,
+          achievement.name,
+          achievement.description,
+          achievement.xp_reward,
+          achievement.points
+        );
+      }
+
+      // Check for specific exercise type requirements
+      if (requirements?.required_types) {
+        const hasAllTypes = requirements.required_types.every(
+          (type: string) => uniqueTypes.has(type)
+        );
+
+        if (hasAllTypes) {
+          console.log('Unlocking exercise type combination achievement:', {
             name: achievement.name,
-            required: requirements.calistenia_count,
-            current: calisteniaCounts
+            required: requirements.required_types,
+            current: Array.from(uniqueTypes)
           });
 
           await AchievementAwardService.awardAchievement(

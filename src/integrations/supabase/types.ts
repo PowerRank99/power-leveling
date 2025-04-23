@@ -1087,6 +1087,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      manage_workout_variety: {
+        Args: {
+          p_user_id: string
+          p_workout_date: string
+          p_activity_type: string
+        }
+        Returns: undefined
+      }
       match_achievement_by_name: {
         Args: Record<PropertyKey, never>
         Returns: {
