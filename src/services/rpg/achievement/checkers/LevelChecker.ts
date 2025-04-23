@@ -21,14 +21,14 @@ export class LevelChecker {
         return;
       }
 
-      console.log('Checking level achievements for level:', profile.level);
+      console.log('Checking level achievements for user', userId);
+      console.log('Current user level:', profile.level);
       
       // Filter level-based achievements
       const levelAchievements = eligibleAchievements.filter(
         achievement => {
           if (!achievement.requirements) return false;
           
-          // Handle both JSON object and string cases
           const requirements = achievement.requirements;
           return typeof requirements === 'object' && 
                  !Array.isArray(requirements) && 
@@ -37,12 +37,6 @@ export class LevelChecker {
       );
       
       console.log('Found level achievements:', levelAchievements.length);
-      if (levelAchievements.length > 0) {
-        levelAchievements.forEach(a => {
-          const requiredLevel = a.requirements.level_required;
-          console.log(`Level achievement: ${a.name}, required level: ${requiredLevel}, user level: ${profile.level}`);
-        });
-      }
       
       // Check each achievement
       for (const achievement of levelAchievements) {
@@ -52,10 +46,10 @@ export class LevelChecker {
         }
         
         const requiredLevel = achievement.requirements.level_required;
-        console.log(`Checking achievement ${achievement.name}: required level ${requiredLevel} vs user level ${profile.level}`);
+        console.log(`Checking ${achievement.name}: Required level ${requiredLevel}, User level ${profile.level}`);
         
         if (profile.level >= requiredLevel) {
-          console.log(`Awarding level achievement ${achievement.name} for level ${requiredLevel}`);
+          console.log(`Awarding achievement ${achievement.name} for reaching level ${requiredLevel}`);
           
           const result = await AchievementAwardService.awardAchievement(
             userId,
@@ -67,8 +61,6 @@ export class LevelChecker {
           );
           
           console.log(`Award result for ${achievement.name}: ${result ? 'Success' : 'Failed'}`);
-        } else {
-          console.log(`Level requirement not met for ${achievement.name}`);
         }
       }
     } catch (error) {
