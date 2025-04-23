@@ -54,7 +54,10 @@ const XPProgressBar: React.FC<XPProgressBarProps> = ({
                 </div>
               </TooltipTrigger>
               <TooltipContent side="top" className="font-sora text-xs">
-                <p>{formatNumber(current)} / {total !== Infinity ? formatNumber(total) : 'MAX'} XP</p>
+                <p>
+                  {formatNumber(current)} / {total !== Infinity ? formatNumber(total) : 'MAX'} XP
+                  {total !== Infinity && ` (${Math.floor(percentage)}%)`}
+                </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

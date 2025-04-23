@@ -39,33 +39,46 @@ const ProfileDataProvider: React.FC<ProfileDataProviderProps> = ({
   userClass, 
   children 
 }) => {
-  // Calculate total XP needed for current level
+  // Calculate XP needed for current level
+  const calculateXPForLevel = (level: number): number => {
+    return level * 100;
+  };
+
+  // Calculate total XP needed to reach a specific level
   const calculateTotalXPForLevel = (level: number): number => {
     let total = 0;
     for (let i = 1; i < level; i++) {
-      total += i * 100;
+      total += calculateXPForLevel(i);
     }
     return total;
   };
 
-  // Prepare RPG data for profile display
+  const level = profile?.level || 1;
+  const totalXP = profile?.xp || 0;
+  
+  // Calculate XP progress within current level
+  const xpForPreviousLevels = calculateTotalXPForLevel(level);
+  const currentLevelProgress = totalXP - xpForPreviousLevels;
+  const nextLevelXP = calculateXPForLevel(level);
+
+  console.log('XP Calculations:', {
+    totalXP,
+    level,
+    xpForPreviousLevels,
+    currentLevelProgress,
+    nextLevelXP
+  });
+
+  // Prepare rank data
   const rankProgress = profile?.rank_progress ? 
     (typeof profile.rank_progress === 'string' ? 
       JSON.parse(profile.rank_progress) : 
       profile.rank_progress as Record<string, any>)
     : { rank_score: 0 };
 
-  const level = profile?.level || 1;
-  const currentXP = profile?.xp || 0;
-  
-  // Calculate XP needed for next level
-  const xpForCurrentLevel = calculateTotalXPForLevel(level);
-  const xpForNextLevel = level >= 99 ? Infinity : xpForCurrentLevel + (level * 100);
-  const nextLevelXP = level >= 99 ? Infinity : level * 100;
-
   const profileData: ProfileData = {
     level,
-    currentXP: currentXP - xpForCurrentLevel, // Show XP progress within current level
+    currentXP: currentLevelProgress,
     nextLevelXP,
     dailyXP: profile?.daily_xp || 0,
     dailyXPCap: profile?.daily_xp_cap || 300,
@@ -80,7 +93,7 @@ const ProfileDataProvider: React.FC<ProfileDataProviderProps> = ({
     className: userClass || 'Sem Classe',
     classDescription: ClassService.getClassDescription(userClass),
     lastActivity: profile?.last_workout_at ? '8h 45min' : 'Nunca',
-    xpGain: '+25 EXP',
+    xpGain: `+${totalXP} EXP Total`,
     rank: profile?.rank || 'Unranked',
     rankScore: typeof rankProgress.rank_score === 'number' ? rankProgress.rank_score : 0
   };
