@@ -917,6 +917,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      backfill_manual_workouts_to_varieties: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       batch_update_achievement_progress: {
         Args: { p_user_id: string; p_achievements: Json }
         Returns: {
@@ -978,6 +982,10 @@ export type Database = {
       create_power_day_usage: {
         Args: { p_user_id: string; p_week_number: number; p_year: number }
         Returns: boolean
+      }
+      debug_fix_combo_fitness_achievement: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       get_achievement_stats: {
         Args: { p_user_id: string }

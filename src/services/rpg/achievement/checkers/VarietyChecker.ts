@@ -14,18 +14,6 @@ export class VarietyChecker {
     startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
     startOfWeek.setHours(0, 0, 0, 0);
     
-    // Get user's profile to identify Pierri Bruno
-    const { data: userProfile } = await supabase
-      .from('profiles')
-      .select('name')
-      .eq('id', userId)
-      .single();
-      
-    const isTargetUser = userProfile?.name === 'Pierri Bruno';
-    if (isTargetUser) {
-      console.log('🎯 Found target user Pierri Bruno! User ID:', userId);
-    }
-    
     // Get ALL workout varieties for cumulative achievements like Combo Fitness
     const { data: allVarieties } = await supabase
       .from('workout_varieties')
@@ -43,20 +31,25 @@ export class VarietyChecker {
     const weeklyUniqueTypes = new Set<string>();
     const allTimeUniqueTypes = new Set<string>();
     
-    weekVarieties?.forEach(v => v.exercise_types?.forEach(t => weeklyUniqueTypes.add(t)));
-    allVarieties?.forEach(v => v.exercise_types?.forEach(t => allTimeUniqueTypes.add(t)));
+    weekVarieties?.forEach(v => {
+      if (v.exercise_types) {
+        v.exercise_types.forEach(t => weeklyUniqueTypes.add(t.toLowerCase()));
+      }
+    });
     
-    if (isTargetUser) {
-      console.log('👤 Pierri Bruno\'s workout varieties:');
-      console.log('All-time unique types:', Array.from(allTimeUniqueTypes));
-      console.log('Weekly unique types:', Array.from(weeklyUniqueTypes));
-    }
+    allVarieties?.forEach(v => {
+      if (v.exercise_types) {
+        v.exercise_types.forEach(t => allTimeUniqueTypes.add(t.toLowerCase()));
+      }
+    });
+    
+    // Debug log for all users' workout varieties
+    console.log('🏋️‍♂️ Checking workout varieties for user:', userId);
+    console.log('All-time unique types:', Array.from(allTimeUniqueTypes));
+    console.log('Weekly unique types:', Array.from(weeklyUniqueTypes));
     
     for (const achievement of achievements) {
       if (unlockedIds.includes(achievement.id)) {
-        if (isTargetUser && achievement.name === 'Combo Fitness') {
-          console.log('⚠️ Combo Fitness is already unlocked, skipping!', achievement.id);
-        }
         continue;
       }
       
@@ -64,58 +57,42 @@ export class VarietyChecker {
         ? JSON.parse(achievement.requirements)
         : achievement.requirements;
         
-      if (isTargetUser && achievement.name === 'Combo Fitness') {
-        console.log('🏅 Debugging COMBO FITNESS achievement for Pierri Bruno:');
-        console.log('Achievement data:', achievement);
-        console.log('Requirements:', requirements);
-      }
-        
       // Handle variety combo requirements
       if (requirements?.variety_combo) {
-        const requiredTypes = requirements.variety_combo;
+        const requiredTypes = requirements.variety_combo.map((t: string) => t.toLowerCase());
         const isComboFitness = achievement.name === 'Combo Fitness';
         
         // Use all-time varieties for Combo Fitness, weekly varieties for others
         const typesToCheck = isComboFitness ? allTimeUniqueTypes : weeklyUniqueTypes;
         
-        console.log(`🏆 Checking ${isComboFitness ? 'All-Time' : 'Weekly'} Variety Achievement:`, {
+        console.log(`🎯 Checking ${isComboFitness ? 'All-Time' : 'Weekly'} Variety Achievement:`, {
           name: achievement.name,
           required: requiredTypes,
           current: Array.from(typesToCheck)
         });
         
         const hasAllRequired = requiredTypes.every(
-          (type: string) => typesToCheck.has(type)
+          (type: string) => Array.from(typesToCheck).some(t => t.includes(type.toLowerCase()))
         );
         
-        if (isTargetUser && achievement.name === 'Combo Fitness') {
-          console.log('Required types check result:');
-          requiredTypes.forEach((type: string) => {
-            console.log(`- ${type}: ${typesToCheck.has(type) ? '✅ Found' : '❌ Missing'}`);
-          });
-          console.log('Final result - Has all required:', hasAllRequired);
-        }
-        
         if (hasAllRequired) {
-          console.log('✅ Achievement Unlocked:', {
+          console.log('✅ Achievement requirements met:', {
             name: achievement.name,
             required: requiredTypes,
             current: Array.from(typesToCheck)
           });
           
           try {
-            const awarded = await this.awardAchievement(userId, achievement);
-            
-            if (isTargetUser && achievement.name === 'Combo Fitness') {
-              console.log('Award attempt result:', awarded);
-            }
+            await this.awardAchievement(userId, achievement);
           } catch (error) {
             console.error('Error awarding achievement:', error);
           }
         } else {
-          console.log('❌ Achievement Not Unlocked (Missing Types):', {
+          console.log('❌ Achievement requirements not met:', {
             name: achievement.name,
-            missing: requiredTypes.filter((t: string) => !typesToCheck.has(t))
+            missing: requiredTypes.filter(
+              (t: string) => !Array.from(typesToCheck).some(ct => ct.includes(t.toLowerCase()))
+            )
           });
         }
       }
