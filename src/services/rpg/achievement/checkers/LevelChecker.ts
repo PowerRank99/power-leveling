@@ -30,7 +30,9 @@ export class LevelChecker {
           
           // Handle both JSON object and string cases
           const requirements = achievement.requirements;
-          return typeof requirements === 'object' && requirements.level_required;
+          return typeof requirements === 'object' && 
+                 !Array.isArray(requirements) && 
+                 'level_required' in requirements;
         }
       );
       

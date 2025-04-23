@@ -57,7 +57,11 @@ export class AchievementDebug {
       // Fix for TypeScript error: properly check if requirements exists and has level_required
       let requiredLevel = 0;
       if (achievement.requirements && typeof achievement.requirements === 'object') {
-        requiredLevel = achievement.requirements.level_required || 0;
+        // Check if it's an object (not array) with level_required property
+        if (!Array.isArray(achievement.requirements) && 
+            'level_required' in achievement.requirements) {
+          requiredLevel = achievement.requirements.level_required as number;
+        }
       }
       
       if (requiredLevel === 0) {
