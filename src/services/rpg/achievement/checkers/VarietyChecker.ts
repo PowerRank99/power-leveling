@@ -26,6 +26,17 @@ export class VarietyChecker {
       console.log('🎯 Found target user Pierri Bruno! User ID:', userId);
     }
     
+    // Force check to see if Combo Fitness is already unlocked
+    if (isTargetUser) {
+      const { data: userAchievement } = await supabase
+        .from('user_achievements')
+        .select('achievement_id')
+        .eq('user_id', userId)
+        .eq('achievement_id', achievements.find(a => a.name === 'Combo Fitness')?.id);
+      
+      console.log('🔍 Checking if Combo Fitness already unlocked:', userAchievement);
+    }
+    
     const { data: weekVarieties } = await supabase
       .from('workout_varieties')
       .select('exercise_types, workout_date')
@@ -55,7 +66,12 @@ export class VarietyChecker {
     }
     
     for (const achievement of achievements) {
-      if (unlockedIds.includes(achievement.id)) continue;
+      if (unlockedIds.includes(achievement.id)) {
+        if (isTargetUser && achievement.name === 'Combo Fitness') {
+          console.log('⚠️ Combo Fitness is already unlocked, skipping!', achievement.id);
+        }
+        continue;
+      }
       
       const requirements = typeof achievement.requirements === 'string'
         ? JSON.parse(achievement.requirements)
@@ -66,9 +82,12 @@ export class VarietyChecker {
         console.log('🏅 Debugging COMBO FITNESS achievement for Pierri Bruno:');
         console.log('Achievement data:', achievement);
         console.log('Requirements:', requirements);
+        console.log('Achievement ID:', achievement.id);
+        console.log('Unlocked IDs:', unlockedIds);
+        console.log('Is achievement already unlocked?', unlockedIds.includes(achievement.id));
       }
         
-      // More detailed logging for variety combo requirements
+      // Detailed logging for variety combo requirements
       if (requirements?.variety_combo) {
         const requiredTypes = requirements.variety_combo;
         console.log('🏆 Checking Variety Combo Achievement:', {
@@ -86,6 +105,7 @@ export class VarietyChecker {
           requiredTypes.forEach((type: string) => {
             console.log(`- ${type}: ${uniqueTypes.has(type) ? '✅ Found' : '❌ Missing'}`);
           });
+          console.log('Final result - Has all required:', hasAllRequired);
         }
         
         if (hasAllRequired) {
@@ -95,7 +115,34 @@ export class VarietyChecker {
             current: Array.from(uniqueTypes)
           });
           
-          await this.awardAchievement(userId, achievement);
+          // For Pierri Bruno, try both award methods
+          if (isTargetUser && achievement.name === 'Combo Fitness') {
+            console.log('🔥 Attempting to award Combo Fitness to Pierri Bruno directly');
+            
+            try {
+              // First try direct method to award the achievement
+              const awarded = await this.awardAchievement(userId, achievement);
+              console.log('Direct award result:', awarded);
+              
+              // If direct method fails, try RPC as backup
+              if (!awarded) {
+                console.log('Direct award failed, trying RPC fallback');
+                const { data, error } = await supabase.rpc(
+                  'check_achievement_batch',
+                  {
+                    p_user_id: userId,
+                    p_achievement_ids: [achievement.id]
+                  }
+                );
+                
+                console.log('RPC award result:', data, error);
+              }
+            } catch (error) {
+              console.error('Error awarding achievement:', error);
+            }
+          } else {
+            await this.awardAchievement(userId, achievement);
+          }
         } else {
           console.log('❌ Achievement Not Unlocked (Missing Types):', {
             name: achievement.name,
@@ -106,14 +153,19 @@ export class VarietyChecker {
     }
   }
   
-  private static async awardAchievement(userId: string, achievement: any) {
-    await AchievementAwardService.awardAchievement(
-      userId,
-      achievement.id,
-      achievement.name,
-      achievement.description,
-      achievement.xp_reward,
-      achievement.points
-    );
+  private static async awardAchievement(userId: string, achievement: any): Promise<boolean> {
+    try {
+      return await AchievementAwardService.awardAchievement(
+        userId,
+        achievement.id,
+        achievement.name,
+        achievement.description,
+        achievement.xp_reward,
+        achievement.points
+      );
+    } catch (error) {
+      console.error('Error in award achievement:', error);
+      return false;
+    }
   }
 }
