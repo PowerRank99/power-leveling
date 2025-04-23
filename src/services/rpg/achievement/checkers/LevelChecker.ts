@@ -25,13 +25,20 @@ export class LevelChecker {
       
       // Filter level-based achievements
       const levelAchievements = eligibleAchievements.filter(
-        achievement => achievement.requirements?.level_required
+        achievement => {
+          if (!achievement.requirements) return false;
+          
+          // Handle both JSON object and string cases
+          const requirements = achievement.requirements;
+          return typeof requirements === 'object' && requirements.level_required;
+        }
       );
       
       console.log('Found level achievements:', levelAchievements.length);
       if (levelAchievements.length > 0) {
         levelAchievements.forEach(a => {
-          console.log(`Level achievement: ${a.name}, required level: ${a.requirements.level_required}, user level: ${profile.level}`);
+          const requiredLevel = a.requirements.level_required;
+          console.log(`Level achievement: ${a.name}, required level: ${requiredLevel}, user level: ${profile.level}`);
         });
       }
       

@@ -54,9 +54,14 @@ export class AchievementDebug {
       console.log('Already awarded?', !!existingAward);
       
       // 4. Check if conditions are met
-      const requiredLevel = achievement.requirements?.level_required;
-      if (!requiredLevel) {
-        console.error('No level requirement found in achievement');
+      // Fix for TypeScript error: properly check if requirements exists and has level_required
+      let requiredLevel = 0;
+      if (achievement.requirements && typeof achievement.requirements === 'object') {
+        requiredLevel = achievement.requirements.level_required || 0;
+      }
+      
+      if (requiredLevel === 0) {
+        console.error('No valid level requirement found in achievement');
         console.groupEnd();
         return;
       }
