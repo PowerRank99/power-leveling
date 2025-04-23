@@ -23,6 +23,7 @@ export class VarietyChecker {
     const uniqueTypes = new Set<string>();
     weekVarieties?.forEach(v => v.exercise_types?.forEach(t => uniqueTypes.add(t)));
     
+    console.log('🔍 Variety Achievement Debug: User ID', userId);
     console.log('Found exercise types for week:', Array.from(uniqueTypes));
     
     for (const achievement of achievements) {
@@ -32,23 +33,10 @@ export class VarietyChecker {
         ? JSON.parse(achievement.requirements)
         : achievement.requirements;
         
-      // Check for unique exercise types requirement
-      if (requirements?.unique_exercise_types && 
-          uniqueTypes.size >= requirements.unique_exercise_types) {
-        console.log('Achievement unlocked (unique types):', {
-          name: achievement.name,
-          required: requirements.unique_exercise_types,
-          current: uniqueTypes.size
-        });
-        
-        await this.awardAchievement(userId, achievement);
-        continue;
-      }
-      
-      // Check for variety combo requirement
+      // More detailed logging for variety combo requirements
       if (requirements?.variety_combo) {
         const requiredTypes = requirements.variety_combo;
-        console.log('Checking variety combo:', {
+        console.log('🏆 Checking Variety Combo Achievement:', {
           name: achievement.name,
           required: requiredTypes,
           current: Array.from(uniqueTypes)
@@ -59,14 +47,15 @@ export class VarietyChecker {
         );
         
         if (hasAllRequired) {
-          console.log('Achievement unlocked (variety combo):', {
+          console.log('✅ Achievement Unlocked (Variety Combo):', {
             name: achievement.name,
-            required: requiredTypes
+            required: requiredTypes,
+            current: Array.from(uniqueTypes)
           });
           
           await this.awardAchievement(userId, achievement);
         } else {
-          console.log('Missing some required types:', {
+          console.log('❌ Achievement Not Unlocked (Missing Types):', {
             name: achievement.name,
             missing: requiredTypes.filter((t: string) => !uniqueTypes.has(t))
           });
