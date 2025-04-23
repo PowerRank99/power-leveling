@@ -39,4 +39,15 @@ export class XPService {
       return false;
     }
   }
+  
+  /**
+   * Legacy method for backward compatibility
+   */
+  static async awardXP(
+    userId: string,
+    amount: number,
+    source?: string
+  ): Promise<boolean> {
+    return await this.addXP(userId, amount, source || 'legacy');
+  }
 }

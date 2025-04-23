@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { isTestingMode } from '@/config/testingMode';
@@ -68,6 +69,29 @@ export class ManualWorkoutValidationService {
         description: error.message || 'Erro ao validar treino manual'
       });
       return false;
+    }
+  }
+  
+  /**
+   * Original validation method for backward compatibility
+   */
+  static async validateSubmission(
+    userId: string,
+    submissionDate: Date
+  ): Promise<{isValid: boolean; error?: string; isPowerDay: boolean}> {
+    try {
+      // Check if the submission date is valid
+      const now = new Date();
+      if (submissionDate > now) {
+        return { isValid: false, error: 'Não é possível registrar treinos futuros', isPowerDay: false };
+      }
+      
+      // Check if this is a power day
+      const isPowerDay = await this.checkPowerDay(userId);
+      
+      return { isValid: true, isPowerDay };
+    } catch (error: any) {
+      return { isValid: false, error: error.message, isPowerDay: false };
     }
   }
   

@@ -4,6 +4,7 @@ import { XPService } from '@/services/xp/XPService';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { ManualWorkoutValidationService } from './ManualWorkoutValidationService';
 import { ActivityBonusService } from './ActivityBonusService';
+import { ManualWorkout } from '@/types/manualWorkoutTypes';
 
 export class ManualWorkoutService {
   static async submitManualWorkout(
@@ -14,20 +15,23 @@ export class ManualWorkoutService {
     workoutDate: Date
   ) {
     try {
-      const validationResult = await ManualWorkoutValidationService.validateSubmission(
+      const validationResult = await ManualWorkoutValidationService.validateWorkoutSubmission(
         userId,
+        photoUrl,
         workoutDate
       );
       
-      if (!validationResult.isValid) {
+      if (!validationResult) {
         return {
           success: false,
-          error: validationResult.error
+          error: 'Validation failed'
         };
       }
       
-      const isPowerDay = validationResult.isPowerDay;
-      const xpAmount = ActivityBonusService.calculateXPBonus(activityType, isPowerDay);
+      const isPowerDay = await ManualWorkoutValidationService.checkPowerDay(userId);
+      const xpAmount = isPowerDay ? 
+        XPService.MANUAL_WORKOUT_BASE_XP + XPService.POWER_DAY_BONUS_XP : 
+        XPService.MANUAL_WORKOUT_BASE_XP;
       
       // Create manual workout
       const { error: workoutError } = await supabase.rpc(
@@ -59,7 +63,7 @@ export class ManualWorkoutService {
       );
       
       // Award XP and trigger achievement check
-      await XPService.awardXP(userId, xpAmount, 'manual_workout');
+      await XPService.addXP(userId, xpAmount, 'manual_workout');
       await AchievementService.checkAchievements(userId);
       
       return {
@@ -73,6 +77,61 @@ export class ManualWorkoutService {
     } catch (error: any) {
       console.error('Error in submitManualWorkout:', error);
       return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Get user's manual workouts
+   */
+  static async getUserManualWorkouts(userId: string): Promise<ManualWorkout[]> {
+    try {
+      const { data, error } = await supabase.rpc('get_user_manual_workouts', {
+        p_user_id: userId
+      });
+      
+      if (error) {
+        throw new Error(`Error fetching manual workouts: ${error.message}`);
+      }
+      
+      return data.map((workout: any) => ({
+        id: workout.id,
+        description: workout.description,
+        activityType: workout.activity_type,
+        exerciseId: workout.exercise_id,
+        photoUrl: workout.photo_url,
+        xpAwarded: workout.xp_awarded,
+        createdAt: workout.created_at,
+        workoutDate: workout.workout_date,
+        isPowerDay: workout.is_power_day
+      }));
+    } catch (error) {
+      console.error('Error getting manual workouts:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Delete a manual workout
+   */
+  static async deleteManualWorkout(userId: string, workoutId: string) {
+    try {
+      const { error } = await supabase
+        .from('manual_workouts')
+        .delete()
+        .eq('id', workoutId)
+        .eq('user_id', userId);
+      
+      if (error) {
+        throw new Error(`Error deleting manual workout: ${error.message}`);
+      }
+      
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error deleting manual workout:', error);
+      return { 
         success: false,
         error: error.message
       };

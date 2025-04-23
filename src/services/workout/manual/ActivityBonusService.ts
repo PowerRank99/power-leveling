@@ -34,4 +34,17 @@ export class ActivityBonusService {
     
     return 0; // No bonus
   }
+
+  /**
+   * Calculate XP bonus based on activity type and power day status
+   */
+  static calculateXPBonus(activityType: string, isPowerDay: boolean): number {
+    let baseXP = 100; // Base XP for manual workouts
+    
+    if (isPowerDay) {
+      baseXP += 50; // Power day bonus
+    }
+    
+    return baseXP;
+  }
 }
