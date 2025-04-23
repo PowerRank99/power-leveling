@@ -18,8 +18,7 @@ export class XPService {
   static readonly BASE_SET_XP = RPGXPService.BASE_SET_XP;
   
   // Manual workout XP values
-  static readonly MANUAL_WORKOUT_BASE_XP = 100; // Updated to 100
-  static readonly POWER_DAY_BONUS_XP = 50;
+  static readonly MANUAL_WORKOUT_BASE_XP = 100; // Fixed at 100 XP
   
   /**
    * Add XP to a user's profile

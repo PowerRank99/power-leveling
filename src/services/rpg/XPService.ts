@@ -20,7 +20,7 @@ export class XPService {
   
   // Power Day constants (2x/week can exceed 300 XP cap up to 500 XP)
   static readonly POWER_DAY_CAP = PowerDayService.POWER_DAY_CAP;
-  static readonly MANUAL_WORKOUT_BASE_XP = 100; // Updated to 100
+  static readonly MANUAL_WORKOUT_BASE_XP = 100; // Fixed at 100 XP
   
   /**
    * Calculate XP for a completed workout
@@ -39,12 +39,12 @@ export class XPService {
     const result = XPCalculationService.calculateWorkoutXP(workout, userClass, streak);
     
     if (isTestingMode()) {
-      console.log('🔧 Testing mode: No XP cap applied');
+      console.log('🔧 Testing mode: No XP cap applied in calculation phase');
       return result.totalXP;
     }
     
-    // Apply cap in non-testing mode
-    return Math.min(result.totalXP, PowerDayService.POWER_DAY_CAP);
+    // We'll apply the cap at award time, not calculation time
+    return result.totalXP;
   }
   
   /**
@@ -80,10 +80,6 @@ export class XPService {
   ): Promise<boolean> {
     // First, reset daily XP if it's a new day
     await ProfileXPService.resetDailyXPIfNeeded(userId);
-    
-    if (isTestingMode()) {
-      console.log('🔧 Testing mode: Awarding uncapped XP:', baseXP);
-    }
     
     return XPBonusService.awardXP(userId, baseXP, personalRecords);
   }

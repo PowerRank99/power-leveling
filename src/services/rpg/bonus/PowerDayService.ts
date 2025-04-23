@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { isTestingMode } from '@/config/testingMode';
 
 /**
  * Service for handling Power Day functionality
@@ -24,10 +25,16 @@ export class PowerDayService {
   /**
    * Check if a user meets Power Day requirements:
    * 1. At least 2 workouts completed today
-   * 2. Combined XP exceeds 300 XP
+   * 2. Combined XP EXCEEDS 300 XP (not just equal to 300)
    */
   static async checkPowerDayEligibility(userId: string): Promise<{ eligible: boolean; reason: string }> {
     try {
+      // Skip check in testing mode
+      if (isTestingMode()) {
+        console.log('🔧 Testing mode: Power Day eligibility skipped');
+        return { eligible: false, reason: 'Testing mode active' };
+      }
+      
       // Get today's date range
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -67,7 +74,7 @@ export class PowerDayService {
         .eq('id', userId)
         .single();
         
-      if (!profile || profile.daily_xp < 300) {
+      if (!profile || profile.daily_xp <= 300) {
         return {
           eligible: false,
           reason: `XP diário precisa ultrapassar 300 (atual: ${profile?.daily_xp || 0})`
@@ -129,6 +136,18 @@ export class PowerDayService {
     year: number;
   }> {
     try {
+      // Skip availability check in testing mode
+      if (isTestingMode()) {
+        console.log('🔧 Testing mode: Power Day availability check skipped');
+        return {
+          available: true,  // Always available in testing mode
+          used: 0,
+          max: 2,
+          week: 0,
+          year: 0
+        };
+      }
+      
       const currentWeek = this.getCurrentWeek();
       const currentYear = new Date().getFullYear();
       
@@ -165,6 +184,11 @@ export class PowerDayService {
    */
   static async recordPowerDayUsage(userId: string, week: number, year: number): Promise<boolean> {
     try {
+      if (isTestingMode()) {
+        console.log('🔧 Testing mode: Power Day usage recording skipped');
+        return true;
+      }
+      
       const { error } = await supabase
         .from('power_day_usage')
         .insert({
@@ -192,7 +216,7 @@ export class PowerDayService {
     return `
     Power Day é ativado quando:
     1. Você completa 2 ou mais treinos no mesmo dia
-    2. Esses treinos, juntos, ultrapassam 300 XP
+    2. Esses treinos, juntos, ultrapassam 300 XP (não apenas atingem)
     3. Você ainda não atingiu o limite semanal de 2 Power Days
     
     Quando ativado, você pode ganhar até 500 XP naquele dia!

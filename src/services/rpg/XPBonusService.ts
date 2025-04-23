@@ -10,7 +10,7 @@ import { XPToastService, XPBreakdown } from './bonus/XPToastService';
 import { ClassBonusCalculator } from './calculations/ClassBonusCalculator';
 import { getClassRegistry } from './registry/ClassRegistry';
 import { PassiveSkillContext } from './types/PassiveSkillTypes';
-import { ManualWorkoutValidationService } from '@/services/workout/manual/ManualWorkoutValidationService';
+import { isTestingMode } from '@/config/testingMode';
 
 /**
  * Main service for handling XP bonuses and updates
@@ -110,36 +110,36 @@ export class XPBonusService {
       const newDailyXP = currentDailyXP + totalXP;
       console.log(`Current daily XP: ${currentDailyXP}, New daily XP after this workout: ${newDailyXP}`);
       
-      // Check if this should be a Power Day (2+ workouts and exceeds 300 XP)
+      // Check if this should be a Power Day (2+ workouts and EXCEEDS 300 XP, not just equals)
       let isPowerDay = false;
-      
-      // Only check for Power Day if daily XP would exceed cap
-      if (newDailyXP > XP_CONSTANTS.DAILY_XP_CAP) {
-        // Check if user is eligible for a Power Day
-        const { available } = await ManualWorkoutValidationService.checkPowerDayAvailability(userId);
-        
-        if (available) {
-          isPowerDay = true;
-          // Record the Power Day usage
-          await ManualWorkoutValidationService.recordPowerDayUsage(userId);
-          console.log('Power Day activated! XP cap increased to 500');
-        } else {
-          console.log('User exceeded daily XP but has no Power Days available this week');
-        }
-      }
-      
-      // Apply daily XP cap (default 300 XP per day from regular workout XP)
-      // Power Day can increase the cap to 500 XP
-      // PR bonuses are always exempt from the cap
-      let cappedWorkoutXP = totalXP;
       let xpCap = XP_CONSTANTS.DAILY_XP_CAP;
       
-      // If user has Power Day and would exceed the cap, apply higher cap
-      if (isPowerDay) {
-        xpCap = this.POWER_DAY_CAP;
+      // Only check for Power Day if not in testing mode
+      if (!isTestingMode()) {
+        // Check if the user has any Power Day usages recorded for this week
+        const { data: powerDayUsage } = await supabase
+          .from('power_day_usage')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('week_number', this.getCurrentWeek())
+          .eq('year', new Date().getFullYear());
+        
+        isPowerDay = powerDayUsage && powerDayUsage.length > 0;
+        
+        // If user has Power Day records, apply higher cap
+        if (isPowerDay) {
+          xpCap = this.POWER_DAY_CAP;
+          console.log(`Power Day active: XP cap increased to ${xpCap}`);
+        }
+      } else {
+        console.log('🔧 Testing mode: XP caps disabled');
+        xpCap = Number.MAX_SAFE_INTEGER; // Effectively no cap in testing mode
       }
       
-      // Make sure we don't exceed the daily cap
+      // Apply daily XP cap
+      let cappedWorkoutXP = totalXP;
+      
+      // Make sure we don't exceed the appropriate daily cap
       if (newDailyXP > xpCap) {
         const allowedXP = Math.max(0, xpCap - currentDailyXP);
         console.log(`Capping workout XP to ${allowedXP} (daily cap: ${xpCap}, current daily: ${currentDailyXP})`);
@@ -176,35 +176,11 @@ export class XPBonusService {
    * Get the current ISO week number - delegated to PowerDayService
    */
   static getCurrentWeek(): number {
-    return ManualWorkoutValidationService.getCurrentWeek();
+    return PowerDayService.getCurrentWeek();
   }
 
   /**
-   * Get power day usage for a user in a specific week
-   */
-  static async getPowerDayUsage(userId: string, week: number, year: number): Promise<{count: number}> {
-    try {
-      const { data, error } = await supabase
-        .from('power_day_usage')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('week_number', week)
-        .eq('year', year);
-      
-      if (error) {
-        console.error('Error checking power day usage:', error);
-        return { count: 0 };
-      }
-      
-      return { count: data?.length || 0 };
-    } catch (error) {
-      console.error('Error checking power day usage:', error);
-      return { count: 0 };
-    }
-  }
-
-  /**
-   * Check if class passive should preserve streak
+   * Check class passive should preserve streak
    * Enhanced to use the new class architecture
    */
   static async checkStreakPreservation(userId: string, userClass: string | null): Promise<boolean> {
@@ -221,61 +197,14 @@ export class XPBonusService {
     week: number;
     year: number;
   }> {
-    try {
-      const currentWeek = this.getCurrentWeek();
-      const currentYear = new Date().getFullYear();
-      
-      const { data, error } = await supabase
-        .from('power_day_usage')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('week_number', currentWeek)
-        .eq('year', currentYear);
-      
-      const usedCount = data?.length || 0;
-      
-      return {
-        available: usedCount < 2,
-        used: usedCount,
-        max: 2,
-        week: currentWeek,
-        year: currentYear
-      };
-    } catch (error) {
-      console.error('Error in checkPowerDayAvailability:', error);
-      return {
-        available: false,
-        used: 0,
-        max: 2,
-        week: 0,
-        year: 0
-      };
-    }
+    return PowerDayService.checkPowerDayAvailability(userId);
   }
   
   /**
    * Record a power day usage
    */
   static async recordPowerDayUsage(userId: string, week: number, year: number): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from('power_day_usage')
-        .insert({
-          user_id: userId,
-          week_number: week,
-          year: year
-        });
-      
-      if (error) {
-        console.error('Error recording power day usage:', error);
-        return false;
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error recording power day usage:', error);
-      return false;
-    }
+    return PowerDayService.recordPowerDayUsage(userId, week, year);
   }
   
   /**

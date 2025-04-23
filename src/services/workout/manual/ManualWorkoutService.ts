@@ -5,6 +5,7 @@ import { AchievementService } from '@/services/rpg/AchievementService';
 import { ManualWorkoutValidationService } from './ManualWorkoutValidationService';
 import { ActivityBonusService } from './ActivityBonusService';
 import { ManualWorkout } from '@/types/manualWorkoutTypes';
+import { PowerDayService } from '@/services/rpg/bonus/PowerDayService';
 
 export class ManualWorkoutService {
   static async submitManualWorkout(
@@ -28,12 +29,40 @@ export class ManualWorkoutService {
         };
       }
       
-      const isPowerDay = await ManualWorkoutValidationService.checkPowerDay(userId);
-      const xpAmount = isPowerDay ? 
-        XPService.MANUAL_WORKOUT_BASE_XP + XPService.POWER_DAY_BONUS_XP : 
-        XPService.MANUAL_WORKOUT_BASE_XP;
+      // First check the user's daily XP to detect if this will trigger a Power Day
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('daily_xp')
+        .eq('id', userId)
+        .single();
       
-      // Create manual workout
+      // Calculate base XP for manual workout
+      const baseXP = XPService.MANUAL_WORKOUT_BASE_XP;
+      
+      // Power Day is only triggered if daily XP *will exceed* 300 after this workout
+      // Not if it's exactly 300
+      const willTriggerPowerDay = (profileData?.daily_xp || 0) + baseXP > 300;
+      let isPowerDay = false;
+      
+      // Only check for Power Day availability if we think this will trigger one
+      if (willTriggerPowerDay) {
+        const { available } = await PowerDayService.checkPowerDayAvailability(userId);
+        
+        if (available) {
+          // Record Power Day usage and update flag
+          isPowerDay = await PowerDayService.recordPowerDayUsage(
+            userId, 
+            ManualWorkoutValidationService.getCurrentWeek(), 
+            new Date().getFullYear()
+          );
+          
+          if (isPowerDay) {
+            console.log('Power Day triggered and recorded for user', userId);
+          }
+        }
+      }
+      
+      // Create manual workout - always with standard XP
       const { error: workoutError } = await supabase.rpc(
         'create_manual_workout',
         {
@@ -42,7 +71,7 @@ export class ManualWorkoutService {
           p_activity_type: activityType,
           p_exercise_id: null,
           p_photo_url: photoUrl,
-          p_xp_awarded: xpAmount,
+          p_xp_awarded: baseXP,
           p_workout_date: workoutDate.toISOString(),
           p_is_power_day: isPowerDay
         }
@@ -63,13 +92,13 @@ export class ManualWorkoutService {
       );
       
       // Award XP and trigger achievement check
-      await XPService.addXP(userId, xpAmount, 'manual_workout');
+      await XPService.addXP(userId, baseXP, 'manual_workout');
       await AchievementService.checkAchievements(userId);
       
       return {
         success: true,
         data: {
-          xp_awarded: xpAmount,
+          xp_awarded: baseXP,
           is_power_day: isPowerDay
         }
       };
