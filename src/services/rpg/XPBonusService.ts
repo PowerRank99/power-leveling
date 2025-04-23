@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { XP_CONSTANTS } from './constants/xpConstants';
 import { XPCalculationService } from './XPCalculationService';
@@ -11,6 +10,7 @@ import { XPToastService, XPBreakdown } from './bonus/XPToastService';
 import { ClassBonusCalculator } from './calculations/ClassBonusCalculator';
 import { getClassRegistry } from './registry/ClassRegistry';
 import { PassiveSkillContext } from './types/PassiveSkillTypes';
+import { ManualWorkoutValidationService } from '@/services/workout/manual/ManualWorkoutValidationService';
 
 /**
  * Main service for handling XP bonuses and updates
@@ -43,7 +43,7 @@ export class XPBonusService {
       // Get user profile and class bonuses (if any)
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('xp, level, class, workouts_count, streak, last_workout_at')
+        .select('xp, level, class, workouts_count, streak, last_workout_at, daily_xp')
         .eq('id', userId)
         .single();
       
@@ -105,47 +105,62 @@ export class XPBonusService {
       }
       xpBreakdown.recordBonus = recordBonusXP;
       
-      // Check if this is a Power Day (user already has a workout today)
+      // Calculate new daily XP total
+      const currentDailyXP = profile.daily_xp || 0;
+      const newDailyXP = currentDailyXP + totalXP;
+      console.log(`Current daily XP: ${currentDailyXP}, New daily XP after this workout: ${newDailyXP}`);
+      
+      // Check if this should be a Power Day (2+ workouts and exceeds 300 XP)
       let isPowerDay = false;
-      let powerDayAvailable = false;
       
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      // Check for Power Day eligibility
-      const currentWeek = PowerDayService.getCurrentWeek();
-      const currentYear = today.getFullYear();
-      
-      // Get power day usage for the current week
-      const { data, error } = await supabase
-        .from('power_day_usage')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('week_number', currentWeek)
-        .eq('year', currentYear);
-      
-      // Count the power days used this week
-      const powerDayCount = data?.length || 0;
-      powerDayAvailable = powerDayCount < 2;
+      // Only check for Power Day if daily XP would exceed cap
+      if (newDailyXP > XP_CONSTANTS.DAILY_XP_CAP) {
+        // Check if user is eligible for a Power Day
+        const { available } = await ManualWorkoutValidationService.checkPowerDayAvailability(userId);
+        
+        if (available) {
+          isPowerDay = true;
+          // Record the Power Day usage
+          await ManualWorkoutValidationService.recordPowerDayUsage(userId);
+          console.log('Power Day activated! XP cap increased to 500');
+        } else {
+          console.log('User exceeded daily XP but has no Power Days available this week');
+        }
+      }
       
       // Apply daily XP cap (default 300 XP per day from regular workout XP)
       // Power Day can increase the cap to 500 XP
       // PR bonuses are always exempt from the cap
-      let cappedWorkoutXP = Math.min(totalXP, XP_CONSTANTS.DAILY_XP_CAP);
+      let cappedWorkoutXP = totalXP;
+      let xpCap = XP_CONSTANTS.DAILY_XP_CAP;
       
-      // If user has Power Day available and would exceed the cap, apply higher cap
-      if (powerDayAvailable && totalXP > XP_CONSTANTS.DAILY_XP_CAP) {
-        cappedWorkoutXP = Math.min(totalXP, this.POWER_DAY_CAP);
-        
-        // Record power day usage
-        isPowerDay = true;
-        await PowerDayService.recordPowerDayUsage(userId, currentWeek, currentYear);
+      // If user has Power Day and would exceed the cap, apply higher cap
+      if (isPowerDay) {
+        xpCap = this.POWER_DAY_CAP;
+      }
+      
+      // Make sure we don't exceed the daily cap
+      if (newDailyXP > xpCap) {
+        const allowedXP = Math.max(0, xpCap - currentDailyXP);
+        console.log(`Capping workout XP to ${allowedXP} (daily cap: ${xpCap}, current daily: ${currentDailyXP})`);
+        cappedWorkoutXP = allowedXP;
       }
       
       const totalXPWithBonuses = cappedWorkoutXP + recordBonusXP;
       
-      // Update profile and check for level up
-      await ProfileXPService.updateProfileXP(userId, profile, totalXPWithBonuses);
+      // Update profile with XP, last workout time, and daily XP
+      await supabase
+        .from('profiles')
+        .update({
+          xp: profile.xp + totalXPWithBonuses,
+          workouts_count: (profile.workouts_count || 0) + 1,
+          last_workout_at: new Date().toISOString(),
+          daily_xp: Math.min(newDailyXP, xpCap) // Update daily XP tracking
+        })
+        .eq('id', userId);
+      
+      // Check for level up
+      await ProfileXPService.checkLevelUp(userId, profile.xp, profile.xp + totalXPWithBonuses);
       
       // Show toast with XP breakdown
       XPToastService.showXPToast(totalXPWithBonuses, xpBreakdown, isPowerDay);
@@ -161,14 +176,31 @@ export class XPBonusService {
    * Get the current ISO week number - delegated to PowerDayService
    */
   static getCurrentWeek(): number {
-    return PowerDayService.getCurrentWeek();
+    return ManualWorkoutValidationService.getCurrentWeek();
   }
 
   /**
-   * Get power day usage for a user in a specific week - delegated to PowerDayService
+   * Get power day usage for a user in a specific week
    */
   static async getPowerDayUsage(userId: string, week: number, year: number): Promise<{count: number}> {
-    return PowerDayService.getPowerDayUsage(userId, week, year);
+    try {
+      const { data, error } = await supabase
+        .from('power_day_usage')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('week_number', week)
+        .eq('year', year);
+      
+      if (error) {
+        console.error('Error checking power day usage:', error);
+        return { count: 0 };
+      }
+      
+      return { count: data?.length || 0 };
+    } catch (error) {
+      console.error('Error checking power day usage:', error);
+      return { count: 0 };
+    }
   }
 
   /**
@@ -180,7 +212,7 @@ export class XPBonusService {
   }
 
   /**
-   * Check power day availability - delegated to PowerDayService
+   * Check power day availability
    */
   static async checkPowerDayAvailability(userId: string): Promise<{ 
     available: boolean;
@@ -189,14 +221,61 @@ export class XPBonusService {
     week: number;
     year: number;
   }> {
-    return PowerDayService.checkPowerDayAvailability(userId);
+    try {
+      const currentWeek = this.getCurrentWeek();
+      const currentYear = new Date().getFullYear();
+      
+      const { data, error } = await supabase
+        .from('power_day_usage')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('week_number', currentWeek)
+        .eq('year', currentYear);
+      
+      const usedCount = data?.length || 0;
+      
+      return {
+        available: usedCount < 2,
+        used: usedCount,
+        max: 2,
+        week: currentWeek,
+        year: currentYear
+      };
+    } catch (error) {
+      console.error('Error in checkPowerDayAvailability:', error);
+      return {
+        available: false,
+        used: 0,
+        max: 2,
+        week: 0,
+        year: 0
+      };
+    }
   }
   
   /**
-   * Record a power day usage - delegated to PowerDayService
+   * Record a power day usage
    */
   static async recordPowerDayUsage(userId: string, week: number, year: number): Promise<boolean> {
-    return PowerDayService.recordPowerDayUsage(userId, week, year);
+    try {
+      const { error } = await supabase
+        .from('power_day_usage')
+        .insert({
+          user_id: userId,
+          week_number: week,
+          year: year
+        });
+      
+      if (error) {
+        console.error('Error recording power day usage:', error);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error recording power day usage:', error);
+      return false;
+    }
   }
   
   /**

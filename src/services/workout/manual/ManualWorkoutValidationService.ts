@@ -96,7 +96,9 @@ export class ManualWorkoutValidationService {
   }
   
   /**
-   * Checks if this is a power day (user has completed a regular workout today)
+   * Checks if this is a power day based on new requirements:
+   * 1. User has completed 2+ workouts in the same day
+   * 2. These workouts together exceed 300 XP
    */
   static async checkPowerDay(userId: string): Promise<boolean> {
     // In testing mode, always return true for power day
@@ -106,25 +108,146 @@ export class ManualWorkoutValidationService {
     }
     
     try {
-      // Check if the user has a completed workout today
+      // Get today's date range
       const today = new Date();
       today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
       
-      const { count: workoutsToday, error: workoutError } = await supabase
-        .from('workouts')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .gte('completed_at', today.toISOString())
-        .lt('completed_at', new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString());
+      // Get workouts count from today (both tracked and manual)
+      const [{ count: trackedCount, error: trackedError }, { count: manualCount, error: manualError }] = await Promise.all([
+        supabase
+          .from('workouts')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .gte('completed_at', today.toISOString())
+          .lt('completed_at', tomorrow.toISOString()),
         
-      if (workoutError) {
-        console.error('Error checking today workouts:', workoutError);
+        supabase
+          .from('manual_workouts')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .gte('workout_date', today.toISOString())
+          .lt('workout_date', tomorrow.toISOString())
+      ]);
+      
+      if (trackedError || manualError) {
+        console.error('Error checking workouts count:', { trackedError, manualError });
         return false;
       }
       
-      return (workoutsToday && workoutsToday > 0);
+      // Get total workout count for today
+      const totalWorkoutsToday = (trackedCount || 0) + (manualCount || 0);
+      
+      // Requirement 1: Must have at least 2 workouts today
+      if (totalWorkoutsToday < 1) {  // This is < 1 because current workout is not yet saved
+        console.log('Power Day not triggered: Less than 2 workouts today');
+        return false;
+      }
+      
+      // Get user's daily XP so far
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('daily_xp')
+        .eq('id', userId)
+        .single();
+        
+      if (profileError || !profile) {
+        console.error('Error fetching daily XP:', profileError);
+        return false;
+      }
+      
+      // Requirement 2: Daily XP must exceed 300 XP
+      // We check if it's already at 300 or will exceed it once the current workout is added
+      if (profile.daily_xp >= 300) {
+        // Check if the user still has Power Days available this week
+        const { available } = await this.checkPowerDayAvailability(userId);
+        
+        if (available) {
+          console.log('Power Day triggered: 2+ workouts and 300+ XP today, with availability');
+          return true;
+        } else {
+          console.log('Power Day not available: Weekly limit reached');
+          return false;
+        }
+      }
+      
+      console.log('Power Day not triggered: Daily XP not sufficient');
+      return false;
     } catch (error) {
       console.error('Error checking power day:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Checks if a user has Power Day availability this week
+   */
+  static async checkPowerDayAvailability(userId: string): Promise<{ available: boolean }> {
+    try {
+      const currentWeek = this.getCurrentWeek();
+      const currentYear = new Date().getFullYear();
+      
+      const { data, error } = await supabase
+        .from('power_day_usage')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('week_number', currentWeek)
+        .eq('year', currentYear);
+      
+      if (error) {
+        console.error('Error checking power day usage:', error);
+        return { available: false };
+      }
+      
+      const usedCount = data?.length || 0;
+      const available = usedCount < 2;  // Max 2 Power Days per week
+      
+      return { available };
+    } catch (error) {
+      console.error('Error in checkPowerDayAvailability:', error);
+      return { available: false };
+    }
+  }
+  
+  /**
+   * Get the current ISO week number
+   */
+  static getCurrentWeek(): number {
+    const now = new Date();
+    const firstDayOfYear = new Date(now.getFullYear(), 0, 1);
+    const pastDaysOfYear = (now.getTime() - firstDayOfYear.getTime()) / 86400000;
+    
+    // Calculate current week number based on ISO week definition (weeks start on Monday)
+    const weekNum = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+    
+    return weekNum;
+  }
+  
+  /**
+   * Records a Power Day usage for the user in the current week
+   */
+  static async recordPowerDayUsage(userId: string): Promise<boolean> {
+    try {
+      const currentWeek = this.getCurrentWeek();
+      const currentYear = new Date().getFullYear();
+      
+      const { error } = await supabase
+        .from('power_day_usage')
+        .insert({
+          user_id: userId,
+          week_number: currentWeek,
+          year: currentYear
+        });
+        
+      if (error) {
+        console.error('Error recording Power Day usage:', error);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error recording Power Day usage:', error);
       return false;
     }
   }

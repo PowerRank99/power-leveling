@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -19,6 +20,7 @@ import { Shield } from 'lucide-react';
 import { RankService } from '@/services/rpg/RankService';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { AchievementDebug } from '@/services/rpg/AchievementDebug';
+import { XPService } from '@/services/rpg/XPService';
 import { toast } from 'sonner';
 
 const ProfilePage = () => {
@@ -29,6 +31,19 @@ const ProfilePage = () => {
   const [classBonuses, setClassBonuses] = useState<{description: string; value: string}[]>([]);
   const [weeklyBonus, setWeeklyBonus] = useState(0);
   const [monthlyBonus, setMonthlyBonus] = useState(0);
+  const [powerDayInfo, setPowerDayInfo] = useState<{
+    available: boolean;
+    used: number;
+    max: number;
+    eligible: boolean;
+    reason: string;
+  }>({
+    available: false,
+    used: 0,
+    max: 2,
+    eligible: false,
+    reason: ''
+  });
   
   useEffect(() => {
     const fetchClassBonuses = async () => {
@@ -58,10 +73,29 @@ const ProfilePage = () => {
       }
     };
     
+    const checkPowerDayStatus = async () => {
+      if (user?.id) {
+        // Get availability
+        const availability = await XPService.checkPowerDayAvailability(user.id);
+        
+        // Check eligibility
+        const eligibility = await XPService.checkPowerDayEligibility(user.id);
+        
+        setPowerDayInfo({
+          available: availability.available,
+          used: availability.used,
+          max: availability.max,
+          eligible: eligibility.eligible,
+          reason: eligibility.reason
+        });
+      }
+    };
+    
     if (user?.id) {
       fetchRankData(user.id);
       fetchClassBonuses();
       calculateBonuses();
+      checkPowerDayStatus();
       
       const refreshInterval = setInterval(() => {
         refreshProfile();
@@ -103,6 +137,16 @@ const ProfilePage = () => {
           refreshProfile();
         })
         .catch(error => console.error('Error debugging level achievement:', error));
+    }
+  };
+
+  const debugPowerDayStatus = () => {
+    if (user?.id) {
+      toast.info('Power Day Status', {
+        description: `Used: ${powerDayInfo.used}/${powerDayInfo.max}, 
+          Elegível: ${powerDayInfo.eligible ? 'Sim' : 'Não'}, 
+          Motivo: ${powerDayInfo.reason}`
+      });
     }
   };
   
@@ -170,6 +214,13 @@ const ProfilePage = () => {
                         onClick={debugLevelAchievement}
                       >
                         Debug: Fix Level Achievement
+                      </button>
+                      
+                      <button 
+                        className="p-2 bg-blue-600 text-white rounded opacity-50 text-xs w-full"
+                        onClick={debugPowerDayStatus}
+                      >
+                        Debug: Power Day Status ({powerDayInfo.used}/{powerDayInfo.max})
                       </button>
                     </div>
                   )}

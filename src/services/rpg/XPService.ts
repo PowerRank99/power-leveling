@@ -1,8 +1,10 @@
+
 import { WorkoutExercise } from '@/types/workoutTypes';
 import { XPCalculationService } from './XPCalculationService';
 import { PersonalRecordService, PersonalRecord } from './PersonalRecordService';
 import { XPBonusService } from './XPBonusService';
 import { PowerDayService } from './bonus/PowerDayService';
+import { ProfileXPService } from './bonus/ProfileXPService';
 import { isTestingMode } from '@/config/testingMode';
 
 /**
@@ -69,15 +71,20 @@ export class XPService {
   
   /**
    * Awards XP to a user and updates their level if necessary
+   * This also handles daily XP tracking and Power Day functionality
    */
   static async awardXP(
     userId: string, 
     baseXP: number, 
     personalRecords: PersonalRecord[] = []
   ): Promise<boolean> {
+    // First, reset daily XP if it's a new day
+    await ProfileXPService.resetDailyXPIfNeeded(userId);
+    
     if (isTestingMode()) {
       console.log('🔧 Testing mode: Awarding uncapped XP:', baseXP);
     }
+    
     return XPBonusService.awardXP(userId, baseXP, personalRecords);
   }
   
@@ -114,9 +121,26 @@ export class XPService {
   }
   
   /**
+   * Check if a user meets the requirements for a Power Day
+   */
+  static async checkPowerDayEligibility(userId: string): Promise<{
+    eligible: boolean;
+    reason: string;
+  }> {
+    return PowerDayService.checkPowerDayEligibility(userId);
+  }
+  
+  /**
    * Record a power day usage
    */
   static async recordPowerDayUsage(userId: string, week: number, year: number): Promise<boolean> {
     return PowerDayService.recordPowerDayUsage(userId, week, year);
+  }
+  
+  /**
+   * Get human-readable explanation of Power Day requirements
+   */
+  static getPowerDayRequirementsText(): string {
+    return PowerDayService.getPowerDayRequirementsText();
   }
 }
