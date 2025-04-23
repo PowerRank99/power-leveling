@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -16,6 +17,9 @@ export class ProfileXPService {
     // Keep increasing level until we find the correct one
     while (level < 99) {  // Cap at level 99
       xpRequired += level * 100;
+      
+      console.log(`Level ${level}: Required XP: ${xpRequired}, User XP: ${totalXP}`);
+      
       if (totalXP < xpRequired) {
         return level;
       }
@@ -36,9 +40,19 @@ export class ProfileXPService {
     try {
       // Calculate new total XP
       const newTotalXP = (profile.xp || 0) + earnedXP;
+      console.log(`Updating XP for user ${userId}:`, {
+        currentXP: profile.xp,
+        earnedXP,
+        newTotalXP
+      });
       
       // Calculate correct level based on total XP
       const newLevel = this.calculateLevel(newTotalXP);
+      console.log(`Level calculation result:`, {
+        oldLevel: profile.level,
+        newLevel,
+        totalXP: newTotalXP
+      });
       
       // Check for level up
       const leveledUp = newLevel > (profile.level || 1);
