@@ -9,6 +9,7 @@ type AuthContextType = {
   profile: any | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,6 +19,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      console.log('Fetching profile for user:', userId);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        throw error;
+      }
+
+      console.log('Fetched profile data:', data);
+      setProfile(data);
+    } catch (error) {
+      console.error('Error in fetchProfile:', error);
+      setProfile(null);
+    }
+  };
+
+  const refreshProfile = async () => {
+    if (user?.id) {
+      await fetchProfile(user.id);
+    }
+  };
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -59,30 +88,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchProfile = async (userId: string) => {
-    try {
-      // Using a type assertion to work around the TypeScript limitation
-      const { data, error } = await (supabase as any)
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) throw error;
-      setProfile(data);
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      setProfile(null);
-    }
-  };
-
   const signOut = async () => {
     await supabase.auth.signOut();
     setProfile(null);
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, loading, signOut }}>
+    <AuthContext.Provider value={{ 
+      session, 
+      user, 
+      profile, 
+      loading, 
+      signOut,
+      refreshProfile 
+    }}>
       {children}
     </AuthContext.Provider>
   );

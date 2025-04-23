@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -23,7 +22,7 @@ import { AchievementDebug } from '@/services/rpg/AchievementDebug';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, refreshProfile } = useAuth();
   const { userClass } = useClass();
   const { rankData, fetchRankData } = useAchievementStore();
   const [classBonuses, setClassBonuses] = useState<{description: string; value: string}[]>([]);
@@ -58,29 +57,18 @@ const ProfilePage = () => {
       }
     };
     
-    const checkUserAchievements = async () => {
-      if (user?.id) {
-        console.log('ProfilePage: Checking achievements for user', user.id);
-        try {
-          // More thorough achievement debugging
-          await AchievementDebug.checkAllAchievements();
-          
-          // Check for achievements that should be awarded
-          await AchievementService.checkAchievements(user.id);
-        } catch (error) {
-          console.error('Error checking achievements:', error);
-        }
-      }
-    };
-    
     if (user?.id) {
       fetchRankData(user.id);
-      checkUserAchievements();
+      fetchClassBonuses();
+      calculateBonuses();
+      
+      const refreshInterval = setInterval(() => {
+        refreshProfile();
+      }, 10000); // Refresh every 10 seconds
+      
+      return () => clearInterval(refreshInterval);
     }
-    
-    fetchClassBonuses();
-    calculateBonuses();
-  }, [userClass, user?.id, profile?.last_workout_at, profile?.workouts_count, fetchRankData]);
+  }, [userClass, user?.id, profile?.last_workout_at, fetchRankData, refreshProfile]);
   
   const handleViewAllAchievements = () => {
     navigate('/conquistas');
@@ -90,7 +78,6 @@ const ProfilePage = () => {
     navigate('/selecao-de-classe');
   };
   
-  // For debugging purposes
   const forceCheckAchievements = () => {
     if (user?.id) {
       console.log('Manual achievement check triggered');
@@ -150,7 +137,6 @@ const ProfilePage = () => {
                     <RecentAchievementsList onViewAll={handleViewAllAchievements} />
                   </div>
                   
-                  {/* Hidden debug button - only in development */}
                   {process.env.NODE_ENV === 'development' && (
                     <button 
                       className="mt-4 p-2 bg-red-600 text-white rounded opacity-50 text-xs"
