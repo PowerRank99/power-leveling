@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { XPService } from '@/services/xp/XPService';
 import { AchievementService } from '@/services/rpg/AchievementService';
@@ -39,30 +38,74 @@ export class ManualWorkoutService {
       // Calculate base XP for manual workout
       const baseXP = XPService.MANUAL_WORKOUT_BASE_XP;
       
-      // Power Day is only triggered if daily XP *will exceed* 300 after this workout
-      // Not if it's exactly 300
-      const willTriggerPowerDay = (profileData?.daily_xp || 0) + baseXP > 300;
+      // IMPORTANT FIX: Power Day is only triggered if:
+      // 1. Daily XP will exceed 300 after this workout (not just reach it)
+      // 2. There's at least one other workout today already
+      // 3. The user has Power Days available this week
       let isPowerDay = false;
-      
-      // Only check for Power Day availability if we think this will trigger one
-      if (willTriggerPowerDay) {
-        const { available } = await PowerDayService.checkPowerDayAvailability(userId);
+
+      // Check daily XP threshold first - must EXCEED 300 XP (not just reach it)
+      // This means after adding this workout's XP, total must be > 300
+      if ((profileData?.daily_xp || 0) + baseXP > 300) {
+        console.log('Daily XP threshold met for potential Power Day trigger');
         
-        if (available) {
-          // Record Power Day usage and update flag
-          isPowerDay = await PowerDayService.recordPowerDayUsage(
-            userId, 
-            ManualWorkoutValidationService.getCurrentWeek(), 
-            new Date().getFullYear()
-          );
+        // Now check if there's at least one other workout today
+        const todayStart = new Date(workoutDate);
+        todayStart.setHours(0, 0, 0, 0);
+        
+        const todayEnd = new Date(workoutDate);
+        todayEnd.setHours(23, 59, 59, 999);
+        
+        // Count other workouts from today
+        const [{ count: trackedCount }, { count: manualCount }] = await Promise.all([
+          supabase
+            .from('workouts')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userId)
+            .gte('started_at', todayStart.toISOString())
+            .lt('completed_at', todayEnd.toISOString()),
           
-          if (isPowerDay) {
-            console.log('Power Day triggered and recorded for user', userId);
+          supabase
+            .from('manual_workouts')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userId)
+            .gte('workout_date', todayStart.toISOString())
+            .lt('workout_date', todayEnd.toISOString())
+        ]);
+        
+        const totalExistingWorkouts = (trackedCount || 0) + (manualCount || 0);
+        console.log(`Found ${totalExistingWorkouts} existing workouts today`);
+        
+        // Only check Power Day availability if we have at least 1 existing workout
+        // (We need 2+ total, with this new one counting as one)
+        if (totalExistingWorkouts >= 1) {
+          console.log('Multiple workouts requirement met for Power Day');
+          
+          // Now check if Power Days are still available this week
+          const { available } = await PowerDayService.checkPowerDayAvailability(userId);
+          
+          if (available) {
+            // All conditions met - record Power Day usage and update flag
+            isPowerDay = await PowerDayService.recordPowerDayUsage(
+              userId, 
+              ManualWorkoutValidationService.getCurrentWeek(), 
+              new Date().getFullYear()
+            );
+            
+            if (isPowerDay) {
+              console.log('Power Day triggered and recorded for user', userId);
+            }
+          } else {
+            console.log('No Power Days available this week');
           }
+        } else {
+          console.log('Not enough workouts today for Power Day trigger');
         }
+      } else {
+        console.log('Daily XP threshold not met for Power Day trigger');
       }
       
-      // Create manual workout - always with standard XP
+      // Create manual workout - with isPowerDay flag
       const { error: workoutError } = await supabase.rpc(
         'create_manual_workout',
         {
