@@ -14,9 +14,21 @@ export class VarietyChecker {
     startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
     startOfWeek.setHours(0, 0, 0, 0);
     
+    // Get user's profile to identify Pierri Bruno
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('name')
+      .eq('id', userId)
+      .single();
+      
+    const isTargetUser = userProfile?.name === 'Pierri Bruno';
+    if (isTargetUser) {
+      console.log('🎯 Found target user Pierri Bruno! User ID:', userId);
+    }
+    
     const { data: weekVarieties } = await supabase
       .from('workout_varieties')
-      .select('exercise_types')
+      .select('exercise_types, workout_date')
       .eq('user_id', userId)
       .gte('workout_date', startOfWeek.toISOString().split('T')[0]);
       
@@ -26,12 +38,35 @@ export class VarietyChecker {
     console.log('🔍 Variety Achievement Debug: User ID', userId);
     console.log('Found exercise types for week:', Array.from(uniqueTypes));
     
+    if (isTargetUser) {
+      console.log('👤 Pierri Bruno\'s workout varieties:');
+      console.log('Current week varieties:', weekVarieties);
+      console.log('Unique workout types:', Array.from(uniqueTypes));
+      console.log('Start of week date:', startOfWeek.toISOString().split('T')[0]);
+      
+      // Get all workout varieties for this user (not just current week)
+      const { data: allVarieties } = await supabase
+        .from('workout_varieties')
+        .select('exercise_types, workout_date')
+        .eq('user_id', userId)
+        .order('workout_date', { ascending: false });
+        
+      console.log('All workout varieties:', allVarieties);
+    }
+    
     for (const achievement of achievements) {
       if (unlockedIds.includes(achievement.id)) continue;
       
       const requirements = typeof achievement.requirements === 'string'
         ? JSON.parse(achievement.requirements)
         : achievement.requirements;
+        
+      // More detailed logging for Combo Fitness achievement
+      if (achievement.name === 'Combo Fitness' && isTargetUser) {
+        console.log('🏅 Debugging COMBO FITNESS achievement for Pierri Bruno:');
+        console.log('Achievement data:', achievement);
+        console.log('Requirements:', requirements);
+      }
         
       // More detailed logging for variety combo requirements
       if (requirements?.variety_combo) {
@@ -45,6 +80,13 @@ export class VarietyChecker {
         const hasAllRequired = requiredTypes.every(
           (type: string) => uniqueTypes.has(type)
         );
+        
+        if (isTargetUser && achievement.name === 'Combo Fitness') {
+          console.log('Required types check result:');
+          requiredTypes.forEach((type: string) => {
+            console.log(`- ${type}: ${uniqueTypes.has(type) ? '✅ Found' : '❌ Missing'}`);
+          });
+        }
         
         if (hasAllRequired) {
           console.log('✅ Achievement Unlocked (Variety Combo):', {
