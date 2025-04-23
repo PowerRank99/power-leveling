@@ -28,16 +28,27 @@ export class LevelChecker {
         achievement => achievement.requirements?.level_required
       );
       
+      console.log('Found level achievements:', levelAchievements.length);
+      if (levelAchievements.length > 0) {
+        levelAchievements.forEach(a => {
+          console.log(`Level achievement: ${a.name}, required level: ${a.requirements.level_required}, user level: ${profile.level}`);
+        });
+      }
+      
       // Check each achievement
       for (const achievement of levelAchievements) {
-        if (unlockedIds.includes(achievement.id)) continue;
+        if (unlockedIds.includes(achievement.id)) {
+          console.log(`Achievement ${achievement.name} already unlocked, skipping`);
+          continue;
+        }
         
         const requiredLevel = achievement.requirements.level_required;
+        console.log(`Checking achievement ${achievement.name}: required level ${requiredLevel} vs user level ${profile.level}`);
         
         if (profile.level >= requiredLevel) {
           console.log(`Awarding level achievement ${achievement.name} for level ${requiredLevel}`);
           
-          await AchievementAwardService.awardAchievement(
+          const result = await AchievementAwardService.awardAchievement(
             userId,
             achievement.id,
             achievement.name,
@@ -45,6 +56,10 @@ export class LevelChecker {
             achievement.xp_reward,
             achievement.points
           );
+          
+          console.log(`Award result for ${achievement.name}: ${result ? 'Success' : 'Failed'}`);
+        } else {
+          console.log(`Level requirement not met for ${achievement.name}`);
         }
       }
     } catch (error) {

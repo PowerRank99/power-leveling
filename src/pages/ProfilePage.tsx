@@ -19,6 +19,7 @@ import { Shield } from 'lucide-react';
 import { RankService } from '@/services/rpg/RankService';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { AchievementDebug } from '@/services/rpg/AchievementDebug';
+import { toast } from 'sonner';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -81,9 +82,27 @@ const ProfilePage = () => {
   const forceCheckAchievements = () => {
     if (user?.id) {
       console.log('Manual achievement check triggered');
+      toast.info('Checking achievements...');
       AchievementService.checkAchievements(user.id)
-        .then(() => console.log('Manual achievement check completed'))
+        .then(() => {
+          console.log('Manual achievement check completed');
+          toast.success('Achievement check completed');
+          refreshProfile();
+        })
         .catch(error => console.error('Error in manual achievement check:', error));
+    }
+  };
+  
+  const debugLevelAchievement = () => {
+    if (user?.id) {
+      console.log('Debugging level achievement');
+      toast.info('Debugging level achievement...');
+      AchievementDebug.debugLevelAchievement(user.id)
+        .then(() => {
+          console.log('Level achievement debug completed');
+          refreshProfile();
+        })
+        .catch(error => console.error('Error debugging level achievement:', error));
     }
   };
   
@@ -138,12 +157,21 @@ const ProfilePage = () => {
                   </div>
                   
                   {process.env.NODE_ENV === 'development' && (
-                    <button 
-                      className="mt-4 p-2 bg-red-600 text-white rounded opacity-50 text-xs"
-                      onClick={forceCheckAchievements}
-                    >
-                      Debug: Force Check Achievements
-                    </button>
+                    <div className="mt-4 space-y-2">
+                      <button 
+                        className="p-2 bg-red-600 text-white rounded opacity-50 text-xs w-full"
+                        onClick={forceCheckAchievements}
+                      >
+                        Debug: Force Check All Achievements
+                      </button>
+                      
+                      <button 
+                        className="p-2 bg-purple-600 text-white rounded opacity-50 text-xs w-full"
+                        onClick={debugLevelAchievement}
+                      >
+                        Debug: Fix Level Achievement
+                      </button>
+                    </div>
                   )}
                 </>
               )}

@@ -1,144 +1,101 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { AchievementAwardService } from './achievement/AchievementAwardService';
+import { toast } from 'sonner';
 
 export class AchievementDebug {
-  static async verifyPrimeiroTreino(): Promise<void> {
-    const { data: achievements, error } = await supabase
-      .from('achievements')
-      .select('*')
-      .or('string_id.eq.primeiro-treino,string_id.eq.first-workout,name.ilike.%primeiro%,name.ilike.%first%workout%');
-      
-    console.log('Found first workout achievements:', achievements);
-    if (error) console.error('Error fetching primeiro-treino:', error);
-  }
-  
-  static async checkUserAchievements(userId: string): Promise<void> {
-    const { data: userAchievements, error } = await supabase
-      .from('user_achievements')
-      .select(`
-        *,
-        achievements (*)
-      `)
-      .eq('user_id', userId);
-      
-    console.log('User achievements:', userAchievements);
-    if (error) console.error('Error fetching user achievements:', error);
-  }
-  
-  static async checkUserProfile(userId: string): Promise<void> {
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-      
-    console.log('User profile:', profile);
-    if (error) console.error('Error fetching user profile:', error);
-  }
-  
-  static async debugFirstWorkoutAchievement(userId: string): Promise<void> {
-    console.log('🔍 Starting deep debug for first workout achievement');
-    await this.verifyPrimeiroTreino();
-    await this.checkUserProfile(userId);
-    await this.checkUserAchievements(userId);
-    await this.checkRPCFunctionality(userId);
-    await this.checkRLSPolicies();
-  }
-  
-  static async testAwardFirstWorkoutAchievement(userId: string): Promise<void> {
+  static async debugLevelAchievement(userId: string, achievementName: string = 'Herói em Ascensão'): Promise<void> {
     try {
-      // Get the first workout achievement
-      const { data: achievements, error } = await supabase
-        .from('achievements')
-        .select('*')
-        .or('string_id.eq.primeiro-treino,string_id.eq.first-workout,name.ilike.%primeiro%,name.ilike.%first%workout%')
-        .limit(1);
+      console.group(`Debug for achievement: ${achievementName}`);
       
-      if (error || !achievements || achievements.length === 0) {
-        console.error('Error or no achievement found:', error);
+      // 1. Get user profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('level, name')
+        .eq('id', userId)
+        .single();
+        
+      if (profileError || !profile) {
+        console.error('Error fetching profile:', profileError);
+        console.groupEnd();
         return;
       }
       
-      const achievement = achievements[0];
-      console.log('Testing award of achievement:', achievement);
+      console.log(`User ${profile.name} is level ${profile.level}`);
       
-      // Check if user already has this achievement
-      const { data: existingAchievement } = await supabase
+      // 2. Get the achievement
+      const { data: achievement, error: achievementError } = await supabase
+        .from('achievements')
+        .select('*')
+        .eq('name', achievementName)
+        .single();
+        
+      if (achievementError || !achievement) {
+        console.error(`Achievement "${achievementName}" not found:`, achievementError);
+        console.groupEnd();
+        return;
+      }
+      
+      console.log('Achievement found:', achievement);
+      console.log('Requirements:', achievement.requirements);
+      
+      // 3. Check if already awarded
+      const { data: existingAward, error: awardError } = await supabase
         .from('user_achievements')
-        .select('id')
+        .select('*')
         .eq('user_id', userId)
         .eq('achievement_id', achievement.id)
         .maybeSingle();
-      
-      if (existingAchievement) {
-        console.log('User already has this achievement');
-        return;
-      }
-      
-      // Try to award using RPC
-      const { data, error: rpcError } = await supabase.rpc(
-        'check_achievement_batch',
-        {
-          p_user_id: userId,
-          p_achievement_ids: [achievement.id]
-        }
-      );
-      
-      console.log('RPC result:', data);
-      if (rpcError) console.error('RPC error:', rpcError);
-      
-      // Verify it was awarded
-      await this.checkUserAchievements(userId);
-    } catch (error) {
-      console.error('Error in testAwardFirstWorkoutAchievement:', error);
-    }
-  }
-
-  static async checkRPCFunctionality(userId: string): Promise<void> {
-    try {
-      console.log('Testing RPC functionality');
-      
-      // Test a basic RPC call
-      const { data: testData, error: testError } = await supabase.rpc(
-        'get_achievement_stats',
-        {
-          p_user_id: userId
-        }
-      );
-      
-      console.log('RPC test result:', testData);
-      if (testError) console.error('RPC test error:', testError);
-    } catch (error) {
-      console.error('Error in checkRPCFunctionality:', error);
-    }
-  }
-
-  static async checkRLSPolicies(): Promise<void> {
-    // This is an informational function only, showing what to check in Supabase dashboard
-    console.log(`
-      RLS Policy Check Reminder:
-      1. Check if 'user_achievements' table has proper RLS policies
-      2. Check if 'check_achievement_batch' RPC function has SECURITY DEFINER
-      3. Verify user has correct permissions
-      4. Check if required SELECT policies exist
-    `);
-  }
-  
-  static async checkAllAchievements(): Promise<void> {
-    try {
-      const { data: allAchievements, error } = await supabase
-        .from('achievements')
-        .select('*')
-        .order('rank', { ascending: true });
         
-      if (error) {
-        console.error('Error fetching all achievements:', error);
+      if (awardError) {
+        console.error('Error checking existing award:', awardError);
+      }
+      
+      console.log('Already awarded?', !!existingAward);
+      
+      // 4. Check if conditions are met
+      const requiredLevel = achievement.requirements?.level_required;
+      if (!requiredLevel) {
+        console.error('No level requirement found in achievement');
+        console.groupEnd();
         return;
       }
       
-      console.log('All achievements in database:', allAchievements);
+      console.log(`Required level: ${requiredLevel}, User level: ${profile.level}`);
+      const meetsRequirements = profile.level >= requiredLevel;
+      console.log('Meets requirements?', meetsRequirements);
+      
+      // 5. Award manually if needed
+      if (!existingAward && meetsRequirements) {
+        console.log('Attempting to manually award achievement...');
+        
+        const awarded = await AchievementAwardService.awardAchievement(
+          userId,
+          achievement.id,
+          achievement.name,
+          achievement.description,
+          achievement.xp_reward,
+          achievement.points
+        );
+        
+        console.log('Manual award result:', awarded);
+        if (awarded) {
+          toast.success(`Achievement "${achievement.name}" awarded!`);
+        } else {
+          toast.error('Failed to award achievement');
+        }
+      } else if (existingAward) {
+        console.log('Achievement already awarded, no action needed');
+        toast.info('Achievement was already unlocked');
+      } else {
+        console.log('Requirements not met, cannot award');
+        toast.error(`Requirements not met: level ${profile.level}/${requiredLevel}`);
+      }
+      
+      console.groupEnd();
     } catch (error) {
-      console.error('Error in checkAllAchievements:', error);
+      console.error('Debug error:', error);
+      console.groupEnd();
     }
   }
 }
