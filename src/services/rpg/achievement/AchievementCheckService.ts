@@ -1,10 +1,10 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { isTestingMode } from '@/config/testingMode';
 import { WorkoutCountChecker } from './checkers/WorkoutCountChecker';
 import { WeeklyWorkoutChecker } from './checkers/WeeklyWorkoutChecker';
 import { VarietyChecker } from './checkers/VarietyChecker';
 import { ExerciseTypeChecker } from './checkers/ExerciseTypeChecker';
+import { LevelChecker } from './checkers/LevelChecker';
 
 export class AchievementCheckService {
   static async checkAchievements(userId: string): Promise<void> {
@@ -18,7 +18,6 @@ export class AchievementCheckService {
         console.log('🔧 Testing mode: Achievement check starting');
       }
       
-      // Get user profile data including manual_workouts count
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('workouts_count, streak, records_count')
@@ -30,13 +29,11 @@ export class AchievementCheckService {
         return;
       }
 
-      // Get count of workouts in the current week
       const currentDate = new Date();
       const startOfWeek = new Date(currentDate);
       startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
       startOfWeek.setHours(0, 0, 0, 0);
       
-      // Get weekly workouts count (combining tracked and manual)
       const [trackedCount, manualCount] = await Promise.all([
         supabase
           .from('workouts')
@@ -56,7 +53,6 @@ export class AchievementCheckService {
       
       const totalWeeklyWorkouts = trackedCount + manualCount;
       
-      // Get all achievements user doesn't have yet
       const { data: unlockedAchievements, error: unlockedError } = await supabase
         .from('user_achievements')
         .select('achievement_id')
@@ -69,7 +65,6 @@ export class AchievementCheckService {
 
       const unlockedIds = unlockedAchievements?.map(a => a.achievement_id) || [];
       
-      // Get all eligible achievements
       const { data: remainingAchievements, error: remainingError } = await supabase
         .from('achievements')
         .select('*')
@@ -82,7 +77,6 @@ export class AchievementCheckService {
 
       console.log('Checking eligible achievements:', remainingAchievements.length);
       
-      // Check different types of achievements using specialized checkers
       await Promise.all([
         WorkoutCountChecker.checkWorkoutAchievements(
           userId, 
@@ -105,6 +99,12 @@ export class AchievementCheckService {
         ),
         
         ExerciseTypeChecker.checkExerciseTypeAchievements(
+          userId,
+          unlockedIds,
+          remainingAchievements
+        ),
+        
+        LevelChecker.checkLevelAchievements(
           userId,
           unlockedIds,
           remainingAchievements
