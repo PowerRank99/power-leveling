@@ -292,23 +292,45 @@ export class GuildService {
    */
   static async getGuildDetails(guildId: string): Promise<any> {
     try {
+      // Fixed query to avoid SQL GROUP BY error
       const { data: guild, error } = await supabase
         .from('guilds')
         .select(`
-          *,
-          guild_members (count),
-          guild_raids (
-            count,
-            status:end_date,
-            type:raid_type
-          )
+          id,
+          name,
+          description,
+          avatar_url,
+          total_xp,
+          created_at,
+          creator_id,
+          guild_members (count)
         `)
         .eq('id', guildId)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching guild details:', error);
+        throw error;
+      }
       
-      return GuildUtils.mapDatabaseGuildToUIFormat(guild);
+      // Get active raids count separately
+      const { count: activeRaidsCount, error: raidsError } = await supabase
+        .from('guild_raids')
+        .select('id', { count: 'exact', head: true })
+        .eq('guild_id', guildId)
+        .gte('end_date', new Date().toISOString());
+      
+      if (raidsError) {
+        console.error('Error counting active raids:', raidsError);
+      }
+      
+      // Add raids count to guild data
+      const guildData = {
+        ...guild,
+        activeRaidsCount: activeRaidsCount || 0
+      };
+      
+      return GuildUtils.mapDatabaseGuildToUIFormat(guildData);
     } catch (error) {
       console.error('Error fetching guild details:', error);
       throw error;
