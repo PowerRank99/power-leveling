@@ -134,7 +134,7 @@ const GuildRaidList: React.FC<GuildRaidListProps> = ({
                   <Progress 
                     value={raid.progress.percentage} 
                     className="h-2" 
-                    indicatorClassName={
+                    indicatorColor={
                       raid.raidType === 'consistency' ? "bg-arcane" : 
                       raid.raidType === 'beast' ? "bg-valor" : "bg-achievement"
                     }

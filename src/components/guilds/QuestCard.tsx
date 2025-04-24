@@ -161,7 +161,7 @@ const QuestCard: React.FC<QuestCardProps> = ({ quest, onClick }) => {
               <Progress 
                 value={progressPercentage} 
                 className="h-1.5 mb-2"
-                indicatorClassName={getProgressColor()}
+                indicatorColor={getProgressColor()}
               />
               
               <div className="flex justify-end mt-3">

@@ -177,7 +177,7 @@ const RaidParticipationUI: React.FC<RaidParticipationUIProps> = ({
               <Progress 
                 value={raid.progress.percentage} 
                 className={`h-2`}
-                indicatorClassName={
+                indicatorColor={
                   raid.raidType === 'consistency' ? "bg-arcane" : 
                   raid.raidType === 'beast' ? "bg-valor" : "bg-achievement"
                 }
@@ -200,7 +200,7 @@ const RaidParticipationUI: React.FC<RaidParticipationUIProps> = ({
               <Progress 
                 value={(userProgress / raid.daysRequired) * 100} 
                 className={`h-2`}
-                indicatorClassName={
+                indicatorColor={
                   raid.raidType === 'consistency' ? "bg-arcane" : 
                   raid.raidType === 'beast' ? "bg-valor" : "bg-achievement"
                 }
