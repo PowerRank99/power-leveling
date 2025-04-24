@@ -37,7 +37,7 @@ const EmptyExerciseState: React.FC = () => {
           Voltar
         </Button>
         <Button 
-          onClick={() => navigate('/treino/criar')}
+          onClick={() => navigate('/rotinas/criar')}
           className="bg-arcane hover:bg-arcane-60 text-text-primary font-sora shadow-glow-subtle"
         >
           Criar Nova Rotina
