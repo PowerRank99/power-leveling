@@ -1,6 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { WorkoutExercise } from '@/types/workoutTypes';
+import { AchievementCheckService } from './achievement/AchievementCheckService';
 
 /**
  * Represents a personal record
@@ -136,6 +136,12 @@ export class PersonalRecordService {
               last_used_at: new Date().toISOString()
             });
         }
+      }
+      
+      // After all PRs are recorded, check for achievements
+      if (personalRecords.length > 0) {
+        console.log(`Found ${personalRecords.length} new PRs, checking for achievements...`);
+        await AchievementCheckService.checkAchievements(userId);
       }
       
       return personalRecords;

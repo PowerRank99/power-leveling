@@ -5,6 +5,7 @@ import { WeeklyWorkoutChecker } from './checkers/WeeklyWorkoutChecker';
 import { VarietyChecker } from './checkers/VarietyChecker';
 import { ExerciseTypeChecker } from './checkers/ExerciseTypeChecker';
 import { LevelChecker } from './checkers/LevelChecker';
+import { PersonalRecordChecker } from './checkers/PersonalRecordChecker';
 
 export class AchievementCheckService {
   static async checkAchievements(userId: string): Promise<void> {
@@ -105,6 +106,12 @@ export class AchievementCheckService {
         ),
         
         LevelChecker.checkLevelAchievements(
+          userId,
+          unlockedIds,
+          remainingAchievements
+        ),
+        
+        PersonalRecordChecker.checkPersonalRecordAchievements(
           userId,
           unlockedIds,
           remainingAchievements
