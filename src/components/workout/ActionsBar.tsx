@@ -9,7 +9,8 @@ const ActionsBar = () => {
 
   const handleCreateRoutine = () => {
     console.log('ActionsBar: Navigating to /rotinas/criar');
-    navigate('/rotinas/criar');
+    // Using absolute path to ensure consistent navigation
+    navigate('/rotinas/criar', { replace: false });
   };
 
   return (
