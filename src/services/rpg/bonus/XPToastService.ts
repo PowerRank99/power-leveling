@@ -22,9 +22,16 @@ export class XPToastService {
    * Show toast notification with XP breakdown
    */
   static showXPToast(totalXP: number, xpBreakdown: XPBreakdown, isPowerDay: boolean = false): void {
+    console.log('[XPToastService] Showing XP breakdown:', {
+      totalXP,
+      breakdown: xpBreakdown,
+      isPowerDay
+    });
+    
     let toastDesc = 'Treino completo!';
     
     const bonuses = [];
+    if (xpBreakdown.base > 0) bonuses.push(`Base: ${xpBreakdown.base}`);
     if (xpBreakdown.classBonus > 0) bonuses.push(`Classe: +${xpBreakdown.classBonus}`);
     if (xpBreakdown.streakBonus > 0) bonuses.push(`Streak: +${xpBreakdown.streakBonus}`);
     if (xpBreakdown.recordBonus > 0) bonuses.push(`Recorde: +${xpBreakdown.recordBonus}`);
@@ -32,7 +39,7 @@ export class XPToastService {
     if (xpBreakdown.monthlyBonus > 0) bonuses.push(`Mensal: +${xpBreakdown.monthlyBonus}`);
     
     if (bonuses.length > 0) {
-      toastDesc = `Base: ${xpBreakdown.base} | ${bonuses.join(' | ')}`;
+      toastDesc = bonuses.join(' | ');
     }
     
     if (isPowerDay) {

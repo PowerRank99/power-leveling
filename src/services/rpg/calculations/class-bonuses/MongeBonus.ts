@@ -29,26 +29,26 @@ export class MongeBonus {
     let bonusXP = 0;
     const bonusBreakdown: ClassBonusBreakdown[] = [];
     
-    // Força Interior: +20% XP directly on exercise and set XP parts for bodyweight exercises
-    const bodyweightExercises = workout.exercises.filter(
-      ex => ex.type === 'Calistenia'
-    );
+    // Count calisthenics exercises
+    const bodyweightExercises = workout.exercises.filter(ex => ex.type === 'Calistenia');
+    const bodyweightCount = bodyweightExercises.length;
     
-    if (bodyweightExercises.length > 0) {
-      // Calculate the exercise and set XP parts only
-      const exerciseXP = workout.exercises.length * XPCalculationService.BASE_EXERCISE_XP;
+    if (bodyweightCount > 0) {
+      // Calculate XP only for calisthenics exercises
+      const exerciseXP = bodyweightCount * XPCalculationService.BASE_EXERCISE_XP;
       
-      // Count completed sets
-      const completedSets = workout.exercises.reduce((sum, ex) => {
+      // Count completed sets only from calisthenics exercises
+      const completedSets = bodyweightExercises.reduce((sum, ex) => {
         return sum + ex.sets.filter(set => set.completed).length;
       }, 0);
       
       const setXP = completedSets * XPCalculationService.BASE_SET_XP;
       
-      // Apply the flat 20% bonus to exercise and set XP
+      // Apply the 20% bonus to calisthenics exercise and set XP only
       const bodyweightBonus = Math.round((exerciseXP + setXP) * this.BODYWEIGHT_BONUS);
       
       if (bodyweightBonus > 0) {
+        console.log(`[MongeBonus] Calisthenics XP breakdown - Exercises: ${exerciseXP}, Sets: ${setXP}, Total bonus: ${bodyweightBonus}`);
         bonusXP += bodyweightBonus;
         bonusBreakdown.push({
           skill: 'Força Interior',

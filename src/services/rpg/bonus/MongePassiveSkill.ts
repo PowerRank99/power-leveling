@@ -1,4 +1,3 @@
-
 import { PassiveSkill, PassiveSkillContext, PassiveSkillResult } from '../types/PassiveSkillTypes';
 import { XPCalculationService } from '../XPCalculationService';
 
@@ -20,17 +19,18 @@ export class ForcaInterior implements PassiveSkill {
   }
   
   calculate(context: PassiveSkillContext): PassiveSkillResult {
-    // Calculate the calisthenics exercise count
+    // Count calisthenics exercises and sets only
     const calisthenicsCount = context.exerciseTypes['Calistenia'] || 0;
     
-    // Only apply to the exercise and set portion of XP
-    const exerciseXP = context.exerciseCount * XPCalculationService.BASE_EXERCISE_XP;
-    const setXP = context.setCount * XPCalculationService.BASE_SET_XP;
-    const exerciseAndSetXP = exerciseXP + setXP;
+    // Calculate XP only for calisthenics exercises and their sets
+    const calisthenicsBaseXP = calisthenicsCount * XPCalculationService.BASE_EXERCISE_XP;
+    const calisthenicsSetsXP = (context.setCount * (calisthenicsCount / context.totalExercises)) * XPCalculationService.BASE_SET_XP;
     
-    // Apply 20% bonus flat, not scaled by ratio
+    // Apply 20% bonus only to calisthenics portion
     const bonusMultiplier = 0.2;
-    const bonusXP = Math.round(exerciseAndSetXP * bonusMultiplier);
+    const bonusXP = Math.round((calisthenicsBaseXP + calisthenicsSetsXP) * bonusMultiplier);
+    
+    console.log(`[ForcaInterior] Calisthenics exercises: ${calisthenicsCount}, Base XP: ${calisthenicsBaseXP}, Sets XP: ${calisthenicsSetsXP}, Bonus: ${bonusXP}`);
     
     return {
       bonusXP,
