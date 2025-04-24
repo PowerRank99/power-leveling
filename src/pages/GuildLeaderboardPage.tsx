@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/ui/PageHeader';
@@ -9,6 +10,8 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { GuildService } from '@/services/rpg/guild/GuildService';
+import { useAuth } from '@/hooks/useAuth';
 
 // Import the components
 import GuildHeader from '@/components/guilds/GuildHeader';
@@ -27,11 +30,27 @@ interface Member {
   trend?: 'up' | 'down' | 'same';
 }
 
+interface GuildInfo {
+  name: string;
+  avatar: string;
+  memberCount: number;
+  activeMemberCount: number;
+  totalExp: number;
+  weeklyExp: number;
+  completedQuests: number;
+  activeQuests: number;
+  isUserGuildMaster: boolean;
+}
+
 const GuildLeaderboardPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [timeFilter, setTimeFilter] = useState('weekly');
   const [metricFilter, setMetricFilter] = useState('xp');
+  const [guildInfo, setGuildInfo] = useState<GuildInfo | null>(null);
+  const [members, setMembers] = useState<Member[]>([]);
   const navigate = useNavigate();
   
   // Animation variants
@@ -54,48 +73,102 @@ const GuildLeaderboardPage: React.FC = () => {
     }
   };
   
-  // Simulate loading effect
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, []);
-  
-  // Mock data for initial UI
-  const guildInfo = {
-    name: "Guerreiros do Fitness",
-    avatar: "/lovable-uploads/71073810-f05a-4adc-a860-636599324c62.png",
-    memberCount: 32,
-    activeMemberCount: 28,
-    totalExp: 15750,
-    weeklyExp: 1250,
-    completedQuests: 24,
-    activeQuests: 2,
-    isUserGuildMaster: true
+  // Calculate guild level based on XP
+  const calculateGuildLevel = (totalXp: number): number => {
+    if (totalXp <= 0) return 1;
+    return Math.max(1, Math.floor(totalXp / 1000) + 1);
   };
   
-  const pixelAvatar1 = "/lovable-uploads/4c10aa78-e770-43d4-96a3-69b43638d90e.png";
-  const pixelAvatar2 = "/lovable-uploads/d84a92f5-828a-4ff9-a21b-3233e15d4276.png";
-  const pixelAvatar3 = "/lovable-uploads/174ea5f4-db2b-4392-a948-5ec67969f043.png";
-  const pixelAvatar4 = "/lovable-uploads/38b244e2-15ad-44b7-8d2d-48eb9e4227a8.png";
-  const pixelAvatar5 = "/lovable-uploads/c6066df0-70c1-48cf-b017-126e8f7e850a.png";
+  // Calculate next level XP
+  const calculateNextLevelXP = (totalXp: number): { current: number, next: number, percent: number } => {
+    const currentLevel = calculateGuildLevel(totalXp);
+    const nextLevelXP = currentLevel * 1000;
+    const prevLevelXP = (currentLevel - 1) * 1000;
+    const levelProgress = totalXp - prevLevelXP;
+    const levelRange = nextLevelXP - prevLevelXP;
+    const percent = Math.round((levelProgress / levelRange) * 100);
+    
+    return {
+      current: levelProgress,
+      next: levelRange,
+      percent: percent
+    };
+  };
   
-  const allMembers: Member[] = [
-    { id: "1", name: "Você", avatar: pixelAvatar1, points: 1250, position: 1, isCurrentUser: true, badge: "Mestre da Guilda", trend: "up" },
-    { id: "2", name: "João Silva", avatar: pixelAvatar2, points: 1100, position: 2, trend: "down" },
-    { id: "3", name: "Maria Santos", avatar: pixelAvatar3, points: 950, position: 3, trend: "same" },
-    { id: "4", name: "Carlos Oliveira", avatar: pixelAvatar4, points: 820, position: 4, trend: "down" },
-    { id: "5", name: "Ana Costa", avatar: pixelAvatar5, points: 790, position: 5, trend: "up" },
-    { id: "6", name: "Pedro Souza", avatar: pixelAvatar4, points: 730, position: 6, trend: "same" },
-    { id: "7", name: "Lúcia Ferreira", avatar: pixelAvatar3, points: 690, position: 7, badge: "Moderadora", trend: "up" },
-    { id: "8", name: "Ricardo Santos", avatar: pixelAvatar2, points: 640, position: 8, trend: "down" },
-    { id: "9", name: "Beatriz Lima", avatar: pixelAvatar5, points: 590, position: 9, trend: "up" }
-  ];
+  useEffect(() => {
+    const fetchGuildData = async () => {
+      if (!id) {
+        setError("ID da guilda não especificado");
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        setLoading(true);
+        
+        // Fetch guild details
+        const guildDetails = await GuildService.getGuildDetails(id);
+        if (!guildDetails) {
+          setError("Guilda não encontrada");
+          setLoading(false);
+          return;
+        }
+        
+        // Fetch guild members leaderboard
+        const leaderboardData = await GuildService.getLeaderboard(id, timeFilter, metricFilter);
+        const leaderboardMembers: Member[] = Array.isArray(leaderboardData) 
+          ? leaderboardData.map((member, index) => ({
+              id: member.user_id,
+              name: member.name || 'Membro',
+              avatar: member.avatar_url || "/lovable-uploads/71073810-f05a-4adc-a860-636599324c62.png",
+              points: member.total_xp || 0,
+              position: index + 1,
+              isCurrentUser: member.user_id === user?.id,
+              badge: member.role === 'guild_master' ? 'Mestre da Guilda' : 
+                     member.role === 'moderator' ? 'Moderador' : undefined,
+              trend: 'same' // We don't have historical data for trend
+            }))
+          : [];
+        
+        // Create guild info object
+        const guildInfoData: GuildInfo = {
+          name: guildDetails.name,
+          avatar: guildDetails.avatar_url || "/lovable-uploads/71073810-f05a-4adc-a860-636599324c62.png",
+          memberCount: guildDetails.memberCount || 0,
+          activeMemberCount: Math.floor((guildDetails.memberCount || 0) * 0.8), // Assume 80% active as a placeholder
+          totalExp: guildDetails.total_xp || 0,
+          weeklyExp: 0, // We don't have this data yet
+          completedQuests: 0, // Placeholder
+          activeQuests: guildDetails.activeRaidsCount || 0,
+          isUserGuildMaster: false // Will update below
+        };
+        
+        // Check if user is guild master
+        const userGuilds = user?.id ? await GuildService.getUserGuilds(user.id) : [];
+        const userGuild = userGuilds.find(g => g.id === id);
+        if (userGuild) {
+          guildInfoData.isUserGuildMaster = userGuild.role === 'guild_master';
+        }
+        
+        setGuildInfo(guildInfoData);
+        setMembers(leaderboardMembers);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching guild data:", error);
+        setError("Erro ao carregar dados da guilda");
+        setLoading(false);
+      }
+    };
+    
+    fetchGuildData();
+  }, [id, user?.id, timeFilter, metricFilter]);
   
   const handleShareRanking = () => {
-    navigator.clipboard.writeText(`Confira a classificação da guilda Guerreiros do Fitness! Junte-se a nós no PowerLeveling!`);
+    if (!guildInfo) return;
+    
+    navigator.clipboard.writeText(
+      `Confira a classificação da guilda ${guildInfo.name}! Junte-se a nós no PowerLeveling!`
+    );
     
     toast.success('Link copiado!', {
       description: 'Link do ranking copiado para a área de transferência.'
@@ -122,11 +195,37 @@ const GuildLeaderboardPage: React.FC = () => {
     );
   }
   
+  if (error || !guildInfo) {
+    return (
+      <div className="min-h-screen bg-midnight-base pb-16">
+        <PageHeader title="Classificação da Guilda" showBackButton={true} />
+        <div className="flex flex-col items-center justify-center h-[50vh] p-4">
+          <div className="text-center space-y-4">
+            <h2 className="text-xl font-orbitron text-text-primary">Guilda não encontrada</h2>
+            <p className="text-text-secondary font-sora">
+              {error || "Não foi possível encontrar a guilda solicitada."}
+            </p>
+            <Button 
+              onClick={() => navigate('/guilds')} 
+              variant="arcane"
+            >
+              Voltar para Lista de Guildas
+            </Button>
+          </div>
+        </div>
+        <BottomNavBar />
+      </div>
+    );
+  }
+  
   // Stat cards data for the remaining Membros Ativos and Missões cards
   const statCards = [
     { title: "Membros Ativos", value: `${guildInfo.activeMemberCount}/${guildInfo.memberCount}`, icon: <Users className="text-text-secondary" /> },
     { title: "Missões", value: guildInfo.activeQuests, icon: <Calendar className="text-valor" /> },
   ];
+  
+  // Calculate guild XP progress
+  const xpProgress = calculateNextLevelXP(guildInfo.totalExp);
   
   return (
     <div className="min-h-screen bg-midnight-base pb-16">
@@ -160,7 +259,7 @@ const GuildLeaderboardPage: React.FC = () => {
           </Card>
         </motion.div>
         
-        {/* Guild Stats Component - Using a grid layout for stat cards (only keeping the two required ones) */}
+        {/* Guild Stats Component - Using a grid layout for stat cards */}
         <motion.div variants={itemVariants}>
           <div className="grid grid-cols-2 gap-3">
             {statCards.map((stat, index) => (
@@ -187,12 +286,12 @@ const GuildLeaderboardPage: React.FC = () => {
             <CardContent className="p-4">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm font-sora text-text-secondary">Progresso da Guilda</span>
-                <span className="text-xs font-space text-text-tertiary">Nível 15</span>
+                <span className="text-xs font-space text-text-tertiary">Nível {calculateGuildLevel(guildInfo.totalExp)}</span>
               </div>
-              <Progress value={65} pulsateIndicator className="h-2 mb-1" />
+              <Progress value={xpProgress.percent} pulsateIndicator className="h-2 mb-1" />
               <div className="flex justify-between text-xs text-text-tertiary">
-                <span className="font-space">9,750 XP</span>
-                <span className="font-space">15,000 XP</span>
+                <span className="font-space">{xpProgress.current} XP</span>
+                <span className="font-space">{xpProgress.next} XP</span>
               </div>
             </CardContent>
           </Card>
@@ -210,10 +309,10 @@ const GuildLeaderboardPage: React.FC = () => {
           </Card>
         </motion.div>
         
-        {/* Members List Component (without the podium) */}
+        {/* Members List Component */}
         <motion.div variants={itemVariants}>
           <Card>
-            <MembersList members={allMembers} />
+            <MembersList members={members} />
           </Card>
         </motion.div>
         

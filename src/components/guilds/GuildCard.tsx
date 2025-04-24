@@ -6,27 +6,54 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, Trophy, Shield, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { GuildService } from '@/services/rpg/guild/GuildService';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
+
+interface Guild {
+  id: string;
+  name: string;
+  description: string;
+  avatar: string;
+  memberCount: number;
+  level: number;
+  questCount: number;
+  isUserGuildMaster: boolean;
+}
 
 interface GuildCardProps {
-  guild: {
-    id: string;
-    name: string;
-    description: string;
-    avatar: string;
-    memberCount: number;
-    level: number;
-    questCount: number;
-    isUserGuildMaster: boolean;
-  };
+  guild: Guild;
   isUserMember: boolean;
 }
 
 const GuildCard: React.FC<GuildCardProps> = ({ guild, isUserMember }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const handleGuildClick = () => {
     if (isUserMember) {
       navigate(`/guilds/${guild.id}/leaderboard`);
+    } else {
+      handleJoinGuild();
+    }
+  };
+  
+  const handleJoinGuild = async () => {
+    if (!user?.id) {
+      toast.error('Você precisa estar logado para ingressar em uma guilda');
+      return;
+    }
+    
+    try {
+      const success = await GuildService.joinGuild(user.id, guild.id);
+      if (success) {
+        navigate(`/guilds/${guild.id}/leaderboard`);
+      }
+    } catch (error) {
+      console.error('Error joining guild:', error);
+      toast.error('Erro ao ingressar na guilda', {
+        description: 'Ocorreu um erro ao tentar ingressar na guilda. Tente novamente.'
+      });
     }
   };
   
@@ -136,6 +163,7 @@ const GuildCard: React.FC<GuildCardProps> = ({ guild, isUserMember }) => {
               </Button>
             ) : (
               <Button 
+                onClick={handleGuildClick}
                 className="text-sm bg-arcane hover:bg-arcane-60 text-text-primary shadow-glow-subtle transition-all duration-300 hover:shadow-glow-purple hover:-translate-y-1 group"
                 size="sm"
               >
