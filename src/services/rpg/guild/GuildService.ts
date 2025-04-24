@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
+import { GuildUtils } from './GuildUtils';
 import { toast } from 'sonner';
-import { CreateGuildParams, CreateRaidParams } from './types';
 
 export class GuildService {
   /**
@@ -289,46 +289,71 @@ export class GuildService {
    */
   static async getGuildDetails(guildId: string): Promise<any> {
     try {
-      const { data: guild, error: guildError } = await supabase
+      const { data: guild, error } = await supabase
         .from('guilds')
-        .select('*')
+        .select(`
+          *,
+          guild_members (count),
+          guild_raids (
+            count,
+            status:end_date,
+            type:raid_type
+          )
+        `)
         .eq('id', guildId)
         .single();
-
-      if (guildError) {
-        console.error('Error fetching guild details:', guildError);
-        throw guildError;
-      }
-
-      const { count: memberCount, error: memberError } = await supabase
-        .from('guild_members')
-        .select('*', { count: 'exact', head: true })
-        .eq('guild_id', guildId);
-
-      if (memberError) {
-        console.error('Error counting guild members:', memberError);
-        throw memberError;
-      }
-
-      const { count: activeRaidsCount, error: raidError } = await supabase
-        .from('guild_raids')
-        .select('*', { count: 'exact', head: true })
-        .eq('guild_id', guildId)
-        .gte('end_date', new Date().toISOString());
-
-      if (raidError) {
-        console.error('Error counting active raids:', raidError);
-        throw raidError;
-      }
-
-      return {
-        ...guild,
-        memberCount: memberCount || 0,
-        activeRaidsCount: activeRaidsCount || 0
-      };
+      
+      if (error) throw error;
+      
+      return GuildUtils.mapDatabaseGuildToUIFormat(guild);
     } catch (error) {
-      console.error('Failed to fetch guild details:', error);
-      return null;
+      console.error('Error fetching guild details:', error);
+      throw error;
+    }
+  }
+  
+  static async getMemberRole(guildId: string, userId: string): Promise<string> {
+    try {
+      const { data, error } = await supabase
+        .from('guild_members')
+        .select('role')
+        .eq('guild_id', guildId)
+        .eq('user_id', userId)
+        .single();
+      
+      if (error) throw error;
+      
+      return data?.role || 'member';
+    } catch (error) {
+      console.error('Error fetching member role:', error);
+      return 'member';
+    }
+  }
+  
+  static async createRaid(guildId: string, userId: string, raidData: any) {
+    try {
+      const { data, error } = await supabase
+        .from('guild_raids')
+        .insert({
+          guild_id: guildId,
+          name: raidData.name,
+          raid_type: raidData.raidType,
+          start_date: raidData.startDate,
+          end_date: raidData.endDate,
+          days_required: raidData.daysRequired,
+          created_by: userId
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      return data.id;
+    } catch (error) {
+      console.error('Error creating raid:', error);
+      throw error;
     }
   }
 }
+
+export default GuildService;

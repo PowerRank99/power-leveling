@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import BottomNavBar from '@/components/navigation/BottomNavBar';
@@ -10,6 +10,11 @@ import { Quest } from '@/components/guilds/QuestCard';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Users, Crown } from 'lucide-react';
+import { RaidService } from '@/services/rpg/guild/RaidService';
+import { GuildService } from '@/services/rpg/guild/GuildService';
+import { toast } from 'sonner';
+import { CreateRaidModal } from '@/components/guilds';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 const GuildQuestsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,107 +22,155 @@ const GuildQuestsPage: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('active');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isGuildMaster, setIsGuildMaster] = useState(true); // Mocked for now
-  const [guildName, setGuildName] = useState("Guilda dos Guerreiros"); // Mock guild name
+  const [isGuildMaster, setIsGuildMaster] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [guildInfo, setGuildInfo] = useState<any>(null);
+  const [raids, setRaids] = useState<Quest[]>([]);
   
-  // Mock guild info
-  const guildInfo = {
-    name: "Guilda dos Guerreiros",
-    avatar: "/lovable-uploads/71073810-f05a-4adc-a860-636599324c62.png",
-    memberCount: 32,
-    level: 5
+  useEffect(() => {
+    const fetchGuildData = async () => {
+      if (!id || !user?.id) return;
+      
+      try {
+        const guildData = await GuildService.getGuildDetails(id);
+        const memberRole = await GuildService.getMemberRole(id, user.id);
+        setIsGuildMaster(memberRole === 'guild_master');
+        setGuildInfo(guildData);
+        
+        const activeRaids = await RaidService.getActiveRaids(id);
+        const formattedRaids = activeRaids.map(raid => ({
+          id: raid.id,
+          title: raid.name,
+          guildName: guildData.name,
+          startDate: raid.startDate.toISOString(),
+          endDate: raid.endDate.toISOString(),
+          status: 'active',
+          daysCompleted: raid.progress.currentValue,
+          daysRequired: raid.daysRequired,
+          rewards: [{ type: 'xp', amount: raid.raidDetails.xpReward }]
+        }));
+        
+        setRaids(formattedRaids);
+      } catch (error) {
+        console.error('Error fetching guild data:', error);
+        toast.error('Erro ao carregar dados da guilda', {
+          description: 'Não foi possível carregar as missões. Tente novamente.'
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchGuildData();
+  }, [id, user?.id]);
+  
+  const handleCreateRaid = () => {
+    setIsCreateModalOpen(true);
   };
   
-  // Mock data for quests
-  const mockQuests: Quest[] = [
-    {
-      id: '1',
-      title: 'Treino Intenso',
-      guildName: 'Guilda dos Guerreiros',
-      startDate: '2025-01-20',
-      endDate: '2025-01-24',
-      status: 'active',
-      daysCompleted: 3,
-      daysRequired: 5,
-      rewards: [
-        { type: 'xp', amount: 200 }
-      ]
-    },
-    {
-      id: '2',
-      title: 'Desafio Semanal',
-      guildName: 'Guilda dos Monges',
-      startDate: '2025-01-13',
-      endDate: '2025-01-19',
-      status: 'completed',
-      daysCompleted: 7,
-      daysRequired: 7,
-      rewards: [
-        { type: 'xp', amount: 200 }
-      ]
-    },
-    {
-      id: '3',
-      title: 'Maratona Ninja',
-      guildName: 'Guilda dos Ninjas',
-      startDate: '2025-01-13',
-      endDate: '2025-01-18',
-      status: 'failed',
-      daysCompleted: 2,
-      daysRequired: 5,
-      rewards: [
-        { type: 'xp', amount: 150 }
-      ]
+  const handleRaidCreated = (raidId: string) => {
+    setIsCreateModalOpen(false);
+    toast.success('Missão criada com sucesso!');
+    // Refresh raids list
+    if (id && user?.id) {
+      RaidService.getActiveRaids(id).then(newRaids => {
+        const formattedRaids = newRaids.map(raid => ({
+          id: raid.id,
+          title: raid.name,
+          guildName: guildInfo?.name || '',
+          startDate: raid.startDate.toISOString(),
+          endDate: raid.endDate.toISOString(),
+          status: 'active',
+          daysCompleted: raid.progress.currentValue,
+          daysRequired: raid.daysRequired,
+          rewards: [{ type: 'xp', amount: raid.raidDetails.xpReward }]
+        }));
+        setRaids(formattedRaids);
+      });
     }
-  ];
+  };
   
-  // Filtering quests based on tab and search query
-  const filteredQuests = mockQuests.filter(quest => {
-    const matchesStatus = 
-      (activeTab === 'active' && quest.status === 'active') ||
-      (activeTab === 'completed' && quest.status === 'completed') ||
-      (activeTab === 'failed' && quest.status === 'failed') ||
-      (activeTab === 'all');
+  const handleQuestClick = async (questId: string) => {
+    if (!user?.id) {
+      toast.error('Você precisa estar logado para participar');
+      return;
+    }
     
-    const matchesSearch = 
-      quest.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      quest.guildName.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    return matchesStatus && matchesSearch;
-  });
-  
-  const handleQuestClick = (questId: string) => {
-    // For now, just log the click. Later, could navigate to quest detail
-    console.log(`Quest clicked: ${questId}`);
+    try {
+      const result = await RaidService.trackParticipation(questId, user.id);
+      if (result) {
+        toast.success('Participação registrada com sucesso!');
+        // Refresh raids to update progress
+        if (id) {
+          const updatedRaids = await RaidService.getActiveRaids(id);
+          const formattedRaids = updatedRaids.map(raid => ({
+            id: raid.id,
+            title: raid.name,
+            guildName: guildInfo?.name || '',
+            startDate: raid.startDate.toISOString(),
+            endDate: raid.endDate.toISOString(),
+            status: 'active',
+            daysCompleted: raid.progress.currentValue,
+            daysRequired: raid.daysRequired,
+            rewards: [{ type: 'xp', amount: raid.raidDetails.xpReward }]
+          }));
+          setRaids(formattedRaids);
+        }
+      }
+    } catch (error) {
+      console.error('Error participating in raid:', error);
+      toast.error('Erro ao participar da missão');
+    }
   };
   
   const handleLeaderboardClick = () => {
     navigate(`/guilds/${id}/leaderboard`);
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-midnight-base pb-16 flex items-center justify-center">
+        <LoadingSpinner 
+          message="Carregando Missões" 
+          subMessage="Buscando missões ativas..." 
+          size="lg"
+        />
+        <BottomNavBar />
+      </div>
+    );
+  }
+
+  // Filter raids based on search and tab
+  const filteredRaids = raids.filter(raid => {
+    const matchesSearch = raid.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = activeTab === 'all' || raid.status === activeTab;
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="min-h-screen bg-midnight-base pb-16">
-      <QuestPageHeader guildId={id || ''} guildName={guildName} />
+      <QuestPageHeader guildId={id || ''} guildName={guildInfo?.name || ''} />
       
       {/* Guild Info Banner */}
       <div className="bg-gradient-to-r from-arcane-30 to-valor-30 p-4 border-b border-divider shadow-glow-subtle mb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <img 
-              src={guildInfo.avatar} 
-              alt={guildInfo.name} 
+              src={guildInfo?.avatar_url || "/lovable-uploads/71073810-f05a-4adc-a860-636599324c62.png"} 
+              alt={guildInfo?.name} 
               className="h-12 w-12 object-cover rounded-lg mr-3 border border-white/20 shadow-glow-purple"
             />
             <div>
-              <h2 className="font-bold text-lg font-orbitron text-text-primary">{guildInfo.name}</h2>
+              <h2 className="font-bold text-lg font-orbitron text-text-primary">{guildInfo?.name}</h2>
               <div className="flex gap-3 text-sm text-text-secondary font-sora">
                 <span className="flex items-center">
                   <Users className="h-3.5 w-3.5 mr-1 text-text-secondary" />
-                  {guildInfo.memberCount}
+                  {guildInfo?.memberCount || 0}
                 </span>
                 <span className="flex items-center">
                   <Crown className="h-3.5 w-3.5 mr-1 text-achievement" />
-                  Level {guildInfo.level}
+                  Level {guildInfo?.level || 1}
                 </span>
               </div>
             </div>
@@ -142,6 +195,7 @@ const GuildQuestsPage: React.FC = () => {
             setSearchQuery={setSearchQuery}
             guildId={id || ''}
             isGuildMaster={isGuildMaster}
+            onCreateQuest={handleCreateRaid}
           />
         </div>
         
@@ -149,13 +203,20 @@ const GuildQuestsPage: React.FC = () => {
           <QuestTabs 
             activeTab={activeTab}
             setActiveTab={setActiveTab}
-            filteredQuests={filteredQuests}
+            filteredQuests={filteredRaids}
             guildId={id || ''}
             isGuildMaster={isGuildMaster}
             handleQuestClick={handleQuestClick}
           />
         </div>
       </div>
+      
+      <CreateRaidModal
+        guildId={id || ''}
+        open={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+        onSuccess={handleRaidCreated}
+      />
       
       <BottomNavBar />
     </div>
