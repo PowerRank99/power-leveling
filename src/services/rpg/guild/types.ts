@@ -27,7 +27,7 @@ export interface RaidProgress {
 export interface RaidDetails {
   participantsCount: number;
   xpReward: number;
-  targetValue?: number; // Add this missing property
+  targetValue: number;
   participants?: any[];
   elementalTypes?: string[];
 }

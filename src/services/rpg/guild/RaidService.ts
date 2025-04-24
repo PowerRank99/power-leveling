@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { RaidWithProgress } from './types';
+import { RaidWithProgress, GuildRaidType } from './types';
 
 export class RaidService {
   /**
@@ -109,10 +109,16 @@ export class RaidService {
         const targetDaysTotal = raid.days_required * (totalParticipants || 1);
         const progressPercentage = Math.min(100, (totalDaysCompleted / Math.max(1, targetDaysTotal)) * 100);
         
+        // Cast raid_type to GuildRaidType to ensure type safety
+        const raidType = raid.raid_type as GuildRaidType;
+        if (!['consistency', 'beast', 'elemental'].includes(raidType)) {
+          console.warn(`Unknown raid type: ${raid.raid_type}, defaulting to 'consistency'`);
+        }
+        
         return {
           id: raid.id,
           name: raid.name,
-          raidType: raid.raid_type || 'consistency',
+          raidType: raidType || 'consistency',
           startDate: new Date(raid.start_date),
           endDate: new Date(raid.end_date),
           daysRequired: raid.days_required,
@@ -124,9 +130,9 @@ export class RaidService {
           raidDetails: {
             participantsCount: totalParticipants,
             xpReward: raid.xp_reward || 100,
-            targetValue: targetDaysTotal, // Add this property to align with our updated type
+            targetValue: targetDaysTotal,
             participants: raid.guild_raid_participants,
-            elementalTypes: raid.raid_type === 'elemental' ? ['strength', 'cardio', 'mobility', 'sport'] : []
+            elementalTypes: raidType === 'elemental' ? ['strength', 'cardio', 'mobility', 'sport'] : []
           }
         };
       });
