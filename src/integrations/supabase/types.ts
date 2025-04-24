@@ -417,6 +417,8 @@ export type Database = {
           guild_id: string | null
           id: string
           name: string
+          raid_details: Json | null
+          raid_type: string
           start_date: string
         }
         Insert: {
@@ -427,6 +429,8 @@ export type Database = {
           guild_id?: string | null
           id?: string
           name: string
+          raid_details?: Json | null
+          raid_type?: string
           start_date: string
         }
         Update: {
@@ -437,6 +441,8 @@ export type Database = {
           guild_id?: string | null
           id?: string
           name?: string
+          raid_details?: Json | null
+          raid_type?: string
           start_date?: string
         }
         Relationships: [
@@ -456,6 +462,53 @@ export type Database = {
           },
         ]
       }
+      guild_xp_contributions: {
+        Row: {
+          amount: number
+          bonus_amount: number
+          created_at: string
+          guild_id: string
+          id: string
+          manual_workout_id: string | null
+          raw_amount: number
+          source: string
+          user_id: string
+          workout_id: string | null
+        }
+        Insert: {
+          amount: number
+          bonus_amount?: number
+          created_at?: string
+          guild_id: string
+          id?: string
+          manual_workout_id?: string | null
+          raw_amount: number
+          source: string
+          user_id: string
+          workout_id?: string | null
+        }
+        Update: {
+          amount?: number
+          bonus_amount?: number
+          created_at?: string
+          guild_id?: string
+          id?: string
+          manual_workout_id?: string | null
+          raw_amount?: number
+          source?: string
+          user_id?: string
+          workout_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_xp_contributions_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guilds: {
         Row: {
           avatar_url: string | null
@@ -464,6 +517,7 @@ export type Database = {
           description: string | null
           id: string
           name: string
+          total_xp: number
         }
         Insert: {
           avatar_url?: string | null
@@ -472,6 +526,7 @@ export type Database = {
           description?: string | null
           id?: string
           name: string
+          total_xp?: number
         }
         Update: {
           avatar_url?: string | null
@@ -480,6 +535,7 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+          total_xp?: number
         }
         Relationships: [
           {
@@ -917,6 +973,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_guild_xp: {
+        Args: {
+          p_guild_id: string
+          p_user_id: string
+          p_amount: number
+          p_source: string
+          p_workout_id?: string
+          p_manual_workout_id?: string
+        }
+        Returns: number
+      }
       backfill_manual_workouts_to_varieties: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -1009,6 +1076,10 @@ export type Database = {
       }
       get_class_cooldown: {
         Args: { p_user_id: string }
+        Returns: Json
+      }
+      get_guild_leaderboard: {
+        Args: { p_guild_id: string; p_time_range?: string; p_limit?: number }
         Returns: Json
       }
       get_paginated_workouts: {
@@ -1131,6 +1202,10 @@ export type Database = {
       recalculate_user_levels: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      record_raid_participation: {
+        Args: { p_raid_id: string; p_user_id: string }
+        Returns: boolean
       }
       rollback_transaction: {
         Args: Record<PropertyKey, never>

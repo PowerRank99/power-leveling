@@ -14,3 +14,4 @@ export interface CreateRaidParams {
   endDate: Date;
   daysRequired: number;
 }
+

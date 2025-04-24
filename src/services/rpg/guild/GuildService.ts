@@ -257,87 +257,20 @@ export class GuildService {
     metricFilter: string = 'xp'
   ): Promise<any[]> {
     try {
-      // Define the date range based on the time filter
-      const now = new Date();
-      let startDate: Date;
-      
-      switch (timeFilter) {
-        case 'weekly':
-          startDate = new Date(now);
-          startDate.setDate(now.getDate() - 7);
-          break;
-        case 'monthly':
-          startDate = new Date(now);
-          startDate.setMonth(now.getMonth() - 1);
-          break;
-        case 'alltime':
-        default:
-          startDate = new Date(0); // Beginning of time
-          break;
-      }
-      
-      // Define the sorting field based on the metric filter
-      let sortField: string;
-      
-      switch (metricFilter) {
-        case 'workouts':
-          sortField = 'profiles(workouts_count)';
-          break;
-        case 'streak':
-          sortField = 'profiles(streak)';
-          break;
-        case 'xp':
-        default:
-          sortField = 'profiles(xp)';
-          break;
-      }
-      
-      // Get guild members with their profiles
+      // Get leaderboard data using the database function
       const { data, error } = await supabase
-        .from('guild_members')
-        .select(`
-          user_id,
-          role,
-          profiles (
-            name,
-            avatar_url,
-            level,
-            xp,
-            workouts_count,
-            streak
-          )
-        `)
-        .eq('guild_id', guildId)
-        .order(sortField, { ascending: false });
+        .rpc('get_guild_leaderboard', {
+          p_guild_id: guildId,
+          p_time_range: timeFilter,
+          p_limit: 50
+        });
         
       if (error) {
         console.error('Error fetching guild leaderboard:', error);
         throw error;
       }
       
-      // Format and return the leaderboard data
-      return data?.map((member, index) => ({
-        id: member.user_id,
-        name: member.profiles?.name,
-        avatar: member.profiles?.avatar_url,
-        level: member.profiles?.level || 1,
-        points: metricFilter === 'xp' 
-          ? member.profiles?.xp 
-          : metricFilter === 'workouts' 
-            ? member.profiles?.workouts_count 
-            : member.profiles?.streak,
-        position: index + 1,
-        isMaster: member.role === 'guild_master',
-        isModerator: member.role === 'moderator',
-        badge: member.role === 'guild_master' 
-          ? 'Mestre da Guilda' 
-          : member.role === 'moderator' 
-            ? 'Moderador' 
-            : undefined,
-        trend: Math.random() > 0.6 
-          ? Math.random() > 0.5 ? 'up' : 'down' 
-          : 'same' // Mock trend data for now
-      })) || [];
+      return data || [];
     } catch (error) {
       console.error('Failed to fetch guild leaderboard:', error);
       return [];
