@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import BottomNavBar from '@/components/navigation/BottomNavBar';
 import { Input } from '@/components/ui/input';
@@ -10,11 +9,13 @@ import GuildCard from '@/components/guilds/GuildCard';
 import { useAuth } from '@/hooks/useAuth';
 import EmptyState from '@/components/ui/EmptyState';
 import { motion } from 'framer-motion';
+import { useGuildNavigation } from '@/hooks/useGuildNavigation';
 
 const GuildsListPage: React.FC = () => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('my-guilds');
+  const guildNavigation = useGuildNavigation('');
 
   // Mock data for guilds
   const pixelAvatar1 = "/lovable-uploads/71073810-f05a-4adc-a860-636599324c62.png";
@@ -73,8 +74,7 @@ const GuildsListPage: React.FC = () => {
   };
   
   const handleCreateGuild = () => {
-    // Navigate to guild creation page or open modal
-    console.log("Create guild clicked");
+    guildNavigation.goToCreateGuild();
   };
   
   const filteredMyGuilds = myGuilds.filter(guild => 
@@ -103,16 +103,12 @@ const GuildsListPage: React.FC = () => {
   
   return (
     <div className="min-h-screen bg-midnight-base pb-16">
-      {/* Removed the PageHeader component */}
-      
       {/* Introduction Banner with Enhanced Gradient */}
       <div className="bg-gradient-to-r from-arcane to-valor text-text-primary p-4 border-b border-arcane-30 shadow-glow-subtle">
         <h2 className="text-xl font-orbitron font-bold mb-1 tracking-wider text-white" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Guildas</h2>
         <p className="text-sm text-text-primary/90 font-sora mb-3 leading-relaxed" style={{ textShadow: '0 1px 1px rgba(0, 0, 0, 0.2)' }}>
           Junte-se a outros atletas, complete missões e ganhe recompensas juntos.
         </p>
-        
-        {/* Removed the category pills section */}
       </div>
       
       <div className="p-4 space-y-4">
