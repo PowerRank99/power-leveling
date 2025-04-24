@@ -374,6 +374,7 @@ export type Database = {
           completed: boolean | null
           days_completed: number | null
           id: string
+          last_participation: string | null
           raid_id: string | null
           user_id: string | null
         }
@@ -381,6 +382,7 @@ export type Database = {
           completed?: boolean | null
           days_completed?: number | null
           id?: string
+          last_participation?: string | null
           raid_id?: string | null
           user_id?: string | null
         }
@@ -388,6 +390,7 @@ export type Database = {
           completed?: boolean | null
           days_completed?: number | null
           id?: string
+          last_participation?: string | null
           raid_id?: string | null
           user_id?: string | null
         }
@@ -420,6 +423,7 @@ export type Database = {
           raid_details: Json | null
           raid_type: string
           start_date: string
+          xp_reward: number | null
         }
         Insert: {
           created_at?: string | null
@@ -432,6 +436,7 @@ export type Database = {
           raid_details?: Json | null
           raid_type?: string
           start_date: string
+          xp_reward?: number | null
         }
         Update: {
           created_at?: string | null
@@ -444,6 +449,7 @@ export type Database = {
           raid_details?: Json | null
           raid_type?: string
           start_date?: string
+          xp_reward?: number | null
         }
         Relationships: [
           {
