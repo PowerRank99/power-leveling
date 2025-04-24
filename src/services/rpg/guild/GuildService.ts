@@ -270,7 +270,13 @@ export class GuildService {
         throw error;
       }
       
-      return data || [];
+      // Fix: Handle the JSON response by ensuring it's an array or defaulting to empty array
+      if (Array.isArray(data)) {
+        return data;
+      } else {
+        console.warn('Leaderboard data is not an array:', data);
+        return [];
+      }
     } catch (error) {
       console.error('Failed to fetch guild leaderboard:', error);
       return [];
