@@ -7,6 +7,11 @@ import { useNavigate } from 'react-router-dom';
 
 const EmptyExerciseState: React.FC = () => {
   const navigate = useNavigate();
+  
+  const handleCreateRoutine = () => {
+    console.log('EmptyExerciseState: Navigating to /rotinas/criar');
+    navigate('/rotinas/criar');
+  };
 
   return (
     <div className="min-h-screen bg-midnight-deep p-4 flex flex-col items-center justify-center">
@@ -37,7 +42,7 @@ const EmptyExerciseState: React.FC = () => {
           Voltar
         </Button>
         <Button 
-          onClick={() => navigate('/rotinas/criar')}
+          onClick={handleCreateRoutine}
           className="bg-arcane hover:bg-arcane-60 text-text-primary font-sora shadow-glow-subtle"
         >
           Criar Nova Rotina

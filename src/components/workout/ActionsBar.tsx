@@ -8,7 +8,7 @@ const ActionsBar = () => {
   const navigate = useNavigate();
 
   const handleCreateRoutine = () => {
-    console.log('Navigating to /rotinas/criar');
+    console.log('ActionsBar: Navigating to /rotinas/criar');
     navigate('/rotinas/criar');
   };
 
