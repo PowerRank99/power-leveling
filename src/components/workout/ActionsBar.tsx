@@ -11,7 +11,7 @@ const ActionsBar = () => {
         asChild 
         className="flex-1 bg-arcane hover:bg-arcane-60 text-text-primary shadow-glow-subtle border border-arcane-30 font-sora"
       >
-        <Link to="/treino/criar">
+        <Link to="/rotinas/criar">
           <Plus className="mr-2 h-5 w-5" />
           Nova Rotina
         </Link>
