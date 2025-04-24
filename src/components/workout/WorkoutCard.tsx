@@ -17,6 +17,7 @@ interface WorkoutCardProps {
   isDeleting?: boolean;
   onDelete?: (id: string) => void;
   workoutType?: 'tracked' | 'manual';
+  xpAwarded?: number; // New prop for actual XP awarded
 }
 
 const WorkoutCard: React.FC<WorkoutCardProps> = ({
@@ -29,7 +30,8 @@ const WorkoutCard: React.FC<WorkoutCardProps> = ({
   durationSeconds,
   isDeleting = false,
   onDelete,
-  workoutType = 'tracked'
+  workoutType = 'tracked',
+  xpAwarded = 0 // Default to 0 if not provided
 }) => {
   const handleDelete = () => {
     if (onDelete) {
@@ -56,7 +58,7 @@ const WorkoutCard: React.FC<WorkoutCardProps> = ({
             <p className="text-text-secondary text-sm font-sora">{date}</p>
           </div>
           <div className="flex flex-col items-end gap-2">
-            <div className="text-achievement font-bold font-space">+{exercisesCount * 10} XP</div>
+            <div className="text-achievement font-bold font-space">+{xpAwarded} XP</div>
             {workoutType === 'tracked' && (
               <Badge variant="outline" className="bg-arcane-15 text-arcane border-arcane-30 flex items-center gap-1">
                 <ClipboardCheck className="h-3 w-3" />

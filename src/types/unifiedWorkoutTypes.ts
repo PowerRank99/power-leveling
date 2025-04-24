@@ -1,25 +1,25 @@
 
-export interface BaseWorkout {
+export interface TrackedWorkout {
   id: string;
-  date: string;
-  workoutDate: string; // ISO string for sorting
-  type: 'tracked' | 'manual';
-}
-
-export interface TrackedWorkout extends BaseWorkout {
   type: 'tracked';
   name: string;
+  date: string;
+  workoutDate: string;
   exercisesCount: number;
   setsCount: number;
-  prs: number;
-  durationSeconds: number | null;
+  prs?: number;
+  durationSeconds?: number | null;
+  xpAwarded?: number; // Add XP awarded field
 }
 
-export interface ManualWorkout extends BaseWorkout {
+export interface ManualWorkout {
+  id: string;
   type: 'manual';
-  description: string | null;
-  activityType: string | null;
-  photoUrl: string;
+  date: string;
+  workoutDate: string;
+  description?: string;
+  activityType?: string;
+  photoUrl?: string;
   xpAwarded: number;
   isPowerDay: boolean;
 }
