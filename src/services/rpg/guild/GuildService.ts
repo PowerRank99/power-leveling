@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { GuildUtils } from './GuildUtils';
 import { toast } from 'sonner';
@@ -116,8 +117,8 @@ export class GuildService {
   /**
    * Creates a new guild raid
    * @param guildId Guild ID
-   * @param creatorId Creator's user ID
-   * @param params Raid parameters
+   * @param userId Creator's user ID
+   * @param raidData Raid parameters
    * @returns Raid ID if successful, null if failed
    */
   static async createRaid(
@@ -329,31 +330,6 @@ export class GuildService {
     } catch (error) {
       console.error('Error fetching member role:', error);
       return 'member';
-    }
-  }
-  
-  static async createRaid(guildId: string, userId: string, raidData: any) {
-    try {
-      const { data, error } = await supabase
-        .from('guild_raids')
-        .insert({
-          guild_id: guildId,
-          name: raidData.name,
-          raid_type: raidData.raidType,
-          start_date: raidData.startDate,
-          end_date: raidData.endDate,
-          days_required: raidData.daysRequired,
-          created_by: userId
-        })
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
-      return data.id;
-    } catch (error) {
-      console.error('Error creating raid:', error);
-      throw error;
     }
   }
 }
