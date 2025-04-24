@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { XPService } from '@/services/xp/XPService';
 import { AchievementService } from '@/services/rpg/AchievementService';
@@ -33,22 +32,19 @@ export class ManualWorkoutService {
       await supabase.rpc('begin_transaction');
       
       try {
+        // Calculate base XP
+        const baseXP = XPService.MANUAL_WORKOUT_BASE_XP;
+        
         // Get current daily XP
         const { data: profileData } = await supabase
           .from('profiles')
-          .select('daily_xp')
+          .select('daily_xp, class')
           .eq('id', userId)
           .single();
         
         const currentDailyXP = profileData?.daily_xp || 0;
-        console.log('Current daily XP:', currentDailyXP);
         
-        // Calculate base XP for this workout
-        const baseXP = XPService.MANUAL_WORKOUT_BASE_XP;
-        const projectedTotalXP = currentDailyXP + baseXP;
-        console.log('Projected total XP after this workout:', projectedTotalXP);
-        
-        // Count other workouts from today
+        // Determine Power Day status and total XP
         const todayStart = new Date(workoutDate);
         todayStart.setHours(0, 0, 0, 0);
         
@@ -73,41 +69,31 @@ export class ManualWorkoutService {
         ]);
         
         const totalExistingWorkouts = (trackedCount || 0) + (manualCount || 0);
-        console.log('Total existing workouts today:', totalExistingWorkouts);
         
-        // Only consider Power Day if:
-        // 1. We have at least one other workout AND
-        // 2. Total XP will EXCEED 300 (not just reach it)
+        // Determine Power Day status
         let isPowerDay = false;
         
-        if (totalExistingWorkouts >= 1 && projectedTotalXP > 300) {
-          console.log('Multiple workouts and XP > 300 requirement met');
-          
-          // Check Power Day availability for this week
+        if (totalExistingWorkouts >= 1) {
           const { available } = await PowerDayService.checkPowerDayAvailability(userId);
-          console.log('Power Day available:', available);
           
           if (available) {
-            // Record Power Day usage
             isPowerDay = await PowerDayService.recordPowerDayUsage(
               userId,
               ManualWorkoutValidationService.getCurrentWeek(),
               new Date().getFullYear()
             );
-            
-            if (isPowerDay) {
-              console.log('Power Day triggered and recorded');
-            }
           }
-        } else {
-          console.log(
-            'Power Day conditions not met:',
-            `Existing workouts: ${totalExistingWorkouts},`,
-            `Projected XP: ${projectedTotalXP}`
-          );
         }
         
-        // Create manual workout with determined isPowerDay flag
+        // Calculate final XP with class and Power Day bonuses
+        const finalXP = await ActivityBonusService.calculateXPBonus(
+          userId, 
+          activityType, 
+          baseXP, 
+          isPowerDay
+        );
+        
+        // Create manual workout
         const { error: workoutError } = await supabase.rpc(
           'create_manual_workout',
           {
@@ -115,7 +101,7 @@ export class ManualWorkoutService {
             p_description: description,
             p_activity_type: activityType,
             p_photo_url: photoUrl,
-            p_xp_awarded: baseXP,
+            p_xp_awarded: finalXP,
             p_workout_date: workoutDate.toISOString(),
             p_is_power_day: isPowerDay,
             p_exercise_id: null
@@ -137,7 +123,7 @@ export class ManualWorkoutService {
         );
         
         // Award XP and trigger achievement check
-        await XPService.addXP(userId, baseXP, 'manual_workout');
+        await XPService.addXP(userId, finalXP, 'manual_workout');
         await AchievementService.checkAchievements(userId);
         
         // Commit transaction
@@ -146,7 +132,7 @@ export class ManualWorkoutService {
         return {
           success: true,
           data: {
-            xp_awarded: baseXP,
+            xp_awarded: finalXP,
             is_power_day: isPowerDay
           }
         };

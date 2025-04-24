@@ -987,6 +987,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      fix_missing_power_day_records: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          fixed_count: number
+          user_id: string
+          workout_date: string
+        }[]
+      }
       get_achievement_stats: {
         Args: { p_user_id: string }
         Returns: Json
