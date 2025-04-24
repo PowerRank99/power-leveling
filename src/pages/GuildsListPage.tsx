@@ -1,15 +1,11 @@
 import React, { useState } from 'react';
-import BottomNavBar from '@/components/navigation/BottomNavBar';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { SearchIcon, PlusIcon } from 'lucide-react';
-import GuildCard from '@/components/guilds/GuildCard';
 import { useAuth } from '@/hooks/useAuth';
-import EmptyState from '@/components/ui/EmptyState';
-import { motion } from 'framer-motion';
 import { useGuildNavigation } from '@/hooks/useGuildNavigation';
+import BottomNavBar from '@/components/navigation/BottomNavBar';
+import GuildListHeader from '@/components/guilds/GuildListHeader';
+import GuildSearchBar from '@/components/guilds/GuildSearchBar';
+import GuildTabContent from '@/components/guilds/GuildTabContent';
 
 const GuildsListPage: React.FC = () => {
   const { user } = useAuth();
@@ -84,57 +80,21 @@ const GuildsListPage: React.FC = () => {
   const filteredSuggestedGuilds = suggestedGuilds.filter(guild => 
     guild.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  
-  // Animation variants for list items
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-  
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] } }
-  };
-  
+
   return (
     <div className="min-h-screen bg-midnight-base pb-16">
-      {/* Introduction Banner with Enhanced Gradient */}
-      <div className="bg-gradient-to-r from-arcane to-valor text-text-primary p-4 border-b border-arcane-30 shadow-glow-subtle">
-        <h2 className="text-xl font-orbitron font-bold mb-1 tracking-wider text-white" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Guildas</h2>
-        <p className="text-sm text-text-primary/90 font-sora mb-3 leading-relaxed" style={{ textShadow: '0 1px 1px rgba(0, 0, 0, 0.2)' }}>
-          Junte-se a outros atletas, complete missões e ganhe recompensas juntos.
-        </p>
-      </div>
+      <GuildListHeader 
+        title="Guildas"
+        description="Junte-se a outros atletas, complete missões e ganhe recompensas juntos."
+      />
       
       <div className="p-4 space-y-4">
-        {/* Enhanced Search and Create */}
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-tertiary h-4 w-4" />
-            <Input 
-              placeholder="Pesquisar guildas..." 
-              className="pl-9 bg-midnight-elevated border-divider text-text-primary placeholder:text-text-tertiary font-sora focus:border-arcane-30 focus:shadow-glow-subtle transition-shadow duration-300" 
-              value={searchQuery} 
-              onChange={handleSearch} 
-            />
-          </div>
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button 
-              onClick={handleCreateGuild} 
-              className="bg-arcane hover:bg-arcane-60 text-text-primary shadow-glow-subtle border border-arcane-30 hover:shadow-glow-purple transition-all duration-300 group"
-            >
-              <PlusIcon className="h-5 w-5 mr-1 group-hover:rotate-90 transition-transform duration-300" />
-              <span className="hidden sm:inline font-sora">Criar Guilda</span>
-            </Button>
-          </motion.div>
-        </div>
+        <GuildSearchBar 
+          searchQuery={searchQuery}
+          onSearchChange={handleSearch}
+          onCreateClick={handleCreateGuild}
+        />
         
-        {/* Enhanced Tabs with Improved Styling */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid grid-cols-2 w-full bg-midnight-elevated overflow-hidden rounded-lg p-1">
             <TabsTrigger 
@@ -152,67 +112,18 @@ const GuildsListPage: React.FC = () => {
           </TabsList>
           
           <TabsContent value="my-guilds" className="mt-4 space-y-4 animate-fade-in">
-            {filteredMyGuilds.length > 0 ? (
-              <ScrollArea className="h-[calc(100vh-250px)]">
-                <motion.div 
-                  className="space-y-4"
-                  variants={container}
-                  initial="hidden"
-                  animate="show"
-                >
-                  {filteredMyGuilds.map(guild => (
-                    <motion.div key={guild.id} variants={item}>
-                      <GuildCard guild={guild} isUserMember={true} />
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </ScrollArea>
-            ) : (
-              <EmptyState 
-                icon="Users" 
-                title="Nenhuma guilda encontrada" 
-                description="Você ainda não participa de nenhuma guilda ou nenhuma corresponde à sua pesquisa." 
-                action={
-                  <Button 
-                    onClick={handleCreateGuild} 
-                    className="bg-arcane hover:bg-arcane-60 mt-4 text-text-primary shadow-glow-subtle border border-arcane-30 transition-all duration-300 hover:shadow-glow-purple group hover:-translate-y-1"
-                  >
-                    <span>Criar uma guilda</span>
-                    <motion.span
-                      animate={{ x: [0, 2, 0] }}
-                      transition={{ repeat: Infinity, duration: 1.5 }}
-                    >
-                      <PlusIcon className="h-4 w-4 ml-1.5" />
-                    </motion.span>
-                  </Button>
-                } 
-              />
-            )}
+            <GuildTabContent 
+              guilds={filteredMyGuilds}
+              isUserMember={true}
+              onCreateGuild={handleCreateGuild}
+            />
           </TabsContent>
           
           <TabsContent value="suggested" className="mt-4 space-y-4 animate-fade-in">
-            {filteredSuggestedGuilds.length > 0 ? (
-              <ScrollArea className="h-[calc(100vh-300px)]">
-                <motion.div 
-                  className="space-y-4"
-                  variants={container}
-                  initial="hidden"
-                  animate="show"
-                >
-                  {filteredSuggestedGuilds.map(guild => (
-                    <motion.div key={guild.id} variants={item}>
-                      <GuildCard guild={guild} isUserMember={false} />
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </ScrollArea>
-            ) : (
-              <EmptyState 
-                icon="Users" 
-                title="Nenhuma guilda sugerida" 
-                description="Não foram encontradas guildas sugeridas para você no momento." 
-              />
-            )}
+            <GuildTabContent 
+              guilds={filteredSuggestedGuilds}
+              isUserMember={false}
+            />
           </TabsContent>
         </Tabs>
       </div>
