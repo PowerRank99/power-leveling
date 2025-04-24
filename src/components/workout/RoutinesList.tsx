@@ -46,7 +46,10 @@ const RoutinesList: React.FC<RoutinesListProps> = ({
         description="Crie uma rotina para começar seus treinos"
         action={
           <Button 
-            onClick={() => navigate('/treino/criar')} 
+            onClick={() => {
+              console.log('RoutinesList: Navigating to /rotinas/criar');
+              navigate('/rotinas/criar', { replace: false });
+            }} 
             className="mt-4 bg-arcane hover:bg-arcane-60 text-text-primary shadow-glow-subtle border border-arcane-30"
           >
             <Plus className="mr-2 h-4 w-4" />
