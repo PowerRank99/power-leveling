@@ -15,3 +15,35 @@ export interface CreateRaidParams {
   daysRequired: number;
 }
 
+// New interfaces to match database schema
+export type GuildRaidType = 'consistency' | 'beast' | 'elemental';
+
+export interface GuildXPContribution {
+  id: string;
+  guildId: string;
+  userId: string;
+  amount: number;
+  rawAmount: number;
+  bonusAmount: number;
+  source: string;
+  workoutId?: string;
+  manualWorkoutId?: string;
+  createdAt: Date;
+}
+
+export interface GuildLeaderboardEntry {
+  userId: string;
+  name: string | null;
+  avatarUrl: string | null;
+  level: number;
+  class: string | null;
+  totalXp: number;
+  workoutsCount: number;
+  role: GuildRole;
+}
+
+export interface GuildStats {
+  memberCount: number;
+  activeRaidsCount: number;
+  totalXp: number;
+}
