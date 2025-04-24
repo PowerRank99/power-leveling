@@ -1,11 +1,10 @@
 
 import React from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import QuestCard, { Quest } from '@/components/guilds/QuestCard';
-import { Button } from '@/components/ui/button';
-import { Plus, ShieldAlert } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent } from '@/components/ui/card';
+import { motion } from 'framer-motion';
+import { Clock, CheckCircle, XCircle, List } from 'lucide-react';
 
 interface QuestTabsProps {
   activeTab: string;
@@ -24,89 +23,155 @@ const QuestTabs: React.FC<QuestTabsProps> = ({
   isGuildMaster,
   handleQuestClick
 }) => {
-  const navigate = useNavigate();
-  
-  const handleCreateQuest = () => {
-    navigate(`/guilds/${guildId}/quests/criar`);
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
   };
   
-  return (
-    <div>
-      <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-4 mb-4 bg-midnight-elevated border border-divider">
-          <TabsTrigger 
-            value="active" 
-            className="font-orbitron text-sm data-[state=active]:bg-arcane-15 data-[state=active]:text-arcane data-[state=active]:border-b-2 data-[state=active]:border-arcane data-[state=active]:shadow-none"
-          >
-            Ativas
-          </TabsTrigger>
-          <TabsTrigger 
-            value="completed" 
-            className="font-orbitron text-sm data-[state=active]:bg-achievement-15 data-[state=active]:text-achievement data-[state=active]:border-b-2 data-[state=active]:border-achievement data-[state=active]:shadow-none"
-          >
-            Completas
-          </TabsTrigger>
-          <TabsTrigger 
-            value="failed" 
-            className="font-orbitron text-sm data-[state=active]:bg-valor-15 data-[state=active]:text-valor data-[state=active]:border-b-2 data-[state=active]:border-valor data-[state=active]:shadow-none"
-          >
-            Falhas
-          </TabsTrigger>
-          <TabsTrigger 
-            value="all" 
-            className="font-orbitron text-sm data-[state=active]:bg-midnight-card data-[state=active]:text-text-primary data-[state=active]:border-b-2 data-[state=active]:border-divider data-[state=active]:shadow-none"
-          >
-            Todas
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value={activeTab} className="space-y-4 mt-4">
-          {filteredQuests.length > 0 ? (
-            filteredQuests.map(quest => (
-              <div key={quest.id} onClick={() => handleQuestClick(quest.id)} className="cursor-pointer">
-                <QuestCard quest={quest} />
-              </div>
-            ))
-          ) : (
-            <div className="bg-midnight-elevated border border-divider text-center py-10 px-4 rounded-lg">
-              <ShieldAlert className="w-12 h-12 mx-auto mb-3 text-text-tertiary" />
-              <h3 className="text-lg font-orbitron mb-1 text-text-primary">
-                Nenhuma quest {activeTab === 'active' ? 'ativa' : activeTab === 'completed' ? 'completa' : activeTab === 'failed' ? 'falha' : ''} encontrada
-              </h3>
-              <p className="text-text-secondary font-sora mb-6">
-                {activeTab === 'active' 
-                  ? 'Não há quests ativas no momento.' 
-                  : activeTab === 'completed' 
-                  ? 'Sua guilda ainda não completou nenhuma quest.' 
-                  : activeTab === 'failed' 
-                  ? 'Parabéns! Sua guilda não falhou em nenhuma quest.'
-                  : 'Não há quests disponíveis.'}
-              </p>
-              
-              {isGuildMaster && activeTab === 'active' && (
-                <Button 
-                  onClick={handleCreateQuest}
-                  className="bg-arcane hover:bg-arcane-60 text-text-primary shadow-glow-subtle"
-                >
-                  <Plus className="w-4 h-4 mr-2" /> Criar Nova Quest
-                </Button>
-              )}
-            </div>
-          )}
-          
-          {isGuildMaster && filteredQuests.length > 0 && activeTab === 'active' && (
-            <div className="flex justify-center pt-4">
-              <Button 
-                onClick={handleCreateQuest}
-                className="bg-arcane hover:bg-arcane-60 text-text-primary shadow-glow-subtle"
-              >
-                <Plus className="w-4 h-4 mr-2" /> Criar Nova Quest
-              </Button>
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+  
+  // Get active quests
+  const activeQuests = filteredQuests.filter(quest => quest.status === 'active');
+  
+  // Get completed quests
+  const completedQuests = filteredQuests.filter(quest => quest.status === 'completed');
+  
+  // Get failed quests
+  const failedQuests = filteredQuests.filter(quest => quest.status === 'failed');
+  
+  // Empty state component
+  const EmptyState = ({ label }: { label: string }) => (
+    <div className="flex flex-col items-center justify-center p-8">
+      <p className="text-text-tertiary text-sm">{label}</p>
     </div>
+  );
+  
+  return (
+    <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <TabsList className="w-full grid grid-cols-4 mb-4 bg-midnight-elevated">
+        <TabsTrigger 
+          value="all" 
+          className="data-[state=active]:bg-arcane-15 data-[state=active]:text-arcane data-[state=active]:shadow-glow-subtle"
+        >
+          <List className="w-4 h-4 mr-1 sm:mr-2" />
+          <span className="hidden sm:inline">Todas</span>
+        </TabsTrigger>
+        <TabsTrigger 
+          value="active" 
+          className="data-[state=active]:bg-arcane-15 data-[state=active]:text-arcane data-[state=active]:shadow-glow-subtle"
+        >
+          <Clock className="w-4 h-4 mr-1 sm:mr-2" />
+          <span className="hidden sm:inline">Ativas</span>
+        </TabsTrigger>
+        <TabsTrigger 
+          value="completed" 
+          className="data-[state=active]:bg-achievement-15 data-[state=active]:text-achievement data-[state=active]:shadow-glow-subtle"
+        >
+          <CheckCircle className="w-4 h-4 mr-1 sm:mr-2" />
+          <span className="hidden sm:inline">Concluídas</span>
+        </TabsTrigger>
+        <TabsTrigger 
+          value="failed" 
+          className="data-[state=active]:bg-valor-15 data-[state=active]:text-valor data-[state=active]:shadow-glow-subtle"
+        >
+          <XCircle className="w-4 h-4 mr-1 sm:mr-2" />
+          <span className="hidden sm:inline">Falhas</span>
+        </TabsTrigger>
+      </TabsList>
+      
+      <TabsContent value="all">
+        <ScrollArea className="h-[60vh]">
+          {filteredQuests.length > 0 ? (
+            <motion.div 
+              className="space-y-3 pr-4"
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+            >
+              {filteredQuests.map(quest => (
+                <motion.div key={quest.id} variants={itemVariants}>
+                  <QuestCard quest={quest} onClick={handleQuestClick} />
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : (
+            <EmptyState label="Nenhuma missão encontrada" />
+          )}
+        </ScrollArea>
+      </TabsContent>
+      
+      <TabsContent value="active">
+        <ScrollArea className="h-[60vh]">
+          {activeQuests.length > 0 ? (
+            <motion.div 
+              className="space-y-3 pr-4"
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+            >
+              {activeQuests.map(quest => (
+                <motion.div key={quest.id} variants={itemVariants}>
+                  <QuestCard quest={quest} onClick={handleQuestClick} />
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : (
+            <EmptyState label="Nenhuma missão ativa encontrada" />
+          )}
+        </ScrollArea>
+      </TabsContent>
+      
+      <TabsContent value="completed">
+        <ScrollArea className="h-[60vh]">
+          {completedQuests.length > 0 ? (
+            <motion.div 
+              className="space-y-3 pr-4"
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+            >
+              {completedQuests.map(quest => (
+                <motion.div key={quest.id} variants={itemVariants}>
+                  <QuestCard quest={quest} onClick={handleQuestClick} />
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : (
+            <EmptyState label="Nenhuma missão concluída encontrada" />
+          )}
+        </ScrollArea>
+      </TabsContent>
+      
+      <TabsContent value="failed">
+        <ScrollArea className="h-[60vh]">
+          {failedQuests.length > 0 ? (
+            <motion.div 
+              className="space-y-3 pr-4"
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+            >
+              {failedQuests.map(quest => (
+                <motion.div key={quest.id} variants={itemVariants}>
+                  <QuestCard quest={quest} onClick={handleQuestClick} />
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : (
+            <EmptyState label="Nenhuma missão falha encontrada" />
+          )}
+        </ScrollArea>
+      </TabsContent>
+    </Tabs>
   );
 };
 

@@ -1,12 +1,14 @@
 
 import React from 'react';
+import { Calendar, Check, Clock, Shield, X } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Compass, Calendar, CheckCircle, XCircle, Shield, Award } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { motion } from 'framer-motion';
 
-interface QuestReward {
-  type: 'xp';
+// Define Quest types
+export interface QuestReward {
+  type: string;
   amount: number;
 }
 
@@ -24,116 +26,156 @@ export interface Quest {
 
 interface QuestCardProps {
   quest: Quest;
-  onClick?: () => void;
+  onClick?: (questId: string) => void;
 }
 
 const QuestCard: React.FC<QuestCardProps> = ({ quest, onClick }) => {
-  // Format date to PT-BR
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return format(date, "d MMM", { locale: ptBR });
+  const progressPercentage = Math.min(100, (quest.daysCompleted / quest.daysRequired) * 100);
+  
+  // Format date strings
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: 'numeric',
+      month: 'short'
+    }).format(date);
   };
   
-  // Get status badge
+  // Calculate days remaining (or days since end for completed/failed quests)
+  const getDaysInfo = () => {
+    const endDate = new Date(quest.endDate);
+    const today = new Date();
+    
+    // For active quests, calculate days remaining
+    if (quest.status === 'active') {
+      const diffTime = endDate.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays <= 0) {
+        return "Último dia!";
+      }
+      return `${diffDays} dias restantes`;
+    }
+    
+    // For completed/failed quests, show when it ended
+    const diffTime = today.getTime() - endDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      return "Finalizado hoje";
+    } else if (diffDays === 1) {
+      return "Finalizado ontem";
+    }
+    return `Finalizado há ${diffDays} dias`;
+  };
+  
+  // Get appropriate status badge
   const getStatusBadge = () => {
-    switch(quest.status) {
+    switch (quest.status) {
       case 'active':
-        return <div className="px-3 py-1 rounded-full bg-arcane-15 text-arcane text-xs flex items-center border border-arcane-30"><Compass className="h-3 w-3 mr-1" />Em Progresso</div>;
+        return <Badge className="bg-arcane-15 text-arcane border-arcane-30">Em Andamento</Badge>;
       case 'completed':
-        return <div className="px-3 py-1 rounded-full bg-achievement-15 text-achievement text-xs flex items-center border border-achievement-30"><CheckCircle className="h-3 w-3 mr-1" />Completo</div>;
+        return <Badge className="bg-achievement-15 text-achievement border-achievement-30">Concluído</Badge>;
       case 'failed':
-        return <div className="px-3 py-1 rounded-full bg-valor-15 text-valor text-xs flex items-center border border-valor-30"><XCircle className="h-3 w-3 mr-1" />Falhou</div>;
+        return <Badge className="bg-valor-15 text-valor border-valor-30">Falhou</Badge>;
       default:
         return null;
     }
   };
   
-  // Get progress indicator color
+  // Get progress indicator color based on status
   const getProgressColor = () => {
-    switch(quest.status) {
+    switch (quest.status) {
       case 'active':
-        return "bg-arcane";
+        return 'bg-arcane';
       case 'completed':
-        return "bg-achievement";
+        return 'bg-achievement';
       case 'failed':
-        return "bg-valor";
+        return 'bg-valor';
       default:
-        return "bg-arcane";
+        return 'bg-arcane';
     }
   };
   
-  // Calculate progress percentage
-  const progressPercentage = (quest.daysCompleted / quest.daysRequired) * 100;
+  // Get status icon
+  const getStatusIcon = () => {
+    switch (quest.status) {
+      case 'active':
+        return <Clock className="h-4 w-4 text-arcane" />;
+      case 'completed':
+        return <Check className="h-4 w-4 text-achievement" />;
+      case 'failed':
+        return <X className="h-4 w-4 text-valor" />;
+      default:
+        return <Shield className="h-4 w-4 text-text-secondary" />;
+    }
+  };
   
   return (
-    <div 
-      className="p-4 mb-4 hover:shadow-elevated transition-all border border-divider bg-midnight-elevated rounded-lg"
-      onClick={onClick}
+    <motion.div 
+      whileHover={{ y: -3 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.2 }}
+      onClick={() => onClick && onClick(quest.id)}
+      className="cursor-pointer"
     >
-      <div className="flex justify-between items-start mb-2">
-        <div>
-          <h3 className="text-lg font-orbitron font-bold text-text-primary">{quest.title}</h3>
-          <p className="text-text-secondary flex items-center text-sm font-sora">
-            <Shield className="h-4 w-4 mr-1 text-text-tertiary" />
-            {quest.guildName}
-          </p>
-        </div>
-        {getStatusBadge()}
-      </div>
-      
-      <div className="mt-4">
-        <div className="flex justify-between mb-1">
-          <span className="text-text-secondary font-sora text-sm">Progresso</span>
-          <span className="font-medium text-text-primary font-space">{quest.daysCompleted}/{quest.daysRequired} dias</span>
-        </div>
-        
-        <Progress 
-          value={progressPercentage} 
-          className="h-2.5 bg-midnight-card" 
-          indicatorColor={getProgressColor()}
-        />
-      </div>
-      
-      <div className="mt-4">
-        {quest.status === 'active' && (
-          <div className="flex justify-between">
-            <div className="text-text-secondary flex items-center text-sm font-sora">
-              <Calendar className="h-4 w-4 mr-1" />
-              Início: {formatDate(quest.startDate)}
-            </div>
-            <div className="text-text-secondary flex items-center text-sm font-sora">
-              <Calendar className="h-4 w-4 mr-1" />
-              Fim: {formatDate(quest.endDate)}
-            </div>
-          </div>
-        )}
-        
-        {quest.status === 'completed' && (
-          <div className="flex justify-between items-center">
-            <div className="text-text-secondary flex items-center text-sm font-sora">
-              <Calendar className="h-4 w-4 mr-1" />
-              Completado em {formatDate(quest.endDate)}
-            </div>
-            <div className="text-achievement font-medium flex items-center font-space">
-              <Award className="h-4 w-4 mr-1" />
-              +{quest.rewards[0].amount} EXP
-            </div>
-          </div>
-        )}
-        
-        {quest.status === 'failed' && (
-          <div className="flex justify-between items-center">
-            <div className="text-text-secondary flex items-center text-sm font-sora">
-              <Calendar className="h-4 w-4 mr-1" />
-              Fim: {formatDate(quest.endDate)}
-            </div>
-            <div className="text-valor font-sora text-sm">
-              Quest Finalizada
+      <Card className={`overflow-hidden border ${
+        quest.status === 'active' ? 'border-arcane-30' : 
+        quest.status === 'completed' ? 'border-achievement-30' : 'border-valor-30'
+      }`}>
+        <CardContent className="p-3">
+          <div className="flex justify-between items-start">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-lg font-orbitron font-semibold text-text-primary tracking-wide">
+                  {quest.title}
+                </h3>
+                {getStatusBadge()}
+              </div>
+              
+              <p className="text-sm text-text-secondary font-sora mb-3">
+                {quest.guildName}
+              </p>
+              
+              <div className="flex gap-4 text-xs text-text-tertiary mb-3">
+                <div className="flex items-center">
+                  <Calendar className="h-3.5 w-3.5 mr-1" />
+                  <span>
+                    {formatDate(quest.startDate)} - {formatDate(quest.endDate)}
+                  </span>
+                </div>
+                
+                <div className="flex items-center">
+                  {getStatusIcon()}
+                  <span className="ml-1">{getDaysInfo()}</span>
+                </div>
+              </div>
+              
+              <div className="mb-1 flex justify-between items-center text-xs">
+                <span className="text-text-secondary">Progresso</span>
+                <span className="font-space text-text-primary">
+                  {quest.daysCompleted}/{quest.daysRequired} dias
+                </span>
+              </div>
+              
+              <Progress 
+                value={progressPercentage} 
+                className="h-1.5 mb-2"
+                indicatorClassName={getProgressColor()}
+              />
+              
+              <div className="flex justify-end mt-3">
+                {quest.rewards.map((reward, index) => (
+                  <Badge key={index} variant="outline" className="ml-2 text-xs font-space bg-midnight-elevated border-divider">
+                    {reward.amount} {reward.type.toUpperCase()}
+                  </Badge>
+                ))}
+              </div>
             </div>
           </div>
-        )}
-      </div>
-    </div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 };
 
