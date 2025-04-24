@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -20,9 +21,10 @@ import AchievementsPage from './pages/AchievementsPage';
 import AdminPage from './pages/AdminPage';
 import NotFound from './pages/NotFound';
 import GuildsListPage from './pages/GuildsListPage';
-import CreateGuildPage from './pages/Guilds/CreateGuildPage';
-import GuildLeaderboardPage from './pages/Guilds/GuildLeaderboardPage';
-import GuildQuestsPage from './pages/Guilds/GuildQuestsPage';
+import CreateGuildPage from './pages/CreateGuildPage';
+import GuildLeaderboardPage from './pages/GuildLeaderboardPage';
+import GuildQuestsPage from './pages/GuildQuestsPage';
+import GuildRaidsPage from './pages/GuildRaidsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -70,6 +72,7 @@ function App() {
                 <Route path="/guilds/create" element={<CreateGuildPage />} />
                 <Route path="/guilds/:id/leaderboard" element={<GuildLeaderboardPage />} />
                 <Route path="/guilds/:id/quests" element={<GuildQuestsPage />} />
+                <Route path="/guilds/:id/raids" element={<GuildRaidsPage />} />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>

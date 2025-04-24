@@ -1,26 +1,30 @@
 
-import React from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-import { format, addDays } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Calendar as CalendarIcon, Loader2 } from 'lucide-react';
-
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import React, { useState } from 'react';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle,
+  DialogFooter
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
-
-import { RaidService } from '@/services/rpg/guild/RaidService';
-import { CreateRaidParams, GuildRaidType } from '@/services/rpg/guild/types';
-import { useAuth } from '@/hooks/useAuth';
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger, 
+} from '@/components/ui/popover';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+
+// Import the GuildService for raid creation
+import { GuildService } from '@/services/rpg/guild/GuildService';
+import { useAuth } from '@/hooks/useAuth';
 
 interface CreateRaidModalProps {
   guildId: string;
@@ -29,21 +33,6 @@ interface CreateRaidModalProps {
   onSuccess?: (raidId: string) => void;
 }
 
-const raidFormSchema = z.object({
-  name: z.string().min(3, "Nome precisa ter no mínimo 3 caracteres").max(50, "Nome não pode ter mais de 50 caracteres"),
-  description: z.string().max(500, "Descrição não pode ter mais de 500 caracteres").optional(),
-  endDate: z.date().refine(date => date > new Date(), {
-    message: "A data de término deve ser no futuro"
-  }),
-  daysRequired: z.number().min(1, "Mínimo de 1 dia").max(30, "Máximo de 30 dias"),
-  raidType: z.enum(['consistency', 'beast', 'elemental'] as const),
-  xpReward: z.number().min(50, "Mínimo de 50 XP").max(1000, "Máximo de 1000 XP"),
-  targetValue: z.number().optional(),
-  elementalTypes: z.array(z.string()).optional(),
-});
-
-type RaidFormValues = z.infer<typeof raidFormSchema>;
-
 const CreateRaidModal: React.FC<CreateRaidModalProps> = ({
   guildId,
   open,
@@ -51,289 +40,193 @@ const CreateRaidModal: React.FC<CreateRaidModalProps> = ({
   onSuccess
 }) => {
   const { user } = useAuth();
-  const today = new Date();
-  const minEndDate = addDays(today, 1);
-  
-  // Initialize form with default values
-  const form = useForm<RaidFormValues>({
-    resolver: zodResolver(raidFormSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      endDate: addDays(today, 7),
-      daysRequired: 3,
-      raidType: 'consistency',
-      xpReward: 200,
-      targetValue: 100,
-      elementalTypes: ['cardio', 'strength', 'flexibility'],
-    }
+  const [loading, setLoading] = useState(false);
+  const [name, setName] = useState('');
+  const [raidType, setRaidType] = useState<'consistency' | 'beast' | 'elemental'>('consistency');
+  const [startDate, setStartDate] = useState<Date>(new Date());
+  const [endDate, setEndDate] = useState<Date>(() => {
+    const date = new Date();
+    date.setDate(date.getDate() + 7); // Default end date is 7 days from now
+    return date;
   });
+  const [daysRequired, setDaysRequired] = useState<number>(3);
   
-  // Form submission handler
-  const onSubmit = async (values: RaidFormValues) => {
-    if (!user?.id) {
-      toast.error("Você precisa estar logado para criar uma raid");
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!name) {
+      toast.error('Por favor, insira um nome para a missão');
       return;
     }
     
+    if (!user?.id) {
+      toast.error('Você precisa estar logado para criar uma missão');
+      return;
+    }
+    
+    setLoading(true);
+    
     try {
-      // Prepare raid details based on type
-      let raidDetails: any = {
-        description: values.description,
-        xpReward: values.xpReward
-      };
+      const raidId = await GuildService.createRaid(guildId, user.id, {
+        name,
+        raidType,
+        startDate,
+        endDate,
+        daysRequired
+      });
       
-      if (values.raidType === 'beast') {
-        raidDetails.targetValue = values.targetValue;
-        raidDetails.bossName = "Behemoth";
-      } else if (values.raidType === 'elemental') {
-        raidDetails.elementalTypes = values.elementalTypes;
-      }
-      
-      // Create the raid
-      const createRaidParams: CreateRaidParams = {
-        name: values.name,
-        description: values.description,
-        startDate: new Date(),
-        endDate: values.endDate,
-        daysRequired: values.daysRequired,
-        raidType: values.raidType,
-        raidDetails: raidDetails
-      };
-      
-      const raidId = await RaidService.createRaid(guildId, user.id, createRaidParams);
-      
-      if (raidId) {
+      if (raidId && onSuccess) {
+        onSuccess(raidId);
+      } else {
         onOpenChange(false);
-        if (onSuccess) onSuccess(raidId);
       }
     } catch (error) {
-      console.error("Error creating raid:", error);
-      toast.error("Erro ao criar raid");
+      console.error('Error creating raid:', error);
+      toast.error('Erro ao criar missão', {
+        description: 'Ocorreu um erro ao criar a missão. Tente novamente.'
+      });
+    } finally {
+      setLoading(false);
     }
   };
   
-  // Get selected raid type to show conditional fields
-  const raidType = form.watch('raidType');
+  const getRaidTypeLabel = (type: string) => {
+    switch (type) {
+      case 'consistency': return 'Consistência';
+      case 'beast': return 'Fera Mitológica';
+      case 'elemental': return 'Desafio Elemental';
+      default: return 'Desconhecido';
+    }
+  };
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] bg-midnight-card border-divider">
+      <DialogContent className="bg-midnight-card border-arcane-30">
         <DialogHeader>
-          <DialogTitle className="text-text-primary font-orbitron">Criar Nova Missão</DialogTitle>
-          <DialogDescription className="text-text-secondary">
-            Crie uma nova missão para a sua guilda e defina os objetivos e recompensas.
-          </DialogDescription>
+          <DialogTitle className="text-xl font-orbitron text-text-primary">Criar Nova Missão</DialogTitle>
         </DialogHeader>
         
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-text-primary">Nome da Missão</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="Digite um nome para a missão"
-                      className="bg-midnight-elevated border-divider text-text-primary"
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage className="text-valor" />
-                </FormItem>
-              )}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name" className="text-sm text-text-secondary">Nome da Missão</Label>
+            <Input 
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ex: Treino Consistente"
+              className="bg-midnight-elevated border-divider text-text-primary"
             />
-            
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-text-primary">Descrição</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Descreva o objetivo da missão"
-                      className="bg-midnight-elevated border-divider text-text-primary h-20 resize-none"
-                      {...field}
-                      value={field.value || ''}
-                    />
-                  </FormControl>
-                  <FormMessage className="text-valor" />
-                </FormItem>
-              )}
-            />
-            
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="raidType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-text-primary">Tipo de Missão</FormLabel>
-                    <Select 
-                      onValueChange={(value) => field.onChange(value as GuildRaidType)} 
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="bg-midnight-elevated border-divider text-text-primary">
-                          <SelectValue placeholder="Selecione o tipo" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="bg-midnight-elevated border-divider text-text-primary">
-                        <SelectItem value="consistency">Consistência</SelectItem>
-                        <SelectItem value="beast">Fera Mitológica</SelectItem>
-                        <SelectItem value="elemental">Desafio Elemental</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormDescription className="text-text-tertiary text-xs">
-                      {raidType === 'consistency' ? "Complete treinos em dias consecutivos" :
-                       raidType === 'beast' ? "Acumule treinos para derrotar uma criatura mítica" :
-                       "Complete diferentes tipos de treino"}
-                    </FormDescription>
-                    <FormMessage className="text-valor" />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="daysRequired"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-text-primary">
-                      {raidType === 'consistency' ? "Dias Necessários" : 
-                       raidType === 'beast' ? "Nível da Fera" : 
-                       "Dias de Desafio"}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        className="bg-midnight-elevated border-divider text-text-primary"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage className="text-valor" />
-                  </FormItem>
-                )}
-              />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="type" className="text-sm text-text-secondary">Tipo de Missão</Label>
+            <Select value={raidType} onValueChange={(value) => setRaidType(value as any)}>
+              <SelectTrigger id="type" className="bg-midnight-elevated border-divider text-text-primary">
+                <SelectValue placeholder="Selecione o tipo" />
+              </SelectTrigger>
+              <SelectContent className="bg-midnight-elevated border-divider">
+                <SelectItem value="consistency" className="text-text-primary hover:bg-arcane-15">
+                  Consistência - Treinar X dias
+                </SelectItem>
+                <SelectItem value="beast" className="text-text-primary hover:bg-arcane-15">
+                  Fera Mitológica - Acumular treinos coletivos
+                </SelectItem>
+                <SelectItem value="elemental" className="text-text-primary hover:bg-arcane-15">
+                  Desafio Elemental - Treinos de tipos específicos
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm text-text-secondary">Data Início</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="w-full bg-midnight-elevated border-divider text-text-primary justify-start"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, 'PPP', { locale: ptBR }) : <span>Selecionar data</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-midnight-elevated border-arcane-30">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={(date) => date && setStartDate(date)}
+                    initialFocus
+                    className="bg-midnight-base"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="endDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel className="text-text-primary">Data de Término</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "pl-3 text-left font-normal bg-midnight-elevated border-divider text-text-primary",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP", { locale: ptBR })
-                            ) : (
-                              <span>Escolha uma data</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 bg-midnight-elevated border-divider" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={(date) => date && field.onChange(date)}
-                          disabled={(date) => date < minEndDate}
-                          initialFocus
-                          className="bg-midnight-elevated text-text-primary"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage className="text-valor" />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="xpReward"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-text-primary">XP de Recompensa</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        className="bg-midnight-elevated border-divider text-text-primary"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage className="text-valor" />
-                  </FormItem>
-                )}
-              />
+            <div className="space-y-2">
+              <Label className="text-sm text-text-secondary">Data Fim</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="w-full bg-midnight-elevated border-divider text-text-primary justify-start"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {endDate ? format(endDate, 'PPP', { locale: ptBR }) : <span>Selecionar data</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-midnight-elevated border-arcane-30">
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={(date) => date && setEndDate(date)}
+                    initialFocus
+                    className="bg-midnight-base"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
-            
-            {/* Conditional fields based on raid type */}
-            {raidType === 'beast' && (
-              <FormField
-                control={form.control}
-                name="targetValue"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-text-primary">Total de Treinos Necessários</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        className="bg-midnight-elevated border-divider text-text-primary"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormDescription className="text-text-tertiary text-xs">
-                      Quantidade de treinos que a guilda precisa acumular para derrotar a fera
-                    </FormDescription>
-                    <FormMessage className="text-valor" />
-                  </FormItem>
-                )}
-              />
-            )}
-            
-            <DialogFooter>
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => onOpenChange(false)}
-                className="bg-midnight-elevated border-divider hover:bg-arcane-15/20"
-              >
-                Cancelar
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={form.formState.isSubmitting}
-                variant="arcane"
-              >
-                {form.formState.isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Criando...
-                  </>
-                ) : (
-                  'Criar Missão'
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="days" className="text-sm text-text-secondary">
+              Dias Necessários
+            </Label>
+            <Input
+              id="days"
+              type="number"
+              min="1"
+              max="30"
+              value={daysRequired}
+              onChange={(e) => setDaysRequired(parseInt(e.target.value) || 1)}
+              className="bg-midnight-elevated border-divider text-text-primary"
+            />
+            <p className="text-xs text-text-tertiary">
+              Para missões de consistência: dias de treino necessários.
+              Para outros tipos: dias para completar os objetivos.
+            </p>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline"
+              className="border-divider text-text-secondary bg-midnight-elevated hover:bg-midnight-base"
+              onClick={() => onOpenChange(false)}
+              disabled={loading}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              type="submit"
+              variant="arcane"
+              className="font-sora"
+              disabled={loading}
+            >
+              {loading ? 'Criando...' : 'Criar Missão'}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

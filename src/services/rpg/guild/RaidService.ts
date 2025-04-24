@@ -1,263 +1,135 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { 
-  GuildRaidType, 
-  RaidWithProgress, 
-  RaidDetails,
-  RaidProgress,
-  CreateRaidParams
-} from './types';
-import { GuildXPService } from './GuildXPService';
+import { RaidWithProgress } from './types';
 
 export class RaidService {
   /**
-   * Creates a new guild raid
+   * Track participation in a guild raid
+   * @param raidId Raid ID
+   * @param userId User ID
+   * @returns Success status
    */
-  static async createRaid(
-    guildId: string, 
-    creatorId: string, 
-    params: CreateRaidParams
-  ): Promise<string | null> {
+  static async trackParticipation(raidId: string, userId: string): Promise<boolean> {
     try {
-      // Check if user is guild master or moderator
-      const { data: member, error: memberError } = await supabase
-        .from('guild_members')
-        .select('role')
-        .eq('guild_id', guildId)
-        .eq('user_id', creatorId)
+      // First check if user is already a participant
+      const { data: existingParticipant, error: checkError } = await supabase
+        .from('guild_raid_participants')
+        .select('id, days_completed')
+        .eq('raid_id', raidId)
+        .eq('user_id', userId)
         .single();
-        
-      if (memberError || !member) {
-        throw new Error('Você precisa ser membro da guilda para criar uma raid.');
+      
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "no rows returned" which is expected if not a participant yet
+        console.error('Error checking raid participation:', checkError);
+        throw checkError;
       }
       
-      if (member.role !== 'guild_master' && member.role !== 'moderator') {
-        throw new Error('Apenas mestres e moderadores da guilda podem criar raids.');
+      // If user is already a participant, increment days_completed
+      if (existingParticipant) {
+        const { error: updateError } = await supabase
+          .from('guild_raid_participants')
+          .update({
+            days_completed: existingParticipant.days_completed + 1,
+            last_participation: new Date().toISOString()
+          })
+          .eq('id', existingParticipant.id);
+          
+        if (updateError) {
+          console.error('Error updating raid participation:', updateError);
+          throw updateError;
+        }
+      } else {
+        // Create a new participant record
+        const { error: insertError } = await supabase
+          .from('guild_raid_participants')
+          .insert({
+            raid_id: raidId,
+            user_id: userId,
+            days_completed: 1,
+            completed: false,
+            last_participation: new Date().toISOString()
+          });
+          
+        if (insertError) {
+          console.error('Error creating raid participation:', insertError);
+          throw insertError;
+        }
       }
       
-      // Create the raid
-      const startDate = params.startDate || new Date();
-      const { data: raid, error: raidError } = await supabase
-        .from('guild_raids')
-        .insert({
-          guild_id: guildId,
-          name: params.name,
-          description: params.description,
-          start_date: startDate.toISOString(),
-          end_date: params.endDate.toISOString(),
-          days_required: params.daysRequired,
-          raid_type: params.raidType || 'consistency',
-          raid_details: params.raidDetails || {}, // Fixed: added missing comma
-          created_by: creatorId
-        })
-        .select('id')
-        .single();
-        
-      if (raidError) {
-        console.error('Error creating guild raid:', raidError);
-        throw raidError;
-      }
-      
-      toast.success('Raid Criada!', {
-        description: `A raid "${params.name}" foi criada com sucesso.`
-      });
-      
-      return raid.id;
+      return true;
     } catch (error) {
-      console.error('Failed to create raid:', error);
-      toast.error('Erro ao criar raid', {
-        description: error instanceof Error ? error.message : 'Ocorreu um erro ao criar a raid.'
-      });
-      return null;
+      console.error('Failed to track raid participation:', error);
+      return false;
     }
   }
-
+  
   /**
-   * Gets active raids for a guild
+   * Get active raids for a guild
+   * @param guildId Guild ID
+   * @returns List of raids with progress information
    */
   static async getActiveRaids(guildId: string): Promise<RaidWithProgress[]> {
     try {
       const { data: raids, error } = await supabase
         .from('guild_raids')
         .select(`
-          *,
-          guild_raid_participants(
-            days_completed,
-            completed,
-            user_id
+          id,
+          name,
+          type,
+          start_date,
+          end_date,
+          days_required,
+          xp_reward,
+          guild_raid_participants (
+            user_id,
+            days_completed
           )
         `)
         .eq('guild_id', guildId)
         .gte('end_date', new Date().toISOString());
-
+        
       if (error) {
-        console.error('Error fetching active raids:', error);
+        console.error('Error fetching guild raids:', error);
         throw error;
       }
-
-      return raids.map(raid => this.mapRaidWithProgress(raid));
+      
+      // Transform into RaidWithProgress objects
+      const raidWithProgress: RaidWithProgress[] = raids.map(raid => {
+        const totalParticipants = raid.guild_raid_participants ? raid.guild_raid_participants.length : 0;
+        const totalDaysCompleted = raid.guild_raid_participants
+          ? raid.guild_raid_participants.reduce((acc: number, curr: any) => acc + curr.days_completed, 0)
+          : 0;
+          
+        // Calculate progress percentage based on total days completed vs target
+        const targetDaysTotal = raid.days_required * (totalParticipants || 1);
+        const progressPercentage = Math.min(100, (totalDaysCompleted / Math.max(1, targetDaysTotal)) * 100);
+        
+        return {
+          id: raid.id,
+          name: raid.name,
+          raidType: raid.type || 'consistency',
+          startDate: new Date(raid.start_date),
+          endDate: new Date(raid.end_date),
+          daysRequired: raid.days_required,
+          progress: {
+            currentValue: totalDaysCompleted,
+            targetValue: targetDaysTotal,
+            percentage: progressPercentage
+          },
+          raidDetails: {
+            participantsCount: totalParticipants,
+            xpReward: raid.xp_reward || 100,
+            participants: raid.guild_raid_participants,
+            elementalTypes: raid.type === 'elemental' ? ['strength', 'cardio', 'mobility', 'sport'] : []
+          }
+        };
+      });
+      
+      return raidWithProgress;
     } catch (error) {
-      console.error('Failed to fetch active raids:', error);
+      console.error('Failed to fetch guild raids:', error);
       return [];
     }
   }
-
-  /**
-   * Gets details for a specific raid
-   */
-  static async getRaidDetails(raidId: string): Promise<RaidWithProgress | null> {
-    try {
-      const { data: raid, error } = await supabase
-        .from('guild_raids')
-        .select(`
-          *,
-          guild_raid_participants(
-            days_completed,
-            completed,
-            user_id
-          )
-        `)
-        .eq('id', raidId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching raid details:', error);
-        throw error;
-      }
-
-      return this.mapRaidWithProgress(raid);
-    } catch (error) {
-      console.error('Failed to fetch raid details:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Records participation in a raid
-   */
-  static async trackParticipation(
-    raidId: string, 
-    userId: string
-  ): Promise<boolean> {
-    try {
-      const { data: result, error } = await supabase
-        .rpc('record_raid_participation', {
-          p_raid_id: raidId,
-          p_user_id: userId
-        });
-
-      if (error) {
-        console.error('Error recording raid participation:', error);
-        throw error;
-      }
-
-      if (result) {
-        // If the raid was completed, distribute rewards
-        await this.distributeRewards(raidId);
-      }
-
-      return result;
-    } catch (error) {
-      console.error('Failed to track raid participation:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Distributes rewards for a completed raid
-   */
-  private static async distributeRewards(raidId: string): Promise<void> {
-    try {
-      const raid = await this.getRaidDetails(raidId);
-      if (!raid) return;
-
-      const { data: participants, error } = await supabase
-        .from('guild_raid_participants')
-        .select('*')
-        .eq('raid_id', raidId)
-        .eq('completed', true);
-
-      if (error) throw error;
-
-      const baseXp = raid.raidDetails?.xpReward || 200; // Default XP reward
-
-      // Award XP to each participant
-      for (const participant of participants || []) {
-        await GuildXPService.contributeXP(
-          raid.guildId,
-          participant.user_id,
-          baseXp,
-          'raid_completion',
-          undefined,
-          undefined
-        );
-      }
-    } catch (error) {
-      console.error('Error distributing raid rewards:', error);
-    }
-  }
-
-  /**
-   * Maps a raid database record to RaidWithProgress type
-   */
-  private static mapRaidWithProgress(raid: any): RaidWithProgress {
-    const progress = this.calculateRaidProgress(raid);
-    
-    return {
-      id: raid.id,
-      name: raid.name,
-      guildId: raid.guild_id,
-      raidType: raid.raid_type,
-      startDate: new Date(raid.start_date),
-      endDate: new Date(raid.end_date),
-      daysRequired: raid.days_required,
-      raidDetails: raid.raid_details || {},
-      progress
-    };
-  }
-
-  /**
-   * Calculates raid progress based on type
-   */
-  private static calculateRaidProgress(raid: any): RaidProgress {
-    const participants = raid.guild_raid_participants || [];
-    let currentValue = 0;
-    let targetValue = 0;
-
-    switch (raid.raid_type) {
-      case 'consistency':
-        // Target is achieving required days for each participant
-        targetValue = raid.days_required;
-        currentValue = Math.max(...participants.map(p => p.days_completed || 0));
-        break;
-
-      case 'beast':
-        // Target is collective workout count
-        targetValue = raid.raid_details?.targetValue || 100;
-        currentValue = participants.reduce((sum, p) => sum + (p.days_completed || 0), 0);
-        break;
-
-      case 'elemental':
-        // Target is completing all required workout types
-        const requiredTypes = raid.raid_details?.elementalTypes || [];
-        targetValue = requiredTypes.length;
-        const completedTypes = new Set(
-          participants.flatMap(p => p.completed_types || [])
-        );
-        currentValue = completedTypes.size;
-        break;
-    }
-
-    const percentage = (currentValue / targetValue) * 100;
-    const completed = percentage >= 100;
-
-    return {
-      completed,
-      currentValue,
-      targetValue,
-      percentage: Math.min(percentage, 100)
-    };
-  }
 }
-
