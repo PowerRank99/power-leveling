@@ -1,7 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { CreateGuildParams, CreateRaidParams, GuildRole } from './types';
+import { CreateGuildParams, CreateRaidParams } from './types';
 
 export class GuildService {
   /**
@@ -183,24 +182,25 @@ export class GuildService {
    */
   static async listGuilds(limit: number = 20): Promise<any[]> {
     try {
-      // Get guilds with member count
       const { data, error } = await supabase
         .from('guilds')
         .select(`
           id, 
           name, 
           description, 
-          avatar_url, 
+          avatar_url,
+          total_xp,
           created_at,
-          creator_id
+          creator_id,
+          guild_members!inner (count)
         `)
         .limit(limit);
-        
+
       if (error) {
         console.error('Error fetching guilds:', error);
         throw error;
       }
-      
+
       return data || [];
     } catch (error) {
       console.error('Failed to list guilds:', error);
@@ -224,16 +224,17 @@ export class GuildService {
             name,
             description,
             avatar_url,
+            total_xp,
             created_at
           )
         `)
         .eq('user_id', userId);
-        
+
       if (error) {
         console.error('Error fetching user guilds:', error);
         throw error;
       }
-      
+
       return data?.map(item => ({
         ...item.guilds,
         role: item.role
@@ -257,26 +258,24 @@ export class GuildService {
     metricFilter: string = 'xp'
   ): Promise<any[]> {
     try {
-      // Get leaderboard data using the database function
       const { data, error } = await supabase
         .rpc('get_guild_leaderboard', {
           p_guild_id: guildId,
           p_time_range: timeFilter,
           p_limit: 50
         });
-        
+
       if (error) {
         console.error('Error fetching guild leaderboard:', error);
         throw error;
       }
-      
-      // Fix: Handle the JSON response by ensuring it's an array or defaulting to empty array
+
       if (Array.isArray(data)) {
         return data;
-      } else {
-        console.warn('Leaderboard data is not an array:', data);
-        return [];
       }
+
+      console.warn('Leaderboard data is not an array:', data);
+      return [];
     } catch (error) {
       console.error('Failed to fetch guild leaderboard:', error);
       return [];
@@ -290,42 +289,38 @@ export class GuildService {
    */
   static async getGuildDetails(guildId: string): Promise<any> {
     try {
-      // Get guild details
       const { data: guild, error: guildError } = await supabase
         .from('guilds')
         .select('*')
         .eq('id', guildId)
         .single();
-        
+
       if (guildError) {
         console.error('Error fetching guild details:', guildError);
         throw guildError;
       }
-      
-      // Get member count
+
       const { count: memberCount, error: memberError } = await supabase
         .from('guild_members')
         .select('*', { count: 'exact', head: true })
         .eq('guild_id', guildId);
-        
+
       if (memberError) {
         console.error('Error counting guild members:', memberError);
         throw memberError;
       }
-      
-      // Get active raids count
+
       const { count: activeRaidsCount, error: raidError } = await supabase
         .from('guild_raids')
         .select('*', { count: 'exact', head: true })
         .eq('guild_id', guildId)
         .gte('end_date', new Date().toISOString());
-        
+
       if (raidError) {
         console.error('Error counting active raids:', raidError);
         throw raidError;
       }
-      
-      // Return combined data
+
       return {
         ...guild,
         memberCount: memberCount || 0,
