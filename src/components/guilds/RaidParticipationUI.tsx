@@ -48,11 +48,11 @@ const RaidParticipationUI: React.FC<RaidParticipationUIProps> = ({
     // Get user progress for this raid
     if (raid.raidDetails.participants) {
       const userParticipation = raid.raidDetails.participants.find(
-        (p: any) => p.userId === user?.id
+        (p: any) => p.user_id === user?.id
       );
       
       if (userParticipation) {
-        setUserProgress(userParticipation.daysCompleted || 0);
+        setUserProgress(userParticipation.days_completed || 0);
       }
     }
   }, [raid, user]);
@@ -98,7 +98,7 @@ const RaidParticipationUI: React.FC<RaidParticipationUIProps> = ({
         };
       case 'beast':
         return {
-          description: `Derrote a fera mitológica acumulando ${raid.raidDetails.targetValue} treinos coletivos.`,
+          description: `Derrote a fera mitológica acumulando ${raid.progress.targetValue} treinos coletivos.`,
           icon: <Target className="h-6 w-6 text-valor" />,
           color: 'text-valor',
           background: 'bg-valor-15',

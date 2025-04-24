@@ -76,7 +76,7 @@ export class RaidService {
         .select(`
           id,
           name,
-          type,
+          raid_type,
           start_date,
           end_date,
           days_required,
@@ -94,6 +94,10 @@ export class RaidService {
         throw error;
       }
       
+      if (!raids) {
+        return [];
+      }
+
       // Transform into RaidWithProgress objects
       const raidWithProgress: RaidWithProgress[] = raids.map(raid => {
         const totalParticipants = raid.guild_raid_participants ? raid.guild_raid_participants.length : 0;
@@ -108,7 +112,7 @@ export class RaidService {
         return {
           id: raid.id,
           name: raid.name,
-          raidType: raid.type || 'consistency',
+          raidType: raid.raid_type || 'consistency',
           startDate: new Date(raid.start_date),
           endDate: new Date(raid.end_date),
           daysRequired: raid.days_required,
@@ -120,8 +124,9 @@ export class RaidService {
           raidDetails: {
             participantsCount: totalParticipants,
             xpReward: raid.xp_reward || 100,
+            targetValue: targetDaysTotal, // Add this property to align with our updated type
             participants: raid.guild_raid_participants,
-            elementalTypes: raid.type === 'elemental' ? ['strength', 'cardio', 'mobility', 'sport'] : []
+            elementalTypes: raid.raid_type === 'elemental' ? ['strength', 'cardio', 'mobility', 'sport'] : []
           }
         };
       });

@@ -27,6 +27,7 @@ export interface RaidProgress {
 export interface RaidDetails {
   participantsCount: number;
   xpReward: number;
+  targetValue?: number; // Add this missing property
   participants?: any[];
   elementalTypes?: string[];
 }
@@ -40,4 +41,17 @@ export interface RaidWithProgress {
   daysRequired: number;
   progress: RaidProgress;
   raidDetails: RaidDetails;
+}
+
+export interface GuildXPContribution {
+  id: string;
+  guildId: string;
+  userId: string;
+  amount: number;
+  rawAmount: number;
+  bonusAmount: number;
+  source: string;
+  workoutId?: string;
+  manualWorkoutId?: string;
+  createdAt: Date;
 }
