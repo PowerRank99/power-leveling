@@ -42,10 +42,10 @@ const GuildQuestsPage: React.FC = () => {
         const formattedRaids = activeRaids.map(raid => ({
           id: raid.id,
           title: raid.name,
-          guildName: guildData.name,
+          guildName: guildData.name || '',
           startDate: raid.startDate.toISOString(),
           endDate: raid.endDate.toISOString(),
-          status: 'active',
+          status: 'active' as const, // Using type assertion to match Quest type
           daysCompleted: raid.progress.currentValue,
           daysRequired: raid.daysRequired,
           rewards: [{ type: 'xp', amount: raid.raidDetails.xpReward }]
@@ -81,7 +81,7 @@ const GuildQuestsPage: React.FC = () => {
           guildName: guildInfo?.name || '',
           startDate: raid.startDate.toISOString(),
           endDate: raid.endDate.toISOString(),
-          status: 'active',
+          status: 'active' as const, // Using type assertion
           daysCompleted: raid.progress.currentValue,
           daysRequired: raid.daysRequired,
           rewards: [{ type: 'xp', amount: raid.raidDetails.xpReward }]
@@ -110,7 +110,7 @@ const GuildQuestsPage: React.FC = () => {
             guildName: guildInfo?.name || '',
             startDate: raid.startDate.toISOString(),
             endDate: raid.endDate.toISOString(),
-            status: 'active',
+            status: 'active' as const, // Using type assertion
             daysCompleted: raid.progress.currentValue,
             daysRequired: raid.daysRequired,
             rewards: [{ type: 'xp', amount: raid.raidDetails.xpReward }]

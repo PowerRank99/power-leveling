@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { GuildUtils } from './GuildUtils';
 import { toast } from 'sonner';
+import { CreateGuildParams, CreateRaidParams } from './types';
 
 export class GuildService {
   /**
@@ -121,8 +122,8 @@ export class GuildService {
    */
   static async createRaid(
     guildId: string, 
-    creatorId: string, 
-    params: CreateRaidParams
+    userId: string, 
+    raidData: CreateRaidParams
   ): Promise<string | null> {
     try {
       // Check if user is guild master or moderator
@@ -130,7 +131,7 @@ export class GuildService {
         .from('guild_members')
         .select('role')
         .eq('guild_id', guildId)
-        .eq('user_id', creatorId)
+        .eq('user_id', userId)
         .single();
         
       if (memberError || !member) {
@@ -143,16 +144,17 @@ export class GuildService {
       }
       
       // Create the raid
-      const startDate = params.startDate || new Date();
+      const startDate = raidData.startDate || new Date();
       const { data: raid, error: raidError } = await supabase
         .from('guild_raids')
         .insert({
           guild_id: guildId,
-          name: params.name,
+          name: raidData.name,
+          raid_type: raidData.raidType,
           start_date: startDate.toISOString(),
-          end_date: params.endDate.toISOString(),
-          days_required: params.daysRequired,
-          created_by: creatorId
+          end_date: raidData.endDate.toISOString(),
+          days_required: raidData.daysRequired,
+          created_by: userId
         })
         .select('id')
         .single();
@@ -163,7 +165,7 @@ export class GuildService {
       }
       
       toast.success('Raid Criada!', {
-        description: `A raid "${params.name}" foi criada com sucesso.`
+        description: `A raid "${raidData.name}" foi criada com sucesso.`
       });
       
       return raid.id;
