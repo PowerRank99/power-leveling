@@ -1,10 +1,10 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { XPService } from '@/services/rpg/XPService';
 import { StreakService } from '@/services/rpg/StreakService';
 import { AchievementService } from '@/services/rpg/AchievementService';
 import { WorkoutDataService } from './WorkoutDataService';
+import { GuildXPService } from '@/services/rpg/guild/GuildXPService';
 
 export class WorkoutCompletionService {
   /**
@@ -105,21 +105,64 @@ export class WorkoutCompletionService {
         });
       }
       
-      // Step 3: Calculate and award XP
+      // Step 3: Calculate base workout XP
       const baseXP = XPService.calculateWorkoutXP(
         { id: workoutId, exercises, durationSeconds: elapsedTime },
         userProfile?.class,
         userProfile?.streak || 0
       );
       
+      // Step 4: Award XP to user
       await XPService.awardXP(userId, baseXP, personalRecords);
       
-      // Step 4: Check for achievements
+      // Step 5: Contribute XP to guilds
+      await this.contributeToGuilds(userId, baseXP, workoutId);
+      
+      // Step 6: Check for achievements
       await AchievementService.checkAchievements(userId);
       
-    } catch (rpgError) {
+    } catch (error) {
       // Log but don't fail the workout completion
-      console.error("Error processing RPG rewards:", rpgError);
+      console.error("Error processing RPG rewards:", error);
+    }
+  }
+
+  /**
+   * Contribute workout XP to all guilds user is a member of
+   */
+  private static async contributeToGuilds(
+    userId: string,
+    baseWorkoutXP: number,
+    workoutId: string
+  ): Promise<void> {
+    try {
+      // Get user's guild memberships
+      const { data: memberships, error: membershipError } = await supabase
+        .from('guild_members')
+        .select('guild_id')
+        .eq('user_id', userId);
+
+      if (membershipError) {
+        console.error('Error fetching guild memberships:', membershipError);
+        return;
+      }
+
+      // Contribute XP to each guild
+      for (const membership of memberships || []) {
+        try {
+          await GuildXPService.contributeXP(
+            membership.guild_id,
+            userId,
+            baseWorkoutXP,
+            'workout',
+            workoutId
+          );
+        } catch (guildError) {
+          console.error('Error contributing to guild:', membership.guild_id, guildError);
+        }
+      }
+    } catch (error) {
+      console.error('Error in guild XP contribution:', error);
     }
   }
   
