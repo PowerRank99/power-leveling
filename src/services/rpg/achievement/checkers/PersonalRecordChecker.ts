@@ -8,8 +8,8 @@ export class PersonalRecordChecker {
     remainingAchievements: any[]
   ): Promise<void> {
     try {
-      // Get "Quebra-Recorde" achievement if not already unlocked
-      const recordAchievement = remainingAchievements.find(a => a.string_id === 'quebra-recorde');
+      // Get "First PR" achievement if not already unlocked
+      const recordAchievement = remainingAchievements.find(a => a.string_id === 'pr-first');
       
       if (!recordAchievement || unlockedIds.includes(recordAchievement.id)) {
         return;
