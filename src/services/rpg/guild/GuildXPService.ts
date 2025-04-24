@@ -61,7 +61,19 @@ export class GuildXPService {
         throw error;
       }
 
-      return data || [];
+      // Map snake_case database columns to camelCase interface properties
+      return (data || []).map(item => ({
+        id: item.id,
+        guildId: item.guild_id,
+        userId: item.user_id,
+        amount: item.amount,
+        rawAmount: item.raw_amount,
+        bonusAmount: item.bonus_amount,
+        source: item.source,
+        workoutId: item.workout_id,
+        manualWorkoutId: item.manual_workout_id,
+        createdAt: new Date(item.created_at)
+      }));
     } catch (error) {
       console.error('Failed to fetch guild contributions:', error);
       return [];
