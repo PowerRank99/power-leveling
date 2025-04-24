@@ -48,7 +48,7 @@ export class RaidService {
           end_date: params.endDate.toISOString(),
           days_required: params.daysRequired,
           raid_type: params.raidType || 'consistency',
-          raid_details: params.raidDetails || {},
+          raid_details: params.raidDetails || {}
           created_by: creatorId
         })
         .select('id')

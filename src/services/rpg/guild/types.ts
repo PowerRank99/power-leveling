@@ -45,6 +45,7 @@ export interface RaidDetails {
   elementalTypes?: string[];
   xpReward?: number;
   bossName?: string;
+  [key: string]: any; // Add index signature to make it compatible with Json type
 }
 
 export interface GuildXPContribution {
