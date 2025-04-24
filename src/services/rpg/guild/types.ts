@@ -1,3 +1,4 @@
+
 export type GuildRole = 'member' | 'moderator' | 'guild_master';
 
 export interface CreateGuildParams {
@@ -12,6 +13,8 @@ export interface CreateRaidParams {
   startDate?: Date;
   endDate: Date;
   daysRequired: number;
+  raidType?: GuildRaidType;  // Added missing property
+  raidDetails?: RaidDetails;  // Added missing property
 }
 
 // New interfaces to match database schema
